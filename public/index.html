@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>PlayFab JavaScript Unit Tests</title>
+    <script type="text/javascript" src="https://download.playfab.com/PlayFabClientApi.js"></script>
+</head>
+<body>
+    Email Address: <input type="text" id="emailSignUpAddress" value="salestest@test.com"><br />
+    Password (Min. 8 characters, must include at least 1 number): <input type="password" id="emailSignUpPassword" value=""><br />
+    Display name: <input type="text" id="displayName" value=""><br />
+    Academic Area: 
+    <select name="academicAreaSelection" id="academicArea">
+        <option value="dentistry">dentistry</option>
+        <option value="ucla">ucla</option>
+        <option value="immersifyUS">immersifyUS</option>
+        <option value="nursing">nursing</option>
+        <option value="tepe">tepe</option>
+    </select>
+    <br />
+    <input type="button" value="Register" onclick="RegisterUserEmailAddress()"><br /><br />
+    Result:<br /><br />
+    <textarea id="resultOutput" cols="60" rows="5"></textarea><br />
+
+    <script type="text/javascript" src="scripts/PlayFabManager.js"></script>
+</body>
+</html>

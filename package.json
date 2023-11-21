@@ -1,0 +1,16 @@
+{
+  "name": "imsalesaccountmanagement",
+  "version": "1.0.0",
+  "description": "sales account creation and management portal",
+  "main": "server.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node server.js"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "confluence.js": "^1.7.1",
+    "express": "^4.18.2"
+  }
+}
