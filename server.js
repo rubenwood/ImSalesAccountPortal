@@ -16,7 +16,7 @@ app.put('/update-confluence-page/:pageId', async (req, res) => {
   const pageId = req.params.pageId;
   const pageContent = await getPageDetails(pageId);
   var newPageContent = pageContent;
-  //console.log(newPageContent);
+  
   // Parse the existing content to add a new row to the table
   if (newPageContent.includes("<table>")) {
     // This is a very basic way to add a row. For more complex scenarios, consider using an XML/HTML parser
@@ -26,7 +26,6 @@ app.put('/update-confluence-page/:pageId', async (req, res) => {
       // If no table exists, create one
       newPageContent = `<table><tbody><tr><td><b>Email</b></td><td><b>Password</b></td><td><b>Area</b></td><td><b>Expiry</b></td></tr></tbody></table>`;
   }
-  //console.log(newPageContent);
 
   try {
     const currentVersion = await getCurrentPageVersion(pageId)
@@ -97,7 +96,7 @@ async function getPageDetails(pageId) {
 
 app.use(express.static('public'));
 
-const PORT = process.env.PORT || 3001;
+const PORT = process.env.PORT;
 
 app.get('/', (req, res) => {
     res.send('Hello World!');

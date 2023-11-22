@@ -29,3 +29,15 @@ function callUpdateConfluencePage(email, pass, area, expiry){
         console.error('Error:', error);
     });
 }
+
+
+const togglePassword = document.getElementById('togglePassword');
+const passwordField = document.getElementById('emailSignUpPassword');
+
+togglePassword.addEventListener('click', function (e) {
+    // toggle the type attribute
+    const type = passwordField.getAttribute('type') === 'password' ? 'text' : 'password';
+    passwordField.setAttribute('type', type);
+    // toggle the eye / eye slash icon
+    this.value = this.value === 'Show Password' ? 'Hide Password' : 'Show Password';
+});
