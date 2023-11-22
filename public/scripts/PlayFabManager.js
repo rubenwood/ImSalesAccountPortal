@@ -1,6 +1,26 @@
 const titleId = "29001";
 
+function isValidEmail(email) {
+    const atIndex = email.indexOf('@');
+    return atIndex > -1 && email.length > atIndex + 1;
+}
+function isValidPassword(password) {
+    return password.length >= 8 && /\d/.test(password);
+}
+
+
 function RegisterUserEmailAddress(){
+    let email = document.getElementById("emailSignUpAddress").value;
+    let pass = document.getElementById("emailSignUpPassword").value;
+    if (!isValidEmail(email)) {
+        document.getElementById("resultOutput").innerHTML = "Invalid email address.";
+        return;
+    }
+    if (!isValidPassword(pass)) {
+        document.getElementById("resultOutput").innerHTML = "Password must be at least 8 characters and include at least 1 number.";
+        return;
+    }
+
     PlayFab.settings.titleId = titleId; // must set titleId this way
 
     var registerRequest = {
@@ -60,20 +80,16 @@ var UpdateUserDataCallback = function (result, error){
     if (result !== null) {
         document.getElementById("resultOutput").innerHTML = "Account created & user data updated!";
 
-         // Display confetti
          confetti({
             particleCount: 100,
             spread: 70,
             origin: { y: 0.6 }
         });
-        
-        // once we have created the user account,
-        // we need to update the confluence doc
-        // need to use fetch, to call our node server code that will update confluence
+
         let email = document.getElementById("emailSignUpAddress").value;
         let pass = document.getElementById("emailSignUpPassword").value;
         let area = document.getElementById("academicArea").value;
-        let expiry = "test expiry";//document.getElementById("expiry").value;
+        let expiry = document.getElementById("expiry").value;
         callUpdateConfluencePage(email, pass, area, expiry);
 
     } else if (error !== null) {
