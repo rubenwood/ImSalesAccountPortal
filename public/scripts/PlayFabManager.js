@@ -60,6 +60,13 @@ var UpdateUserDataCallback = function (result, error){
     if (result !== null) {
         document.getElementById("resultOutput").innerHTML = "Account created & user data updated!";
 
+         // Display confetti
+         confetti({
+            particleCount: 100,
+            spread: 70,
+            origin: { y: 0.6 }
+        });
+        
         // once we have created the user account,
         // we need to update the confluence doc
         // need to use fetch, to call our node server code that will update confluence
