@@ -8,6 +8,13 @@ app.use(express.json());
 app.use(cors());
 
 app.put('/update-confluence-page/:pageId', async (req, res) => {
+
+  //console.log("BODY: " + JSON.stringify(req.body));
+  var email = req.body.email;
+  var pass = req.body.pass;
+  var area = req.body.area;
+  var expiry = req.body.expiry;
+
   const pageId = req.params.pageId;
   const pageContent = await getPageDetails(pageId);
   var newPageContent = pageContent;
@@ -16,13 +23,13 @@ app.put('/update-confluence-page/:pageId', async (req, res) => {
   // Parse the existing content to add a new row to the table
   if (newPageContent.includes("<table>")) {
     // This is a very basic way to add a row. For more complex scenarios, consider using an XML/HTML parser
-    const newRow = `<tr><td>Some Email</td><td>Some Password</td><td>Some Area</td><td>Some Expiry Date</td></tr>`;
+    const newRow = `<tr><td>${email}</td><td>${pass}</td><td>${area}</td><td>${expiry}</td></tr>`;
     newPageContent = pageContent.replace("</tbody>", `${newRow}</tbody>`);
   } else {
       // If no table exists, create one
       newPageContent = `<table><tbody><tr><td><b>Email</b></td><td><b>Password</b></td><td><b>Area</b></td><td><b>Expiry</b></td></tr></tbody></table>`;
   }
-  console.log(newPageContent);
+  //console.log(newPageContent);
 
   try {
     const currentVersion = await getCurrentPageVersion(pageId)
@@ -70,7 +77,7 @@ async function getCurrentPageVersion(pageId) {
       return response.data.version.number;
   } catch (error) {
       console.error("Error fetching page version:", error);
-      throw error; // Re-throw the error to handle it in the calling function
+      throw error;
   }
 }
 async function getPageDetails(pageId) {
@@ -81,7 +88,7 @@ async function getPageDetails(pageId) {
               'Accept': 'application/json'
           }
       });
-      console.log(response.data.body.storage.value); // Log the response data
+      //console.log(response.data.body.storage.value); // Log the response data
       return response.data.body.storage.value // This is the current page content in storage format
       
   } catch (error) {

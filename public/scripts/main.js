@@ -1,4 +1,8 @@
-document.getElementById('updateButton').addEventListener('click', function() {
+// document.getElementById('updateButton').addEventListener('click', function() {
+//     callUpdateConfluencePage("Some Email", "Some Password", "Some Area", "Some Expiry");
+// });
+
+function callUpdateConfluencePage(email, pass, area, expiry){
     const pageId = '929333296'; // Replace with your page ID
     const url = `http://localhost:3001/update-confluence-page/${pageId}`;
 
@@ -8,9 +12,8 @@ document.getElementById('updateButton').addEventListener('click', function() {
             'Content-Type': 'application/json',
             // Add any other headers like authentication tokens here
         },
-        body: JSON.stringify({
-            // Your payload here if needed
-        })
+        // Your payload here if needed
+        body: JSON.stringify({ email, pass, area, expiry }) 
     })
     .then(response => {
         if (!response.ok) {
@@ -26,4 +29,4 @@ document.getElementById('updateButton').addEventListener('click', function() {
         console.error('Error:', error);
         // Handle errors
     });
-});
+}

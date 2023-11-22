@@ -26,7 +26,6 @@ var RegisterCallback = function (result, error){
     }
 }
 
-
 function UpdateUserData(){
     PlayFab.settings.titleId = titleId;
 
@@ -60,6 +59,16 @@ function UpdateUserData(){
 var UpdateUserDataCallback = function (result, error){
     if (result !== null) {
         document.getElementById("resultOutput").innerHTML = "Account created & user data updated!";
+
+        // once we have created the user account,
+        // we need to update the confluence doc
+        // need to use fetch, to call our node server code that will update confluence
+        let email = document.getElementById("emailSignUpAddress").value;
+        let pass = document.getElementById("emailSignUpPassword").value;
+        let area = document.getElementById("academicArea").value;
+        let expiry = "test expiry";//document.getElementById("expiry").value;
+        callUpdateConfluencePage(email, pass, area, expiry);
+
     } else if (error !== null) {
         document.getElementById("resultOutput").innerHTML =
             "Something went wrong\n" +
