@@ -7,17 +7,25 @@ function isValidEmail(email) {
 function isValidPassword(password) {
     return password.length >= 8 && /\d/.test(password);
 }
-
+function isValidExpiryDate(expiry){
+    console.log(expiry);
+    return expiry !== "";
+}
 
 function RegisterUserEmailAddress(){
     let email = document.getElementById("emailSignUpAddress").value;
     let pass = document.getElementById("emailSignUpPassword").value;
+    let expiry = document.getElementById("expiry").value;
     if (!isValidEmail(email)) {
         document.getElementById("resultOutput").innerHTML = "Invalid email address.";
         return;
     }
     if (!isValidPassword(pass)) {
         document.getElementById("resultOutput").innerHTML = "Password must be at least 8 characters and include at least 1 number.";
+        return;
+    }
+    if(!isValidExpiryDate(expiry)){
+        document.getElementById("resultOutput").innerHTML = "Select an expiry date!";
         return;
     }
 
