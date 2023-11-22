@@ -86,14 +86,7 @@ function UpdateUserData(){
 
 var UpdateUserDataCallback = function (result, error){
     if (result !== null) {
-        document.getElementById("resultOutput").innerHTML = "Account created & user data updated!";
-
-         confetti({
-            particleCount: 100,
-            spread: 70,
-            origin: { y: 0.6 }
-        });
-
+        document.getElementById("resultOutput").innerHTML = "Account created & user data updated... Updating confluence...";
         let email = document.getElementById("emailSignUpAddress").value;
         let pass = document.getElementById("emailSignUpPassword").value;
         let area = document.getElementById("academicArea").value;

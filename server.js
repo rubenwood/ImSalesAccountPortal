@@ -8,8 +8,6 @@ app.use(express.json());
 app.use(cors());
 
 app.put('/update-confluence-page/:pageId', async (req, res) => {
-
-  //console.log("BODY: " + JSON.stringify(req.body));
   var email = req.body.email;
   var pass = req.body.pass;
   var area = req.body.area;
@@ -18,8 +16,7 @@ app.put('/update-confluence-page/:pageId', async (req, res) => {
   const pageId = req.params.pageId;
   const pageContent = await getPageDetails(pageId);
   var newPageContent = pageContent;
-  console.log(newPageContent);
-  //let pageContent = pageDetails.content;
+  //console.log(newPageContent);
   // Parse the existing content to add a new row to the table
   if (newPageContent.includes("<table>")) {
     // This is a very basic way to add a row. For more complex scenarios, consider using an XML/HTML parser
@@ -38,7 +35,7 @@ app.put('/update-confluence-page/:pageId', async (req, res) => {
         "number": ${currentVersion+1}, 
         "message": "update"
       },
-      "title": "TEST",
+      "title": "Test Accounts (Automated)",
       "type": "page",
       "status": "current",
       "body": {
