@@ -6,14 +6,15 @@
     <script type="text/javascript" src="https://download.playfab.com/PlayFabClientApi.js"></script>
     <link rel="stylesheet" type="text/css" href="styles.css">
 </head>
-<div>
-    Email Address: <input type="text" id="emailSignUpAddress" value="salestest@test.com"><br />
-    Password (Min. 8 characters, must include at least 1 number): 
+<body>
+<div class="container">
+    Email Address <input type="text" id="emailSignUpAddress" value="salestest@test.com"><br />
+    Password <span class="small-text">(Min. 8 characters, must include at least 1 number)</span>
     <input type="text" id="emailSignUpPassword" value="">
     <input type="button" id="generatePassword" class="reveal-button" value="Generate Password" onclick="generatePass()"><br />
 
-    Display name: <input type="text" id="displayName" value=""><br />
-    Academic Area: 
+    Display name <input type="text" id="displayName" value=""><br />
+    Academic Area
     <select name="academicAreaSelection" id="academicArea">
         <option value="dentistry">dentistry</option>
         <option value="ucla">ucla</option>
@@ -22,14 +23,16 @@
         <option value="tepe">tepe</option>
     </select>
     <br />
-    Expiry: <input type="date" id="expiry"><br />
+    Expiry<br />
+    <input type="date" id="expiry"><br />
     <br />
     <input type="button" value="Register" onclick="RegisterUserEmailAddress()"><br /><br />
-    Result:<br /><br />
+    Result<br /><br />
     <textarea id="resultOutput" cols="60" rows="5"></textarea><br />
 
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.1/dist/confetti.browser.js"></script>
     <script type="text/javascript" src="scripts/main.js"></script>
     <script type="text/javascript" src="scripts/PlayFabManager.js"></script>
+</div>
 </body>
 </html>

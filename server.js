@@ -19,7 +19,6 @@ app.put('/update-confluence-page/:pageId', async (req, res) => {
   
   // Parse the existing content to add a new row to the table
   if (newPageContent.includes("<table>")) {
-    // This is a very basic way to add a row. For more complex scenarios, consider using an XML/HTML parser
     const newRow = `<tr><td>${email}</td><td>${pass}</td><td>${area}</td><td>${expiry}</td></tr>`;
     newPageContent = pageContent.replace("</tbody>", `${newRow}</tbody>`);
   } else {
