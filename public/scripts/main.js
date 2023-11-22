@@ -41,3 +41,29 @@ togglePassword.addEventListener('click', function (e) {
     // toggle the eye / eye slash icon
     this.value = this.value === 'Show Password' ? 'Hide Password' : 'Show Password';
 });
+
+
+
+function generatePass() {
+    const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
+    const digits = '0123456789';
+    const allCharacters = alphabet + digits;
+
+    // Randomly choose a length between 8 and 12
+    const length = Math.floor(Math.random() * 5) + 8; // Will generate a number between 8 and 12
+
+    let password = '';
+
+    // Ensure at least one digit is included
+    password += digits[Math.floor(Math.random() * digits.length)];
+
+    // Generate the rest of the password
+    for (let i = 1; i < length; i++) {
+        password += allCharacters[Math.floor(Math.random() * allCharacters.length)];
+    }
+
+    // Shuffle to randomize the position of the digit
+    password = password.split('').sort(() => 0.5 - Math.random()).join('');
+    document.getElementById("emailSignUpPassword").value = password;
+    return password;
+}
