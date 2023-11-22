@@ -7,54 +7,88 @@ const app = express();
 app.use(express.json());
 app.use(cors());
 
-// const { ConfluenceClient } = require('confluence.js');
-// const client = new ConfluenceClient({
-//     host: 'https://immersify.atlassian.net',
-//     authentication: {
-//         basic: {
-//         username: process.env.CONFLUENCE_USERNAME,
-//         password: process.env.CONFLUENCE_PASSWORD,
-//         },
-//     }
-// });
-
-
 app.put('/update-confluence-page/:pageId', async (req, res) => {
-    console.log("CALLED");
-    try {
-      const pageId = req.params.pageId;
-      const updateData = {
-        id: pageId,
-        type: "page",
-        title: "TEST PAGE",
-        space: { key: "DEVTeam" },
-        body: {
-          storage: {
-            value: "<p>This is the updated text for the new page</p>",
-            representation: "storage"
-          }
-        },
-        version: { number: 2 }
-      };
-  
-      const response = await axios.put(`https://immersify.atlassian.net/wiki/rest/api/content/${pageId}`, updateData, {
-        auth: {
-          username: process.env.CONFLUENCE_USERNAME,
-          password: process.env.CONFLUENCE_PASSWORD
-        },
-        headers: {
-          'Content-Type': 'application/json'
+  const pageId = req.params.pageId;
+  const pageContent = await getPageDetails(pageId);
+  var newPageContent = pageContent;
+  console.log(newPageContent);
+  //let pageContent = pageDetails.content;
+  // Parse the existing content to add a new row to the table
+  if (newPageContent.includes("<table>")) {
+    // This is a very basic way to add a row. For more complex scenarios, consider using an XML/HTML parser
+    const newRow = `<tr><td>Some Email</td><td>Some Password</td><td>Some Area</td><td>Some Expiry Date</td></tr>`;
+    newPageContent = pageContent.replace("</tbody>", `${newRow}</tbody>`);
+  } else {
+      // If no table exists, create one
+      newPageContent = `<table><tbody><tr><td><b>Email</b></td><td><b>Password</b></td><td><b>Area</b></td><td><b>Expiry</b></td></tr></tbody></table>`;
+  }
+  console.log(newPageContent);
+
+  try {
+    const currentVersion = await getCurrentPageVersion(pageId)
+    const bodyData = `{
+      "version": {
+        "number": ${currentVersion+1}, 
+        "message": "update"
+      },
+      "title": "TEST",
+      "type": "page",
+      "status": "current",
+      "body": {
+        "storage": {
+          "value": "${newPageContent}",
+          "representation": "storage"
         }
+      }
+    }`;      
+
+    const response = await axios.put(`https://immersify.atlassian.net/wiki/rest/api/content/${pageId}`, bodyData, {
+      headers: {
+        'Authorization': `Basic ${Buffer.from(`${process.env.CONFLUENCE_USERNAME}:${process.env.CONFLUENCE_API_TOKEN}`)
+        .toString('base64')}`,
+        'Accept': 'application/json',
+        'Content-Type': 'application/json'
+      },
+      body: bodyData
+    });
+    
+    res.json(response.data);
+  } catch (error) {
+    console.error(error);
+    res.status(500).send('Error updating Confluence page');
+  }
+});
+
+async function getCurrentPageVersion(pageId) {
+  try {
+      const response = await axios.get(`https://immersify.atlassian.net/wiki/rest/api/content/${pageId}?expand=version`, {
+          headers: {
+              'Authorization': `Basic ${Buffer.from(`${process.env.CONFLUENCE_USERNAME}:${process.env.CONFLUENCE_API_TOKEN}`).toString('base64')}`,
+              'Accept': 'application/json'
+          }
       });
+      return response.data.version.number;
+  } catch (error) {
+      console.error("Error fetching page version:", error);
+      throw error; // Re-throw the error to handle it in the calling function
+  }
+}
+async function getPageDetails(pageId) {
+  try {
+      const response = await axios.get(`https://immersify.atlassian.net/wiki/rest/api/content/${pageId}?expand=body.storage`, {
+          headers: {
+              'Authorization': `Basic ${Buffer.from(`${process.env.CONFLUENCE_USERNAME}:${process.env.CONFLUENCE_API_TOKEN}`).toString('base64')}`,
+              'Accept': 'application/json'
+          }
+      });
+      console.log(response.data.body.storage.value); // Log the response data
+      return response.data.body.storage.value // This is the current page content in storage format
       
-      res.json(response.data);
-    } catch (error) {
-      console.error(error);
-      res.status(500).send('Error updating Confluence page');
-    }
-  });
-
-
+  } catch (error) {
+      console.error("Error fetching page details:", error);
+      throw error;
+  }
+}
 
 
 app.use(express.static('public'));
