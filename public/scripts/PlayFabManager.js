@@ -108,3 +108,40 @@ var UpdateUserDataCallback = function (result, error){
 
 // Get user data (for report)
 // for users in a list (of email addresses), get the playfab ID for that user, then get the player profile
+function GetUserData(email){
+    let playFabID = "";
+    fetch(`https://titleId.playfabapi.com/Admin/GetUserAccountInfo`,
+    {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-SecretKey':process.env.PLAYFAB_SECRET_KEY
+        },
+        body: JSON.stringify({ Email: email })
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error('Network response was not ok');
+        }
+        return response.json();
+    })
+    .then(data => {
+        console.log('Success:', data);
+    })
+    .catch((error) => {
+        console.error('Error:', error);
+    });
+
+    PlayFab.settings.titleId = titleId;
+    var request = {
+        PlayFabId: playFabID
+    };
+    PlayFabClientSDK.GetPlayerProfile(request, GetPlayerProfileCallback);
+}
+var GetPlayerProfileCallback = function(result, error){
+    if (result !== null) {
+
+    } else if (error !== null) {
+
+    }
+}
