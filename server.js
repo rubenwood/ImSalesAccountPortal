@@ -1,6 +1,8 @@
 const express = require('express');
 const axios = require('axios');
 const cors = require('cors');
+const fs = require('fs');
+const path = require('path');
 require('dotenv').config();
 const app = express();
 
@@ -53,7 +55,9 @@ app.put('/update-confluence-page/:pageId', async (req, res) => {
       },
       body: bodyData
     });
-    
+
+    writeCSV(email, pass, area, expiry);
+
     res.json(response.data);
   } catch (error) {
     console.error(error);
@@ -61,6 +65,14 @@ app.put('/update-confluence-page/:pageId', async (req, res) => {
   }
 });
 
+// WRITE TO CSV
+function writeCSV(email, pass, area, expiry) {
+  const csvFilePath = path.join('csv/', 'data.csv'); // Adjust the path as needed
+  const newLine = `${email},${pass},${area},${expiry}\n`;
+  fs.appendFileSync(csvFilePath, newLine, 'utf8');
+}
+
+// CONFLUENCE METHODS
 async function getCurrentPageVersion(pageId) {
   try {
       const response = await axios.get(`https://immersify.atlassian.net/wiki/rest/api/content/${pageId}?expand=version`, {

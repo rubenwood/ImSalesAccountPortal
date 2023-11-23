@@ -25,6 +25,7 @@ function callUpdateConfluencePage(email, pass, area, expiry){
         });
 
         document.getElementById("resultOutput").innerHTML = "Account Created, Data added, confluence page updated:\nhttps://immersify.atlassian.net/wiki/spaces/DEVTeam/pages/929333296/Test+Accounts+Automated";
+        document.getElementById("registerButton").value  = "Register";
     })
     .catch((error) => {
         console.error('Error:', error);

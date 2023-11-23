@@ -29,6 +29,8 @@ function RegisterUserEmailAddress(){
         return;
     }
 
+    document.getElementById("registerButton").value  = "Registering...";
+
     PlayFab.settings.titleId = titleId; // must set titleId this way
 
     var registerRequest = {
@@ -91,9 +93,11 @@ var UpdateUserDataCallback = function (result, error){
         let pass = document.getElementById("emailSignUpPassword").value;
         let area = document.getElementById("academicArea").value;
         let expiry = document.getElementById("expiry").value;
+
         callUpdateConfluencePage(email, pass, area, expiry);
 
     } else if (error !== null) {
+        document.getElementById("registerButton").value  = "Register";
         document.getElementById("resultOutput").innerHTML =
             "Something went wrong\n" +
             "Here's some debug information:\n" +
