@@ -104,3 +104,7 @@ var UpdateUserDataCallback = function (result, error){
             PlayFab.GenerateErrorReport(error);
     }
 }
+
+
+// Get user data (for report)
+// for users in a list (of email addresses), get the playfab ID for that user, then get the player profile

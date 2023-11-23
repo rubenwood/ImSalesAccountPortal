@@ -7,7 +7,7 @@
     <link rel="stylesheet" type="text/css" href="styles.css">
 </head>
 <body>
-<div class="container">
+<div id="signup-container" class="container">
     Email Address <input type="text" id="emailSignUpAddress" value="salestest@test.com"><br />
     Password <span class="small-text">(Min. 8 characters, must include at least 1 number)</span>
     <input type="text" id="emailSignUpPassword" value="">
@@ -28,6 +28,10 @@
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.1/dist/confetti.browser.js"></script>
     <script type="text/javascript" src="scripts/main.js"></script>
     <script type="text/javascript" src="scripts/PlayFabManager.js"></script>
+</div>
+<div id="report-container" class="container">
+    <input type="button" id="generateReportButton" value="Generate Report" onclick="">
+    <textarea>Report will go here</textarea>
 </div>
 </body>
 </html>

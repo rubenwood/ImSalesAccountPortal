@@ -1,8 +1,13 @@
 body {
+    display: flex; 
+    justify-content: center;
+    gap: 20px; 
+    width: 100%;
     font-family: Arial, sans-serif;
     background-color: #f4f4f4;
     padding: 20px;
     color: #333;
+    align-items: flex-start;
 }
 
 input[type=text], input[type=password], select {
@@ -46,14 +51,30 @@ label {
 }
 
 .container {
-    width: 400px;
-    margin: auto;
+    flex-grow: 1;    
+    border: 1px solid #ccc; /* Just for visualization */
     border-radius: 5px;
     background-color: #ffffff;
     padding: 20px;
+    box-sizing: border-box;
     box-shadow: 0 4px 8px 0 rgba(0,0,0,0.2);
 }
 
+#signup-container {
+    flex: 0 0 auto;
+    width: 400px;
+}
+
+#report-container {
+    flex: 1; /* Grow to take up the remaining space */
+    display: flex; /* Use flexbox layout within this container */
+    flex-direction: column; /* Stack children vertically */
+}
+#generateReportButton{
+    align-self: flex-start; /* Align the button to the start of the flex container (top left) */
+    width: auto;
+    margin-bottom: auto; /* Push everything else to the bottom */
+}
 
 .small-text {
     font-size: 0.8em; /* Adjust the size as needed */

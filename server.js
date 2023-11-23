@@ -12,13 +12,13 @@ app.use(cors());
 
 
 // AWS METHODS
-// Configure AWS
 AWS.config.update({
   accessKeyId: process.env.AWS_ACCES_KEY_ID,
   secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
   region: process.env.AWS_REGION
 });
 const s3 = new AWS.S3();
+// GET ACADEMIC AREA JSON
 app.get('/getAcademicAreas', async (req, res) => {
   try {
       const params = {
@@ -33,13 +33,15 @@ app.get('/getAcademicAreas', async (req, res) => {
       res.status(500).send('Error fetching data from S3');
   }
 });
+// GET PRESIGNED URL (UNUSED)
 app.get('/getPresignedUrl', (req, res) => {
   const s3Params = {
       Bucket: process.env.AWS_BUCKET,
       Key: 'TestFiles/OtherData/AcademicAreasData.json',
       Expires: 60 // The URL will be valid for 60 seconds
   };
-
+  // S3 getSignedUrl with callbacks are not supported in AWS SDK for JavaScript (v3).
+  // Please convert to 'client.getSignedUrl(apiName, options)', and re-run aws-sdk-js-codemod.
   s3.getSignedUrl('getObject', s3Params, (err, url) => {
       if (err) {
           console.error('Error:', err);
@@ -48,7 +50,6 @@ app.get('/getPresignedUrl', (req, res) => {
       res.send({ url });
   });
 });
-
 
 // UPDATE CONFLUENCE PAGE
 app.put('/update-confluence-page/:pageId', async (req, res) => {
