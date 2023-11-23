@@ -3,12 +3,54 @@ const axios = require('axios');
 const cors = require('cors');
 const fs = require('fs');
 const path = require('path');
+const AWS = require('aws-sdk');
 require('dotenv').config();
 const app = express();
 
 app.use(express.json());
 app.use(cors());
 
+
+// AWS METHODS
+// Configure AWS
+AWS.config.update({
+  accessKeyId: process.env.AWS_ACCES_KEY_ID,
+  secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+  region: process.env.AWS_REGION
+});
+const s3 = new AWS.S3();
+app.get('/getAcademicAreas', async (req, res) => {
+  try {
+      const params = {
+          Bucket: process.env.AWS_BUCKET,
+          Key: 'TestFiles/OtherData/AcademicAreasData.json'
+      };
+
+      const data = await s3.getObject(params).promise();
+      res.send(JSON.parse(data.Body.toString()));
+  } catch (error) {
+      console.error('Error:', error);
+      res.status(500).send('Error fetching data from S3');
+  }
+});
+app.get('/getPresignedUrl', (req, res) => {
+  const s3Params = {
+      Bucket: process.env.AWS_BUCKET,
+      Key: 'TestFiles/OtherData/AcademicAreasData.json',
+      Expires: 60 // The URL will be valid for 60 seconds
+  };
+
+  s3.getSignedUrl('getObject', s3Params, (err, url) => {
+      if (err) {
+          console.error('Error:', err);
+          return res.status(500).send('Could not generate URL');
+      }
+      res.send({ url });
+  });
+});
+
+
+// UPDATE CONFLUENCE PAGE
 app.put('/update-confluence-page/:pageId', async (req, res) => {
   var email = req.body.email;
   var pass = req.body.pass;
@@ -104,7 +146,7 @@ async function getPageDetails(pageId) {
   }
 }
 
-
+// EXEC SERVER
 app.use(express.static('public'));
 
 const PORT = process.env.PORT;
@@ -118,5 +160,5 @@ app.get('/test', (req, res) => {
 });
 
 app.listen(PORT, () => {
-    console.log(`Server running on port ${PORT}`);
+    console.log(`Server running on port ${PORT} == ^_^ ==`);
 });

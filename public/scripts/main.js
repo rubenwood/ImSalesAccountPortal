@@ -65,3 +65,35 @@ function generatePass() {
     document.getElementById("emailSignUpPassword").value = password;
     return password;
 }
+
+
+function populateDropdown(data) {
+    const selectElement = document.getElementById('academicArea');
+    data.forEach(item => {
+        const option = document.createElement('option');
+        option.value = item.id;
+        option.textContent = item.id;
+        selectElement.appendChild(option);
+    });
+}
+
+// Function to fetch and process JSON data
+function fetchAndPopulate() {
+    const url = 'http://localhost:3001/getAcademicAreas'; // Replace with your server's URL
+
+    fetch(url)
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            return response.json();
+        })
+        .then(data => {
+            // Assuming 'data' is the JSON object with your academic areas
+            populateDropdown(data.academicAreas);
+        })
+        .catch(error => console.error('Error fetching data:', error));
+}
+
+// Fetch and populate on page load
+fetchAndPopulate();
