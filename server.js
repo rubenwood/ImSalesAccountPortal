@@ -107,14 +107,6 @@ app.put('/update-confluence-page/:pageId', async (req, res) => {
     res.status(500).send('Error updating Confluence page');
   }
 });
-
-// WRITE TO CSV
-function writeCSV(email, pass, area, expiry) {
-  const csvFilePath = path.join('csv/', 'data.csv'); // Adjust the path as needed
-  const newLine = `${email},${pass},${area},${expiry}\n`;
-  fs.appendFileSync(csvFilePath, newLine, 'utf8');
-}
-
 // CONFLUENCE METHODS
 async function getCurrentPageVersion(pageId) {
   try {
@@ -146,6 +138,50 @@ async function getPageDetails(pageId) {
       throw error;
   }
 }
+// WRITE TO CSV
+function writeCSV(email, pass, area, expiry) {
+  const csvFilePath = path.join('csv/', 'data.csv'); // Adjust the path as needed
+  const newLine = `${email},${pass},${area},${expiry}\n`;
+  fs.appendFileSync(csvFilePath, newLine, 'utf8');
+}
+
+
+// GET USER DATA (for report)
+// for users in a list (of email addresses), get the playfab ID for that user, 
+// then get the player profile
+// Make this server side
+app.post('/get-user-data/:email', async (req, res) => {
+  let playFabID = "";
+
+  fetch(`https://${process.env.PLAYFAB_TITLE_ID}.playfabapi.com/Admin/GetUserAccountInfo`,
+  {
+      method: 'POST',
+      headers: {
+          'Content-Type': 'application/json',
+          'X-SecretKey':process.env.PLAYFAB_SECRET_KEY
+      },
+      body: JSON.stringify({ Email: email })
+  })
+  .then(response => {
+      if (!response.ok) {
+          throw new Error('Network response was not ok');
+      }
+      return response.json();
+  })
+  .then(data => {
+      console.log('Success:', data);
+      // get playFabID from response data
+      // we will use the playFabID in subsequent calls to get more user data
+  })
+  .catch((error) => {
+      console.error('Error:', error);
+  });
+});
+
+
+
+
+
 
 // EXEC SERVER
 app.use(express.static('public'));

@@ -66,7 +66,7 @@ function generatePass() {
     return password;
 }
 
-
+// POPULATE DROP DOWN (ACADEMIC AREA)
 function populateDropdown(data) {
     const selectElement = document.getElementById('academicArea');
     data.forEach(item => {
@@ -79,7 +79,7 @@ function populateDropdown(data) {
 
 // Function to fetch and process JSON data
 function fetchAndPopulate() {
-    const url = 'http://localhost:3001/getAcademicAreas'; // Replace with your server's URL
+    const url = 'http://localhost:3001/getAcademicAreas';
 
     fetch(url)
         .then(response => {
@@ -97,3 +97,38 @@ function fetchAndPopulate() {
 
 // Fetch and populate on page load
 fetchAndPopulate();
+
+
+function generateReport(){
+    let email = document.getElementById("emailSignUpAddress").value;
+    console.log(email);
+
+    const url = `http://localhost:3001/get-user-data/${email}`;
+
+    fetch(url, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email }) 
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error('Network response was not ok');
+        }
+        return response.json();
+    })
+    .then(data => {
+        console.log('Success:', data);
+        confetti({
+            particleCount: 100,
+            spread: 70,
+            origin: { y: 0.6 }
+        });
+
+        // populate report out
+    })
+    .catch((error) => {
+        console.error('Error:', error);
+    });
+}
