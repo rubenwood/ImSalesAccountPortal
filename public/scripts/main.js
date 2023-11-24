@@ -118,8 +118,8 @@ function generateReport(){
         }
         return response.json();
     })
-    .then(data => {
-        console.log('Success:', data);
+    .then(respData => {
+        console.log('Success:', respData);
         confetti({
             particleCount: 100,
             spread: 70,
@@ -127,6 +127,10 @@ function generateReport(){
         });
 
         // populate report out
+        let playFabID = respData.data.UserInfo.PlayFabId;
+        console.log("PLAYFAB ID: " + playFabID);
+        // now do the request to get the data for this playFabID using the playFabClient API
+        GetPlayerProfile(playFabID);
     })
     .catch((error) => {
         console.error('Error:', error);

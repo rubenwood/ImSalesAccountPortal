@@ -105,7 +105,7 @@ var UpdateUserDataCallback = function (result, error){
     }
 }
 
-function GetPlayerProfile(){
+function GetPlayerProfile(playFabID){
     PlayFab.settings.titleId = titleId;
     var request = {
         PlayFabId: playFabID
@@ -114,7 +114,7 @@ function GetPlayerProfile(){
 }
 var GetPlayerProfileCallback = function(result, error){
     if (result !== null) {
-  
+        console.log(result);
     } else if (error !== null) {
   
     }

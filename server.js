@@ -152,33 +152,32 @@ function writeCSV(email, pass, area, expiry) {
 // Make this server side
 app.post('/get-user-data/:email', async (req, res) => {
   let playFabID = "";
+  console.log(req.body);
 
-  fetch(`https://${process.env.PLAYFAB_TITLE_ID}.playfabapi.com/Admin/GetUserAccountInfo`,
-  {
-      method: 'POST',
-      headers: {
-          'Content-Type': 'application/json',
-          'X-SecretKey':process.env.PLAYFAB_SECRET_KEY
-      },
-      body: JSON.stringify({ Email: email })
-  })
-  .then(response => {
-      if (!response.ok) {
-          throw new Error('Network response was not ok');
-      }
-      return response.json();
-  })
-  .then(data => {
-      console.log('Success:', data);
+  try {
+      const response = await axios.post(
+          `https://${process.env.PLAYFAB_TITLE_ID}.playfabapi.com/Admin/GetUserAccountInfo`,
+          { Email: req.body.email },
+          {
+              headers: {
+                  'Content-Type': 'application/json',
+                  'X-SecretKey': process.env.PLAYFAB_SECRET_KEY
+              }
+          }
+      );
+
+      console.log('Success:', response.data);
       // get playFabID from response data
       // we will use the playFabID in subsequent calls to get more user data
-  })
-  .catch((error) => {
+
+      // Send response back to the client
+      res.json(response.data);
+  } catch (error) {
       console.error('Error:', error);
-  });
+      // Send error response back to the client
+      res.status(500).send('Error fetching user data');
+  }
 });
-
-
 
 
 
