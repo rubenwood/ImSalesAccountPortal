@@ -169,7 +169,6 @@ app.post('/get-user-data/:email', async (req, res) => {
       console.log('Success:', response.data);
       // get playFabID from response data
       // we will use the playFabID in subsequent calls to get more user data
-
       // Send response back to the client
       res.json(response.data);
   } catch (error) {
@@ -178,7 +177,6 @@ app.post('/get-user-data/:email', async (req, res) => {
       res.status(500).send('Error fetching user data');
   }
 });
-
 
 
 

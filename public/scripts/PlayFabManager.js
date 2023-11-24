@@ -114,8 +114,8 @@ function GetPlayerProfile(playFabID){
 }
 var GetPlayerProfileCallback = function(result, error){
     if (result !== null) {
-        console.log(result);
+        console.log("player profile: " + result);
     } else if (error !== null) {
-  
+        console.error(error);
     }
 }

@@ -32,16 +32,6 @@ function callUpdateConfluencePage(email, pass, area, expiry){
     });
 }
 
-// HIDE / SHOW password
-//const togglePassword = document.getElementById('togglePassword');
-//const passwordField = document.getElementById('emailSignUpPassword');
-// togglePassword.addEventListener('click', function (e) {
-//     const type = passwordField.getAttribute('type') === 'password' ? 'text' : 'password';
-//     passwordField.setAttribute('type', type);
-//     this.value = this.value === 'Show Password' ? 'Hide Password' : 'Show Password';
-// });
-
-
 function generatePass() {
     const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
     const digits = '0123456789';
@@ -94,7 +84,6 @@ function fetchAndPopulate() {
         })
         .catch(error => console.error('Error fetching data:', error));
 }
-
 // Fetch and populate on page load
 fetchAndPopulate();
 
@@ -129,7 +118,7 @@ function generateReport(){
         // populate report out
         let playFabID = respData.data.UserInfo.PlayFabId;
         console.log("PLAYFAB ID: " + playFabID);
-        // now do the request to get the data for this playFabID using the playFabClient API
+        // do client API call
         GetPlayerProfile(playFabID);
     })
     .catch((error) => {
