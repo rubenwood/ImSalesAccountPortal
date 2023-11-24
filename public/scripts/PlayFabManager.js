@@ -110,6 +110,7 @@ var UpdateUserDataCallback = function (result, error){
 // for users in a list (of email addresses), get the playfab ID for that user, then get the player profile
 function GetUserData(email){
     let playFabID = "";
+
     fetch(`https://titleId.playfabapi.com/Admin/GetUserAccountInfo`,
     {
         method: 'POST',
@@ -127,6 +128,8 @@ function GetUserData(email){
     })
     .then(data => {
         console.log('Success:', data);
+        // get playFabID from response data
+        // we will use the playFabID in subsequent calls to get more user data
     })
     .catch((error) => {
         console.error('Error:', error);
