@@ -117,11 +117,13 @@ function generateReport(){
 
         // populate report out
         let outputString = "";
-        //outputString += JSON.stringify(respData.data) + "\n";
         let playFabID = respData.data.UserInfo.PlayFabId;
         let emailAddr = respData.data.UserInfo.PrivateInfo.Email;
-        let createdDate = respData.data.UserInfo.TitleInfo.Created;
-        let lastLoginDate = respData.data.UserInfo.TitleInfo.LastLogin;
+        let createdDate = new Date(respData.data.UserInfo.TitleInfo.Created);
+        let lastLoginDate = new Date(respData.data.UserInfo.TitleInfo.LastLogin);
+        let today = new Date();
+        let diffTime = Math.abs(today - createdDate);
+        let daysSinceCreation = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 
         //outputString += "\n" + playFabID  + " - " + emailAddr + " - " + createdDate + " - " + lastLoginDate;
         //document.getElementById("reportOutput").innerHTML = outputString;
@@ -134,6 +136,7 @@ function generateReport(){
         row.insertCell().textContent = emailAddr;
         row.insertCell().textContent = createdDate;
         row.insertCell().textContent = lastLoginDate;
+        row.insertCell().textContent = daysSinceCreation;
 
         // do client API call
         //GetPlayerProfile(playFabID);
