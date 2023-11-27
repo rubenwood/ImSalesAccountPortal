@@ -116,14 +116,24 @@ function generateReport(){
         });
 
         // populate report out
-        let outputString = JSON.stringify(respData.data) + "\n";
+        let outputString = "";
+        //outputString += JSON.stringify(respData.data) + "\n";
         let playFabID = respData.data.UserInfo.PlayFabId;
         let emailAddr = respData.data.UserInfo.PrivateInfo.Email;
         let createdDate = respData.data.UserInfo.TitleInfo.Created;
         let lastLoginDate = respData.data.UserInfo.TitleInfo.LastLogin;
 
-        outputString += "\n" + playFabID  + " - " + emailAddr + " - " + createdDate + " - " + lastLoginDate;
-        document.getElementById("reportOutput").innerHTML = outputString;
+        //outputString += "\n" + playFabID  + " - " + emailAddr + " - " + createdDate + " - " + lastLoginDate;
+        //document.getElementById("reportOutput").innerHTML = outputString;
+
+        // Create a new row in the table for each piece of data
+        const tableBody = document.getElementById("reportTableBody");
+        tableBody.innerHTML = ''; // Clear out the existing rows
+        const row = tableBody.insertRow(); // Append a new row to the table
+        row.insertCell().textContent = playFabID;
+        row.insertCell().textContent = emailAddr;
+        row.insertCell().textContent = createdDate;
+        row.insertCell().textContent = lastLoginDate;
 
         // do client API call
         //GetPlayerProfile(playFabID);

@@ -32,6 +32,22 @@
 <div id="report-container" class="container">
     <input type="button" id="generateReportButton" value="Generate Report" onclick="generateReport()">
     <textarea id="reportOutput">Report will go here</textarea>
+    <div id="report-container" class="container">
+        <input type="button" id="generateReportButton" value="Generate Report" onclick="generateReport()">
+        <table id="reportTable">
+            <thead>
+                <tr>
+                    <th>PlayFab ID</th>
+                    <th>Email Address</th>
+                    <th>Account Created</th>
+                    <th>Last Login</th>
+                </tr>
+            </thead>
+            <tbody id="reportTableBody">
+                <!-- Rows will be added here by the generateReport() function -->
+            </tbody>
+        </table>
+    </div>
 </div>
 </body>
 </html>
