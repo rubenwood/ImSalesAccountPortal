@@ -105,17 +105,21 @@ var UpdateUserDataCallback = function (result, error){
     }
 }
 
-function GetPlayerProfile(playFabID){
-    PlayFab.settings.titleId = titleId;
-    var request = {
-        PlayFabId: playFabID
-    };
-    PlayFabClientSDK.GetPlayerProfile(request, GetPlayerProfileCallback);
-}
-var GetPlayerProfileCallback = function(result, error){
-    if (result !== null) {
-        console.log("player profile: " + result);
-    } else if (error !== null) {
-        console.error(error);
-    }
-}
+// function GetPlayerProfile(playFabID){
+//     PlayFab.settings.titleId = titleId;
+//     var request = {
+//         PlayFabId: playFabID
+//     };
+//     PlayFabClientSDK.GetPlayerProfile(request, GetPlayerProfileCallback);
+// }
+// var GetPlayerProfileCallback = function(result, error){
+//     document.getElementById("resultOutput").innerHTML = "got player profile";
+
+//     if (result !== null) {
+//         console.log("player profile: " + result);
+        
+//     } else if (error !== null) {
+//         console.error("Error: " + error);
+        
+//     }
+// }

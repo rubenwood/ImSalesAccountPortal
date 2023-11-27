@@ -116,12 +116,20 @@ function generateReport(){
         });
 
         // populate report out
+        let outputString = JSON.stringify(respData.data) + "\n";
         let playFabID = respData.data.UserInfo.PlayFabId;
-        console.log("PLAYFAB ID: " + playFabID);
+        let emailAddr = respData.data.UserInfo.PrivateInfo.Email;
+        let createdDate = respData.data.UserInfo.TitleInfo.Created;
+        let lastLoginDate = respData.data.UserInfo.TitleInfo.LastLogin;
+
+        outputString += "\n" + playFabID  + " - " + emailAddr + " - " + createdDate + " - " + lastLoginDate;
+        document.getElementById("reportOutput").innerHTML = outputString;
+
         // do client API call
-        GetPlayerProfile(playFabID);
+        //GetPlayerProfile(playFabID);
     })
     .catch((error) => {
         console.error('Error:', error);
+        document.getElementById("reportOutput").innerHTML = error;
     });
 }
