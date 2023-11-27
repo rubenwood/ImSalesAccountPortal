@@ -30,26 +30,22 @@
     <script type="text/javascript" src="scripts/PlayFabManager.js"></script>
 </div>
 <div id="report-container" class="container">
+    <textarea id="emailList" placeholder="Enter email addresses here, one per line"></textarea>
     <input type="button" id="generateReportButton" value="Generate Report" onclick="generateReport()">
-    <textarea id="reportOutput">Report will go here</textarea>
-    <div id="report-container" class="container">
-        <textarea id="emailList" placeholder="Enter email addresses here, one per line"></textarea>
-        <input type="button" id="generateReportButton" value="Generate Report" onclick="generateReport()">
-        <table id="reportTable">
-            <thead>
-                <tr>
-                    <th>PlayFab ID</th>
-                    <th>Email Address</th>
-                    <th>Account Created</th>
-                    <th>Last Login</th>
-                    <th>Days Since Creation</th>
-                </tr>
-            </thead>
-            <tbody id="reportTableBody">
-                <!-- Rows will be added here by the generateReport() function -->
-            </tbody>
-        </table>
-    </div>
+    <table id="reportTable">
+        <thead>
+            <tr>
+                <th>PlayFab ID</th>
+                <th>Email Address</th>
+                <th>Account Created</th>
+                <th>Last Login</th>
+                <th>Days Since Creation</th>
+            </tr>
+        </thead>
+        <tbody id="reportTableBody">
+            <!-- Rows will be added here by the generateReport() function -->
+        </tbody>
+    </table>
 </div>
 </body>
 </html>

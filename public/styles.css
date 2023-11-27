@@ -79,3 +79,9 @@ label {
 .small-text {
     font-size: 0.8em; /* Adjust the size as needed */
 }
+
+
+.highlighted {
+    background-color: #ff7a7a;
+    color: white; /* Ensuring text is readable on a red background */
+}

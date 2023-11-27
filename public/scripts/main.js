@@ -79,7 +79,6 @@ function fetchAndPopulate() {
             return response.json();
         })
         .then(data => {
-            // Assuming 'data' is the JSON object with your academic areas
             populateDropdown(data.academicAreas);
         })
         .catch(error => console.error('Error fetching data:', error));
@@ -119,7 +118,7 @@ function generateReport() {
 
     // Create an array of promises for fetching user data
     const fetchPromises = emailList.map((email, index) => {
-        return delay(index * 1000) // Delay increases with each email to stagger the requests
+        return delay(index * 1000) // Delay
             .then(() => fetchUserData(email))
             .then(respData => {
                 let createdDate = new Date(respData.data.UserInfo.TitleInfo.Created);
@@ -134,6 +133,9 @@ function generateReport() {
                 row.insertCell().textContent = createdDate.toDateString();
                 row.insertCell().textContent = lastLoginDate.toDateString();
                 row.insertCell().textContent = daysSinceCreation;
+                if (daysSinceCreation >= 2 && createdDate.toDateString() === lastLoginDate.toDateString()) {
+                    row.style.backgroundColor = '#ff7a7a'; // Highlight the cell in red
+                }
             })
             .catch(error => {
                 // Log the error or display it on the UI
@@ -148,7 +150,6 @@ function generateReport() {
     // Wait for all the fetch calls to settle
     Promise.allSettled(fetchPromises).then(results => {
         console.log('All fetch calls have been processed');
-        // Actions after all fetches are done, like hiding a loading indicator
         confetti({
             particleCount: 100,
             spread: 70,
