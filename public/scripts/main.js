@@ -88,13 +88,11 @@ function fetchAndPopulate() {
 fetchAndPopulate();
 
 
-function generateReport(){
-    let email = document.getElementById("emailSignUpAddress").value;
-    console.log(email);
-
+// Function to fetch user data for a given email
+function fetchUserData(email) {
     const url = `http://localhost:3001/get-user-data/${email}`;
 
-    fetch(url, {
+    return fetch(url, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
@@ -103,46 +101,58 @@ function generateReport(){
     })
     .then(response => {
         if (!response.ok) {
-            throw new Error('Network response was not ok');
+            throw new Error('Network response was not ok for email ' + email);
         }
         return response.json();
-    })
-    .then(respData => {
-        console.log('Success:', respData);
+    });
+}
+
+// Function to generate the report
+function generateReport() {
+    const emailListText = document.getElementById("emailList").value;
+    const emailList = emailListText.split('\n').filter(Boolean); // Split by newline and filter out empty strings
+    const tableBody = document.getElementById("reportTableBody");
+    tableBody.innerHTML = ''; // Clear out the existing rows
+
+    // Helper function to delay execution
+    const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
+
+    // Create an array of promises for fetching user data
+    const fetchPromises = emailList.map((email, index) => {
+        return delay(index * 1000) // Delay increases with each email to stagger the requests
+            .then(() => fetchUserData(email))
+            .then(respData => {
+                let createdDate = new Date(respData.data.UserInfo.TitleInfo.Created);
+                let lastLoginDate =  new Date(respData.data.UserInfo.TitleInfo.LastLogin);
+                let today = new Date();
+                let diffTime = Math.abs(today - createdDate);
+                let daysSinceCreation = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                // Append data to the table
+                const row = tableBody.insertRow();
+                row.insertCell().textContent = respData.data.UserInfo.PlayFabId;
+                row.insertCell().textContent = email;
+                row.insertCell().textContent = createdDate.toDateString();
+                row.insertCell().textContent = lastLoginDate.toDateString();
+                row.insertCell().textContent = daysSinceCreation;
+            })
+            .catch(error => {
+                // Log the error or display it on the UI
+                console.error('Error:', error);
+                const row = tableBody.insertRow();
+                row.insertCell().textContent = 'Error for email: ' + email;
+                row.insertCell().colSpan = 3;
+                row.insertCell().textContent = error.message;
+            });
+    });
+
+    // Wait for all the fetch calls to settle
+    Promise.allSettled(fetchPromises).then(results => {
+        console.log('All fetch calls have been processed');
+        // Actions after all fetches are done, like hiding a loading indicator
         confetti({
             particleCount: 100,
             spread: 70,
             origin: { y: 0.6 }
         });
-
-        // populate report out
-        let outputString = "";
-        let playFabID = respData.data.UserInfo.PlayFabId;
-        let emailAddr = respData.data.UserInfo.PrivateInfo.Email;
-        let createdDate = new Date(respData.data.UserInfo.TitleInfo.Created);
-        let lastLoginDate = new Date(respData.data.UserInfo.TitleInfo.LastLogin);
-        let today = new Date();
-        let diffTime = Math.abs(today - createdDate);
-        let daysSinceCreation = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-
-        //outputString += "\n" + playFabID  + " - " + emailAddr + " - " + createdDate + " - " + lastLoginDate;
-        //document.getElementById("reportOutput").innerHTML = outputString;
-
-        // Create a new row in the table for each piece of data
-        const tableBody = document.getElementById("reportTableBody");
-        tableBody.innerHTML = ''; // Clear out the existing rows
-        const row = tableBody.insertRow(); // Append a new row to the table
-        row.insertCell().textContent = playFabID;
-        row.insertCell().textContent = emailAddr;
-        row.insertCell().textContent = createdDate;
-        row.insertCell().textContent = lastLoginDate;
-        row.insertCell().textContent = daysSinceCreation;
-
-        // do client API call
-        //GetPlayerProfile(playFabID);
-    })
-    .catch((error) => {
-        console.error('Error:', error);
-        document.getElementById("reportOutput").innerHTML = error;
     });
 }
