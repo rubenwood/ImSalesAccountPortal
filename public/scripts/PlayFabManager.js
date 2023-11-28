@@ -68,6 +68,7 @@ function UpdateUserData(){
     var Guest = false;
     var RefCode = "";
     var VIP = false;
+    var TestAccountExpiryDate = document.getElementById("expiry").value;
 
     var updateUserDataRequest = {
         TitleId: titleId,
@@ -80,7 +81,8 @@ function UpdateUserData(){
             Enterprise,
             Guest,
             RefCode,
-            VIP
+            VIP,
+            TestAccountExpiryDate
         }
     };
     PlayFabClientSDK.UpdateUserData(updateUserDataRequest, UpdateUserDataCallback);

@@ -128,6 +128,10 @@ function generateReport() {
                 let today = new Date();
                 let diffTime = Math.abs(today - createdDate);
                 let daysSinceCreation = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+                console.log(respData.data);
+                //let accountExpiryDate = new Date(respData.data.UserInfo.TitleInfo.Expires);
+
                 // Append data to the table
                 const row = tableBody.insertRow();
                 row.insertCell().textContent = respData.data.UserInfo.PlayFabId;
