@@ -163,12 +163,13 @@ function generateReport() {
 
                 // Append data to the table
                 const row = tableBody.insertRow();
-                row.insertCell().textContent = userAccInfo.data.UserInfo.PlayFabId;
-                row.insertCell().textContent = email;
-                row.insertCell().textContent = createdDate.toDateString();
-                row.insertCell().textContent = lastLoginDate.toDateString();
-                row.insertCell().textContent = daysSinceCreation;
-                row.insertCell().textContent = accountExpiryDate.toDateString();
+                addCellToRow(row, userAccInfo.data.UserInfo.PlayFabId);
+                addCellToRow(row, email);
+                addCellToRow(row, createdDate.toDateString());
+                addCellToRow(row, lastLoginDate.toDateString());
+                addCellToRow(row, daysSinceCreation);
+                addCellToRow(row, accountExpiryDate.toDateString());
+
                 if (daysSinceCreation >= 2 && createdDate.toDateString() === lastLoginDate.toDateString()) {
                     row.style.backgroundColor = '#fa8c8cab'; // Highlight the cell in red
                 }
@@ -194,4 +195,11 @@ function generateReport() {
             origin: { y: 0.6 }
         });
     });
+}
+
+function addCellToRow(row, text, colSpan = 1) {
+    const cell = row.insertCell();
+    cell.textContent = text;
+    cell.style.textAlign = 'center';
+    cell.colSpan = colSpan;
 }
