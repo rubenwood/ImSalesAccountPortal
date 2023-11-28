@@ -138,27 +138,37 @@ function generateReport() {
     // Helper function to delay execution
     const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
 
+    let userAccInfo;
+    let userData;
+
     // Create an array of promises for fetching user data
     const fetchPromises = emailList.map((email, index) => {
         return delay(index * 1000) // Delay
             .then(() => fetchUserAccInfo(email))
+            .then(respData => { userAccInfo = respData; })
+            .then(() => fetchUserData(userAccInfo.data.UserInfo.PlayFabId))
             .then(respData => {
-                let createdDate = new Date(respData.data.UserInfo.TitleInfo.Created);
-                let lastLoginDate =  new Date(respData.data.UserInfo.TitleInfo.LastLogin);
+                //console.log("USER ACC:");
+                //console.log(userAccInfo);
+                userData = respData;
+                console.log("USER DATA:");
+                console.log(userData);
+                let createdDate = new Date(userAccInfo.data.UserInfo.TitleInfo.Created);
+                let lastLoginDate =  new Date(userAccInfo.data.UserInfo.TitleInfo.LastLogin);
                 let today = new Date();
                 let diffTime = Math.abs(today - createdDate);
                 let daysSinceCreation = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 
-                console.log(respData);
-                //let accountExpiryDate = new Date(respData.data.UserInfo.TitleInfo.Expires);
+                let accountExpiryDate = new Date(userData.data.Data.TestAccountExpiryDate.Value);
 
                 // Append data to the table
                 const row = tableBody.insertRow();
-                row.insertCell().textContent = respData.data.UserInfo.PlayFabId;
+                row.insertCell().textContent = userAccInfo.data.UserInfo.PlayFabId;
                 row.insertCell().textContent = email;
                 row.insertCell().textContent = createdDate.toDateString();
                 row.insertCell().textContent = lastLoginDate.toDateString();
                 row.insertCell().textContent = daysSinceCreation;
+                row.insertCell().textContent = accountExpiryDate.toDateString();
                 if (daysSinceCreation >= 2 && createdDate.toDateString() === lastLoginDate.toDateString()) {
                     row.style.backgroundColor = '#fa8c8cab'; // Highlight the cell in red
                 }
