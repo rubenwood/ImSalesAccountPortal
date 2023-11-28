@@ -136,7 +136,7 @@ function generateReport() {
                 row.insertCell().textContent = lastLoginDate.toDateString();
                 row.insertCell().textContent = daysSinceCreation;
                 if (daysSinceCreation >= 2 && createdDate.toDateString() === lastLoginDate.toDateString()) {
-                    row.style.backgroundColor = '#ff7a7a'; // Highlight the cell in red
+                    row.style.backgroundColor = '#fa8c8cab'; // Highlight the cell in red
                 }
             })
             .catch(error => {

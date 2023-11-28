@@ -82,6 +82,6 @@ label {
 
 
 .highlighted {
-    background-color: #ff7a7a;
+    background-color: #fa8c8cab;
     color: white; /* Ensuring text is readable on a red background */
 }
