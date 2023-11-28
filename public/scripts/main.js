@@ -100,7 +100,9 @@ function fetchUserData(email) {
     })
     .then(response => {
         if (!response.ok) {
-            throw new Error('Network response was not ok for email ' + email);
+            return response.json().then(err => { 
+                throw new Error(err.error || 'An error occurred');
+            });
         }
         return response.json();
     });
@@ -138,12 +140,14 @@ function generateReport() {
                 }
             })
             .catch(error => {
-                // Log the error or display it on the UI
                 console.error('Error:', error);
                 const row = tableBody.insertRow();
                 row.insertCell().textContent = 'Error for email: ' + email;
-                row.insertCell().colSpan = 3;
                 row.insertCell().textContent = error.message;
+                row.insertCell().colSpan = 3; // empty columns
+                row.style.color = 'white';
+                row.style.fontWeight = 'bold';
+                row.style.backgroundColor = '#700000';
             });
     });
 

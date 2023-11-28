@@ -172,9 +172,14 @@ app.post('/get-user-data/:email', async (req, res) => {
       // Send response back to the client
       res.json(response.data);
   } catch (error) {
-      console.error('Error:', error);
-      // Send error response back to the client
-      res.status(500).send('Error fetching user data');
+    console.error('Error:', error);
+    if (error.response && error.response.data) {
+        // Sending back the specific error information from Axios
+        res.status(500).json(error.response.data);
+    } else {
+        // Sending back a general error if the response data is not available
+        res.status(500).json({ message: error.message, stack: error.stack });
+    }
   }
 });
 
