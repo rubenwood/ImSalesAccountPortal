@@ -146,11 +146,11 @@ function writeCSV(email, pass, area, expiry) {
 }
 
 
-// GET USER DATA (for report)
+// GET USER ACC INFO (for report)
 // for users in a list (of email addresses), get the playfab ID for that user, 
 // then get the player profile
 // Make this server side
-app.post('/get-user-data/:email', async (req, res) => {
+app.post('/get-user-acc-info/:email', async (req, res) => {
   let playFabID = "";
   console.log(req.body);
 
@@ -167,10 +167,7 @@ app.post('/get-user-data/:email', async (req, res) => {
       );
 
       console.log('Success:', response.data);
-      // get playFabID from response data
-      // we will use the playFabID in subsequent calls to get more user data
-      // Send response back to the client
-      res.json(response.data);
+      res.json(response.data); // send back to client
   } catch (error) {
     console.error('Error:', error);
     if (error.response && error.response.data) {
@@ -183,6 +180,36 @@ app.post('/get-user-data/:email', async (req, res) => {
   }
 });
 
+// GET USER DATA (for report)
+app.post('/get-user-data/:playFabID', async (req, res) => {
+  let playFabID = "";
+  console.log(req.body);
+
+  try {
+      const response = await axios.post(
+          `https://${process.env.PLAYFAB_TITLE_ID}.playfabapi.com/Admin/GetUserData`,
+          { PlayFabId: req.body.playFabID },
+          {
+              headers: {
+                  'Content-Type': 'application/json',
+                  'X-SecretKey': process.env.PLAYFAB_SECRET_KEY
+              }
+          }
+      );
+
+      console.log('Success:', response.data);
+      res.json(response.data); // send back to client
+  } catch (error) {
+    console.error('Error:', error);
+    if (error.response && error.response.data) {
+        // Sending back the specific error information from Axios
+        res.status(500).json(error.response.data);
+    } else {
+        // Sending back a general error if the response data is not available
+        res.status(500).json({ message: error.message, stack: error.stack });
+    }
+  }
+});
 
 
 // EXEC SERVER

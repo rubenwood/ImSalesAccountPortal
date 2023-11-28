@@ -88,8 +88,8 @@ fetchAndPopulate();
 
 
 // Function to fetch user data for a given email
-function fetchUserData(email) {
-    const url = `http://localhost:3001/get-user-data/${email}`;
+function fetchUserAccInfo(email) {
+    const url = `http://localhost:3001/get-user-acc-info/${email}`;
 
     return fetch(url, {
         method: 'POST',
@@ -107,6 +107,26 @@ function fetchUserData(email) {
         return response.json();
     });
 }
+function fetchUserData(playFabID) {
+    const url = `http://localhost:3001/get-user-data/${playFabID}`;
+
+    return fetch(url, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ playFabID }) 
+    })
+    .then(response => {
+        if (!response.ok) {
+            return response.json().then(err => { 
+                throw new Error(err.error || 'An error occurred');
+            });
+        }
+        return response.json();
+    });
+}
+
 
 // Function to generate the report
 function generateReport() {
@@ -121,7 +141,7 @@ function generateReport() {
     // Create an array of promises for fetching user data
     const fetchPromises = emailList.map((email, index) => {
         return delay(index * 1000) // Delay
-            .then(() => fetchUserData(email))
+            .then(() => fetchUserAccInfo(email))
             .then(respData => {
                 let createdDate = new Date(respData.data.UserInfo.TitleInfo.Created);
                 let lastLoginDate =  new Date(respData.data.UserInfo.TitleInfo.LastLogin);
@@ -129,7 +149,7 @@ function generateReport() {
                 let diffTime = Math.abs(today - createdDate);
                 let daysSinceCreation = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 
-                console.log(respData.data);
+                console.log(respData);
                 //let accountExpiryDate = new Date(respData.data.UserInfo.TitleInfo.Expires);
 
                 // Append data to the table
