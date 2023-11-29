@@ -53,14 +53,14 @@ app.get('/getPresignedUrl', (req, res) => {
 
 // UPDATE CONFLUENCE PAGE
 app.put('/update-confluence-page/:pageId', async (req, res) => {
-  var email = req.body.email;
-  var pass = req.body.pass;
-  var area = req.body.area;
-  var expiry = req.body.expiry;
+  let email = req.body.email;
+  let pass = req.body.pass;
+  let area = req.body.area;
+  let expiry = req.body.expiry;
 
   const pageId = req.params.pageId;
   const pageContent = await getPageDetails(pageId);
-  var newPageContent = pageContent;
+  let newPageContent = pageContent;
   
   // Parse the existing content to add a new row to the table
   if (newPageContent.includes("</tbody>")) {
