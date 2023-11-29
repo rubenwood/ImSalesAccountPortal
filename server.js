@@ -10,7 +10,6 @@ const app = express();
 app.use(express.json());
 app.use(cors());
 
-
 // AWS METHODS
 AWS.config.update({
   accessKeyId: process.env.AWS_ACCES_KEY_ID,
@@ -147,7 +146,6 @@ function writeCSV(email, pass, area, expiry) {
   fs.appendFileSync(csvFilePath, newLine, 'utf8');
 }
 
-
 // GET USER ACC INFO (for report)
 // for users in a list (of email addresses), get the playfab ID for that user, 
 // then get the player profile
@@ -222,11 +220,6 @@ const PORT = process.env.PORT;
 app.get('/', (req, res) => {
     res.send('Hello World!');
 });
-
-app.get('/test', (req, res) => {
-    res.send('It Works!');
-});
-
 app.listen(PORT, () => {
     console.log(`Server running on port ${PORT} == ^_^ ==`);
 });
