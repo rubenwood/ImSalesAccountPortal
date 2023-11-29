@@ -40,7 +40,6 @@ app.get('/getPresignedUrl', (req, res) => {
       Expires: 60 // The URL will be valid for 60 seconds
   };
   // S3 getSignedUrl with callbacks are not supported in AWS SDK for JavaScript (v3).
-  // Please convert to 'client.getSignedUrl(apiName, options)', and re-run aws-sdk-js-codemod.
   s3.getSignedUrl('getObject', s3Params, (err, url) => {
       if (err) {
           console.error('Error:', err);
@@ -147,9 +146,6 @@ function writeCSV(email, pass, area, expiry) {
 }
 
 // GET USER ACC INFO (for report)
-// for users in a list (of email addresses), get the playfab ID for that user, 
-// then get the player profile
-// Make this server side
 app.post('/get-user-acc-info/:email', async (req, res) => {
   let playFabID = "";
   console.log(req.body);
