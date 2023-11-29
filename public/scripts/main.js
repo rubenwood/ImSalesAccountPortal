@@ -175,11 +175,15 @@ function generateReport() {
                 if(daysToExpire < 7)
                 {
                     row.style.backgroundColor = '#ffa500'; // Orange color
+                    row.addEventListener('mouseenter', e => showTooltip(e, 'Account is expiring soon.'));
+                    row.addEventListener('mouseleave', hideTooltip);
                 }
 
                 if (daysSinceCreation >= 2 && createdDate.toDateString() === lastLoginDate.toDateString())
                 {
                     row.style.backgroundColor = '#fa8c8cab'; // Highlight the cell in red
+                    row.addEventListener('mouseenter', e => showTooltip(e, 'Its been a while since this account was created and the user hasnt logged in.'));
+                    row.addEventListener('mouseleave', hideTooltip);
                 }
             })
             .catch(error => {
@@ -210,4 +214,28 @@ function addCellToRow(row, text, colSpan = 1) {
     cell.textContent = text;
     cell.style.textAlign = 'center';
     cell.colSpan = colSpan;
+}
+
+function showTooltip(event, message) {
+    // Create tooltip element if it doesn't exist
+    let tooltip = document.getElementById('tooltip');
+    if (!tooltip) {
+        tooltip = document.createElement('div');
+        tooltip.id = 'tooltip';
+        tooltip.className = 'tooltip';
+        document.body.appendChild(tooltip);
+    }
+
+    // Set message and position of tooltip
+    tooltip.textContent = message;
+    tooltip.style.left = event.pageX + 'px';
+    tooltip.style.top = event.pageY + 'px';
+    tooltip.classList.add('visible');
+}
+
+function hideTooltip() {
+    const tooltip = document.getElementById('tooltip');
+    if (tooltip) {
+        tooltip.classList.remove('visible');
+    }
 }

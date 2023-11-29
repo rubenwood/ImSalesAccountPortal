@@ -52,7 +52,7 @@ label {
 
 .container {
     flex-grow: 1;    
-    border: 1px solid #ccc; /* Just for visualization */
+    border: 1px solid #ccc;
     border-radius: 5px;
     background-color: #ffffff;
     padding: 20px;
@@ -66,22 +66,41 @@ label {
 }
 
 #report-container {
-    flex: 1; /* Grow to take up the remaining space */
-    display: flex; /* Use flexbox layout within this container */
-    flex-direction: column; /* Stack children vertically */
+    flex: 1;
+    display: flex;
+    flex-direction: column;
 }
 #generateReportButton{
-    align-self: flex-start; /* Align the button to the start of the flex container (top left) */
+    align-self: flex-start;
     width: auto;
-    margin-bottom: auto; /* Push everything else to the bottom */
+    margin-bottom: auto;
 }
 
 .small-text {
-    font-size: 0.8em; /* Adjust the size as needed */
+    font-size: 0.8em;
 }
 
 
 .highlighted {
     background-color: #fa8c8cab;
-    color: white; /* Ensuring text is readable on a red background */
+    color: white;
+}
+
+
+.tooltip {
+    display: none;
+    position: fixed;
+    padding: 10px 15px;
+    background: #333;
+    color: white;
+    border-radius: 4px;
+    font-size: 14px;
+    max-width: 300px;
+    z-index: 1000;
+    white-space: nowrap;
+}
+
+/* Tooltip visible state */
+.tooltip.visible {
+    display: block;
 }
