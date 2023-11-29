@@ -165,7 +165,6 @@ function generateReport() {
 
                 // Append data to the table
                 const row = tableBody.insertRow();
-                addCellToRow(row, userAccInfo.data.UserInfo.PlayFabId);
                 addCellToRow(row, email);
                 addCellToRow(row, createdDate.toDateString());
                 addCellToRow(row, lastLoginDate.toDateString());
