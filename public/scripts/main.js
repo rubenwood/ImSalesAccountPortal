@@ -160,6 +160,8 @@ function generateReport() {
                 let daysSinceCreation = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 
                 let accountExpiryDate = new Date(userData.data.Data.TestAccountExpiryDate.Value);
+                let diffTime2 = Math.abs(today - accountExpiryDate);
+                let daysToExpire = Math.ceil(diffTime2 / (1000 * 60 * 60 * 24));
 
                 // Append data to the table
                 const row = tableBody.insertRow();
@@ -169,8 +171,15 @@ function generateReport() {
                 addCellToRow(row, lastLoginDate.toDateString());
                 addCellToRow(row, daysSinceCreation);
                 addCellToRow(row, accountExpiryDate.toDateString());
+                addCellToRow(row, daysToExpire);
 
-                if (daysSinceCreation >= 2 && createdDate.toDateString() === lastLoginDate.toDateString()) {
+                if(daysToExpire < 7)
+                {
+                    row.style.backgroundColor = '#ffa500'; // Orange color
+                }
+
+                if (daysSinceCreation >= 2 && createdDate.toDateString() === lastLoginDate.toDateString())
+                {
                     row.style.backgroundColor = '#fa8c8cab'; // Highlight the cell in red
                 }
             })
