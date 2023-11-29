@@ -65,14 +65,7 @@ app.put('/update-confluence-page/:pageId', async (req, res) => {
   // Parse the existing content to add a new row to the table
   if (newPageContent.includes("</tbody>")) {
     const newRow = `<tr><td>${email}</td><td>${pass}</td><td>${area}</td><td>${expiry}</td></tr>`;
-    console.log("==\n\n\n");
-    console.log(pageContent);
-    console.log("==\n\n\n");
-    console.log(newRow);
     newPageContent = pageContent.replace("</tbody>", `${newRow}</tbody>`);
-    console.log("==\n\n\n");
-    console.log(newPageContent);
-    console.log("==\n\n\n");
   } else {
       console.log("No table found in Confluence page");
       // If no table exists, create one
