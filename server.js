@@ -63,19 +63,27 @@ app.put('/update-confluence-page/:pageId', async (req, res) => {
   var newPageContent = pageContent;
   
   // Parse the existing content to add a new row to the table
-  if (newPageContent.includes("<table>")) {
+  if (newPageContent.includes("</tbody>")) {
     const newRow = `<tr><td>${email}</td><td>${pass}</td><td>${area}</td><td>${expiry}</td></tr>`;
+    console.log("==\n\n\n");
+    console.log(pageContent);
+    console.log("==\n\n\n");
+    console.log(newRow);
     newPageContent = pageContent.replace("</tbody>", `${newRow}</tbody>`);
+    console.log("==\n\n\n");
+    console.log(newPageContent);
+    console.log("==\n\n\n");
   } else {
+      console.log("No table found in Confluence page");
       // If no table exists, create one
       newPageContent = `<table><tbody><tr><td><b>Email</b></td><td><b>Password</b></td><td><b>Area</b></td><td><b>Expiry</b></td></tr></tbody></table>`;
   }
 
   try {
     const currentVersion = await getCurrentPageVersion(pageId)
-    const bodyData = `{
+    const bodyData = {
       "version": {
-        "number": ${currentVersion+1}, 
+        "number": currentVersion+1, 
         "message": "update"
       },
       "title": "Test Accounts (Automated)",
@@ -83,13 +91,14 @@ app.put('/update-confluence-page/:pageId', async (req, res) => {
       "status": "current",
       "body": {
         "storage": {
-          "value": "${newPageContent}",
+          "value": newPageContent,
           "representation": "storage"
         }
       }
-    }`;      
+    };      
 
-    const response = await axios.put(`https://immersify.atlassian.net/wiki/rest/api/content/${pageId}`, bodyData, {
+    const response = await axios.put(`https://immersify.atlassian.net/wiki/rest/api/content/${pageId}`, 
+    JSON.stringify(bodyData), {
       headers: {
         'Authorization': `Basic ${Buffer.from(`${process.env.CONFLUENCE_USERNAME}:${process.env.CONFLUENCE_API_TOKEN}`)
         .toString('base64')}`,
