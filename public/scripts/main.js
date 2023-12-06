@@ -191,10 +191,11 @@ function generateReport() {
                 const row = tableBody.insertRow();
                 row.insertCell().textContent = 'Error for email: ' + email;
                 row.insertCell().textContent = error.message;
-                row.insertCell().colSpan = 3; // empty columns
+                row.insertCell().colSpan = 4; // empty columns
                 row.style.color = 'white';
                 row.style.fontWeight = 'bold';
                 row.style.backgroundColor = '#700000';
+                row.style.textAlign = 'center';
             });
     });
 
