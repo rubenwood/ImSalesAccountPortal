@@ -190,9 +190,12 @@ function generateReport() {
                     playerData.activities.forEach(activity => {
                         let activityContent =`<table><tr><td><b>Activity ID</b></td><td>${activity.activityID}</td></tr>`;
                         activityContent += `<tr><td><b>Plays</b></td><td>${activity.plays.length}</td></tr>`;
+                        let totalSessionTime = 0;
                         activity.plays.forEach(play => {
-                            activityContent += `<tr><td></td><td><b>Session Length</b> ${Math.round(play.sessionTime)} seconds</td></tr>`;
+                            //activityContent += `<tr><td></td><td><b>Session Length</b> ${Math.round(play.sessionTime)} seconds</td></tr>`;
+                            totalSessionTime += Math.round(play.sessionTime);
                         });
+                        activityContent += `<tr><td></td><td><b>Total Session Length</b> ${totalSessionTime} seconds</td></tr><br />`;
                         activityContent += "</table>";
                         playerDataContent += activityContent;
                     });
