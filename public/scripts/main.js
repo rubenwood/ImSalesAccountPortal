@@ -157,9 +157,16 @@ function generateReport() {
                 let diffTime = Math.abs(today - createdDate);
                 let daysSinceCreation = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 
-                let accountExpiryDate = userData.data.Data.TestAccountExpiryDate !== undefined ? new Date(userData.data.Data.TestAccountExpiryDate.Value) : new Date();
-                let diffTime2 = Math.abs(today - accountExpiryDate);
-                let daysToExpire = Math.ceil(diffTime2 / (1000 * 60 * 60 * 24));
+                let accountExpiryDate = userData.data.Data.TestAccountExpiryDate !== undefined ? new Date(userData.data.Data.TestAccountExpiryDate.Value) : "No Expiry Date";
+                let daysToExpire;
+                if (accountExpiryDate instanceof Date && !isNaN(accountExpiryDate)) {
+                    let diffTime2 = Math.abs(today - accountExpiryDate);
+                    daysToExpire = Math.ceil(diffTime2 / (1000 * 60 * 60 * 24));
+                    accountExpiryDate = accountExpiryDate.toDateString(); // Convert to string if it's a valid date
+                } else {
+                    daysToExpire = "No Expiry Date";
+                    accountExpiryDate = "No Expiry Date"; // Use the string directly
+                }
 
                 let createdBy = userData.data.Data.CreatedBy !== undefined ? userData.data.Data.CreatedBy.Value : "";
                 let createdFor = userData.data.Data.CreatedFor !== undefined ? userData.data.Data.CreatedFor.Value : "";
@@ -170,29 +177,30 @@ function generateReport() {
                 addCellToRow(row, createdDate.toDateString(), false);
                 addCellToRow(row, lastLoginDate.toDateString(), false);
                 addCellToRow(row, daysSinceCreation, false);
-                addCellToRow(row, accountExpiryDate.toDateString(), false);
+                addCellToRow(row, accountExpiryDate, false);
                 addCellToRow(row, daysToExpire, false);
                 addCellToRow(row, createdBy, false);
                 addCellToRow(row, createdFor, false);
                 
-                // process player data
+                // process PlayerData
                 let playerData = userData.data.Data.PlayerData !== undefined ? JSON.parse(userData.data.Data.PlayerData.Value) : undefined;
                 if(playerData !== undefined){
                     let playerDataContent = '';
                     console.log(playerData);
                     playerData.activities.forEach(activity => {
                         playerDataContent += `<p>Activity ID: ${activity.activityID}</p>`;
+                        playerDataContent += `<p>Plays: ${activity.plays.length}</p>`;
                         activity.plays.forEach(play => {
                             playerDataContent += `<p>Session Time: ${Math.round(play.sessionTime)} seconds</p>`;
                         });
                     });
-                    addCellToRow(row, 'Player Data', 1, true, playerDataContent);
+                    addCellToRow(row, 'Expand Player Data', 1, true, playerDataContent);
                 }else{
                     addCellToRow(row, 'No Player Data', false);
                 }
                 
                 // highlight rules
-                if(daysToExpire < 7)
+                if(!isNaN(daysToExpire) && daysToExpire < 7)
                 {
                     row.style.backgroundColor = '#ffa500'; // Orange color
                     row.addEventListener('mouseenter', e => showTooltip(e, 'Account is expiring soon.'));
