@@ -69,6 +69,8 @@ function UpdateUserData(){
     var RefCode = "";
     var VIP = false;
     var TestAccountExpiryDate = document.getElementById("expiry").value;
+    var CreatedBy = document.getElementById("createdBy").value;
+    var CreatedFor = document.getElementById("createdFor").value;
 
     var updateUserDataRequest = {
         TitleId: titleId,
@@ -80,9 +82,9 @@ function UpdateUserData(){
             CanEmail,
             Enterprise,
             Guest,
-            RefCode,
-            VIP,
-            TestAccountExpiryDate
+            TestAccountExpiryDate,
+            CreatedBy,
+            CreatedFor
         }
     };
     PlayFabClientSDK.UpdateUserData(updateUserDataRequest, UpdateUserDataCallback);
@@ -95,8 +97,10 @@ var UpdateUserDataCallback = function (result, error){
         let pass = document.getElementById("emailSignUpPassword").value;
         let area = document.getElementById("academicArea").value;
         let expiry = document.getElementById("expiry").value;
+        var createdBy = document.getElementById("createdBy").value;
+        var createdFor = document.getElementById("createdFor").value;
 
-        callUpdateConfluencePage(email, pass, area, expiry);
+        callUpdateConfluencePage(email,pass,area,expiry,createdBy,createdFor);
 
     } else if (error !== null) {
         document.getElementById("registerButton").value  = "Register";

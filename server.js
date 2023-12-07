@@ -55,19 +55,24 @@ app.put('/update-confluence-page/:pageId', async (req, res) => {
   let pass = req.body.pass;
   let area = req.body.area;
   let expiry = req.body.expiry;
+  let createdBy = req.body.createdBy;
+  let createdFor = req.body.createdFor;
 
   const pageId = req.params.pageId;
   const pageContent = await getPageDetails(pageId);
   let newPageContent = pageContent;
+
+  console.log(createdBy);
+  console.log(createdFor);
   
   // Parse the existing content to add a new row to the table
   if (newPageContent.includes("</tbody>")) {
-    const newRow = `<tr><td>${email}</td><td>${pass}</td><td>${area}</td><td>${expiry}</td></tr>`;
+    const newRow = `<tr><td>${email}</td><td>${pass}</td><td>${area}</td><td>${expiry}</td><td>${createdBy}</td><td>${createdFor}</td></tr>`;
     newPageContent = pageContent.replace("</tbody>", `${newRow}</tbody>`);
   } else {
       console.log("No table found in Confluence page");
       // If no table exists, create one
-      newPageContent = `<table><tbody><tr><td><b>Email</b></td><td><b>Password</b></td><td><b>Area</b></td><td><b>Expiry</b></td></tr></tbody></table>`;
+      newPageContent = `<table><tbody><tr><td><b>Email</b></td><td><b>Password</b></td><td><b>Area</b></td><td><b>Expiry</b></td><td><b>Created By</b></td><td><b>Created For</b></td></tr></tbody></table>`;
   }
 
   try {

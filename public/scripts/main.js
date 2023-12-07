@@ -1,5 +1,5 @@
 // public button event, when clicked, updates confluence page
-function callUpdateConfluencePage(email, pass, area, expiry){
+function callUpdateConfluencePage(email, pass, area, expiry, createdBy, createdFor){
     const pageId = '929333296'; // Replace with your page ID
     const url = `http://localhost:3001/update-confluence-page/${pageId}`;
 
@@ -8,7 +8,7 @@ function callUpdateConfluencePage(email, pass, area, expiry){
         headers: {
             'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ email, pass, area, expiry }) 
+        body: JSON.stringify({ email, pass, area, expiry, createdBy, createdFor }) 
     })
     .then(response => {
         if (!response.ok) {
@@ -163,6 +163,9 @@ function generateReport() {
                 let diffTime2 = Math.abs(today - accountExpiryDate);
                 let daysToExpire = Math.ceil(diffTime2 / (1000 * 60 * 60 * 24));
 
+                let createdBy = userData.data.Data.CreatedBy.Value;
+                let createdFor = userData.data.Data.CreatedFor.Value;
+
                 // Append data to the table
                 const row = tableBody.insertRow();
                 addCellToRow(row, email);
@@ -171,7 +174,10 @@ function generateReport() {
                 addCellToRow(row, daysSinceCreation);
                 addCellToRow(row, accountExpiryDate.toDateString());
                 addCellToRow(row, daysToExpire);
-
+                addCellToRow(row, createdBy);
+                addCellToRow(row, createdFor);
+                
+                // highlight rules
                 if(daysToExpire < 7)
                 {
                     row.style.backgroundColor = '#ffa500'; // Orange color
