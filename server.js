@@ -61,9 +61,6 @@ app.put('/update-confluence-page/:pageId', async (req, res) => {
   const pageId = req.params.pageId;
   const pageContent = await getPageDetails(pageId);
   let newPageContent = pageContent;
-
-  console.log(createdBy);
-  console.log(createdFor);
   
   // Parse the existing content to add a new row to the table
   if (newPageContent.includes("</tbody>")) {
@@ -153,7 +150,7 @@ function writeCSV(email, pass, area, expiry) {
 // GET USER ACC INFO (for report)
 app.post('/get-user-acc-info/:email', async (req, res) => {
   let playFabID = "";
-  console.log(req.body);
+  //console.log(req.body);
 
   try {
       const response = await axios.post(
