@@ -148,8 +148,6 @@ function generateReport() {
             .then(respData => { userAccInfo = respData; })
             .then(() => fetchUserData(userAccInfo.data.UserInfo.PlayFabId))
             .then(respData => {
-                //console.log("USER ACC:");
-                //console.log(userAccInfo);
                 userData = respData;
                 console.log("USER DATA:");
                 console.log(userData);
@@ -159,23 +157,39 @@ function generateReport() {
                 let diffTime = Math.abs(today - createdDate);
                 let daysSinceCreation = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 
-                let accountExpiryDate = new Date(userData.data.Data.TestAccountExpiryDate.Value);
+                let accountExpiryDate = userData.data.Data.TestAccountExpiryDate !== undefined ? new Date(userData.data.Data.TestAccountExpiryDate.Value) : new Date();
                 let diffTime2 = Math.abs(today - accountExpiryDate);
                 let daysToExpire = Math.ceil(diffTime2 / (1000 * 60 * 60 * 24));
 
-                let createdBy = userData.data.Data.CreatedBy.Value;
-                let createdFor = userData.data.Data.CreatedFor.Value;
+                let createdBy = userData.data.Data.CreatedBy !== undefined ? userData.data.Data.CreatedBy.Value : "";
+                let createdFor = userData.data.Data.CreatedFor !== undefined ? userData.data.Data.CreatedFor.Value : "";
 
                 // Append data to the table
                 const row = tableBody.insertRow();
-                addCellToRow(row, email);
-                addCellToRow(row, createdDate.toDateString());
-                addCellToRow(row, lastLoginDate.toDateString());
-                addCellToRow(row, daysSinceCreation);
-                addCellToRow(row, accountExpiryDate.toDateString());
-                addCellToRow(row, daysToExpire);
-                addCellToRow(row, createdBy);
-                addCellToRow(row, createdFor);
+                addCellToRow(row, email, false);
+                addCellToRow(row, createdDate.toDateString(), false);
+                addCellToRow(row, lastLoginDate.toDateString(), false);
+                addCellToRow(row, daysSinceCreation, false);
+                addCellToRow(row, accountExpiryDate.toDateString(), false);
+                addCellToRow(row, daysToExpire, false);
+                addCellToRow(row, createdBy, false);
+                addCellToRow(row, createdFor, false);
+                
+                // process player data
+                let playerData = userData.data.Data.PlayerData !== undefined ? JSON.parse(userData.data.Data.PlayerData.Value) : undefined;
+                if(playerData !== undefined){
+                    let playerDataContent = '';
+                    console.log(playerData);
+                    playerData.activities.forEach(activity => {
+                        playerDataContent += `<p>Activity ID: ${activity.activityID}</p>`;
+                        activity.plays.forEach(play => {
+                            playerDataContent += `<p>Session Time: ${Math.round(play.sessionTime)} seconds</p>`;
+                        });
+                    });
+                    addCellToRow(row, 'Player Data', 1, true, playerDataContent);
+                }else{
+                    addCellToRow(row, 'No Player Data', false);
+                }
                 
                 // highlight rules
                 if(daysToExpire < 7)
@@ -216,11 +230,27 @@ function generateReport() {
     });
 }
 
-function addCellToRow(row, text, colSpan = 1) {
+function addCellToRow(row, text, colSpan = 1, isCollapsible = false, collapsibleContent = '') {
     const cell = row.insertCell();
-    cell.textContent = text;
-    cell.style.textAlign = 'center';
-    cell.colSpan = colSpan;
+    if(!isCollapsible){     
+        cell.textContent = text;
+        cell.style.textAlign = 'center';
+        cell.colSpan = colSpan;
+    }else{
+        const collapseButton = document.createElement('button');
+        collapseButton.textContent = text;
+        collapseButton.onclick = function() {
+            this.nextElementSibling.style.display = this.nextElementSibling.style.display === 'none' ? 'block' : 'none';
+        };
+
+        const collapsibleDiv = document.createElement('div');
+        collapsibleDiv.style.display = 'none';
+        collapsibleDiv.innerHTML = collapsibleContent;
+
+        cell.appendChild(collapseButton);
+        cell.appendChild(collapsibleDiv);
+        collapsibleDiv.className = 'collapsible-content';
+    }    
 }
 
 function showTooltip(event, message) {
