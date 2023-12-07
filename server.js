@@ -164,7 +164,7 @@ app.post('/get-user-acc-info/:email', async (req, res) => {
           }
       );
 
-      console.log('Success:', response.data);
+      //console.log('Success:', response.data);
       res.json(response.data); // send back to client
   } catch (error) {
     console.error('Error:', error);
@@ -181,7 +181,7 @@ app.post('/get-user-acc-info/:email', async (req, res) => {
 // GET USER DATA (for report)
 app.post('/get-user-data/:playFabID', async (req, res) => {
   let playFabID = "";
-  console.log(req.body);
+  //console.log(req.body);
 
   try {
       const response = await axios.post(
@@ -195,7 +195,7 @@ app.post('/get-user-data/:playFabID', async (req, res) => {
           }
       );
 
-      console.log('Success:', response.data);
+      //console.log('Success:', response.data);
       res.json(response.data); // send back to client
   } catch (error) {
     console.error('Error:', error);

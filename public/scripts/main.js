@@ -188,11 +188,13 @@ function generateReport() {
                     let playerDataContent = '';
                     console.log(playerData);
                     playerData.activities.forEach(activity => {
-                        playerDataContent += `<p>Activity ID: ${activity.activityID}</p>`;
-                        playerDataContent += `<p>Plays: ${activity.plays.length}</p>`;
+                        let activityContent =`<table><tr><td><b>Activity ID</b></td><td>${activity.activityID}</td></tr>`;
+                        activityContent += `<tr><td><b>Plays</b></td><td>${activity.plays.length}</td></tr>`;
                         activity.plays.forEach(play => {
-                            playerDataContent += `<p>Session Time: ${Math.round(play.sessionTime)} seconds</p>`;
+                            activityContent += `<tr><td></td><td><b>Session Length</b> ${Math.round(play.sessionTime)} seconds</td></tr>`;
                         });
+                        activityContent += "</table>";
+                        playerDataContent += activityContent;
                     });
                     addCellToRow(row, 'Expand Player Data', 1, true, playerDataContent);
                 }else{
@@ -250,6 +252,7 @@ function addCellToRow(row, text, colSpan = 1, isCollapsible = false, collapsible
         collapseButton.onclick = function() {
             this.nextElementSibling.style.display = this.nextElementSibling.style.display === 'none' ? 'block' : 'none';
         };
+        collapseButton.className = 'collapsible-button';
 
         const collapsibleDiv = document.createElement('div');
         collapsibleDiv.style.display = 'none';
