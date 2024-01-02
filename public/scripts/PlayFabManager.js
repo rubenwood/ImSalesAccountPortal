@@ -8,7 +8,6 @@ function isValidPassword(password) {
     return password.length >= 8 && /\d/.test(password);
 }
 function isValidExpiryDate(expiry){
-    console.log(expiry);
     return expiry !== "";
 }
 

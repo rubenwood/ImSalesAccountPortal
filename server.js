@@ -39,9 +39,6 @@ app.get('/getPresignedUrl', (req, res) => {
       Key: 'TestFiles/OtherData/AcademicAreasData.json',
       Expires: 60 // The URL will be valid for 60 seconds
   };
-  // S3 getSignedUrl with callbacks are not supported in AWS SDK for JavaScript (v3).
-  // S3 getSignedUrl with callbacks are not supported in AWS SDK for JavaScript (v3).
-  // Please convert to 'client.getSignedUrl(apiName, options)', and re-run aws-sdk-js-codemod.
   s3.getSignedUrl('getObject', s3Params, (err, url) => {
       if (err) {
           console.error('Error:', err);
@@ -183,7 +180,6 @@ app.post('/get-user-acc-info/:email', async (req, res) => {
 // GET USER DATA (for report)
 app.post('/get-user-data/:playFabID', async (req, res) => {
   let playFabID = "";
-  //console.log(req.body);
 
   try {
       const response = await axios.post(
@@ -197,7 +193,6 @@ app.post('/get-user-data/:playFabID', async (req, res) => {
           }
       );
 
-      //console.log('Success:', response.data);
       res.json(response.data); // send back to client
   } catch (error) {
     console.error('Error:', error);
