@@ -40,6 +40,8 @@ app.get('/getPresignedUrl', (req, res) => {
       Expires: 60 // The URL will be valid for 60 seconds
   };
   // S3 getSignedUrl with callbacks are not supported in AWS SDK for JavaScript (v3).
+  // S3 getSignedUrl with callbacks are not supported in AWS SDK for JavaScript (v3).
+  // Please convert to 'client.getSignedUrl(apiName, options)', and re-run aws-sdk-js-codemod.
   s3.getSignedUrl('getObject', s3Params, (err, url) => {
       if (err) {
           console.error('Error:', err);
