@@ -131,7 +131,6 @@ async function getPageDetails(pageId) {
               'Accept': 'application/json'
           }
       });
-      //console.log(response.data.body.storage.value); // Log the response data
       return response.data.body.storage.value // This is the current page content in storage format
       
   } catch (error) {
@@ -149,7 +148,6 @@ function writeCSV(email, pass, area, expiry) {
 // GET USER ACC INFO (for report)
 app.post('/get-user-acc-info/:email', async (req, res) => {
   let playFabID = "";
-  //console.log(req.body);
 
   try {
       const response = await axios.post(
