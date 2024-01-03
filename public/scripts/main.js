@@ -1,6 +1,58 @@
+let lessonInfo;
+let pracInfo;
+
 window.onload = function() {
     document.getElementById('loginModal').style.display = 'block';
 };
+
+function getLessonInfo(){
+    const url = `http://localhost:3001/getLessonInfo`;
+    let area = "ucla";
+
+    fetch(url, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ area }) 
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error('Network response was not ok');
+        }
+        
+        return response.json();
+    })
+    .then(data =>{
+        //console.log(data);
+        lessonInfo = data;
+    })
+}
+function getPracInfo(){
+    const url = `http://localhost:3001/getPracInfo`;
+    let area = "ucla";
+    
+    fetch(url, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ area }) 
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error('Network response was not ok');
+        }
+        
+        return response.json();
+    })
+    .then(data =>{        
+        //console.log(data);
+        pracInfo = data;
+    })
+}
+getLessonInfo();
+getPracInfo();
 
 // public button event, when clicked, updates confluence page
 function callUpdateConfluencePage(email, pass, area, expiry, createdBy, createdFor){

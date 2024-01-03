@@ -48,6 +48,37 @@ app.get('/getPresignedUrl', (req, res) => {
   });
 });
 
+// GET LESSON INFO
+app.post('/getLessonInfo', async (req, res) => {
+  try {
+      const params = {
+          Bucket: process.env.AWS_BUCKET,
+          Key: `AndroidFiles/5.5.2/OtherData/AcademicAreaData/${req.body.area}/LessonInfo.json`
+      };
+
+      const data = await s3.getObject(params).promise();
+      res.send(JSON.parse(data.Body.toString()));
+  } catch (error) {
+      console.error('Error:', error);
+      res.status(500).send('Error fetching data from S3');
+  }
+});
+// GET PRAC INFO
+app.post('/getPracInfo', async (req, res) => {
+  try {
+      const params = {
+          Bucket: process.env.AWS_BUCKET,
+          Key: `AndroidFiles/5.5.2/OtherData/AcademicAreaData/${req.body.area}/PracticalInfo.json`
+      };
+
+      const data = await s3.getObject(params).promise();
+      res.send(JSON.parse(data.Body.toString()));
+  } catch (error) {
+      console.error('Error:', error);
+      res.status(500).send('Error fetching data from S3');
+  }
+});
+
 // UPDATE CONFLUENCE PAGE
 app.put('/update-confluence-page/:pageId', async (req, res) => {
   let email = req.body.email;
