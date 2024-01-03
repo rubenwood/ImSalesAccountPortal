@@ -7,6 +7,14 @@
     <link rel="stylesheet" type="text/css" href="styles.css">
 </head>
 <body>
+<div id="loginModal" class="modal">
+    <div class="modal-content">
+        <h2>Login</h2>
+        <input type="text" id="username" placeholder="Username"><br>
+        <input type="password" id="password" placeholder="Password"><br>
+        <button onclick="Login()">Login</button>
+    </div>
+</div>
 <div id="signup-container" class="container">
     Email Address <input type="text" id="emailSignUpAddress" value="salestest@test.com"><br />
     Password <span class="small-text">(Min. 8 characters, must include at least 1 number)</span>
@@ -56,6 +64,12 @@
             <!-- Rows will be added here by the generateReport() function -->
         </tbody>
     </table>
+</div>
+<div id="playerDataModal" class="modal">
+    <div class="modal-content">
+        <span class="close" onclick="closePlayerDataModal()">&times;</span>
+        <div id="playerDataModalBody"></div>
+    </div>
 </div>
 </body>
 </html>

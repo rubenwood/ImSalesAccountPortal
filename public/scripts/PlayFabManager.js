@@ -11,6 +11,35 @@ function isValidExpiryDate(expiry){
     return expiry !== "";
 }
 
+async function Login()
+{  
+    PlayFab.settings.titleId = titleId;
+
+    const email = document.getElementById('username').value;
+    const password = document.getElementById('password').value;
+
+    var loginRequest = {
+        Email: email,
+        Password: password,
+        TitleId: PlayFab.settings.titleId
+    };
+
+    PlayFabClientSDK.LoginWithEmailAddress(loginRequest, async function (response, error) {
+        if (error) {
+            console.error("Error logging in:", error);
+            // Handle error
+        } else {
+            let accessLevel = await getUserData(["AccessLevel"]);
+            if(accessLevel.AccessLevel == 'admin') {
+                // Handle successful login
+                document.getElementById('loginModal').style.display = 'none';
+            } else {
+                console.error("invalid access");
+            }
+        }
+    });
+}
+
 function RegisterUserEmailAddress(){
     let email = document.getElementById("emailSignUpAddress").value;
     let pass = document.getElementById("emailSignUpPassword").value;
@@ -121,6 +150,29 @@ var UpdateUserDataCallback = function (result, error){
     updatingUserData = false;
 }
 
+
+function getUserData(keys) {
+    return new Promise((resolve, reject) => {
+        var requestData = {
+            Keys: keys
+        };
+
+        PlayFabClientSDK.GetUserData(requestData, function(response, error) {
+            if (error) {
+                console.error("Error getting user data:", error);
+                reject(error);
+            } else {
+                var resultData = {};
+                keys.forEach(key => {
+                    resultData[key] = response.data.Data[key] 
+                                      ? response.data.Data[key].Value 
+                                      : null;
+                });
+                resolve(resultData);
+            }
+        });
+    });
+}
 // function GetPlayerProfile(playFabID){
 //     PlayFab.settings.titleId = titleId;
 //     var request = {

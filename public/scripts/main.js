@@ -1,3 +1,7 @@
+window.onload = function() {
+    document.getElementById('loginModal').style.display = 'block';
+};
+
 // public button event, when clicked, updates confluence page
 function callUpdateConfluencePage(email, pass, area, expiry, createdBy, createdFor){
     const pageId = '929333296'; // Replace with your page ID
@@ -173,6 +177,7 @@ function generateReport() {
 
                 // Append data to the table
                 const row = tableBody.insertRow();
+                row.className = 'report-row';
                 addCellToRow(row, email, false);
                 addCellToRow(row, createdDate.toDateString(), false);
                 addCellToRow(row, lastLoginDate.toDateString(), false);
@@ -186,7 +191,6 @@ function generateReport() {
                 let playerData = userData.data.Data.PlayerData !== undefined ? JSON.parse(userData.data.Data.PlayerData.Value) : undefined;
                 if(playerData !== undefined){
                     let playerDataContent = '';
-                    console.log(playerData);
                     playerData.activities.forEach(activity => {
                         let activityContent =`<table><tr><td><b>Activity ID</b></td><td>${activity.activityID}</td></tr>`;
                         activityContent += `<tr><td><b>Plays</b></td><td>${activity.plays.length}</td></tr>`;
@@ -253,7 +257,8 @@ function addCellToRow(row, text, colSpan = 1, isCollapsible = false, collapsible
         const collapseButton = document.createElement('button');
         collapseButton.textContent = text;
         collapseButton.onclick = function() {
-            this.nextElementSibling.style.display = this.nextElementSibling.style.display === 'none' ? 'block' : 'none';
+            //this.nextElementSibling.style.display = this.nextElementSibling.style.display === 'none' ? 'block' : 'none';
+            showPlayerDataModal(collapsibleContent);
         };
         collapseButton.className = 'collapsible-button';
 
@@ -264,7 +269,17 @@ function addCellToRow(row, text, colSpan = 1, isCollapsible = false, collapsible
         cell.appendChild(collapseButton);
         cell.appendChild(collapsibleDiv);
         collapsibleDiv.className = 'collapsible-content';
+
+        cell.appendChild(collapseButton);
     }    
+}
+function showPlayerDataModal(content) {
+    document.getElementById('playerDataModalBody').innerHTML = content;
+    document.getElementById('playerDataModal').style.display = 'block';
+}
+
+function closePlayerDataModal() {
+    document.getElementById('playerDataModal').style.display = 'none';
 }
 
 function showTooltip(event, message) {
