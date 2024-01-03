@@ -247,11 +247,15 @@ function generateReport() {
                         let activityContent =`<table><tr><td><b>Activity ID</b></td><td>${activity.activityID}</td></tr>`;
                         activityContent += `<tr><td><b>Plays</b></td><td>${activity.plays.length}</td></tr>`;
                         let totalSessionTime = 0;
+                        let bestScore = 0;
                         activity.plays.forEach(play => {
-                            //activityContent += `<tr><td></td><td><b>Session Length</b> ${Math.round(play.sessionTime)} seconds</td></tr>`;
                             totalSessionTime += Math.round(play.sessionTime);
+                            if(play.normalisedScore > bestScore){
+                                bestScore = Math.round(play.normalisedScore * 100);
+                            }
                         });
-                        activityContent += `<tr><td></td><td><b>Total Session Length</b> ${totalSessionTime} seconds</td></tr><br />`;
+                        activityContent += `<tr><td><b>Total Session Length</b></td><td>${totalSessionTime} seconds</td></tr><br />`;
+                        activityContent += `<tr><td><b>Best Score</b></td><td>${bestScore} %</td></tr><br />`;
                         activityContent += "</table>";
                         playerDataContent += activityContent;
                     });
