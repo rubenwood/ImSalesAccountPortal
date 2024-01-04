@@ -245,12 +245,11 @@ app.post('/check-access', async (req, res) => {
   console.log(process.env.REQUIRED_ACCESS.toLowerCase());
 
   if (userAccess.toLowerCase() === process.env.REQUIRED_ACCESS.toLowerCase()) {
-    res.json({ isAuthorized: true });
+    res.json({ isAuthorized: true, modalMode: 'none' });
   } else {
     res.status(403).json({ isAuthorized: false, error: 'Access Denied: Incorrect access level' });
   }
 });
-
 
 // EXEC SERVER
 app.use(express.static('public'));

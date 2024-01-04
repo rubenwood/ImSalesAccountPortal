@@ -12,7 +12,6 @@ function isValidExpiryDate(expiry){
     return expiry !== "";
 }
 
-
 async function Login()
 {  
     PlayFab.settings.titleId = titleId;
@@ -29,13 +28,12 @@ async function Login()
     PlayFabClientSDK.LoginWithEmailAddress(loginRequest, async function (response, error) {
         if (error) {
             console.error("Error logging in:", error);
-            // Handle error
         } else {
             accessLevel = await getUserData(["AccessLevel"]);
             console.log(accessLevel.AccessLevel);
             let accessCheckResponse = await fetchUserAccess(accessLevel.AccessLevel);
             if (accessCheckResponse.isAuthorized) {
-                document.getElementById('loginModal').style.display = 'none';
+                document.getElementById('loginModal').style.display = accessCheckResponse.modalMode;
             }
         }
     });
@@ -55,7 +53,7 @@ async function fetchUserAccess(userAccess) {
         throw new Error('Access check failed');
     }
 
-    return await response.json(); // Assuming the server sends back a JSON with isAuthorized
+    return await response.json();
 }
 
 async function RegisterUserEmailAddress(){
@@ -81,7 +79,7 @@ async function RegisterUserEmailAddress(){
 
     document.getElementById("registerButton").value  = "Registering...";
 
-    PlayFab.settings.titleId = titleId; // must set titleId this way
+    PlayFab.settings.titleId = titleId;
 
     var registerRequest = {
         TitleId: titleId,
