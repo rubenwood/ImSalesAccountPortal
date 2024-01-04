@@ -131,7 +131,7 @@ app.put('/update-confluence-page/:pageId', async (req, res) => {
       body: bodyData
     });
 
-    writeCSV(email, pass, area, expiry);
+    //writeCSV(email, pass, area, expiry);
 
     res.json(response.data);
   } catch (error) {
