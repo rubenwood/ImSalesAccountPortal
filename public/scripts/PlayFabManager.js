@@ -30,7 +30,6 @@ async function Login()
             console.error("Error logging in:", error);
         } else {
             accessLevel = await getUserData(["AccessLevel"]);
-            console.log(accessLevel.AccessLevel);
             let accessCheckResponse = await fetchUserAccess(accessLevel.AccessLevel);
             if (accessCheckResponse.isAuthorized) {
                 document.getElementById('loginModal').style.display = accessCheckResponse.modalMode;
