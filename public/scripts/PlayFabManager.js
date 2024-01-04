@@ -30,17 +30,39 @@ async function Login()
             // Handle error
         } else {
             let accessLevel = await getUserData(["AccessLevel"]);
-            if(accessLevel.AccessLevel.toLowerCase() == 'admin') {
-                // Handle successful login
+            console.log(accessLevel.AccessLevel);
+            let accessCheckResponse = await fetchUserAccess(accessLevel.AccessLevel);
+            if (accessCheckResponse.isAuthorized) {
                 document.getElementById('loginModal').style.display = 'none';
-            } else {
-                console.error("invalid access");
             }
         }
     });
 }
+async function fetchUserAccess(userAccess) {
+    const url = `/check-access`;
 
-function RegisterUserEmailAddress(){
+    const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ userAccess }) 
+    });
+
+    if (!response.ok) {
+        throw new Error('Access check failed');
+    }
+
+    return await response.json(); // Assuming the server sends back a JSON with isAuthorized
+}
+
+
+async function RegisterUserEmailAddress(){
+    let accessLevel = await getUserData(["AccessLevel"]);
+    let accessCheckResponse = await fetchUserAccess(accessLevel.AccessLevel);
+    if (!accessCheckResponse.isAuthorized) { return; }
+
+
     let email = document.getElementById("emailSignUpAddress").value;
     let pass = document.getElementById("emailSignUpPassword").value;
     let expiry = document.getElementById("expiry").value;

@@ -234,6 +234,23 @@ app.post('/get-user-data/:playFabID', async (req, res) => {
   }
 });
 
+app.post('/check-access', async (req, res) => {
+  const userAccess = req.body.userAccess;
+
+  if (!userAccess) {
+    return res.status(403).json({ isAuthorized: false, error: 'Access Denied: No access level provided' });
+  }
+
+  console.log(userAccess.toLowerCase());
+  console.log(process.env.REQUIRED_ACCESS.toLowerCase());
+
+  if (userAccess.toLowerCase() === process.env.REQUIRED_ACCESS.toLowerCase()) {
+    res.json({ isAuthorized: true });
+  } else {
+    res.status(403).json({ isAuthorized: false, error: 'Access Denied: Incorrect access level' });
+  }
+});
+
 
 // EXEC SERVER
 app.use(express.static('public'));
