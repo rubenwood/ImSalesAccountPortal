@@ -241,6 +241,8 @@ function generateReport() {
                 
                 // process PlayerData
                 let playerData = userData.data.Data.PlayerData !== undefined ? JSON.parse(userData.data.Data.PlayerData.Value) : undefined;
+                let totalPlays = 0;
+                let totalPlayTime = 0;
                 if(playerData !== undefined){
                     let playerDataContent = '';
                     playerData.activities.forEach(activity => {
@@ -248,8 +250,10 @@ function generateReport() {
                         activityContent += `<tr><td><b>Plays</b></td><td>${activity.plays.length}</td></tr>`;
                         let totalSessionTime = 0;
                         let bestScore = 0;
+                        totalPlays += activity.plays.length;
                         activity.plays.forEach(play => {
                             totalSessionTime += Math.round(play.sessionTime);
+                            totalPlayTime += totalSessionTime;
                             if(play.normalisedScore > bestScore){
                                 bestScore = Math.round(play.normalisedScore * 100);
                             }
@@ -257,8 +261,12 @@ function generateReport() {
                         activityContent += `<tr><td><b>Total Session Length</b></td><td>${totalSessionTime} seconds</td></tr><br />`;
                         activityContent += `<tr><td><b>Best Score</b></td><td>${bestScore} %</td></tr><br />`;
                         activityContent += "</table>";
-                        playerDataContent += activityContent;
+                        playerDataContent += activityContent;                        
                     });
+                    playerDataContent += `<h1>Total Plays: ${totalPlays}</h1>`;
+                    playerDataContent += `<h1>Total Play Time: ${totalPlayTime} seconds</h1>`;
+                    let averageTimePerPlay = Math.round(totalPlayTime / totalPlays); 
+                    playerDataContent += `<h1>Avg. Time per activity: ${averageTimePerPlay} seconds</h1>`;
                     addCellToRow(row, 'Expand Player Data', 1, true, playerDataContent);
                 }else{
                     addCellToRow(row, 'No Player Data', false);
