@@ -6,7 +6,7 @@ window.onload = function() {
 };
 
 function getLessonInfo(){
-    const url = `http://localhost:3001/getLessonInfo`;
+    const url = `http://${process.env.SERVER_URL}:${process.env.PORT}/getLessonInfo`;
     let area = "ucla";
 
     fetch(url, {
@@ -29,7 +29,7 @@ function getLessonInfo(){
     })
 }
 function getPracInfo(){
-    const url = `http://localhost:3001/getPracInfo`;
+    const url = `http://${process.env.SERVER_URL}:${process.env.PORT}/getPracInfo`;
     let area = "ucla";
     
     fetch(url, {
@@ -57,7 +57,7 @@ getPracInfo();
 // public button event, when clicked, updates confluence page
 function callUpdateConfluencePage(email, pass, area, expiry, createdBy, createdFor){
     const pageId = '929333296'; // Replace with your page ID
-    const url = `http://localhost:3001/update-confluence-page/${pageId}`;
+    const url = `http://${process.env.SERVER_URL}:${process.env.PORT}/update-confluence-page/${pageId}`;
 
     fetch(url, {
         method: 'PUT',
@@ -125,7 +125,7 @@ function populateDropdown(data) {
 
 // Function to fetch and process JSON data
 function fetchAndPopulate() {
-    const url = 'http://localhost:3001/getAcademicAreas';
+    const url = 'http://${process.env.SERVER_URL}:${process.env.PORT}/getAcademicAreas';
 
     fetch(url)
         .then(response => {
@@ -145,7 +145,7 @@ fetchAndPopulate();
 
 // Function to fetch user data for a given email
 function fetchUserAccInfo(email) {
-    const url = `http://localhost:3001/get-user-acc-info/${email}`;
+    const url = `http://${process.env.SERVER_URL}:${process.env.PORT}/get-user-acc-info/${email}`;
 
     return fetch(url, {
         method: 'POST',
@@ -164,7 +164,7 @@ function fetchUserAccInfo(email) {
     });
 }
 function fetchUserData(playFabID) {
-    const url = `http://localhost:3001/get-user-data/${playFabID}`;
+    const url = `http://${process.env.SERVER_URL}:${process.env.PORT}/get-user-data/${playFabID}`;
 
     return fetch(url, {
         method: 'POST',
