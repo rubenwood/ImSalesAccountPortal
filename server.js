@@ -212,7 +212,7 @@ app.post('/get-user-data/:playFabID', async (req, res) => {
 
   try {
       const response = await axios.post(
-          `https://${process.env.PLAYFAB_TITLE_ID}.playfabapi.com/Admin/GetUserData`,
+          `https://${process.env.PLAYFAB_TITLE_ID}.api.main.azureplayfab.com/Admin/GetUserData`,
           { PlayFabId: req.body.playFabID },
           {
               headers: {
