@@ -4,6 +4,55 @@ let pracInfo;
 window.onload = function() {
     document.getElementById('loginModal').style.display = 'block';
 };
+function getLessonInfo(){
+    const url = `/getLessonInfo`;
+    let area = "ucla";
+  
+    fetch(url, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ area }) 
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error('Network response was not ok');
+        }
+        
+        return response.json();
+    })
+    .then(data =>{
+        //console.log(data);
+        lessonInfo = data;
+    })
+  }
+  function getPracInfo(){
+    const url = `/getPracInfo`;
+    let area = "ucla";
+    
+    fetch(url, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ area }) 
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error('Network response was not ok');
+        }
+        
+        return response.json();
+    })
+    .then(data =>{        
+        //console.log(data);
+        pracInfo = data;
+    })
+  }
+  getLessonInfo();
+  getPracInfo();
+
 
 // public button event, when clicked, updates confluence page
 function callUpdateConfluencePage(email, pass, area, expiry, createdBy, createdFor){
@@ -76,7 +125,7 @@ function populateDropdown(data) {
 
 // Function to fetch and process JSON data
 function fetchAndPopulate() {
-    const url = 'http://${process.env.SERVER_URL}:${process.env.PORT}/getAcademicAreas';
+    const url = `/getAcademicAreas`;
 
     fetch(url)
         .then(response => {
@@ -96,7 +145,7 @@ fetchAndPopulate();
 
 // Function to fetch user data for a given email
 function fetchUserAccInfo(email) {
-    const url = `http://${process.env.SERVER_URL}:${process.env.PORT}/get-user-acc-info/${email}`;
+    const url = `/get-user-acc-info/${email}`;
 
     return fetch(url, {
         method: 'POST',
@@ -115,7 +164,7 @@ function fetchUserAccInfo(email) {
     });
 }
 function fetchUserData(playFabID) {
-    const url = `http://${process.env.SERVER_URL}:${process.env.PORT}/get-user-data/${playFabID}`;
+    const url = `/get-user-data/${playFabID}`;
 
     return fetch(url, {
         method: 'POST',
