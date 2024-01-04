@@ -142,7 +142,6 @@ function fetchAndPopulate() {
 // Fetch and populate on page load
 fetchAndPopulate();
 
-
 // Function to fetch user data for a given email
 function fetchUserAccInfo(email) {
     const url = `/get-user-acc-info/${email}`;

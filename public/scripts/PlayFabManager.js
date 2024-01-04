@@ -56,7 +56,6 @@ async function fetchUserAccess(userAccess) {
     return await response.json(); // Assuming the server sends back a JSON with isAuthorized
 }
 
-
 async function RegisterUserEmailAddress(){
     let accessLevel = await getUserData(["AccessLevel"]);
     let accessCheckResponse = await fetchUserAccess(accessLevel.AccessLevel);
