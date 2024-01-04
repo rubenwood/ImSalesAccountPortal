@@ -182,7 +182,7 @@ app.post('/get-user-acc-info/:email', async (req, res) => {
 
   try {
       const response = await axios.post(
-          `https://${process.env.PLAYFAB_TITLE_ID}.playfabapi.com/Admin/GetUserAccountInfo`,
+          `https://${process.env.PLAYFAB_TITLE_ID}.api.main.azureplayfab.com/Admin/GetUserAccountInfo`,
           { Email: req.body.email },
           {
               headers: {
