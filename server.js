@@ -179,7 +179,8 @@ function writeCSV(email, pass, area, expiry) {
 // GET USER ACC INFO (for report)
 app.post('/get-user-acc-info/:email', async (req, res) => {
   let playFabID = "";
-
+  let url = `https://${process.env.PLAYFAB_TITLE_ID}.api.main.azureplayfab.com/Admin/GetUserAccountInfo`;
+  console.log(url);
   try {
       const response = await axios.post(
           `https://${process.env.PLAYFAB_TITLE_ID}.api.main.azureplayfab.com/Admin/GetUserAccountInfo`,
