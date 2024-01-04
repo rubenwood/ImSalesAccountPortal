@@ -10,9 +10,6 @@ const app = express();
 app.use(express.json());
 app.use(cors());
 
-
-let authorised = false;
-
 // AWS METHODS
 AWS.config.update({
   accessKeyId: process.env.AWS_ACCES_KEY_ID,
@@ -249,7 +246,6 @@ app.post('/check-access', async (req, res) => {
   console.log(process.env.REQUIRED_ACCESS.toLowerCase());
 
   if (userAccess.toLowerCase() === process.env.REQUIRED_ACCESS.toLowerCase()) {
-    authorised = true;
     res.json({ isAuthorized: true, modalMode: 'none' });
   } else {
     res.status(403).json({ isAuthorized: false, error: 'Access Denied: Incorrect access level' });
