@@ -236,6 +236,56 @@ app.post('/get-user-data/:playFabID', async (req, res) => {
 });
 
 
+function getLessonInfo(){
+  const url = `http://${process.env.SERVER_URL}:${process.env.PORT}/getLessonInfo`;
+  let area = "ucla";
+
+  fetch(url, {
+      method: 'POST',
+      headers: {
+          'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ area }) 
+  })
+  .then(response => {
+      if (!response.ok) {
+          throw new Error('Network response was not ok');
+      }
+      
+      return response.json();
+  })
+  .then(data =>{
+      //console.log(data);
+      lessonInfo = data;
+  })
+}
+function getPracInfo(){
+  const url = `http://${process.env.SERVER_URL}:${process.env.PORT}/getPracInfo`;
+  let area = "ucla";
+  
+  fetch(url, {
+      method: 'POST',
+      headers: {
+          'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ area }) 
+  })
+  .then(response => {
+      if (!response.ok) {
+          throw new Error('Network response was not ok');
+      }
+      
+      return response.json();
+  })
+  .then(data =>{        
+      //console.log(data);
+      pracInfo = data;
+  })
+}
+getLessonInfo();
+getPracInfo();
+
+
 // EXEC SERVER
 app.use(express.static('public'));
 
