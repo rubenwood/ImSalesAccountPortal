@@ -264,9 +264,9 @@ function generateReport() {
                         playerDataContent += activityContent;                        
                     });
                     playerDataContent += `<h1>Total Plays: ${totalPlays}</h1>`;
-                    playerDataContent += `<h1>Total Play Time: ${totalPlayTime} seconds</h1>`;
+                    playerDataContent += `<h1>Total Play Time: ${formatTime(totalPlayTime)}</h1>`;
                     let averageTimePerPlay = Math.round(totalPlayTime / totalPlays); 
-                    playerDataContent += `<h1>Avg. Time per activity: ${averageTimePerPlay} seconds</h1>`;
+                    playerDataContent += `<h1>Avg. Time per activity: ${formatTime(averageTimePerPlay)}</h1>`;
                     addCellToRow(row, 'Expand Player Data', 1, true, playerDataContent);
                 }else{
                     addCellToRow(row, 'No Player Data', false);
@@ -309,6 +309,11 @@ function generateReport() {
             origin: { y: 0.6 }
         });
     });
+}
+function formatTime(seconds) {
+    const minutes = Math.floor(seconds / 60);
+    const remainingSeconds = seconds % 60;
+    return `${minutes} minutes, ${remainingSeconds} seconds`;
 }
 
 function addCellToRow(row, text, colSpan = 1, isCollapsible = false, collapsibleContent = '') {
