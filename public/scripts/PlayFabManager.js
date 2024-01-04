@@ -1,5 +1,5 @@
 const titleId = "29001";
-const accessLevel = "";
+let accessLevel;
 
 function isValidEmail(email) {
     const atIndex = email.indexOf('@');
