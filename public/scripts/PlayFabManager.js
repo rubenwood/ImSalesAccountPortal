@@ -30,7 +30,7 @@ async function Login()
             // Handle error
         } else {
             let accessLevel = await getUserData(["AccessLevel"]);
-            if(accessLevel.AccessLevel == 'admin') {
+            if(accessLevel.AccessLevel.toLowerCase() == 'admin') {
                 // Handle successful login
                 document.getElementById('loginModal').style.display = 'none';
             } else {
