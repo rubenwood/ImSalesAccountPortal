@@ -1,4 +1,5 @@
 const titleId = "29001";
+const accessLevel = "";
 
 function isValidEmail(email) {
     const atIndex = email.indexOf('@');
@@ -10,6 +11,7 @@ function isValidPassword(password) {
 function isValidExpiryDate(expiry){
     return expiry !== "";
 }
+
 
 async function Login()
 {  
@@ -29,7 +31,7 @@ async function Login()
             console.error("Error logging in:", error);
             // Handle error
         } else {
-            let accessLevel = await getUserData(["AccessLevel"]);
+            accessLevel = await getUserData(["AccessLevel"]);
             console.log(accessLevel.AccessLevel);
             let accessCheckResponse = await fetchUserAccess(accessLevel.AccessLevel);
             if (accessCheckResponse.isAuthorized) {
@@ -57,7 +59,6 @@ async function fetchUserAccess(userAccess) {
 }
 
 async function RegisterUserEmailAddress(){
-    let accessLevel = await getUserData(["AccessLevel"]);
     let accessCheckResponse = await fetchUserAccess(accessLevel.AccessLevel);
     if (!accessCheckResponse.isAuthorized) { return; }
 
@@ -157,6 +158,7 @@ function UpdateUserData(updateData){
     PlayFabClientSDK.UpdateUserData(updateUserDataRequest, UpdateUserDataCallback);
 }
 
+// UPDATE USER DATA
 var UpdateUserDataCallback = function (result, error){
     if (result !== null) {
         document.getElementById("resultOutput").innerHTML = "Account created & user data updated... Updating confluence...";
@@ -171,7 +173,7 @@ var UpdateUserDataCallback = function (result, error){
     updatingUserData = false;
 }
 
-
+// GET USER DATA
 function getUserData(keys) {
     return new Promise((resolve, reject) => {
         var requestData = {
