@@ -73,22 +73,21 @@ label {
     display: flex;
     flex-direction: column;
 }
-#generateReportButton{
-    align-self: flex-start;
-    width: auto;
-    margin-bottom: auto;
+
+.button-container {
+    display: flex;
+    align-items: center;
+    gap: 10px;
 }
 
 .small-text {
     font-size: 0.8em;
 }
 
-
 .highlighted {
     background-color: #fa8c8cab;
     color: white;
 }
-
 
 .tooltip {
     display: none;

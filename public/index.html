@@ -46,8 +46,10 @@
 </div>
 <div id="report-container" class="container">
     <textarea id="emailList" placeholder="Enter email addresses here, one per line"></textarea>
-    <input type="button" id="generateReportButton" value="Generate Report" onclick="generateReport()">
-    <input type="button" id="exportReportButton" value="Export to Excel" onclick="exportToExcel()">
+    <div class="button-container">
+        <input type="button" id="generateReportButton" value="Generate Report" onclick="generateReport()">
+        <input type="button" id="exportReportButton" value="Export to Excel" onclick="exportToExcel()">
+    </div>
     <br /><br />
     <table id="reportTable">
         <thead>
