@@ -23,7 +23,6 @@ function getLessonInfo(){
         return response.json();
     })
     .then(data =>{
-        //console.log(data);
         lessonInfo = data;
     })
   }
@@ -46,7 +45,6 @@ function getLessonInfo(){
         return response.json();
     })
     .then(data =>{        
-        //console.log(data);
         pracInfo = data;
     })
   }
@@ -182,7 +180,7 @@ function fetchUserData(playFabID) {
     });
 }
 
-
+let reportData = [];
 // Function to generate the report
 function generateReport() {
     const emailListText = document.getElementById("emailList").value;
@@ -204,8 +202,8 @@ function generateReport() {
             .then(() => fetchUserData(userAccInfo.data.UserInfo.PlayFabId))
             .then(respData => {
                 userData = respData;
-                console.log("USER DATA:");
-                console.log(userData);
+                //console.log("USER DATA:");
+                //console.log(userData);
                 let createdDate = new Date(userAccInfo.data.UserInfo.TitleInfo.Created);
                 let lastLoginDate =  new Date(userAccInfo.data.UserInfo.TitleInfo.LastLogin);
                 let today = new Date();
@@ -242,6 +240,7 @@ function generateReport() {
                 let playerData = userData.data.Data.PlayerData !== undefined ? JSON.parse(userData.data.Data.PlayerData.Value) : undefined;
                 let totalPlays = 0;
                 let totalPlayTime = 0;
+                let activityDataForReport = [];
                 if(playerData !== undefined){
                     let playerDataContent = '';
                     playerData.activities.forEach(activity => {
@@ -260,13 +259,37 @@ function generateReport() {
                         activityContent += `<tr><td><b>Total Session Length</b></td><td>${totalSessionTime} seconds</td></tr><br />`;
                         activityContent += `<tr><td><b>Best Score</b></td><td>${bestScore} %</td></tr><br />`;
                         activityContent += "</table>";
-                        playerDataContent += activityContent;                        
+                        playerDataContent += activityContent;
+
+                        // add the unformatted data for the report
+                        let activityData = { 
+                            activityID:activity.activityID,
+                            plays:activity.plays.length,
+                            totalSessionTime:totalSessionTime,
+                            bestScore:bestScore
+                        };
+                        activityDataForReport.push(activityData);
                     });
                     playerDataContent += `<h1>Total Plays: ${totalPlays}</h1>`;
                     playerDataContent += `<h1>Total Play Time: ${formatTime(totalPlayTime)}</h1>`;
                     let averageTimePerPlay = Math.round(totalPlayTime / totalPlays); 
                     playerDataContent += `<h1>Avg. Time per activity: ${formatTime(averageTimePerPlay)}</h1>`;
                     addCellToRow(row, 'Expand Player Data', 1, true, playerDataContent);
+                    
+                    // add to stored data
+                    //console.log(activityDataForReport);
+                    let playerDataForReport = {
+                        email: email,
+                        createdDate: createdDate.toDateString(),
+                        lastLoginDate: lastLoginDate.toDateString(),
+                        daysSinceCreation: daysSinceCreation,
+                        accountExpiryDate: accountExpiryDate,
+                        daysToExpire: daysToExpire,
+                        createdBy: createdBy,
+                        createdFor: createdFor,
+                        activityData: formatActivityData(activityDataForReport)
+                    };
+                    reportData.push(playerDataForReport);
                 }else{
                     addCellToRow(row, 'No Player Data', false);
                 }
@@ -314,6 +337,11 @@ function formatTime(seconds) {
     const remainingSeconds = seconds % 60;
     return `${minutes} minutes, ${remainingSeconds} seconds`;
 }
+function formatActivityData(activityData) {
+    return activityData.map(activity => {
+      return `Activity ID: ${activity.activityID}, Plays: ${activity.plays}, Total Session Time: ${activity.totalSessionTime} seconds, Best Score: ${activity.bestScore}%`;
+    }).join("\n"); // Join each activity's string with a newline
+  }
 
 function addCellToRow(row, text, colSpan = 1, isCollapsible = false, collapsibleContent = '') {
     const cell = row.insertCell();
@@ -341,6 +369,8 @@ function addCellToRow(row, text, colSpan = 1, isCollapsible = false, collapsible
         cell.appendChild(collapseButton);
     }    
 }
+
+// PLAYER DATA MODAL
 function showPlayerDataModal(content) {
     document.getElementById('playerDataModalBody').innerHTML = content;
     document.getElementById('playerDataModal').style.display = 'block';
@@ -350,6 +380,7 @@ function closePlayerDataModal() {
     document.getElementById('playerDataModal').style.display = 'none';
 }
 
+// REPORT TOOLTIPS
 function showTooltip(event, message) {
     // Create tooltip element if it doesn't exist
     let tooltip = document.getElementById('tooltip');
@@ -372,4 +403,15 @@ function hideTooltip() {
     if (tooltip) {
         tooltip.classList.remove('visible');
     }
+}
+
+// EXPORT REPORT
+function exportToExcel() {
+    let workbook = XLSX.utils.book_new();
+
+    // Convert reportData to a worksheet
+    let worksheet = XLSX.utils.json_to_sheet(reportData);
+
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Report");
+    XLSX.writeFile(workbook, "Report.xlsx");
 }

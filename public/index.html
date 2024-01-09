@@ -4,6 +4,7 @@
     <meta charset="utf-8">
     <title>PlayFab JavaScript Unit Tests</title>
     <script type="text/javascript" src="https://download.playfab.com/PlayFabClientApi.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.16.2/xlsx.full.min.js"></script>
     <link rel="stylesheet" type="text/css" href="styles.css">
 </head>
 <body>
@@ -46,6 +47,7 @@
 <div id="report-container" class="container">
     <textarea id="emailList" placeholder="Enter email addresses here, one per line"></textarea>
     <input type="button" id="generateReportButton" value="Generate Report" onclick="generateReport()">
+    <input type="button" id="exportReportButton" value="Export to Excel" onclick="exportToExcel()">
     <br /><br />
     <table id="reportTable">
         <thead>
