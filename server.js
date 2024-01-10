@@ -176,9 +176,8 @@ function writeCSV(email, pass, area, expiry) {
   fs.appendFileSync(csvFilePath, newLine, 'utf8');
 }
 
-// GET USER ACC INFO (for report)
-app.post('/get-user-acc-info/:email', async (req, res) => {
-  let playFabID = "";
+// GET USER ACC INFO (by email, for report)
+app.post('/get-user-acc-info-email/:email', async (req, res) => {
   try {
       const response = await axios.post(
           `https://${process.env.PLAYFAB_TITLE_ID}.api.main.azureplayfab.com/Admin/GetUserAccountInfo`,
@@ -192,6 +191,31 @@ app.post('/get-user-acc-info/:email', async (req, res) => {
       );
 
       //console.log('Success:', response.data);
+      res.json(response.data); // send back to client
+  } catch (error) {
+    console.error('Error:', error);
+    if (error.response && error.response.data) {
+        // Sending back the specific error information from Axios
+        res.status(500).json(error.response.data);
+    } else {
+        // Sending back a general error if the response data is not available
+        res.status(500).json({ message: error.message, stack: error.stack });
+    }
+  }
+});
+app.post('/get-user-acc-info-id/:playFabID', async (req, res) => {
+  try {
+      const response = await axios.post(
+          `https://${process.env.PLAYFAB_TITLE_ID}.api.main.azureplayfab.com/Admin/GetUserAccountInfo`,
+          { PlayFabId: req.body.playFabID },
+          {
+              headers: {
+                  'Content-Type': 'application/json',
+                  'X-SecretKey': process.env.PLAYFAB_SECRET_KEY
+              }
+          }
+      );
+
       res.json(response.data); // send back to client
   } catch (error) {
     console.error('Error:', error);
@@ -246,6 +270,59 @@ app.post('/check-access', async (req, res) => {
     res.json({ isAuthorized: true, modalMode: 'none' });
   } else {
     res.status(403).json({ isAuthorized: false, error: 'Access Denied: Incorrect access level' });
+  }
+});
+
+// SEGMENT RELATED
+// GET ALL SEGMENTS
+app.post('/get-segments', async (req, res) => {
+  try {
+      const response = await axios.post(
+          `https://${process.env.PLAYFAB_TITLE_ID}.playfabapi.com/Server/GetAllSegments`,
+          {
+              headers: {
+                  'X-SecretKey': process.env.PLAYFAB_SECRET_KEY
+              }
+          }
+      );
+
+      console.log('Segments:', response.data);
+      res.json(response.data); // send back to client
+  } catch (error) {
+    console.error('Error:', error);
+    if (error.response && error.response.data) {
+        // Sending back the specific error information from Axios
+        res.status(500).json(error.response.data);
+    } else {
+        // Sending back a general error if the response data is not available
+        res.status(500).json({ message: error.message, stack: error.stack });
+    }
+  }
+});
+// GET ALL PLAYERS IN A SEGMENT
+app.post('/get-segment-players/:segmentID', async (req, res) => {
+  try {
+      const response = await axios.post(
+          `https://${process.env.PLAYFAB_TITLE_ID}.playfabapi.com/Server/GetPlayersInSegment`,
+          { SegmentId: req.body.segmentID },
+          {
+            headers: {
+                'X-SecretKey': process.env.PLAYFAB_SECRET_KEY
+            }
+          }          
+      );
+
+      console.log('Segment Data:', response.data);
+      res.json(response.data); // send back to client
+  } catch (error) {
+    console.error('Error:', error);
+    if (error.response && error.response.data) {
+        // Sending back the specific error information from Axios
+        res.status(500).json(error.response.data);
+    } else {
+        // Sending back a general error if the response data is not available
+        res.status(500).json({ message: error.message, stack: error.stack });
+    }
   }
 });
 

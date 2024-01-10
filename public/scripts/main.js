@@ -9,6 +9,8 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('generateReportButton').addEventListener('click', generateReport);
     document.getElementById('exportReportButton').addEventListener('click', exportToExcel);
     document.getElementById('closePlayerDataModal').addEventListener('click', closePlayerDataModal);
+    document.getElementById('getSegmentsButton').addEventListener('click', fetchSegments);
+    document.getElementById('getSegmentPlayersButton').addEventListener('click', getPlayersInSegTest);
 });
 
 let lessonInfo;
@@ -41,6 +43,7 @@ function getLessonInfo(){
   }
   function getPracInfo(){
     const url = `/getPracInfo`;
+    // MAKE THIS MODULAR
     let area = "ucla";
     
     fetch(url, {
@@ -154,8 +157,8 @@ function fetchAndPopulate() {
 fetchAndPopulate();
 
 // Function to fetch user data for a given email
-function fetchUserAccInfo(email) {
-    const url = `/get-user-acc-info/${email}`;
+function fetchUserAccInfoByEmail(email) {
+    const url = `/get-user-acc-info-email/${email}`;
 
     return fetch(url, {
         method: 'POST',
@@ -173,6 +176,26 @@ function fetchUserAccInfo(email) {
         return response.json();
     });
 }
+function fetchUserAccInfoById(playFabID) {
+    const url = `/get-user-acc-info-id/${playFabID}`;
+
+    return fetch(url, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ playFabID }) 
+    })
+    .then(response => {
+        if (!response.ok) {
+            return response.json().then(err => { 
+                throw new Error(err.error || 'An error occurred');
+            });
+        }
+        return response.json();
+    });
+}
+
 function fetchUserData(playFabID) {
     const url = `/get-user-data/${playFabID}`;
 
@@ -216,7 +239,7 @@ export async function generateReport() {
     // Create an array of promises for fetching user data
     const fetchPromises = emailList.map((email, index) => {
         return delay(index * 1000) // Delay
-            .then(() => fetchUserAccInfo(email))
+            .then(() => fetchUserAccInfoByEmail(email))
             .then(respData => { userAccInfo = respData; })
             .then(() => fetchUserData(userAccInfo.data.UserInfo.PlayFabId))
             .then(respData => {
@@ -306,7 +329,11 @@ export async function generateReport() {
                         daysToExpire: daysToExpire,
                         createdBy: createdBy,
                         createdFor: createdFor,
-                        activityData: formatActivityData(activityDataForReport)
+                        activityData: formatActivityData(activityDataForReport),
+                        totalPlays,
+                        totalPlayTime,
+                        averageTimePerPlay
+
                     };
                     reportData.push(playerDataForReport);
                 }else{
@@ -394,7 +421,6 @@ function showPlayerDataModal(content) {
     document.getElementById('playerDataModalBody').innerHTML = content;
     document.getElementById('playerDataModal').style.display = 'block';
 }
-
 function closePlayerDataModal() {
     document.getElementById('playerDataModal').style.display = 'none';
 }
@@ -422,6 +448,76 @@ function hideTooltip() {
     if (tooltip) {
         tooltip.classList.remove('visible');
     }
+}
+
+
+// SEGMENT RELATED
+function fetchSegments(){
+    const url = `/get-segments`;
+
+    return fetch(url, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        }
+    })
+    .then(response => {
+        if (!response.ok) {
+            return response.json().then(err => { 
+                throw new Error(err.error || 'An error occurred');
+            });
+        }
+        return response.json();
+    });
+}
+async function getPlayersInSegTest(){
+    let data = await fetchSegmentPlayers("E5F5A5B6EA3C7662"); // ucla segment, wont be hardcoded soon
+    console.log(data);
+    //let emailList = [];
+    let playerProfiles = data.data.PlayerProfiles;
+    console.log(playerProfiles);
+
+     // Use map to transform each profile into a promise of email address
+     const emailPromises = playerProfiles.map(profile => getPlayerEmailAddr(profile.PlayerId));
+
+     // Wait for all promises to resolve
+     const emailList = await Promise.all(emailPromises);
+     console.log(emailList);
+
+    // Once we get the player profiles, used the playfab Id's to get their email addresses
+    // then use those to populate the report field
+}
+async function getPlayerEmailAddr(playFabId) {
+    try{
+        let playerData = await fetchUserAccInfoById(playFabId);
+        console.log(playerData);
+        let userEmail = playerData.data.UserInfo.PrivateInfo.Email;
+        console.log(userEmail);
+        return userEmail;
+    } catch (error) {
+        console.error(`Error fetching email for PlayFab ID ${playFabId}:`, error);
+        return null; // or some default value or error indicator
+    }    
+}
+function fetchSegmentPlayers(reqSegmentID){
+    const url = `/get-segment-players/${reqSegmentID}`;
+    let segmentID = reqSegmentID;
+    console.log(segmentID);
+    return fetch(url, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ segmentID })
+    })
+    .then(response => {
+        if (!response.ok) {
+            return response.json().then(err => { 
+                throw new Error(err.error || 'An error occurred');
+            });
+        }
+        return response.json();
+    });
 }
 
 // EXPORT REPORT
