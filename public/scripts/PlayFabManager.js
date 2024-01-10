@@ -1,3 +1,4 @@
+import { callUpdateConfluencePage } from "./main.js";
 const titleId = "29001";
 let accessLevel;
 
@@ -12,7 +13,7 @@ function isValidExpiryDate(expiry){
     return expiry !== "";
 }
 
-async function Login()
+export async function Login()
 {  
     PlayFab.settings.titleId = titleId;
 
@@ -29,15 +30,19 @@ async function Login()
         if (error) {
             console.error("Error logging in:", error);
         } else {
+            console.log(response);
             accessLevel = await getUserData(["AccessLevel"]);
-            let accessCheckResponse = await fetchUserAccess(accessLevel.AccessLevel);
+            let accessCheckResponse = await fetchUserAccess();
             if (accessCheckResponse.isAuthorized) {
                 document.getElementById('loginModal').style.display = accessCheckResponse.modalMode;
             }
         }
     });
 }
-async function fetchUserAccess(userAccess) {
+export async function fetchUserAccess() {
+    if(accessLevel == undefined){ return; }
+    let userAccess = accessLevel.AccessLevel;
+
     const url = `/check-access`;
 
     const response = await fetch(url, {
@@ -55,10 +60,10 @@ async function fetchUserAccess(userAccess) {
     return await response.json();
 }
 
-async function RegisterUserEmailAddress(){
-    let accessCheckResponse = await fetchUserAccess(accessLevel.AccessLevel);
+export async function RegisterUserEmailAddress(){
+    let accessCheckResponse = await fetchUserAccess();
+    if(accessCheckResponse == undefined){ return; }
     if (!accessCheckResponse.isAuthorized) { return; }
-
 
     let email = document.getElementById("emailSignUpAddress").value;
     let pass = document.getElementById("emailSignUpPassword").value;
@@ -184,9 +189,7 @@ function getUserData(keys) {
             } else {
                 var resultData = {};
                 keys.forEach(key => {
-                    resultData[key] = response.data.Data[key] 
-                                      ? response.data.Data[key].Value 
-                                      : null;
+                    resultData[key] = response.data.Data[key] ? response.data.Data[key].Value : null;
                 });
                 resolve(resultData);
             }

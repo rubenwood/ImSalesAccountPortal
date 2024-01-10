@@ -242,9 +242,6 @@ app.post('/check-access', async (req, res) => {
     return res.status(403).json({ isAuthorized: false, error: 'Access Denied: No access level provided' });
   }
 
-  console.log(userAccess.toLowerCase());
-  console.log(process.env.REQUIRED_ACCESS.toLowerCase());
-
   if (userAccess.toLowerCase() === process.env.REQUIRED_ACCESS.toLowerCase()) {
     res.json({ isAuthorized: true, modalMode: 'none' });
   } else {

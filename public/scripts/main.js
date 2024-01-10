@@ -1,3 +1,16 @@
+import { fetchUserAccess } from "./PlayFabManager.js";
+import { Login, RegisterUserEmailAddress } from './PlayFabManager.js';
+
+document.addEventListener('DOMContentLoaded', () => {
+    // Bind event listeners
+    document.getElementById('loginButton').addEventListener('click', Login);
+    document.getElementById('registerButton').addEventListener('click', RegisterUserEmailAddress);
+    document.getElementById('generatePassword').addEventListener('click', generatePass);
+    document.getElementById('generateReportButton').addEventListener('click', generateReport);
+    document.getElementById('exportReportButton').addEventListener('click', exportToExcel);
+    document.getElementById('closePlayerDataModal').addEventListener('click', closePlayerDataModal);
+});
+
 let lessonInfo;
 let pracInfo;
 
@@ -53,7 +66,7 @@ function getLessonInfo(){
 
 
 // public button event, when clicked, updates confluence page
-function callUpdateConfluencePage(email, pass, area, expiry, createdBy, createdFor){
+export function callUpdateConfluencePage(email, pass, area, expiry, createdBy, createdFor){
     const pageId = '929333296'; // Replace with your page ID
     const url = `/update-confluence-page/${pageId}`;
 
@@ -86,7 +99,7 @@ function callUpdateConfluencePage(email, pass, area, expiry, createdBy, createdF
     });
 }
 
-function generatePass() {
+export function generatePass() {
     const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
     const digits = '0123456789';
     const allCharacters = alphabet + digits;
@@ -182,7 +195,13 @@ function fetchUserData(playFabID) {
 
 let reportData = [];
 // Function to generate the report
-function generateReport() {
+export async function generateReport() {
+    let accessCheckResponse = await fetchUserAccess();
+    if(accessCheckResponse == undefined){ return; }
+    if (!accessCheckResponse.isAuthorized) { return; }
+
+    reportData = []; // reset the report data
+
     const emailListText = document.getElementById("emailList").value;
     const emailList = emailListText.split('\n').filter(Boolean); // Split by newline and filter out empty strings
     const tableBody = document.getElementById("reportTableBody");
