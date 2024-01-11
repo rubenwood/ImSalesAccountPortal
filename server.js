@@ -169,12 +169,6 @@ async function getPageDetails(pageId) {
       throw error;
   }
 }
-// WRITE TO CSV
-function writeCSV(email, pass, area, expiry) {
-  const csvFilePath = path.join('csv/', 'data.csv'); // Adjust the path as needed
-  const newLine = `${email},${pass},${area},${expiry}\n`;
-  fs.appendFileSync(csvFilePath, newLine, 'utf8');
-}
 
 // GET USER ACC INFO (by email, for report)
 app.post('/get-user-acc-info-email/:email', async (req, res) => {
@@ -231,8 +225,6 @@ app.post('/get-user-acc-info-id/:playFabID', async (req, res) => {
 
 // GET USER DATA (for report)
 app.post('/get-user-data/:playFabID', async (req, res) => {
-  let playFabID = "";
-
   try {
       const response = await axios.post(
           `https://${process.env.PLAYFAB_TITLE_ID}.api.main.azureplayfab.com/Admin/GetUserData`,
@@ -278,15 +270,16 @@ app.post('/check-access', async (req, res) => {
 app.post('/get-segments', async (req, res) => {
   try {
       const response = await axios.post(
-          `https://${process.env.PLAYFAB_TITLE_ID}.playfabapi.com/Server/GetAllSegments`,
+          `https://${process.env.PLAYFAB_TITLE_ID}.playfabapi.com/Admin/GetAllSegments`,
+          {},
           {
               headers: {
-                  'X-SecretKey': process.env.PLAYFAB_SECRET_KEY
+                'Content-Type': 'application/json',
+                'X-SecretKey': process.env.PLAYFAB_SECRET_KEY
               }
           }
       );
 
-      console.log('Segments:', response.data);
       res.json(response.data); // send back to client
   } catch (error) {
     console.error('Error:', error);
@@ -312,7 +305,6 @@ app.post('/get-segment-players/:segmentID', async (req, res) => {
           }          
       );
 
-      console.log('Segment Data:', response.data);
       res.json(response.data); // send back to client
   } catch (error) {
     console.error('Error:', error);

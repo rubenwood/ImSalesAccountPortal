@@ -9,9 +9,15 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('generateReportButton').addEventListener('click', generateReport);
     document.getElementById('exportReportButton').addEventListener('click', exportToExcel);
     document.getElementById('closePlayerDataModal').addEventListener('click', closePlayerDataModal);
-    document.getElementById('getSegmentsButton').addEventListener('click', fetchSegments);
-    document.getElementById('getSegmentPlayersButton').addEventListener('click', getPlayersInSegTest);
+    document.getElementById('getSegmentsButton').addEventListener('click', getSegmentsClicked);
+    document.getElementById('getSegmentPlayersButton').addEventListener('click', getPlayersInSegmentClicked);
 });
+
+async function canAccess(){
+    let accessCheckResponse = await fetchUserAccess();
+    if(accessCheckResponse == undefined){ return false; }
+    if (!accessCheckResponse.isAuthorized) { return false; }else { return true; }
+}
 
 let lessonInfo;
 let pracInfo;
@@ -43,7 +49,6 @@ function getLessonInfo(){
   }
   function getPracInfo(){
     const url = `/getPracInfo`;
-    // MAKE THIS MODULAR
     let area = "ucla";
     
     fetch(url, {
@@ -70,7 +75,7 @@ function getLessonInfo(){
 
 // public button event, when clicked, updates confluence page
 export function callUpdateConfluencePage(email, pass, area, expiry, createdBy, createdFor){
-    const pageId = '929333296'; // Replace with your page ID
+    const pageId = '929333296';
     const url = `/update-confluence-page/${pageId}`;
 
     fetch(url, {
@@ -216,12 +221,13 @@ function fetchUserData(playFabID) {
     });
 }
 
+
+
 let reportData = [];
 // Function to generate the report
 export async function generateReport() {
-    let accessCheckResponse = await fetchUserAccess();
-    if(accessCheckResponse == undefined){ return; }
-    if (!accessCheckResponse.isAuthorized) { return; }
+    let hasAccess = await canAccess();
+    if(!hasAccess){ return; }
 
     reportData = []; // reset the report data
 
@@ -244,8 +250,6 @@ export async function generateReport() {
             .then(() => fetchUserData(userAccInfo.data.UserInfo.PlayFabId))
             .then(respData => {
                 userData = respData;
-                //console.log("USER DATA:");
-                //console.log(userData);
                 let createdDate = new Date(userAccInfo.data.UserInfo.TitleInfo.Created);
                 let lastLoginDate =  new Date(userAccInfo.data.UserInfo.TitleInfo.LastLogin);
                 let today = new Date();
@@ -287,6 +291,7 @@ export async function generateReport() {
                     let playerDataContent = '';
                     playerData.activities.forEach(activity => {
                         let activityContent =`<table><tr><td><b>Activity ID</b></td><td>${activity.activityID}</td></tr>`;
+                        activityContent +=`<tr><td><b>Activity Name</b></td><td>${activity.activityTitle}</td></tr>`;
                         activityContent += `<tr><td><b>Plays</b></td><td>${activity.plays.length}</td></tr>`;
                         let totalSessionTime = 0;
                         let bestScore = 0;
@@ -298,7 +303,7 @@ export async function generateReport() {
                                 bestScore = Math.round(play.normalisedScore * 100);
                             }
                         });
-                        activityContent += `<tr><td><b>Total Session Length</b></td><td>${totalSessionTime} seconds</td></tr><br />`;
+                        activityContent += `<tr><td><b>Total Session Length</b></td><td>${formatTime(totalSessionTime)}</td></tr><br />`;
                         activityContent += `<tr><td><b>Best Score</b></td><td>${bestScore} %</td></tr><br />`;
                         activityContent += "</table>";
                         playerDataContent += activityContent;
@@ -319,7 +324,6 @@ export async function generateReport() {
                     addCellToRow(row, 'Expand Player Data', 1, true, playerDataContent);
                     
                     // add to stored data
-                    //console.log(activityDataForReport);
                     let playerDataForReport = {
                         email: email,
                         createdDate: createdDate.toDateString(),
@@ -378,16 +382,6 @@ export async function generateReport() {
         });
     });
 }
-function formatTime(seconds) {
-    const minutes = Math.floor(seconds / 60);
-    const remainingSeconds = seconds % 60;
-    return `${minutes} minutes, ${remainingSeconds} seconds`;
-}
-function formatActivityData(activityData) {
-    return activityData.map(activity => {
-      return `Activity ID: ${activity.activityID}, Plays: ${activity.plays}, Total Session Time: ${activity.totalSessionTime} seconds, Best Score: ${activity.bestScore}%`;
-    }).join("\n"); // Join each activity's string with a newline
-  }
 
 function addCellToRow(row, text, colSpan = 1, isCollapsible = false, collapsibleContent = '') {
     const cell = row.insertCell();
@@ -399,7 +393,6 @@ function addCellToRow(row, text, colSpan = 1, isCollapsible = false, collapsible
         const collapseButton = document.createElement('button');
         collapseButton.textContent = text;
         collapseButton.onclick = function() {
-            //this.nextElementSibling.style.display = this.nextElementSibling.style.display === 'none' ? 'block' : 'none';
             showPlayerDataModal(collapsibleContent);
         };
         collapseButton.className = 'collapsible-button';
@@ -450,8 +443,28 @@ function hideTooltip() {
     }
 }
 
-
 // SEGMENT RELATED
+async function getSegmentsClicked(){
+    let hasAccess = await canAccess();
+    if(!hasAccess){ return; }
+
+    let segmentResponse = await fetchSegments();
+    let segments = segmentResponse.data.Segments;
+    console.log(segments);
+    populateSegmentsDropdown(segments);
+}
+function populateSegmentsDropdown(segments) {
+    const dropdown = document.getElementById("segmentSelection");
+    dropdown.innerHTML = '';
+
+    segments.forEach(segment => {
+        const option = document.createElement("option");
+        option.value = segment.Id;
+        option.textContent = segment.Name;
+        dropdown.appendChild(option);
+    });
+}
+
 function fetchSegments(){
     const url = `/get-segments`;
 
@@ -470,12 +483,20 @@ function fetchSegments(){
         return response.json();
     });
 }
-async function getPlayersInSegTest(){
-    let data = await fetchSegmentPlayers("E5F5A5B6EA3C7662"); // ucla segment, wont be hardcoded soon
-    console.log(data);
-    //let emailList = [];
+
+async function getPlayersInSegmentClicked(){
+    let hasAccess = await canAccess();
+    if(!hasAccess){ return; }
+
+    // Get the selected segment ID from the dropdown
+    const selectedSegmentId = document.getElementById("segmentSelection").value;
+    if (!selectedSegmentId) {
+        console.log("No segment selected");
+        return;
+    }
+
+    let data = await fetchSegmentPlayers(selectedSegmentId);
     let playerProfiles = data.data.PlayerProfiles;
-    console.log(playerProfiles);
 
      // Use map to transform each profile into a promise of email address
      const emailPromises = playerProfiles.map(profile => getPlayerEmailAddr(profile.PlayerId));
@@ -483,16 +504,14 @@ async function getPlayersInSegTest(){
      // Wait for all promises to resolve
      const emailList = await Promise.all(emailPromises);
      console.log(emailList);
-
-    // Once we get the player profiles, used the playfab Id's to get their email addresses
-    // then use those to populate the report field
+     const emailListString = emailList.join('\n');
+    // Set the email list string as the value of the textarea
+    document.getElementById("emailList").value = emailListString;
 }
 async function getPlayerEmailAddr(playFabId) {
     try{
         let playerData = await fetchUserAccInfoById(playFabId);
-        console.log(playerData);
         let userEmail = playerData.data.UserInfo.PrivateInfo.Email;
-        console.log(userEmail);
         return userEmail;
     } catch (error) {
         console.error(`Error fetching email for PlayFab ID ${playFabId}:`, error);
@@ -502,7 +521,6 @@ async function getPlayerEmailAddr(playFabId) {
 function fetchSegmentPlayers(reqSegmentID){
     const url = `/get-segment-players/${reqSegmentID}`;
     let segmentID = reqSegmentID;
-    console.log(segmentID);
     return fetch(url, {
         method: 'POST',
         headers: {
