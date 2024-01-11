@@ -16,7 +16,7 @@ document.addEventListener('DOMContentLoaded', () => {
 async function canAccess(){
     let accessCheckResponse = await fetchUserAccess();
     if(accessCheckResponse == undefined){ return false; }
-    if (!accessCheckResponse.isAuthorized) { return false; }else { return true; }
+    if (!accessCheckResponse.isAuthorized) { return false; } else { return true; }
 }
 
 window.onload = function() {

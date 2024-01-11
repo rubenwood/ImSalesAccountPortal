@@ -1,8 +1,6 @@
 const express = require('express');
 const axios = require('axios');
 const cors = require('cors');
-const fs = require('fs');
-const path = require('path');
 const AWS = require('aws-sdk');
 require('dotenv').config();
 const app = express();
