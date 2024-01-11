@@ -19,9 +19,6 @@ async function canAccess(){
     if (!accessCheckResponse.isAuthorized) { return false; }else { return true; }
 }
 
-let lessonInfo;
-let pracInfo;
-
 window.onload = function() {
     document.getElementById('loginModal').style.display = 'block';
 };
@@ -45,7 +42,7 @@ export function callUpdateConfluencePage(email, pass, area, expiry, createdBy, c
         return response.json();
     })
     .then(data => {
-        console.log('Success:', data);
+        //console.log('Success:', data);
         confetti({
             particleCount: 100,
             spread: 70,
