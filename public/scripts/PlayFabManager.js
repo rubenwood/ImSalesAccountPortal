@@ -30,7 +30,6 @@ export async function Login()
         if (error) {
             console.error("Error logging in:", error);
         } else {
-            console.log(response);
             accessLevel = await getUserData(["AccessLevel"]);
             let accessCheckResponse = await fetchUserAccess();
             if (accessCheckResponse.isAuthorized) {

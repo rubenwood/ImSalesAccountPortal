@@ -25,53 +25,6 @@ let pracInfo;
 window.onload = function() {
     document.getElementById('loginModal').style.display = 'block';
 };
-function getLessonInfo(){
-    const url = `/getLessonInfo`;
-    let area = "ucla";
-  
-    fetch(url, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ area }) 
-    })
-    .then(response => {
-        if (!response.ok) {
-            throw new Error('Network response was not ok');
-        }
-        
-        return response.json();
-    })
-    .then(data =>{
-        lessonInfo = data;
-    })
-  }
-  function getPracInfo(){
-    const url = `/getPracInfo`;
-    let area = "ucla";
-    
-    fetch(url, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ area }) 
-    })
-    .then(response => {
-        if (!response.ok) {
-            throw new Error('Network response was not ok');
-        }
-        
-        return response.json();
-    })
-    .then(data =>{        
-        pracInfo = data;
-    })
-  }
-  getLessonInfo();
-  getPracInfo();
-
 
 // public button event, when clicked, updates confluence page
 export function callUpdateConfluencePage(email, pass, area, expiry, createdBy, createdFor){
@@ -158,7 +111,6 @@ function fetchAndPopulate() {
         })
         .catch(error => console.error('Error fetching data:', error));
 }
-// Fetch and populate on page load
 fetchAndPopulate();
 
 // Function to fetch user data for a given email
@@ -221,8 +173,7 @@ function fetchUserData(playFabID) {
     });
 }
 
-
-
+// GENERATE REPORT
 let reportData = [];
 // Function to generate the report
 export async function generateReport() {
@@ -311,6 +262,7 @@ export async function generateReport() {
                         // add the unformatted data for the report
                         let activityData = { 
                             activityID:activity.activityID,
+                            activityTitle: activity.activityTitle,
                             plays:activity.plays.length,
                             totalSessionTime:totalSessionTime,
                             bestScore:bestScore
@@ -450,7 +402,7 @@ async function getSegmentsClicked(){
 
     let segmentResponse = await fetchSegments();
     let segments = segmentResponse.data.Segments;
-    console.log(segments);
+    //console.log(segments);
     populateSegmentsDropdown(segments);
 }
 function populateSegmentsDropdown(segments) {
@@ -503,7 +455,7 @@ async function getPlayersInSegmentClicked(){
 
      // Wait for all promises to resolve
      const emailList = await Promise.all(emailPromises);
-     console.log(emailList);
+     //console.log(emailList);
      const emailListString = emailList.join('\n');
     // Set the email list string as the value of the textarea
     document.getElementById("emailList").value = emailListString;
