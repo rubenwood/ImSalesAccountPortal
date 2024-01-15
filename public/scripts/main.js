@@ -247,7 +247,8 @@ export async function generateReport() {
                         daysToExpire: daysToExpire,
                         createdBy: createdBy,
                         createdFor: createdFor,
-                        activityData: formatActivityData(activityDataForReport),
+                        activityData: activityDataForReport,
+                        activityDataFormatted: formatActivityData(activityDataForReport),
                         totalPlays,
                         totalPlayTime,
                         averageTimePerPlay
