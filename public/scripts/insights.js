@@ -54,19 +54,15 @@ function findPlayersWithMostPlayTime(reportData, start, end) {
     return output;
 }
 function findPlayersWithLeastPlayTime(reportData, start, end) {
-    // Sort the data by totalPlayTime in ascending order
     const sortedData = reportData.slice().sort((a, b) => a.totalPlayTime - b.totalPlayTime);
 
-    // Adjusting start and end to be zero-based index
     start = Math.max(start - 1, 0);
     end = Math.min(end, reportData.length);
 
-    // Slice the sorted array to get the range
     const selectedPlayers = sortedData.slice(start, end);
 
     let output = '<h2>Players with the least playtime</h2><br/>';
 
-    // Format the result for display (you can customize this part as needed)
     selectedPlayers.map((player, index) => {
         output += `${start + index + 1}. ${player.email}, Total Play Time: ${formatTime(player.totalPlayTime)}<br/>`;
     }).join('\n');
@@ -144,11 +140,9 @@ function findPlayersWithMostUniqueActivitiesPlayed(reportData, start, end) {
 
 // Get most played activity & Get least played activity
 export function findMostPlayedActivities(reportData, start, end) {
-    // Object to hold activity counts
     let activityCounts = {};
 
     reportData.forEach(data => {
-        console.log(data);
         // Ensure the player has valid activity data
         if (data.activityData && Array.isArray(data.activityData)) {
                 data.activityData.forEach(activity => {
