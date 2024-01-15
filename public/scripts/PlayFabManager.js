@@ -1,4 +1,4 @@
-import { callUpdateConfluencePage } from "./main.js";
+import { callUpdateConfluencePage } from "./confluence.js";
 const titleId = "29001";
 let accessLevel;
 

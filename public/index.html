@@ -48,6 +48,7 @@
     <textarea id="emailList" placeholder="Enter email addresses here, one per line"></textarea>
     <div class="button-container">
         <input type="button" id="generateReportButton" value="Generate Report">
+        <input type="button" id="insightsButton" value="Insights">
         <input type="button" id="exportReportButton" value="Export to Excel">
     </div>
     <br /><br />
@@ -65,9 +66,7 @@
                 <th>Player Data</th>
             </tr>
         </thead>
-        <tbody id="reportTableBody">
-            <!-- Rows will be added here by the generateReport() function -->
-        </tbody>
+        <tbody id="reportTableBody"><!-- Rows will be added here by the generateReport() function --></tbody>
     </table>
 </div>
 <div id="playerDataModal" class="modal">
@@ -76,10 +75,19 @@
         <div id="playerDataModalBody"></div>
     </div>
 </div>
+<div id="insightsModal" class="modal">
+    <div class="modal-content">
+        <span class="close" id="closeInsightsButton">&times;</span>
+        <h2>Insights</h2>        
+        <div id="insightsContent">TEST<!-- Insights will be displayed here --></div>
+    </div>
+</div>
 
 <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.1/dist/confetti.browser.js"></script>
 <script type="module" src="scripts/main.js"></script>
+<script type="module" src="scripts/insights.js"></script>
 <script type="module" src="scripts/PlayFabManager.js"></script>
+<script type="module" src="scripts/confluence.js"></script>
 <script type="text/javascript" src="scripts/asyncTools.js"></script>
 <script type="text/javascript" src="scripts/utils.js"></script>
 

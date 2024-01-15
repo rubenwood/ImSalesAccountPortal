@@ -2,7 +2,6 @@ import { fetchUserAccess } from "./PlayFabManager.js";
 import { Login, RegisterUserEmailAddress } from './PlayFabManager.js';
 
 document.addEventListener('DOMContentLoaded', () => {
-    // Bind event listeners
     document.getElementById('loginButton').addEventListener('click', Login);
     document.getElementById('registerButton').addEventListener('click', RegisterUserEmailAddress);
     document.getElementById('generatePassword').addEventListener('click', generatePass);
@@ -22,40 +21,6 @@ async function canAccess(){
 window.onload = function() {
     document.getElementById('loginModal').style.display = 'block';
 };
-
-// public button event, when clicked, updates confluence page
-export function callUpdateConfluencePage(email, pass, area, expiry, createdBy, createdFor){
-    const pageId = '929333296';
-    const url = `/update-confluence-page/${pageId}`;
-
-    fetch(url, {
-        method: 'PUT',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email, pass, area, expiry, createdBy, createdFor }) 
-    })
-    .then(response => {
-        if (!response.ok) {
-            throw new Error('Network response was not ok');
-        }
-        return response.json();
-    })
-    .then(data => {
-        //console.log('Success:', data);
-        confetti({
-            particleCount: 100,
-            spread: 70,
-            origin: { y: 0.6 }
-        });
-
-        document.getElementById("resultOutput").innerHTML = "Account Created, Data added, confluence page updated:\nhttps://immersify.atlassian.net/wiki/spaces/DEVTeam/pages/929333296/Test+Accounts+Automated";
-        document.getElementById("registerButton").value  = "Register";
-    })
-    .catch((error) => {
-        console.error('Error:', error);
-    });
-}
 
 export function generatePass() {
     const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
@@ -171,7 +136,7 @@ function fetchUserData(playFabID) {
 }
 
 // GENERATE REPORT
-let reportData = [];
+export let reportData = [];
 // Function to generate the report
 export async function generateReport() {
     let hasAccess = await canAccess();
