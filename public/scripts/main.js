@@ -1,5 +1,5 @@
 import { canAccess, Login, RegisterUserEmailAddress } from './PlayFabManager.js';
-import { getTotalPlayTime } from './insights.js';
+import { getTotalPlayTime, findPlayersWithMostPlayTime, findPlayersWithMostPlays, findPlayersWithMostUniqueActivitiesPlayed, findMostPlayedActivities } from './insights.js';
 import { formatTime, formatTimeToHHMMSS, formatActivityData, getAcademicAreas } from './utils.js';
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -462,10 +462,17 @@ function exportToExcel() {
     let workbook = XLSX.utils.book_new();
 
     // add any relevant insights data
-    let totalPlayTimeAcrossAllUsersSeconds = getTotalPlayTime(reportData);
-    let totalPlayTimeAcrossAllUsersSecondsFormatted = formatTime(totalPlayTimeAcrossAllUsersSeconds);
+    let totalPlayTimeAcrossAllUsersSeconds = getTotalPlayTime(exportData);
+    let playersWithMostPlayTime = JSON.stringify(findPlayersWithMostPlayTime(exportData, 1, 3));
+    let playersWithMostPlays = JSON.stringify(findPlayersWithMostPlays(exportData, 1, 3));
+    let playersWithMostUniqueActivities = JSON.stringify(findPlayersWithMostUniqueActivitiesPlayed(exportData, 1, 3));
+    let mostPlayedActivities = JSON.stringify(findMostPlayedActivities(exportData, 1, 10));
     let insightsExportDataJSON = {
-        totalPlayTimeAcrossAllUsers: formatTimeToHHMMSS(totalPlayTimeAcrossAllUsersSeconds)
+        totalPlayTimeAcrossAllUsers: formatTimeToHHMMSS(totalPlayTimeAcrossAllUsersSeconds),
+        usersWithHighestPlayTime: playersWithMostPlayTime,
+        usersWithMostPlays: playersWithMostPlays,
+        userWithMostPlayedUniqueActivities: playersWithMostUniqueActivities,
+        mostPlayedActivitiesOverall: mostPlayedActivities
     }
     let insightsExportData = [];
     insightsExportData.push(insightsExportDataJSON);

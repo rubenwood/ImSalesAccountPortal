@@ -1,5 +1,5 @@
 import { reportData } from "./main.js";
-import {formatTime } from './utils.js';
+import { formatTime } from './utils.js';
 
 document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('insightsButton').addEventListener('click', showInsightsModal);
@@ -8,20 +8,19 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // INSIGHT DATA MODAL
 export function showInsightsModal() {   
-    getTotalPlayTime(reportData);
     let totalPlayTimeAcrossAllUsers = getTotalPlayTimeHTML(reportData);
-    let playerWithMostPlayTime = findPlayersWithMostPlayTime(reportData, 1, 3);
-    let playerWithLeastPlayTime = findPlayersWithLeastPlayTime(reportData, 1, 3);
-    let playersWithMostPlays = findPlayersWithMostPlays(reportData, 1, 3);
-    let playersWithLeastPlays = findPlayersWithLeastPlays(reportData, 1, 3);
-    let playersWithMostUniqueActivities = findPlayersWithMostUniqueActivitiesPlayed(reportData, 1, 3);
-    let mostPlayedActivities = findMostPlayedActivities(reportData, 1, 10);
+    let playersWithMostPlayTime = findPlayersWithMostPlayTimeHTML(reportData, 1, 3);
+    let playersWithLeastPlayTime = findPlayersWithLeastPlayTimeHTML(reportData, 1, 3);
+    let playersWithMostPlays = findPlayersWithMostPlaysHTML(reportData, 1, 3);
+    let playersWithLeastPlays = findPlayersWithLeastPlaysHTML(reportData, 1, 3);
+    let playersWithMostUniqueActivities = findPlayersWithMostUniqueActivitiesPlayedHTML(reportData, 1, 3);
+    let mostPlayedActivities = findMostPlayedActivitiesHTML(reportData, 1, 10);
     let playsBetweenDates = findPlaysBetweenDatesHTML(reportData, '01/01/2024 00:00:00', '16/01/2024 23:59:59');
 
     let content = "";
     content += totalPlayTimeAcrossAllUsers;
-    content += playerWithMostPlayTime;
-    content += playerWithLeastPlayTime;
+    content += playersWithMostPlayTime;
+    content += playersWithLeastPlayTime;
     content += playersWithMostPlays;
     content += playersWithLeastPlays;
     content += playersWithMostUniqueActivities;
@@ -50,7 +49,7 @@ function getTotalPlayTimeHTML(reportData){
 }
 
 // Get player most play time & Get player least play time
-function findPlayersWithMostPlayTime(reportData, start, end) {
+export function findPlayersWithMostPlayTime(reportData, start, end) {
     // Sort the data by totalPlayTime in descending order
     const sortedData = reportData.slice().sort((a, b) => b.totalPlayTime - a.totalPlayTime);
 
@@ -60,50 +59,61 @@ function findPlayersWithMostPlayTime(reportData, start, end) {
 
     // Slice the sorted array to get the range
     const selectedPlayers = sortedData.slice(start, end);
-
+    return selectedPlayers;
+}
+function findPlayersWithMostPlayTimeHTML(reportData, start, end){
+    let selectedPlayers = findPlayersWithMostPlayTime(reportData, start, end);
     let output = '<h2>Players with the most playtime</h2><br/>';
 
     // Format the result for display (you can customize this part as needed)
     selectedPlayers.map((player, index) => {
-        output += `${start + index + 1}. ${player.email}, Total Play Time: ${formatTime(player.totalPlayTime)}<br/>`;
+        output += `${start + index}. ${player.email}, Total Play Time: ${formatTime(player.totalPlayTime)}<br/>`;
     }).join('\n');
 
     return output;
 }
-function findPlayersWithLeastPlayTime(reportData, start, end) {
+
+export function findPlayersWithLeastPlayTime(reportData, start, end) {
     const sortedData = reportData.slice().sort((a, b) => a.totalPlayTime - b.totalPlayTime);
 
     start = Math.max(start - 1, 0);
     end = Math.min(end, reportData.length);
 
     const selectedPlayers = sortedData.slice(start, end);
-
+    return selectedPlayers;
+}
+function findPlayersWithLeastPlayTimeHTML(reportData, start, end) {
+    let selectedPlayers = findPlayersWithLeastPlayTime(reportData, start, end);
     let output = '<h2>Players with the least playtime</h2><br/>';
 
     selectedPlayers.map((player, index) => {
-        output += `${start + index + 1}. ${player.email}, Total Play Time: ${formatTime(player.totalPlayTime)}<br/>`;
+        output += `${start + index}. ${player.email}, Total Play Time: ${formatTime(player.totalPlayTime)}<br/>`;
     }).join('\n');
 
     return output;
 }
 
 // Get player with most plays & Get player with least plays
-function findPlayersWithMostPlays(reportData, start, end) {
+export function findPlayersWithMostPlays(reportData, start, end) {
     const sortedData = reportData.slice().sort((a, b) => b.totalPlays - a.totalPlays);
 
     start = Math.max(start - 1, 0);
     end = Math.min(end, reportData.length);
 
     const selectedPlayers = sortedData.slice(start, end);
-
+    return selectedPlayers;
+}
+function findPlayersWithMostPlaysHTML(reportData, start, end) {
+    let selectedPlayers = findPlayersWithMostPlays(reportData, start, end);
     let output = '<h2>Players with the most plays</h2><br/>';
 
     selectedPlayers.map((player, index) => {
-        output += `${start + index + 1}. ${player.email}, Total Plays: ${player.totalPlays}<br/>`;
+        output += `${start + index}. ${player.email}, Total Plays: ${player.totalPlays}<br/>`;
     }).join('\n');
 
     return output;
 }
+
 function findPlayersWithLeastPlays(reportData, start, end) {
     const sortedData = reportData.slice().sort((a, b) => a.totalPlays - b.totalPlays);
 
@@ -111,18 +121,22 @@ function findPlayersWithLeastPlays(reportData, start, end) {
     end = Math.min(end, reportData.length);
 
     const selectedPlayers = sortedData.slice(start, end);
-
+    return selectedPlayers;
+}
+function findPlayersWithLeastPlaysHTML(reportData, start, end){
+    let selectedPlayers = findPlayersWithLeastPlays(reportData, start, end);
     let output = '<h2>Players with the least plays</h2><br/>';
 
     selectedPlayers.map((player, index) => {
-        output += `${start + index + 1}. ${player.email}, Total Plays: ${player.totalPlays}<br/>`;
+        output += `${start + index}. ${player.email}, Total Plays: ${player.totalPlays}<br/>`;
     }).join('\n');
 
     return output;
 }
 
+
 // Get player with most activities played & Get player with least activities played
-function findPlayersWithMostUniqueActivitiesPlayed(reportData, start, end) {
+export function findPlayersWithMostUniqueActivitiesPlayed(reportData, start, end) {
     // Map each player to an object with email and count of unique activity IDs
     const playersWithUniqueActivityCount = reportData.map(data => {        
         if (data === undefined || !data.activityData || !Array.isArray(data.activityData)) {
@@ -143,12 +157,15 @@ function findPlayersWithMostUniqueActivitiesPlayed(reportData, start, end) {
 
     // Slice the array to get the specified range
     const selectedPlayers = playersWithUniqueActivityCount.slice(start, end);
-    
+    return selectedPlayers;
+}
+function findPlayersWithMostUniqueActivitiesPlayedHTML(reportData, start, end) {
+    let selectedPlayers = findPlayersWithMostUniqueActivitiesPlayed(reportData, start, end);
     let output =  '<h2>Players with the most unique activities played</h2><br/>';
 
     // Format the result for display
     selectedPlayers.forEach((player, index) => {
-        output += `${start + index + 1}. ${player.email}, unique activities played: ${player.uniqueActivitiesCount}<br/>`;
+        output += `${start + index}. ${player.email}, unique activities played: ${player.uniqueActivitiesCount}<br/>`;
     });
 
     return output;
@@ -184,12 +201,15 @@ export function findMostPlayedActivities(reportData, start, end) {
 
     // Slice the array to get the specified range
     const mostPlayedActivities = sortedActivities.slice(start, end);
-
+    return mostPlayedActivities;
+}
+function findMostPlayedActivitiesHTML(reportData, start, end) {
+    let mostPlayedActivities = findMostPlayedActivities(reportData, start, end);
     let output = '<h2>Most Played Activities</h2><br/>';
 
     // Format the result for display
     mostPlayedActivities.forEach((activity, index) => {
-        output += `${start + index + 1}. ID: ${activity.id}, Title: ${activity.title}, Total Times Played: ${activity.count}<br/>`;
+        output += `${start + index}. ID: ${activity.id}, Title: ${activity.title}, Total Times Played: ${activity.count}<br/>`;
     });
 
     return output;
