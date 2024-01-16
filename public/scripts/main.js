@@ -1,4 +1,6 @@
 import { canAccess, Login, RegisterUserEmailAddress } from './PlayFabManager.js';
+import { getTotalPlayTime } from './insights.js';
+import { formatTime, formatTimeToHHMMSS, formatActivityData, getAcademicAreas } from './utils.js';
 
 document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('loginButton').addEventListener('click', Login);
@@ -13,8 +15,6 @@ document.addEventListener('DOMContentLoaded', () => {
 window.onload = function() {
     document.getElementById('loginModal').style.display = 'block';
 };
-
-
 
 export function generatePass() {
     const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
@@ -41,33 +41,23 @@ export function generatePass() {
 }
 
 // POPULATE DROP DOWN (ACADEMIC AREA)
-function populateDropdown(data) {
-    const selectElement = document.getElementById('academicArea');
-    data.forEach(item => {
-        const option = document.createElement('option');
-        option.value = item.id;
-        option.textContent = item.id;
-        selectElement.appendChild(option);
-    });
+async function initializeDropdown() {
+    try {
+        const academicAreas = await getAcademicAreas();
+        if (academicAreas) {
+            const selectElement = document.getElementById('academicArea');
+            academicAreas.forEach(item => {
+                const option = document.createElement('option');
+                option.value = item.id;
+                option.textContent = item.id;
+                selectElement.appendChild(option);
+            });
+        }
+    } catch (error) {
+        console.error('Error:', error);
+    }
 }
-
-// Function to fetch and process JSON data
-function fetchAndPopulate() {
-    const url = `/getAcademicAreas`;
-
-    fetch(url)
-        .then(response => {
-            if (!response.ok) {
-                throw new Error('Network response was not ok');
-            }
-            return response.json();
-        })
-        .then(data => {
-            populateDropdown(data.academicAreas);
-        })
-        .catch(error => console.error('Error fetching data:', error));
-}
-fetchAndPopulate();
+initializeDropdown();
 
 // Function to fetch user data for a given email
 function fetchUserAccInfoByEmail(email) {
@@ -205,7 +195,7 @@ export async function generateReport() {
                         let bestScore = 0;
                         totalPlays += activity.plays.length;
                         activity.plays.forEach(play => {
-                            totalSessionTime += Math.round(play.sessionTime);
+                            totalSessionTime += Math.round(Math.abs(play.sessionTime));
                             totalPlayTime += totalSessionTime;
                             if(play.normalisedScore > bestScore){
                                 bestScore = Math.round(play.normalisedScore * 100);
@@ -266,7 +256,7 @@ export async function generateReport() {
                         totalPlays,
                         totalPlayTime,
                         averageTimePerPlay
-                    }
+                    }                    
                     exportData.push(userExportData);
                 }else{
                     addCellToRow(row, 'No Player Data', false);
@@ -471,9 +461,53 @@ let exportData;
 function exportToExcel() {
     let workbook = XLSX.utils.book_new();
 
-    
-    let worksheet = XLSX.utils.json_to_sheet(exportData);
+    // add any relevant insights data
+    let totalPlayTimeAcrossAllUsersSeconds = getTotalPlayTime(reportData);
+    let totalPlayTimeAcrossAllUsersSecondsFormatted = formatTime(totalPlayTimeAcrossAllUsersSeconds);
+    let insightsExportDataJSON = {
+        totalPlayTimeAcrossAllUsers: formatTimeToHHMMSS(totalPlayTimeAcrossAllUsersSeconds)
+    }
+    let insightsExportData = [];
+    insightsExportData.push(insightsExportDataJSON);
 
-    XLSX.utils.book_append_sheet(workbook, worksheet, "Report");
+    let allData = [];
+    exportData.forEach(dataToExport => {
+        let isFirstActivity = true; // Flag to check if it's the first activity for the user
+
+        dataToExport.activityDataFormatted.forEach(activity => {
+            let row = {
+                activityID: activity.activityID,
+                activityTitle: activity.activityTitle,
+                playDate: activity.playDate,
+                score: (activity.score * 100) + '%',
+                sessionTime: formatTimeToHHMMSS(activity.sessionTime)
+            };
+
+            if (isFirstActivity) {
+                // Include user data only for the first activity
+                row = {                    
+                    email: dataToExport.email,
+                    createdDate: dataToExport.createdDate,
+                    lastLoginDate: dataToExport.lastLoginDate,
+                    daysSinceCreation: dataToExport.daysSinceCreation,
+                    accountExpiryDate: dataToExport.accountExpiryDate,
+                    daysToExpire: dataToExport.daysToExpire,
+                    totalPlays: dataToExport.totalPlays,
+                    totalPlayTime: formatTimeToHHMMSS(dataToExport.totalPlayTime),
+                    averageTimePerPlay: formatTimeToHHMMSS(dataToExport.averageTimePerPlay),
+                    ...row, // Activity data
+                };
+                isFirstActivity = false; // Set the flag to false after adding user data
+            }
+            allData.push(row);
+        });
+        allData.push({});
+    });
+
+    let insightsWorksheet = XLSX.utils.json_to_sheet(insightsExportData);
+    let userDataWorksheet = XLSX.utils.json_to_sheet(allData);    
+
+    XLSX.utils.book_append_sheet(workbook, insightsWorksheet, "Insights");
+    XLSX.utils.book_append_sheet(workbook, userDataWorksheet, "Report");
     XLSX.writeFile(workbook, "Report.xlsx");
 }

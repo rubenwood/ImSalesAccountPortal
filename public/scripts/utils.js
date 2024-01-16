@@ -1,4 +1,4 @@
-function formatTime(secondsTotal) {
+export function formatTime(secondsTotal) {
     const hours = Math.floor(secondsTotal / 3600);
     const minutes = Math.floor((secondsTotal % 3600) / 60);
     const seconds = secondsTotal % 60;
@@ -14,15 +14,34 @@ function formatTime(secondsTotal) {
 
     return formattedTime;
 }
+export function formatTimeToHHMMSS(seconds) {
+    seconds = Math.round(seconds);
+    const hours = Math.floor(seconds / 3600);
+    const minutes = Math.floor((seconds % 3600) / 60);
+    const secs = seconds % 60;
 
-function formatActivityData(activityData) {
-    return activityData.map(activity => {
-        let playsFormatted = activity.plays.map(play => {
-            return `Play Date: ${play.playDate}, Best Score: ${Math.round(play.normalisedScore * 100)}%, Session Time: ${Math.round(play.sessionTime)} seconds`;
-        }).join(", "); // Join each play's string with a comma
+    const paddedHours = String(hours).padStart(2, '0');
+    const paddedMinutes = String(minutes).padStart(2, '0');
+    const paddedSeconds = String(secs).padStart(2, '0');
 
-        return `Activity ID: ${activity.activityID}, Activity Name: ${activity.activityTitle}, Plays: [${playsFormatted}], Total Session Time: ${Math.round(activity.totalSessionTime)}, Best Score: ${activity.bestScore}%`;
-    }).join("\n"); // Join each activity's string with a newline
+    return `${paddedHours}:${paddedMinutes}:${paddedSeconds}`;
+}
+
+export function formatActivityData(activityData) {
+    let formattedData = [];
+    //console.log(activityData);
+    activityData.forEach(activity => {
+        activity.plays.forEach(play => {
+            formattedData.push({
+                activityID: activity.activityID,
+                activityTitle: activity.activityTitle,
+                playDate: play.playDate,
+                score: play.normalisedScore,
+                sessionTime: play.sessionTime
+            });
+        });
+    });
+    return formattedData;
 }
 
 // GET LESSON INFO & PRAC INFO
@@ -70,3 +89,23 @@ function getPracInfo(){
         pracInfo = data;
     })
 }
+
+//getLessonInfo();
+//getPracInfo();
+
+export let academicAreas;
+export async function getAcademicAreas() {
+    const url = `/getAcademicAreas`;
+
+    try {
+        const response = await fetch(url);
+        if (!response.ok) {
+            throw new Error('Network response was not ok');
+        }
+        const data = await response.json();
+        return data.academicAreas;
+    } catch (error) {
+        console.error('Error fetching data:', error);
+    }
+}
+getAcademicAreas();

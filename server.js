@@ -30,22 +30,6 @@ app.get('/getAcademicAreas', async (req, res) => {
       res.status(500).send('Error fetching data from S3');
   }
 });
-// GET PRESIGNED URL (UNUSED)
-app.get('/getPresignedUrl', (req, res) => {
-  const s3Params = {
-      Bucket: process.env.AWS_BUCKET,
-      Key: 'TestFiles/OtherData/AcademicAreasData.json',
-      Expires: 60 // The URL will be valid for 60 seconds
-  };
-  s3.getSignedUrl('getObject', s3Params, (err, url) => {
-      if (err) {
-          console.error('Error:', err);
-          return res.status(500).send('Could not generate URL');
-      }
-      res.send({ url });
-  });
-});
-
 // GET LESSON INFO
 app.post('/getLessonInfo', async (req, res) => {
   try {

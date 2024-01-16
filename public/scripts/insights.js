@@ -1,4 +1,5 @@
 import { reportData } from "./main.js";
+import {formatTime } from './utils.js';
 
 document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('insightsButton').addEventListener('click', showInsightsModal);
@@ -7,6 +8,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // INSIGHT DATA MODAL
 export function showInsightsModal() {   
+    getTotalPlayTime(reportData);
+    let totalPlayTimeAcrossAllUsers = getTotalPlayTimeHTML(reportData);
     let playerWithMostPlayTime = findPlayersWithMostPlayTime(reportData, 1, 3);
     let playerWithLeastPlayTime = findPlayersWithLeastPlayTime(reportData, 1, 3);
     let playersWithMostPlays = findPlayersWithMostPlays(reportData, 1, 3);
@@ -16,6 +19,7 @@ export function showInsightsModal() {
     let playsBetweenDates = findPlaysBetweenDatesHTML(reportData, '01/01/2024 00:00:00', '16/01/2024 23:59:59');
 
     let content = "";
+    content += totalPlayTimeAcrossAllUsers;
     content += playerWithMostPlayTime;
     content += playerWithLeastPlayTime;
     content += playersWithMostPlays;
@@ -29,6 +33,20 @@ export function showInsightsModal() {
 }
 export function closeInsightsModal() {
     document.getElementById('insightsModal').style.display = 'none';
+}
+
+// Get total play time across all users
+export function getTotalPlayTime(reportData){
+    let totalPlayTimeAcrossAllUsers = 0;
+    reportData.forEach((data) => {
+        totalPlayTimeAcrossAllUsers += data.totalPlayTime;
+    });
+
+    return totalPlayTimeAcrossAllUsers;
+}
+function getTotalPlayTimeHTML(reportData){
+    let totalPlayTimeAcrossAllUsers = getTotalPlayTime(reportData);
+    return `<h2>Total Play Time across all users</h2><br/>${formatTime(totalPlayTimeAcrossAllUsers)}`;
 }
 
 // Get player most play time & Get player least play time
