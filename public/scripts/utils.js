@@ -70,5 +70,3 @@ function getPracInfo(){
         pracInfo = data;
     })
 }
-  //getLessonInfo();
-  //getPracInfo();

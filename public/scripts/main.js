@@ -1,5 +1,4 @@
-import { fetchUserAccess } from "./PlayFabManager.js";
-import { Login, RegisterUserEmailAddress } from './PlayFabManager.js';
+import { canAccess, Login, RegisterUserEmailAddress } from './PlayFabManager.js';
 
 document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('loginButton').addEventListener('click', Login);
@@ -11,16 +10,11 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('getSegmentsButton').addEventListener('click', getSegmentsClicked);
     document.getElementById('getSegmentPlayersButton').addEventListener('click', getPlayersInSegmentClicked);
 });
-
-async function canAccess(){
-    let accessCheckResponse = await fetchUserAccess();
-    if(accessCheckResponse == undefined){ return false; }
-    if (!accessCheckResponse.isAuthorized) { return false; } else { return true; }
-}
-
 window.onload = function() {
     document.getElementById('loginModal').style.display = 'block';
 };
+
+
 
 export function generatePass() {
     const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';

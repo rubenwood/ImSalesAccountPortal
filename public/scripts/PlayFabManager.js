@@ -213,3 +213,9 @@ function getUserData(keys) {
         
 //     }
 // }
+
+export async function canAccess(){
+    let accessCheckResponse = await fetchUserAccess();
+    if(accessCheckResponse == undefined){ return false; }
+    if (!accessCheckResponse.isAuthorized) { return false; } else { return true; }
+}
