@@ -195,25 +195,8 @@ function getUserData(keys) {
         });
     });
 }
-// function GetPlayerProfile(playFabID){
-//     PlayFab.settings.titleId = titleId;
-//     var request = {
-//         PlayFabId: playFabID
-//     };
-//     PlayFabClientSDK.GetPlayerProfile(request, GetPlayerProfileCallback);
-// }
-// var GetPlayerProfileCallback = function(result, error){
-//     document.getElementById("resultOutput").innerHTML = "got player profile";
 
-//     if (result !== null) {
-//         console.log("player profile: " + result);
-        
-//     } else if (error !== null) {
-//         console.error("Error: " + error);
-        
-//     }
-// }
-
+// CAN ACCESS
 export async function canAccess(){
     let accessCheckResponse = await fetchUserAccess();
     if(accessCheckResponse == undefined){ return false; }

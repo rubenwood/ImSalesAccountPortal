@@ -157,6 +157,7 @@ export function findPlayersWithMostUniqueActivitiesPlayed(reportData, start, end
 
     // Slice the array to get the specified range
     const selectedPlayers = playersWithUniqueActivityCount.slice(start, end);
+    console.log(selectedPlayers);
     return selectedPlayers;
 }
 function findPlayersWithMostUniqueActivitiesPlayedHTML(reportData, start, end) {

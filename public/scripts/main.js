@@ -462,31 +462,40 @@ function exportToExcel() {
     let workbook = XLSX.utils.book_new();
 
     // add any relevant insights data
-    let totalPlayTimeAcrossAllUsersSeconds = getTotalPlayTime(exportData);
-    let playersWithMostPlayTime = JSON.stringify(findPlayersWithMostPlayTime(exportData, 1, 3));
-    let playersWithMostPlays = JSON.stringify(findPlayersWithMostPlays(exportData, 1, 3));
-    let playersWithMostUniqueActivities = JSON.stringify(findPlayersWithMostUniqueActivitiesPlayed(exportData, 1, 3));
-    let mostPlayedActivities = JSON.stringify(findMostPlayedActivities(exportData, 1, 10));
-    let insightsExportDataJSON = {
-        totalPlayTimeAcrossAllUsers: formatTimeToHHMMSS(totalPlayTimeAcrossAllUsersSeconds),
-        usersWithHighestPlayTime: playersWithMostPlayTime,
-        usersWithMostPlays: playersWithMostPlays,
-        userWithMostPlayedUniqueActivities: playersWithMostUniqueActivities,
-        mostPlayedActivitiesOverall: mostPlayedActivities
-    }
-    let insightsExportData = [];
-    insightsExportData.push(insightsExportDataJSON);
+    let totalPlayTimeAcrossAllUsersSeconds = getTotalPlayTime(exportData); // use reportData rather than exportData??
+    let playersWithMostPlayTime = findPlayersWithMostPlayTime(exportData, 1, 3); // use reportData rather than exportData??
+    let playersWithMostPlays = findPlayersWithMostPlays(exportData, 1, 3);
+    let playersWithMostUniqueActivities = findPlayersWithMostUniqueActivitiesPlayed(reportData, 1, 3);
+    let mostPlayedActivities = findMostPlayedActivities(exportData, 1, 10); // use reportData rather than exportData??
+
+    let insightsExportData = [
+        { insight: 'Total Play Time Across All Users', value: formatTimeToHHMMSS(totalPlayTimeAcrossAllUsersSeconds) }
+    ];
+
+    playersWithMostPlayTime.forEach(player => {
+        insightsExportData.push({ insight: 'Player With Most Play Time', value: player.email + ' - ' + formatTimeToHHMMSS(player.totalPlayTime) });
+    });
+    playersWithMostPlays.forEach(player => {
+        insightsExportData.push({ insight: 'Player With Most Plays', value: player.email + ' - ' + player.totalPlays });
+    });
+    playersWithMostUniqueActivities.forEach(player => {
+        insightsExportData.push({ insight: 'Player With Most Unique Activities', value: player.email + ' - ' + player.uniqueActivitiesCount });
+    });
+    mostPlayedActivities.forEach(activity => {
+        insightsExportData.push({ insight: 'Most Played Activities', value: activity.activityTitle + ' - ' + activity.totalPlays });
+    });
 
     let allData = [];
     exportData.forEach(dataToExport => {
         let isFirstActivity = true; // Flag to check if it's the first activity for the user
 
         dataToExport.activityDataFormatted.forEach(activity => {
+            let scorePercentage = Math.round(activity.score * 100)
             let row = {
                 activityID: activity.activityID,
                 activityTitle: activity.activityTitle,
                 playDate: activity.playDate,
-                score: (activity.score * 100) + '%',
+                score: scorePercentage + '%',
                 sessionTime: formatTimeToHHMMSS(activity.sessionTime)
             };
 
@@ -508,7 +517,7 @@ function exportToExcel() {
             }
             allData.push(row);
         });
-        allData.push({});
+        allData.push({}); // add an empty row to divide the user data chunks
     });
 
     let insightsWorksheet = XLSX.utils.json_to_sheet(insightsExportData);
