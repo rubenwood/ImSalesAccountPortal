@@ -143,6 +143,7 @@ export async function generateReport() {
     if(!hasAccess){ return; }
 
     reportData = []; // reset the report data
+    exportData = [];
 
     const emailListText = document.getElementById("emailList").value;
     const emailList = emailListText.split('\n').filter(Boolean); // Split by newline and filter out empty strings
@@ -222,32 +223,35 @@ export async function generateReport() {
                         playerDataContent += activityContent;
 
                         // add the unformatted data for the report
-                        let activityData = { 
+                        let userActivityData = {                             
                             activityID:activity.activityID,
                             activityTitle: activity.activityTitle,
-                            plays:activity.plays.length,
+                            plays:activity.plays,
+                            playCount:activity.plays.length,
                             totalSessionTime:totalSessionTime,
                             bestScore:bestScore
                         };
-                        activityDataForReport.push(activityData);
+                        activityDataForReport.push(userActivityData);
                     });
                     playerDataContent += `<h1>Total Plays: ${totalPlays}</h1>`;
+                    playerDataContent += `<h1>Total Activities Played: ${playerData.activities.length}</h1>`;
                     playerDataContent += `<h1>Total Play Time: ${formatTime(totalPlayTime)}</h1>`;
                     let averageTimePerPlay = Math.round(totalPlayTime / totalPlays); 
                     playerDataContent += `<h1>Avg. Time per activity: ${formatTime(averageTimePerPlay)}</h1>`;
                     addCellToRow(row, 'Expand Player Data', 1, true, playerDataContent);
                     
                     // add to stored data
-                    let playerDataForReport = {
-                        email: email,
+                    let playerDataForReport = { // (per user)
+                        userPlayFabId: userAccInfo.data.UserInfo.PlayFabId, // hide from exported report
+                        email:email,
                         createdDate: createdDate.toDateString(),
                         lastLoginDate: lastLoginDate.toDateString(),
                         daysSinceCreation: daysSinceCreation,
                         accountExpiryDate: accountExpiryDate,
-                        daysToExpire: daysToExpire,
-                        createdBy: createdBy,
-                        createdFor: createdFor,
-                        activityData: activityDataForReport,
+                        daysToExpire: daysToExpire, 
+                        createdBy: createdBy, // hide from exported report
+                        createdFor: createdFor, // hide from exported report
+                        activityData: activityDataForReport, // hide from exported report
                         activityDataFormatted: formatActivityData(activityDataForReport),
                         totalPlays,
                         totalPlayTime,
@@ -255,6 +259,21 @@ export async function generateReport() {
 
                     };
                     reportData.push(playerDataForReport);
+
+                    // slightly different data for export
+                    let userExportData = {
+                        email:email,
+                        createdDate: createdDate.toDateString(),
+                        lastLoginDate: lastLoginDate.toDateString(),
+                        daysSinceCreation: daysSinceCreation,
+                        accountExpiryDate: accountExpiryDate,
+                        daysToExpire: daysToExpire, 
+                        activityDataFormatted: formatActivityData(activityDataForReport),
+                        totalPlays,
+                        totalPlayTime,
+                        averageTimePerPlay
+                    }
+                    exportData.push(userExportData);
                 }else{
                     addCellToRow(row, 'No Player Data', false);
                 }
@@ -454,11 +473,12 @@ function fetchSegmentPlayers(reqSegmentID){
 }
 
 // EXPORT REPORT
+let exportData;
 function exportToExcel() {
     let workbook = XLSX.utils.book_new();
 
-    // Convert reportData to a worksheet
-    let worksheet = XLSX.utils.json_to_sheet(reportData);
+    
+    let worksheet = XLSX.utils.json_to_sheet(exportData);
 
     XLSX.utils.book_append_sheet(workbook, worksheet, "Report");
     XLSX.writeFile(workbook, "Report.xlsx");

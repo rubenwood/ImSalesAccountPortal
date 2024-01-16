@@ -17,7 +17,11 @@ function formatTime(secondsTotal) {
 
 function formatActivityData(activityData) {
     return activityData.map(activity => {
-      return `Activity ID: ${activity.activityID}, Activity Name: ${activity.activityTitle}, Plays: ${activity.plays}, Total Session Time: ${activity.totalSessionTime}, Best Score: ${activity.bestScore}%`;
+        let playsFormatted = activity.plays.map(play => {
+            return `Play Date: ${play.playDate}, Best Score: ${Math.round(play.normalisedScore * 100)}%, Session Time: ${Math.round(play.sessionTime)} seconds`;
+        }).join(", "); // Join each play's string with a comma
+
+        return `Activity ID: ${activity.activityID}, Activity Name: ${activity.activityTitle}, Plays: [${playsFormatted}], Total Session Time: ${Math.round(activity.totalSessionTime)}, Best Score: ${activity.bestScore}%`;
     }).join("\n"); // Join each activity's string with a newline
 }
 

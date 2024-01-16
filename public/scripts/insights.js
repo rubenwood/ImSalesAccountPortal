@@ -6,16 +6,14 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 // INSIGHT DATA MODAL
-export function showInsightsModal() {
-    console.log("show insights");
-    
-    // get the insights & populate html 
+export function showInsightsModal() {   
     let playerWithMostPlayTime = findPlayersWithMostPlayTime(reportData, 1, 3);
     let playerWithLeastPlayTime = findPlayersWithLeastPlayTime(reportData, 1, 3);
     let playersWithMostPlays = findPlayersWithMostPlays(reportData, 1, 3);
     let playersWithLeastPlays = findPlayersWithLeastPlays(reportData, 1, 3);
     let playersWithMostUniqueActivities = findPlayersWithMostUniqueActivitiesPlayed(reportData, 1, 3);
-    let mostPlayedActivities = findMostPlayedActivities(reportData, 1, 3);
+    let mostPlayedActivities = findMostPlayedActivities(reportData, 1, 10);
+    let playsBetweenDates = findPlaysBetweenDatesHTML(reportData, '01/01/2024 00:00:00', '16/01/2024 23:59:59');
 
     let content = "";
     content += playerWithMostPlayTime;
@@ -24,6 +22,7 @@ export function showInsightsModal() {
     content += playersWithLeastPlays;
     content += playersWithMostUniqueActivities;
     content += mostPlayedActivities;
+    content += playsBetweenDates;
 
     document.getElementById('insightsContent').innerHTML = content;
     document.getElementById('insightsModal').style.display = 'block';
@@ -108,7 +107,6 @@ function findPlayersWithLeastPlays(reportData, start, end) {
 function findPlayersWithMostUniqueActivitiesPlayed(reportData, start, end) {
     // Map each player to an object with email and count of unique activity IDs
     const playersWithUniqueActivityCount = reportData.map(data => {        
-        // Check if player has activities and they are an array
         if (data === undefined || !data.activityData || !Array.isArray(data.activityData)) {
             console.log(`No activities found for ${data.email}`);
             return { email: data.email, uniqueActivitiesCount: 0 };
@@ -146,25 +144,22 @@ export function findMostPlayedActivities(reportData, start, end) {
         // Ensure the player has valid activity data
         if (data.activityData && Array.isArray(data.activityData)) {
                 data.activityData.forEach(activity => {
-                const activityKey = activity.activityID + ' - ' + activity.activityTitle; // Unique key for each activity
-                // If the activity is already in the activityCounts object, increment its count
-                if (activityCounts[activityKey]) {
-                    activityCounts[activityKey].count += 1;
-                } else {
-                    // Otherwise, initialize it with a count of 1
-                    activityCounts[activityKey] = {
-                        id: activity.activityID,
-                        title: activity.activityTitle,
-                        count: 1
-                    };
-                }
+                    const activityKey = activity.activityID + ' - ' + activity.activityTitle;
+                    if (activityCounts[activityKey]) {
+                        activityCounts[activityKey].count += activity.playCount;
+                    } else {
+                        activityCounts[activityKey] = {
+                            id: activity.activityID,
+                            title: activity.activityTitle,
+                            count: activity.playCount
+                        };
+                    }
             });
         }
     });
 
     // Convert the object into an array and sort it by count in descending order
     const sortedActivities = Object.values(activityCounts).sort((a, b) => b.count - a.count);
-
     // Adjusting start and end to be zero-based index
     start = Math.max(start - 1, 0);
     end = Math.min(end, sortedActivities.length);
@@ -182,5 +177,43 @@ export function findMostPlayedActivities(reportData, start, end) {
     return output;
 }
 
+// Get total plays between dates
+function findPlaysBetweenDates(reportData, startDate, endDate) {
+    const parseDate = (dateString) => {
+        const parts = dateString.split(" ");
+        const dateParts = parts[0].split("/");
+        const timeParts = parts[1].split(":");
+        // Note: months are 0-based in JavaScript Date
+        return new Date(dateParts[2], dateParts[1] - 1, dateParts[0], timeParts[0], timeParts[1], timeParts[2]);
+    };
 
-// map plays per date
+    const startDateObj = parseDate(startDate);
+    const endDateObj = parseDate(endDate);
+    let playsWithinDateRange = [];
+
+    reportData.forEach(data => {
+        if (data.activityData && Array.isArray(data.activityData)) {
+            data.activityData.forEach(activity => {
+                if (activity.plays && Array.isArray(activity.plays)) {
+                    activity.plays.forEach(play => {
+                        const playDateObj = parseDate(play.playDate);
+
+                        if (playDateObj >= startDateObj && playDateObj <= endDateObj) {
+                            playsWithinDateRange.push(play);
+                        }
+                    });
+                }
+            });
+        }
+    });
+
+    return playsWithinDateRange;
+}
+// formats the output from findPlaysBetweenDates and returns HTML
+function findPlaysBetweenDatesHTML(reportData, startDate, endDate) {
+    let playsBetweenDates = findPlaysBetweenDates(reportData, startDate, endDate);
+
+    let output = `<h2>Total Plays between ${startDate} and ${endDate}</h2><br/>`;
+    output += playsBetweenDates.length;
+    return output;
+}
