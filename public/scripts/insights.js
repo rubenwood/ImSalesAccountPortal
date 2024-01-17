@@ -16,6 +16,7 @@ export function showInsightsModal() {
     let playersWithMostUniqueActivities = findPlayersWithMostUniqueActivitiesPlayedHTML(reportData, 1, 3);
     let mostPlayedActivities = findMostPlayedActivitiesHTML(reportData, 1, 10);
     let playsBetweenDates = findPlaysBetweenDatesHTML(reportData, '01/01/2024 00:00:00', '16/01/2024 23:59:59');
+    let totalPlayTimeBetweenDates = totalPlayTimeBetweenDatesHTML(reportData, '01/01/2024 00:00:00', '16/01/2024 23:59:59');
 
     let content = "";
     content += totalPlayTimeAcrossAllUsers;
@@ -26,6 +27,7 @@ export function showInsightsModal() {
     content += playersWithMostUniqueActivities;
     content += mostPlayedActivities;
     content += playsBetweenDates;
+    content += totalPlayTimeBetweenDates;
 
     document.getElementById('insightsContent').innerHTML = content;
     document.getElementById('insightsModal').style.display = 'block';
@@ -63,7 +65,7 @@ export function findPlayersWithMostPlayTime(reportData, start, end) {
 }
 function findPlayersWithMostPlayTimeHTML(reportData, start, end){
     let selectedPlayers = findPlayersWithMostPlayTime(reportData, start, end);
-    let output = '<h2>Players with the most playtime</h2><br/>';
+    let output = '<h2>Users with the most playtime</h2><br/>';
 
     // Format the result for display (you can customize this part as needed)
     selectedPlayers.map((player, index) => {
@@ -84,7 +86,7 @@ export function findPlayersWithLeastPlayTime(reportData, start, end) {
 }
 function findPlayersWithLeastPlayTimeHTML(reportData, start, end) {
     let selectedPlayers = findPlayersWithLeastPlayTime(reportData, start, end);
-    let output = '<h2>Players with the least playtime</h2><br/>';
+    let output = '<h2>Users with the least playtime</h2><br/>';
 
     selectedPlayers.map((player, index) => {
         output += `${start + index}. ${player.email}, Total Play Time: ${formatTime(player.totalPlayTime)}<br/>`;
@@ -105,7 +107,7 @@ export function findPlayersWithMostPlays(reportData, start, end) {
 }
 function findPlayersWithMostPlaysHTML(reportData, start, end) {
     let selectedPlayers = findPlayersWithMostPlays(reportData, start, end);
-    let output = '<h2>Players with the most plays</h2><br/>';
+    let output = '<h2>Users with the most plays</h2><br/>';
 
     selectedPlayers.map((player, index) => {
         output += `${start + index}. ${player.email}, Total Plays: ${player.totalPlays}<br/>`;
@@ -125,7 +127,7 @@ function findPlayersWithLeastPlays(reportData, start, end) {
 }
 function findPlayersWithLeastPlaysHTML(reportData, start, end){
     let selectedPlayers = findPlayersWithLeastPlays(reportData, start, end);
-    let output = '<h2>Players with the least plays</h2><br/>';
+    let output = '<h2>Users with the least plays</h2><br/>';
 
     selectedPlayers.map((player, index) => {
         output += `${start + index}. ${player.email}, Total Plays: ${player.totalPlays}<br/>`;
@@ -157,12 +159,12 @@ export function findPlayersWithMostUniqueActivitiesPlayed(reportData, start, end
 
     // Slice the array to get the specified range
     const selectedPlayers = playersWithUniqueActivityCount.slice(start, end);
-    console.log(selectedPlayers);
+    //console.log(selectedPlayers);
     return selectedPlayers;
 }
 function findPlayersWithMostUniqueActivitiesPlayedHTML(reportData, start, end) {
     let selectedPlayers = findPlayersWithMostUniqueActivitiesPlayed(reportData, start, end);
-    let output =  '<h2>Players with the most unique activities played</h2><br/>';
+    let output =  '<h2>Users with the most unique activities played</h2><br/>';
 
     // Format the result for display
     selectedPlayers.forEach((player, index) => {
@@ -254,5 +256,44 @@ function findPlaysBetweenDatesHTML(reportData, startDate, endDate) {
 
     let output = `<h2>Total Plays between ${startDate} and ${endDate}</h2><br/>`;
     output += playsBetweenDates.length;
+    return output;
+}
+
+
+function findTotalPlayTimeBetweenDates(reportData, startDate, endDate) {
+    const parseDate = (dateString) => {
+        const parts = dateString.split(" ");
+        const dateParts = parts[0].split("/");
+        const timeParts = parts[1].split(":");
+        return new Date(dateParts[2], dateParts[1] - 1, dateParts[0], timeParts[0], timeParts[1], timeParts[2]);
+    };
+
+    const startDateObj = parseDate(startDate);
+    const endDateObj = parseDate(endDate);
+    let totalPlayTime = 0;
+
+    reportData.forEach(data => {
+        if (data.activityData && Array.isArray(data.activityData)) {
+            data.activityData.forEach(activity => {
+                if (activity.plays && Array.isArray(activity.plays)) {
+                    activity.plays.forEach(play => {
+                        const playDateObj = parseDate(play.playDate);
+
+                        if (playDateObj >= startDateObj && playDateObj <= endDateObj) {
+                            totalPlayTime += Math.round(play.sessionTime);
+                        }
+                    });
+                }
+            });
+        }
+    });
+    return totalPlayTime;
+}
+function totalPlayTimeBetweenDatesHTML(reportData, startDate, endDate) {
+    let totalPlayTime = findTotalPlayTimeBetweenDates(reportData, startDate, endDate);
+
+    let formattedPlayTime = formatTime(totalPlayTime);
+    let output = `<h2>Total Play Time between ${startDate} and ${endDate}</h2><br/>`;
+    output += formattedPlayTime;
     return output;
 }

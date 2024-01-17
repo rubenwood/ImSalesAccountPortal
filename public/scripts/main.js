@@ -153,6 +153,8 @@ export async function generateReport() {
                 let today = new Date();
                 let diffTime = Math.abs(today - createdDate);
                 let daysSinceCreation = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                let diffTimeLastLogin = Math.abs(today - lastLoginDate);
+                let daysSinceLastLogin = Math.ceil(diffTimeLastLogin / (1000 * 60 * 60 * 24));
 
                 let accountExpiryDate = userData.data.Data.TestAccountExpiryDate !== undefined ? new Date(userData.data.Data.TestAccountExpiryDate.Value) : "No Expiry Date";
                 let daysToExpire;
@@ -174,6 +176,7 @@ export async function generateReport() {
                 addCellToRow(row, email, false);
                 addCellToRow(row, createdDate.toDateString(), false);
                 addCellToRow(row, lastLoginDate.toDateString(), false);
+                addCellToRow(row, daysSinceLastLogin, false);
                 addCellToRow(row, daysSinceCreation, false);
                 addCellToRow(row, accountExpiryDate, false);
                 addCellToRow(row, daysToExpire, false);
@@ -230,6 +233,7 @@ export async function generateReport() {
                         email:email,
                         createdDate: createdDate.toDateString(),
                         lastLoginDate: lastLoginDate.toDateString(),
+                        daysSinceLastLogin: daysSinceLastLogin,
                         daysSinceCreation: daysSinceCreation,
                         accountExpiryDate: accountExpiryDate,
                         daysToExpire: daysToExpire, 
@@ -249,6 +253,7 @@ export async function generateReport() {
                         email:email,
                         createdDate: createdDate.toDateString(),
                         lastLoginDate: lastLoginDate.toDateString(),
+                        daysSinceLastLogin: daysSinceLastLogin,
                         daysSinceCreation: daysSinceCreation,
                         accountExpiryDate: accountExpiryDate,
                         daysToExpire: daysToExpire, 
@@ -505,6 +510,7 @@ function exportToExcel() {
                     email: dataToExport.email,
                     createdDate: dataToExport.createdDate,
                     lastLoginDate: dataToExport.lastLoginDate,
+                    daysSinceLastLogin: dataToExport.daysSinceLastLogin,
                     daysSinceCreation: dataToExport.daysSinceCreation,
                     accountExpiryDate: dataToExport.accountExpiryDate,
                     daysToExpire: dataToExport.daysToExpire,
