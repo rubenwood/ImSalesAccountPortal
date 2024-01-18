@@ -15,8 +15,8 @@ export function showInsightsModal() {
     let playersWithLeastPlays = findPlayersWithLeastPlaysHTML(reportData, 1, 3);
     let playersWithMostUniqueActivities = findPlayersWithMostUniqueActivitiesPlayedHTML(reportData, 1, 3);
     let mostPlayedActivities = findMostPlayedActivitiesHTML(reportData, 1, 10);
-    let playsBetweenDates = findPlaysBetweenDatesHTML(reportData, '01/01/2024 00:00:00', '16/01/2024 23:59:59');
-    let totalPlayTimeBetweenDates = totalPlayTimeBetweenDatesHTML(reportData, '01/01/2024 00:00:00', '16/01/2024 23:59:59');
+    let playsBetweenDates = findPlaysBetweenDatesHTML(reportData, '01/01/2024 00:00:00', '31/01/2024 23:59:59');
+    let totalPlayTimeBetweenDates = totalPlayTimeBetweenDatesHTML(reportData, '01/01/2024 00:00:00', '31/01/2024 23:59:59');
 
     let content = "";
     content += totalPlayTimeAcrossAllUsers;

@@ -1,4 +1,7 @@
 const express = require('express');
+// const session = require('express-session');
+// const redis = require('redis');
+// const RedisStore = require("connect-redis").default;
 const axios = require('axios');
 const cors = require('cors');
 const AWS = require('aws-sdk');
@@ -7,6 +10,8 @@ const app = express();
 
 app.use(express.json());
 app.use(cors());
+
+
 
 // AWS METHODS
 AWS.config.update({
@@ -299,6 +304,29 @@ app.post('/get-segment-players/:segmentID', async (req, res) => {
     }
   }
 });
+
+
+// REDIS (SESSION STORAGE)
+/*const redisClient = redis.createClient({
+  url: process.env.REDIS_URL // Replace with your Redis URL
+});
+
+app.use(session({
+  store: new RedisStore({
+      client: redisClient,
+      ttl: 24 * 60 * 60 // TTL in seconds (24 hours)
+  }),
+  secret: 'your_secret',
+  resave: false,
+  saveUninitialized: false,
+  cookie: {
+      maxAge: 24 * 60 * 60 * 1000, // Cookie max age in milliseconds (24 hours)
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production", // Secure cookie in production
+      sameSite: true
+  }
+}));*/
+
 
 // EXEC SERVER
 app.use(express.static('public'));

@@ -22,7 +22,7 @@ export function generatePass() {
     const allCharacters = alphabet + digits;
 
     // Randomly choose a length between 8 and 12
-    const length = Math.floor(Math.random() * 5) + 8; // Will generate a number between 8 and 12
+    const length = Math.floor(Math.random() * 5) + 8;
 
     let password = '';
 
@@ -142,12 +142,13 @@ export async function generateReport() {
 
     // Create an array of promises for fetching user data
     const fetchPromises = emailList.map((email, index) => {
-        return delay(index * 1000) // Delay
+        return delay(index * 700) // Delay
             .then(() => fetchUserAccInfoByEmail(email))
             .then(respData => { userAccInfo = respData; })
             .then(() => fetchUserData(userAccInfo.data.UserInfo.PlayFabId))
             .then(respData => {
                 userData = respData;
+                //console.log(userData);
                 let createdDate = new Date(userAccInfo.data.UserInfo.TitleInfo.Created);
                 let lastLoginDate =  new Date(userAccInfo.data.UserInfo.TitleInfo.LastLogin);
                 let today = new Date();
