@@ -174,6 +174,27 @@ var UpdateUserDataCallback = function (result, error){
     updatingUserData = false;
 }
 
+// UPDATE USER DATA (SERVER SIDE)
+export async function UpdateUserDataServer(){
+    const url = `/update-user-data`;
+    let playFabID = '9539A4E12B7C396B'; // testing
+    let updateData = {'TESTKEY':'TESTvalue'};
+
+    const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ playFabID, updateData })
+    });
+
+    if (!response.ok) {
+        throw new Error('Access check failed');
+    }
+
+    return await response.json();
+}
+
 // GET USER DATA
 function getUserData(keys) {
     return new Promise((resolve, reject) => {

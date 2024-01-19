@@ -1,10 +1,11 @@
-import { canAccess, Login, RegisterUserEmailAddress } from './PlayFabManager.js';
+import { canAccess, Login, RegisterUserEmailAddress, UpdateUserDataServer} from './PlayFabManager.js';
 import { getTotalPlayTime, findPlayersWithMostPlayTime, findPlayersWithMostPlays, findPlayersWithMostUniqueActivitiesPlayed, findMostPlayedActivities } from './insights.js';
 import { formatTime, formatTimeToHHMMSS, formatActivityData, getAcademicAreas } from './utils.js';
 
 document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('loginButton').addEventListener('click', Login);
     document.getElementById('registerButton').addEventListener('click', RegisterUserEmailAddress);
+    //document.getElementById('updateButton').addEventListener('click', UpdateUserDataServer);
     document.getElementById('generatePassword').addEventListener('click', generatePass);
     document.getElementById('generateReportButton').addEventListener('click', generateReport);
     document.getElementById('exportReportButton').addEventListener('click', exportToExcel);

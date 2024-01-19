@@ -64,6 +64,11 @@ label {
     flex: 0 0 auto;
     width: 400px;
 }
+#modify-existing-container {
+    flex: 0 0 auto;
+    width: 400px;
+}
+
 
 .report-row:hover {
     background-color: #f2f2f2; /* Light grey color, adjust as needed */

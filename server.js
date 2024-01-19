@@ -237,7 +237,40 @@ app.post('/get-user-data/:playFabID', async (req, res) => {
   }
 });
 
+// PLAYFAB UPDATE USER DATA
+app.post('/update-user-data', async (req, res) => {
+  console.log(req.body);
+  try {
+      const response = await axios.post(
+          `https://${process.env.PLAYFAB_TITLE_ID}.playfabapi.com/Server/UpdateUserData`,
+          { 
+            PlayFabId: req.body.playFabID,
+            Data: req.body.updateData
+          },
+          {
+              headers: {
+                  'Content-Type': 'application/json',
+                  'X-SecretKey': process.env.PLAYFAB_SECRET_KEY
+              }
+          }
+      );
 
+      res.json(response.data); // send back to client
+  } catch (error) {
+    console.error('Error:', error);
+    if (error.response && error.response.data) {
+        // Sending back the specific error information from Axios
+        res.status(500).json(error.response.data);
+    } else {
+        // Sending back a general error if the response data is not available
+        res.status(500).json({ message: error.message, stack: error.stack });
+    }
+  }
+});
+
+
+
+// CHECK USER ACCESS
 app.post('/check-access', async (req, res) => {
   const userAccess = req.body.userAccess;
 
