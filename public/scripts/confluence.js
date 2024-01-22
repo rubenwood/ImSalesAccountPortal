@@ -1,5 +1,5 @@
 // public button event, when clicked, updates confluence page
-export function callUpdateConfluencePage(email, pass, area, expiry, createdBy, createdFor){
+export function callUpdateConfluencePage(email, pass, area, expiry, createdBy, reason){
     const pageId = '929333296';
     const url = `/update-confluence-page/${pageId}`;
 
@@ -8,7 +8,7 @@ export function callUpdateConfluencePage(email, pass, area, expiry, createdBy, c
         headers: {
             'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ email, pass, area, expiry, createdBy, createdFor }) 
+        body: JSON.stringify({ email, pass, area, expiry, createdBy, reason }) 
     })
     .then(response => {
         if (!response.ok) {

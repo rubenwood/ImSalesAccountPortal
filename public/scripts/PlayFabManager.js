@@ -111,7 +111,7 @@ var RegisterCallback = async function (result, error){
         var Guest = false;
         var TestAccountExpiryDate = document.getElementById("expiry").value;
         var CreatedBy = document.getElementById("createdBy").value;
-        var CreatedFor = document.getElementById("createdFor").value;
+        var CreatedUpdatedReason = document.getElementById("createdReason").value;
 
         var data = {
             SubOverride,
@@ -123,7 +123,7 @@ var RegisterCallback = async function (result, error){
             Guest,
             TestAccountExpiryDate,
             CreatedBy,
-            CreatedFor
+            CreatedUpdatedReason
         };
         UpdateUserData(data);
         // wait for UpdateUserData to complete
@@ -134,12 +134,8 @@ var RegisterCallback = async function (result, error){
         // update confluence page
         let email = document.getElementById("emailSignUpAddress").value;
         let pass = document.getElementById("emailSignUpPassword").value;
-        let area = document.getElementById("academicArea").value;
-        let expiry = document.getElementById("expiry").value;
-        var createdBy = document.getElementById("createdBy").value;
-        var createdFor = document.getElementById("createdFor").value;
 
-        callUpdateConfluencePage(email,pass,area,expiry,createdBy,createdFor);
+        callUpdateConfluencePage(email,pass,AcademicArea,TestAccountExpiryDate,CreatedBy,CreatedUpdatedReason);
     } else if (error !== null) {
         document.getElementById("resultOutput").innerHTML =
             "Something went wrong\n" +
@@ -178,16 +174,16 @@ var UpdateUserDataCallback = function (result, error){
 
 // UPDATE USER DATA (SERVER SIDE)
 export async function UpdateUserDataServer(){
+    let resultOutput = document.getElementById("updateResultOutput").value;
+    resultOutput = '';
     let email =  document.getElementById("emailAddressUpdate").value;
     let userAccInfoResp = await fetchUserAccInfoByEmail(email); // input email address, get playfabID
     if (userAccInfoResp.error) {
-        document.getElementById("updateResultOutput").value = `Error occurred: ${userAccInfoResp.message}`;
+        resultOutput = `Error occurred: ${userAccInfoResp.message}`;
         return;
     }
-
     console.log(userAccInfoResp.data.UserInfo);
-    let userInfo = userAccInfoResp.data.UserInfo;
-    
+
     const url = `/update-user-data`;
     let playFabID = userAccInfoResp.data.UserInfo.PlayFabId;
 
@@ -196,12 +192,14 @@ export async function UpdateUserDataServer(){
     let AcademicArea = document.getElementById("academicAreaUpdate").value;
     let TestAccountExpiryDate = document.getElementById("expiryUpdate").value;
     let UpdatedBy = document.getElementById("updatedBy").value;
+    let CreatedUpdatedReason = document.getElementById("updatedReason").value;
     let data = {
         SubOverride,
         VerifyEmailOverride,
         AcademicArea,
         TestAccountExpiryDate,
-        UpdatedBy
+        UpdatedBy,
+        CreatedUpdatedReason
     };
 
     const response = await fetch(url, {
@@ -216,6 +214,9 @@ export async function UpdateUserDataServer(){
         console.log(response);
         throw new Error('Access check failed');
     }
+
+    // Update the confluence page
+    await callUpdateConfluencePage(email,'[user defined]',AcademicArea,TestAccountExpiryDate,UpdatedBy,CreatedUpdatedReason);
 
     return await response.json();
 }
