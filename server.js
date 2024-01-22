@@ -254,21 +254,16 @@ app.post('/update-user-data', async (req, res) => {
               }
           }
       );
-
       res.json(response.data); // send back to client
   } catch (error) {
     console.error('Error:', error);
-    if (error.response && error.response.data) {
-        // Sending back the specific error information from Axios
-        res.status(500).json(error.response.data);
-    } else {
-        // Sending back a general error if the response data is not available
-        res.status(500).json({ message: error.message, stack: error.stack });
-    }
+    res.status(500).json({
+      message: 'An error occurred',
+      error: error.message,
+      details: error.response ? error.response.data : null
+    });
   }
 });
-
-
 
 // CHECK USER ACCESS
 app.post('/check-access', async (req, res) => {

@@ -1,4 +1,6 @@
 import { callUpdateConfluencePage } from "./confluence.js";
+import { fetchUserAccInfoByEmail } from "./main.js";
+
 const titleId = "29001";
 let accessLevel;
 
@@ -176,19 +178,42 @@ var UpdateUserDataCallback = function (result, error){
 
 // UPDATE USER DATA (SERVER SIDE)
 export async function UpdateUserDataServer(){
+    let email =  document.getElementById("emailAddressUpdate").value;
+    let userAccInfoResp = await fetchUserAccInfoByEmail(email); // input email address, get playfabID
+    if (userAccInfoResp.error) {
+        document.getElementById("updateResultOutput").value = `Error occurred: ${userAccInfoResp.message}`;
+        return;
+    }
+
+    console.log(userAccInfoResp.data.UserInfo);
+    let userInfo = userAccInfoResp.data.UserInfo;
+    
     const url = `/update-user-data`;
-    let playFabID = '9539A4E12B7C396B'; // testing
-    let updateData = {'TESTKEY':'TESTvalue'};
+    let playFabID = userAccInfoResp.data.UserInfo.PlayFabId;
+
+    let SubOverride = true;
+    let VerifyEmailOverride = true;
+    let AcademicArea = document.getElementById("academicAreaUpdate").value;
+    let TestAccountExpiryDate = document.getElementById("expiryUpdate").value;
+    let UpdatedBy = document.getElementById("updatedBy").value;
+    let data = {
+        SubOverride,
+        VerifyEmailOverride,
+        AcademicArea,
+        TestAccountExpiryDate,
+        UpdatedBy
+    };
 
     const response = await fetch(url, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ playFabID, updateData })
+        body: JSON.stringify({ playFabID, updateData: data })
     });
 
     if (!response.ok) {
+        console.log(response);
         throw new Error('Access check failed');
     }
 

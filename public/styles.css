@@ -50,8 +50,7 @@ label {
     font-weight: bold;
 }
 
-.container {
-    flex-grow: 1;    
+.form-container {
     border: 1px solid #ccc;
     border-radius: 5px;
     background-color: #ffffff;
@@ -63,12 +62,15 @@ label {
 #signup-container {
     flex: 0 0 auto;
     width: 400px;
+    display: flex;
+    flex-direction: column;
 }
 #modify-existing-container {
     flex: 0 0 auto;
     width: 400px;
+    display: flex;
+    flex-direction: column;
 }
-
 
 .report-row:hover {
     background-color: #f2f2f2; /* Light grey color, adjust as needed */
@@ -77,6 +79,12 @@ label {
     flex: 1;
     display: flex;
     flex-direction: column;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    background-color: #ffffff;
+    padding: 20px;
+    box-sizing: border-box;
+    box-shadow: 0 4px 8px 0 rgba(0,0,0,0.2);
 }
 
 .button-container {

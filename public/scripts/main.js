@@ -4,8 +4,11 @@ import { formatTime, formatTimeToHHMMSS, formatActivityData, getAcademicAreas } 
 
 document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('loginButton').addEventListener('click', Login);
+    document.getElementById('signUpFormRadio').addEventListener('change', toggleForms);
+    document.getElementById('modifyFormRadio').addEventListener('change', toggleForms);
+    toggleForms(); // Call once to set initial state
     document.getElementById('registerButton').addEventListener('click', RegisterUserEmailAddress);
-    //document.getElementById('updateButton').addEventListener('click', UpdateUserDataServer);
+    document.getElementById('updateButton').addEventListener('click', UpdateUserDataServer);
     document.getElementById('generatePassword').addEventListener('click', generatePass);
     document.getElementById('generateReportButton').addEventListener('click', generateReport);
     document.getElementById('exportReportButton').addEventListener('click', exportToExcel);
@@ -17,19 +20,30 @@ window.onload = function() {
     document.getElementById('loginModal').style.display = 'block';
 };
 
+// Function to toggle between sign up and modify existing forms
+function toggleForms() {
+    const isSignUpSelected = document.getElementById('signUpFormRadio').checked;
+    const signUpForm = document.getElementById('signup-container');
+    const modifyForm = document.getElementById('modify-existing-container');
+
+    if (isSignUpSelected) {
+        signUpForm.style.display = 'flex'; // or 'flex' or whatever is appropriate
+        modifyForm.style.display = 'none';
+    } else {
+        signUpForm.style.display = 'none';
+        modifyForm.style.display = 'flex'; // or 'flex' or whatever is appropriate
+    }
+}
+
 export function generatePass() {
     const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
     const digits = '0123456789';
     const allCharacters = alphabet + digits;
-
     // Randomly choose a length between 8 and 12
     const length = Math.floor(Math.random() * 5) + 8;
-
     let password = '';
-
     // Ensure at least one digit is included
     password += digits[Math.floor(Math.random() * digits.length)];
-
     // Generate the rest of the password
     for (let i = 1; i < length; i++) {
         password += allCharacters[Math.floor(Math.random() * allCharacters.length)];
@@ -42,11 +56,11 @@ export function generatePass() {
 }
 
 // POPULATE DROP DOWN (ACADEMIC AREA)
-async function initializeDropdown() {
+async function initializeDropdown(selectElement) {
     try {
         const academicAreas = await getAcademicAreas();
         if (academicAreas) {
-            const selectElement = document.getElementById('academicArea');
+            
             academicAreas.forEach(item => {
                 const option = document.createElement('option');
                 option.value = item.id;
@@ -58,10 +72,11 @@ async function initializeDropdown() {
         console.error('Error:', error);
     }
 }
-initializeDropdown();
+initializeDropdown(document.getElementById('academicArea'));
+initializeDropdown(document.getElementById('academicAreaUpdate'));
 
 // Function to fetch user data for a given email
-function fetchUserAccInfoByEmail(email) {
+export function fetchUserAccInfoByEmail(email) {
     const url = `/get-user-acc-info-email/${email}`;
 
     return fetch(url, {
@@ -73,9 +88,10 @@ function fetchUserAccInfoByEmail(email) {
     })
     .then(response => {
         if (!response.ok) {
-            return response.json().then(err => { 
-                throw new Error(err.error || 'An error occurred');
-            });
+            return response.json().then(err => ({
+                error: true,
+                message: err.error || 'An unknown error occurred'
+            }));
         }
         return response.json();
     });
@@ -127,20 +143,19 @@ export async function generateReport() {
     let hasAccess = await canAccess();
     if(!hasAccess){ return; }
 
-    reportData = []; // reset the report data
-    exportData = [];
-
     const emailListText = document.getElementById("emailList").value;
     const emailList = emailListText.split('\n').filter(Boolean); // Split by newline and filter out empty strings
     const tableBody = document.getElementById("reportTableBody");
     tableBody.innerHTML = ''; // Clear out the existing rows
 
-    // Helper function to delay execution
-    const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
+    reportData = []; // reset the report data
+    exportData = [];
 
     let userAccInfo;
     let userData;
 
+    // Helper function to delay execution
+    const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
     // Create an array of promises for fetching user data
     const fetchPromises = emailList.map((email, index) => {
         return delay(index * 700) // Delay
@@ -166,11 +181,12 @@ export async function generateReport() {
                     accountExpiryDate = accountExpiryDate.toDateString(); // Convert to string if it's a valid date
                 } else {
                     daysToExpire = "No Expiry Date";
-                    accountExpiryDate = "No Expiry Date"; // Use the string directly
+                    accountExpiryDate = "No Expiry Date";
                 }
 
                 let createdBy = userData.data.Data.CreatedBy !== undefined ? userData.data.Data.CreatedBy.Value : "";
                 let createdFor = userData.data.Data.CreatedFor !== undefined ? userData.data.Data.CreatedFor.Value : "";
+                let averageTimePerPlay = 0;
 
                 // Append data to the table
                 const row = tableBody.insertRow();
@@ -225,49 +241,49 @@ export async function generateReport() {
                     playerDataContent += `<h1>Total Plays: ${totalPlays}</h1>`;
                     playerDataContent += `<h1>Total Activities Played: ${playerData.activities.length}</h1>`;
                     playerDataContent += `<h1>Total Play Time: ${formatTime(totalPlayTime)}</h1>`;
-                    let averageTimePerPlay = Math.round(totalPlayTime / totalPlays); 
+                    averageTimePerPlay = Math.round(totalPlayTime / totalPlays); 
                     playerDataContent += `<h1>Avg. Time per activity: ${formatTime(averageTimePerPlay)}</h1>`;
                     addCellToRow(row, 'Expand Player Data', 1, true, playerDataContent);
-                    
-                    // add to stored data
-                    let playerDataForReport = { // (per user)
-                        userPlayFabId: userAccInfo.data.UserInfo.PlayFabId, // hide from exported report
-                        email:email,
-                        createdDate: createdDate.toDateString(),
-                        lastLoginDate: lastLoginDate.toDateString(),
-                        daysSinceLastLogin: daysSinceLastLogin,
-                        daysSinceCreation: daysSinceCreation,
-                        accountExpiryDate: accountExpiryDate,
-                        daysToExpire: daysToExpire, 
-                        createdBy: createdBy, // hide from exported report
-                        createdFor: createdFor, // hide from exported report
-                        activityData: activityDataForReport, // hide from exported report
-                        activityDataFormatted: formatActivityData(activityDataForReport),
-                        totalPlays,
-                        totalPlayTime,
-                        averageTimePerPlay
-
-                    };
-                    reportData.push(playerDataForReport);
-
-                    // slightly different data for export
-                    let userExportData = {
-                        email:email,
-                        createdDate: createdDate.toDateString(),
-                        lastLoginDate: lastLoginDate.toDateString(),
-                        daysSinceLastLogin: daysSinceLastLogin,
-                        daysSinceCreation: daysSinceCreation,
-                        accountExpiryDate: accountExpiryDate,
-                        daysToExpire: daysToExpire, 
-                        activityDataFormatted: formatActivityData(activityDataForReport),
-                        totalPlays,
-                        totalPlayTime,
-                        averageTimePerPlay
-                    }                    
-                    exportData.push(userExportData);
                 }else{
                     addCellToRow(row, 'No Player Data', false);
                 }
+
+                 // add to stored data
+                 let playerDataForReport = { // (per user)
+                    userPlayFabId: userAccInfo.data.UserInfo.PlayFabId, // hide from exported report
+                    email:email,
+                    createdDate: createdDate.toDateString(),
+                    lastLoginDate: lastLoginDate.toDateString(),
+                    daysSinceLastLogin: daysSinceLastLogin,
+                    daysSinceCreation: daysSinceCreation,
+                    accountExpiryDate: accountExpiryDate,
+                    daysToExpire: daysToExpire, 
+                    createdBy: createdBy, // hide from exported report
+                    createdFor: createdFor, // hide from exported report
+                    activityData: activityDataForReport, // hide from exported report
+                    activityDataFormatted: formatActivityData(activityDataForReport),
+                    totalPlays,
+                    totalPlayTime,
+                    averageTimePerPlay
+
+                };
+                reportData.push(playerDataForReport);
+
+                // slightly different data for export
+                let userExportData = {
+                    email:email,
+                    createdDate: createdDate.toDateString(),
+                    lastLoginDate: lastLoginDate.toDateString(),
+                    daysSinceLastLogin: daysSinceLastLogin,
+                    daysSinceCreation: daysSinceCreation,
+                    accountExpiryDate: accountExpiryDate,
+                    daysToExpire: daysToExpire, 
+                    activityDataFormatted: formatActivityData(activityDataForReport),
+                    totalPlays,
+                    totalPlayTime,
+                    averageTimePerPlay
+                }                    
+                exportData.push(userExportData);
                 
                 // highlight rules
                 if(!isNaN(daysToExpire) && daysToExpire < 7)
@@ -465,6 +481,22 @@ function fetchSegmentPlayers(reqSegmentID){
 
 // EXPORT REPORT
 let exportData;
+function createUserRow(dataToExport, activity, isFirstActivity) {
+    let userRow = {
+        email: dataToExport.email,
+        createdDate: dataToExport.createdDate,
+        lastLoginDate: dataToExport.lastLoginDate,
+        daysSinceLastLogin: dataToExport.daysSinceLastLogin,
+        daysSinceCreation: dataToExport.daysSinceCreation,
+        accountExpiryDate: dataToExport.accountExpiryDate,
+        daysToExpire: dataToExport.daysToExpire,
+        totalPlays: dataToExport.totalPlays,
+        totalPlayTime: formatTimeToHHMMSS(dataToExport.totalPlayTime),
+        averageTimePerPlay: formatTimeToHHMMSS(dataToExport.averageTimePerPlay)
+    };
+    return isFirstActivity ? { ...userRow, ...activity } : activity;
+}
+
 function exportToExcel() {
     let workbook = XLSX.utils.book_new();
 
@@ -492,44 +524,30 @@ function exportToExcel() {
         insightsExportData.push({ insight: 'Most Played Activities', value: activity.activityTitle + ' - ' + activity.totalPlays });
     });
 
-    let allData = [];
+    // add user data
+    let userData = [];
     exportData.forEach(dataToExport => {
-        let isFirstActivity = true; // Flag to check if it's the first activity for the user
-
-        dataToExport.activityDataFormatted.forEach(activity => {
-            let scorePercentage = Math.round(activity.score * 100)
-            let row = {
-                activityID: activity.activityID,
-                activityTitle: activity.activityTitle,
-                playDate: activity.playDate,
-                score: scorePercentage + '%',
-                sessionTime: formatTimeToHHMMSS(activity.sessionTime)
-            };
-
-            if (isFirstActivity) {
-                // Include user data only for the first activity
-                row = {                    
-                    email: dataToExport.email,
-                    createdDate: dataToExport.createdDate,
-                    lastLoginDate: dataToExport.lastLoginDate,
-                    daysSinceLastLogin: dataToExport.daysSinceLastLogin,
-                    daysSinceCreation: dataToExport.daysSinceCreation,
-                    accountExpiryDate: dataToExport.accountExpiryDate,
-                    daysToExpire: dataToExport.daysToExpire,
-                    totalPlays: dataToExport.totalPlays,
-                    totalPlayTime: formatTimeToHHMMSS(dataToExport.totalPlayTime),
-                    averageTimePerPlay: formatTimeToHHMMSS(dataToExport.averageTimePerPlay),
-                    ...row, // Activity data
+        if (dataToExport.activityDataFormatted && dataToExport.activityDataFormatted.length > 0) {
+            let isFirstActivity = true;
+            dataToExport.activityDataFormatted.forEach(activity => {
+                let activityRow = {
+                    activityID: activity.activityID,
+                    activityTitle: activity.activityTitle,
+                    playDate: activity.playDate,
+                    score: Math.round(activity.score * 100) + '%',
+                    sessionTime: formatTimeToHHMMSS(activity.sessionTime)
                 };
-                isFirstActivity = false; // Set the flag to false after adding user data
-            }
-            allData.push(row);
-        });
-        allData.push({}); // add an empty row to divide the user data chunks
+                userData.push(createUserRow(dataToExport, activityRow, isFirstActivity));
+                isFirstActivity = false;
+            });
+        } else {
+            userData.push(createUserRow(dataToExport, {}, true));
+        }
+        userData.push({}); // Add an empty row to divide user data chunks
     });
 
     let insightsWorksheet = XLSX.utils.json_to_sheet(insightsExportData);
-    let userDataWorksheet = XLSX.utils.json_to_sheet(allData);    
+    let userDataWorksheet = XLSX.utils.json_to_sheet(userData);
 
     XLSX.utils.book_append_sheet(workbook, insightsWorksheet, "Insights");
     XLSX.utils.book_append_sheet(workbook, userDataWorksheet, "Report");
