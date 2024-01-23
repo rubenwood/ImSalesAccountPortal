@@ -7,11 +7,12 @@ const cors = require('cors');
 const AWS = require('aws-sdk');
 require('dotenv').config();
 const app = express();
+// routes
+const googleRoutes = require('./google/googlestore.js');
+const appleRoutes = require('./apple/applestore.js');
 
 app.use(express.json());
 app.use(cors());
-
-
 
 // AWS METHODS
 AWS.config.update({
@@ -358,6 +359,8 @@ app.use(session({
 
 // EXEC SERVER
 app.use(express.static('public'));
+app.use('/google', googleRoutes);
+app.use('/apple', appleRoutes);
 
 const PORT = process.env.PORT;
 
