@@ -1,6 +1,7 @@
 import { canAccess, Login, RegisterUserEmailAddress, UpdateUserDataServer} from './PlayFabManager.js';
 import { getTotalPlayTime, findPlayersWithMostPlayTime, findPlayersWithMostPlays, findPlayersWithMostUniqueActivitiesPlayed, findMostPlayedActivities } from './insights.js';
 import { formatTime, formatTimeToHHMMSS, formatActivityData, getAcademicAreas } from './utils.js';
+import { getSegmentsClicked, getPlayersInSegmentClicked } from './segments.js';
 
 document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('loginButton').addEventListener('click', Login);
@@ -96,7 +97,7 @@ export function fetchUserAccInfoByEmail(email) {
         return response.json();
     });
 }
-function fetchUserAccInfoById(playFabID) {
+export function fetchUserAccInfoById(playFabID) {
     const url = `/get-user-acc-info-id/${playFabID}`;
 
     return fetch(url, {
@@ -382,101 +383,6 @@ function hideTooltip() {
     if (tooltip) {
         tooltip.classList.remove('visible');
     }
-}
-
-// SEGMENT RELATED
-async function getSegmentsClicked(){
-    let hasAccess = await canAccess();
-    if(!hasAccess){ return; }
-
-    let segmentResponse = await fetchSegments();
-    let segments = segmentResponse.data.Segments;
-    //console.log(segments);
-    populateSegmentsDropdown(segments);
-}
-function populateSegmentsDropdown(segments) {
-    const dropdown = document.getElementById("segmentSelection");
-    dropdown.innerHTML = '';
-
-    segments.forEach(segment => {
-        const option = document.createElement("option");
-        option.value = segment.Id;
-        option.textContent = segment.Name;
-        dropdown.appendChild(option);
-    });
-}
-
-function fetchSegments(){
-    const url = `/get-segments`;
-
-    return fetch(url, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        }
-    })
-    .then(response => {
-        if (!response.ok) {
-            return response.json().then(err => { 
-                throw new Error(err.error || 'An error occurred');
-            });
-        }
-        return response.json();
-    });
-}
-
-async function getPlayersInSegmentClicked(){
-    let hasAccess = await canAccess();
-    if(!hasAccess){ return; }
-
-    // Get the selected segment ID from the dropdown
-    const selectedSegmentId = document.getElementById("segmentSelection").value;
-    if (!selectedSegmentId) {
-        console.log("No segment selected");
-        return;
-    }
-
-    let data = await fetchSegmentPlayers(selectedSegmentId);
-    let playerProfiles = data.data.PlayerProfiles;
-
-     // Use map to transform each profile into a promise of email address
-     const emailPromises = playerProfiles.map(profile => getPlayerEmailAddr(profile.PlayerId));
-
-     // Wait for all promises to resolve
-     const emailList = await Promise.all(emailPromises);
-     //console.log(emailList);
-     const emailListString = emailList.join('\n');
-    // Set the email list string as the value of the textarea
-    document.getElementById("emailList").value = emailListString;
-}
-async function getPlayerEmailAddr(playFabId) {
-    try{
-        let playerData = await fetchUserAccInfoById(playFabId);
-        let userEmail = playerData.data.UserInfo.PrivateInfo.Email;
-        return userEmail;
-    } catch (error) {
-        console.error(`Error fetching email for PlayFab ID ${playFabId}:`, error);
-        return null; // or some default value or error indicator
-    }    
-}
-function fetchSegmentPlayers(reqSegmentID){
-    const url = `/get-segment-players/${reqSegmentID}`;
-    let segmentID = reqSegmentID;
-    return fetch(url, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ segmentID })
-    })
-    .then(response => {
-        if (!response.ok) {
-            return response.json().then(err => { 
-                throw new Error(err.error || 'An error occurred');
-            });
-        }
-        return response.json();
-    });
 }
 
 // EXPORT REPORT

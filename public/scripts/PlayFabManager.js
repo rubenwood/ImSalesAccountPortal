@@ -1,5 +1,5 @@
 import { callUpdateConfluencePage } from "./confluence.js";
-import { fetchUserAccInfoByEmail } from "./main.js";
+import { fetchUserAccInfoById, fetchUserAccInfoByEmail } from "./main.js";
 
 const titleId = "29001";
 let accessLevel;
@@ -241,6 +241,18 @@ function getUserData(keys) {
             }
         });
     });
+}
+
+// GET PLAYER EMAIL ADDR
+export async function getPlayerEmailAddr(playFabId) {
+    try{
+        let playerData = await fetchUserAccInfoById(playFabId);
+        let userEmail = playerData.data.UserInfo.PrivateInfo.Email;
+        return userEmail;
+    } catch (error) {
+        console.error(`Error fetching email for PlayFab ID ${playFabId}:`, error);
+        return null; // or some default value or error indicator
+    }    
 }
 
 // CAN ACCESS
