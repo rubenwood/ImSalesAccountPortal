@@ -1,5 +1,5 @@
-import { canAccess, getPlayerEmailAddr } from './PlayFabManager.js';
-import { fetchUserAccInfoById } from './main.js';
+import { getPlayerEmailAddr } from './PlayFabManager.js';
+import { canAccess } from './access-check.js';
 
 export function fetchSegments(){
     const url = `/get-segments`;
@@ -45,7 +45,6 @@ export function fetchSegmentPlayers(reqSegmentID){
 export async function getSegmentsClicked(){
     let hasAccess = await canAccess();
     if(!hasAccess){ return; }
-
     let segmentResponse = await fetchSegments();
     let segments = segmentResponse.data.Segments;
     populateSegmentsDropdown(segments);

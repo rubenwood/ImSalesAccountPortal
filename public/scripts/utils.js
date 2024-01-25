@@ -89,7 +89,6 @@ function getPracInfo(){
         pracInfo = data;
     })
 }
-
 //getLessonInfo();
 //getPracInfo();
 
@@ -109,3 +108,65 @@ export async function getAcademicAreas() {
     }
 }
 getAcademicAreas();
+
+
+
+export function fetchUserAccInfoById(playFabID) {
+    const url = `/get-user-acc-info-id/${playFabID}`;
+
+    return fetch(url, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ playFabID }) 
+    })
+    .then(response => {
+        if (!response.ok) {
+            return response.json().then(err => { 
+                throw new Error(err.error || 'An error occurred');
+            });
+        }
+        return response.json();
+    });
+}
+// Function to fetch user data for a given email
+export function fetchUserAccInfoByEmail(email) {
+    const url = `/get-user-acc-info-email/${email}`;
+
+    return fetch(url, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email }) 
+    })
+    .then(response => {
+        if (!response.ok) {
+            return response.json().then(err => ({
+                error: true,
+                message: err.error || 'An unknown error occurred'
+            }));
+        }
+        return response.json();
+    });
+}
+export function fetchUserData(playFabID) {
+    const url = `/get-user-data/${playFabID}`;
+
+    return fetch(url, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ playFabID }) 
+    })
+    .then(response => {
+        if (!response.ok) {
+            return response.json().then(err => { 
+                throw new Error(err.error || 'An error occurred');
+            });
+        }
+        return response.json();
+    });
+}

@@ -1,10 +1,14 @@
-import { canAccess } from "./PlayFabManager";
-import { fetchSegmentPlayers } from "./main";
+import { canAccess } from "./access-check.js";
+import { fetchSegmentPlayers } from "./segments.js";
+
+document.addEventListener('DOMContentLoaded', () => {
+    document.getElementById('update-area-btn').addEventListener('click', ()=>UpdatePlayersAcademicArea("test", "test"));
+});
 
 async function UpdatePlayersAcademicArea(selectedSegmentId, desiredAcademicArea)
 {
     let hasAccess = await canAccess();
-    if(!hasAccess){ return; }
+    if(!hasAccess){ console.log("no access"); return; }else{ console.log("can access"); }
 
     // get all plays in a segment
     let segmentPlayers = await fetchSegmentPlayers(selectedSegmentId);

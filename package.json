@@ -10,6 +10,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@google-cloud/storage": "^7.7.0",
     "aws-sdk": "^2.1502.0",
     "axios": "^1.6.2",
     "confluence.js": "^1.7.1",
@@ -22,6 +23,7 @@
     "fs": "^0.0.1-security",
     "googleapis": "^131.0.0",
     "jsonwebtoken": "^9.0.2",
-    "redis": "^4.6.12"
+    "redis": "^4.6.12",
+    "zlib": "^1.0.5"
   }
 }

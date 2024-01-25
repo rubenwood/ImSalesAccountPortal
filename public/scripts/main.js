@@ -1,13 +1,14 @@
-import { canAccess, Login, RegisterUserEmailAddress, UpdateUserDataServer} from './PlayFabManager.js';
-import { getTotalPlayTime, findPlayersWithMostPlayTime, findPlayersWithMostPlays, findPlayersWithMostUniqueActivitiesPlayed, findMostPlayedActivities } from './insights.js';
-import { formatTime, formatTimeToHHMMSS, formatActivityData, getAcademicAreas } from './utils.js';
+import { canAccess } from './access-check.js';
+import { Login, RegisterUserEmailAddress, UpdateUserDataServer} from './PlayFabManager.js';
+import { showInsightsModal, closeInsightsModal, getTotalPlayTime, findPlayersWithMostPlayTime, findPlayersWithMostPlays, findPlayersWithMostUniqueActivitiesPlayed, findMostPlayedActivities } from './insights.js';
+import { fetchUserData, fetchUserAccInfoByEmail, formatTime, formatTimeToHHMMSS, formatActivityData, getAcademicAreas } from './utils.js';
 import { getSegmentsClicked, getPlayersInSegmentClicked } from './segments.js';
 
 document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('loginButton').addEventListener('click', Login);
     document.getElementById('signUpFormRadio').addEventListener('change', toggleForms);
     document.getElementById('modifyFormRadio').addEventListener('change', toggleForms);
-    toggleForms(); // Call once to set initial state
+    toggleForms(); // set initial state
     document.getElementById('registerButton').addEventListener('click', RegisterUserEmailAddress);
     document.getElementById('updateButton').addEventListener('click', UpdateUserDataServer);
     document.getElementById('generatePassword').addEventListener('click', generatePass);
@@ -16,6 +17,9 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('closePlayerDataModal').addEventListener('click', closePlayerDataModal);
     document.getElementById('getSegmentsButton').addEventListener('click', getSegmentsClicked);
     document.getElementById('getSegmentPlayersButton').addEventListener('click', getPlayersInSegmentClicked);
+
+    document.getElementById('insightsButton').addEventListener('click', ()=>showInsightsModal(reportData));
+    document.getElementById('closeInsightsButton').addEventListener('click', closeInsightsModal);
 });
 window.onload = function() {
     document.getElementById('loginModal').style.display = 'block';
@@ -75,67 +79,6 @@ async function initializeDropdown(selectElement) {
 }
 initializeDropdown(document.getElementById('academicArea'));
 initializeDropdown(document.getElementById('academicAreaUpdate'));
-
-// Function to fetch user data for a given email
-export function fetchUserAccInfoByEmail(email) {
-    const url = `/get-user-acc-info-email/${email}`;
-
-    return fetch(url, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email }) 
-    })
-    .then(response => {
-        if (!response.ok) {
-            return response.json().then(err => ({
-                error: true,
-                message: err.error || 'An unknown error occurred'
-            }));
-        }
-        return response.json();
-    });
-}
-export function fetchUserAccInfoById(playFabID) {
-    const url = `/get-user-acc-info-id/${playFabID}`;
-
-    return fetch(url, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ playFabID }) 
-    })
-    .then(response => {
-        if (!response.ok) {
-            return response.json().then(err => { 
-                throw new Error(err.error || 'An error occurred');
-            });
-        }
-        return response.json();
-    });
-}
-
-function fetchUserData(playFabID) {
-    const url = `/get-user-data/${playFabID}`;
-
-    return fetch(url, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ playFabID }) 
-    })
-    .then(response => {
-        if (!response.ok) {
-            return response.json().then(err => { 
-                throw new Error(err.error || 'An error occurred');
-            });
-        }
-        return response.json();
-    });
-}
 
 // GENERATE REPORT
 export let reportData = [];
@@ -316,7 +259,6 @@ export async function generateReport() {
 
     // Wait for all the fetch calls to settle
     Promise.allSettled(fetchPromises).then(results => {
-        console.log('All fetch calls have been processed');
         confetti({
             particleCount: 100,
             spread: 70,

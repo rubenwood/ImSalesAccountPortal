@@ -275,7 +275,7 @@ app.post('/check-access', async (req, res) => {
   }
 
   if (userAccess.toLowerCase() === process.env.REQUIRED_ACCESS.toLowerCase()) {
-    res.json({ isAuthorized: true, modalMode: 'none' });
+    res.json({ isAuthorized: true });
   } else {
     res.status(403).json({ isAuthorized: false, error: 'Access Denied: Incorrect access level' });
   }

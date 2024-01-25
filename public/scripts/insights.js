@@ -1,13 +1,7 @@
-import { reportData } from "./main.js";
 import { formatTime } from './utils.js';
 
-document.addEventListener('DOMContentLoaded', () => {
-    document.getElementById('insightsButton').addEventListener('click', showInsightsModal);
-    document.getElementById('closeInsightsButton').addEventListener('click', closeInsightsModal);
-});
-
 // INSIGHT DATA MODAL
-export function showInsightsModal() {   
+export function showInsightsModal(reportData) {   
     let totalPlayTimeAcrossAllUsers = getTotalPlayTimeHTML(reportData);
     let playersWithMostPlayTime = findPlayersWithMostPlayTimeHTML(reportData, 1, 3);
     let playersWithLeastPlayTime = findPlayersWithLeastPlayTimeHTML(reportData, 1, 3);

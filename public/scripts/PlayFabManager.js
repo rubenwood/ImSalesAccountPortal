@@ -1,8 +1,8 @@
 import { callUpdateConfluencePage } from "./confluence.js";
-import { fetchUserAccInfoById, fetchUserAccInfoByEmail } from "./main.js";
+import {fetchUserAccInfoById, fetchUserAccInfoByEmail} from "./utils.js"
+import {setAccessLevel, canAccess} from "./access-check.js"
 
 const titleId = "29001";
-let accessLevel;
 
 function isValidEmail(email) {
     const atIndex = email.indexOf('@');
@@ -32,39 +32,19 @@ export async function Login()
         if (error) {
             console.error("Error logging in:", error);
         } else {
-            accessLevel = await getUserData(["AccessLevel"]); 
-            let accessCheckResponse = await fetchUserAccess();
-            if (accessCheckResponse.isAuthorized) {                
-                document.getElementById('loginModal').style.display = accessCheckResponse.modalMode;
+            //accessLevel = await getUserData(["AccessLevel"]); 
+            setAccessLevel(await getUserData(["AccessLevel"])); 
+            //let accessCheckResponse = await fetchUserAccess();
+            if (canAccess()) {                
+                document.getElementById('loginModal').style.display = 'none';
             }
         }
     });
 }
-export async function fetchUserAccess() {
-    if(accessLevel == undefined){ return; }
-    let userAccess = accessLevel.AccessLevel;
-
-    const url = `/check-access`;
-
-    const response = await fetch(url, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ userAccess }) 
-    });
-
-    if (!response.ok) {
-        throw new Error('Access check failed');
-    }
-
-    return await response.json();
-}
 
 export async function RegisterUserEmailAddress(){
-    let accessCheckResponse = await fetchUserAccess();
-    if(accessCheckResponse == undefined){ return; }
-    if (!accessCheckResponse.isAuthorized) { return; }
+    let hasAccess = await canAccess();
+    if(!hasAccess){ return; }
 
     let email = document.getElementById("emailSignUpAddress").value;
     let pass = document.getElementById("emailSignUpPassword").value;
@@ -182,7 +162,6 @@ export async function UpdateUserDataServer(){
         resultOutput = `Error occurred: ${userAccInfoResp.message}`;
         return;
     }
-    console.log(userAccInfoResp.data.UserInfo);
 
     const url = `/update-user-data`;
     let playFabID = userAccInfoResp.data.UserInfo.PlayFabId;
@@ -253,11 +232,4 @@ export async function getPlayerEmailAddr(playFabId) {
         console.error(`Error fetching email for PlayFab ID ${playFabId}:`, error);
         return null; // or some default value or error indicator
     }    
-}
-
-// CAN ACCESS
-export async function canAccess(){
-    let accessCheckResponse = await fetchUserAccess();
-    if(accessCheckResponse == undefined){ return false; }
-    if (!accessCheckResponse.isAuthorized) { return false; } else { return true; }
 }
