@@ -13,6 +13,7 @@ const oauth2Client = new google.auth.OAuth2(
 // generate a url that asks permissions for Blogger and Google Calendar scopes
 const scopes = [
   'https://www.googleapis.com/auth/androidpublisher',
+  'https://www.googleapis.com/auth/analytics.readonly',
   'https://www.googleapis.com/auth/devstorage.read_only',
   'openid'
 ];
@@ -38,12 +39,16 @@ router.get('/google-login-callback', async (req, res) =>{
   cachedAccessToken = tokens.access_token;
   const idToken = tokens.id_token; // Accessing the id_token
   console.log('\n----ID Token----\n', idToken);
+  req.session.idToken = idToken;
+
+  // (for app)
   // construct deeplink
   // redirect to deeplink
   // app opens, extracts id token
   // login with open id call (playfab)
   //res.redirect(`immersifyeducation://immersifydental?idToken=${idToken}`);
-  res.redirect('/reports.html');
+
+  res.redirect(`/reports.html`);
 });
 
 // SUB STUFF
@@ -51,6 +56,7 @@ const playDeveloper = google.androidpublisher({
   version: 'v3',
   auth: oauth2Client
 });
+
 async function listSubscriptions() {
   const response = await playDeveloper.monetization.subscriptions.list({
     packageName: process.env.GOOGLE_APP_PACKAGE_ID
@@ -59,6 +65,7 @@ async function listSubscriptions() {
   });
   return response;
 }
+
 router.get('/get-google-prods', async (req, res) => {
     let subListResp = await listSubscriptions();
     let subList = subListResp.data;
@@ -71,7 +78,6 @@ router.get('/get-google-prods', async (req, res) => {
     })
     res.send(JSON.stringify(prodIDs));
 });
-
 
 async function listSubPurchases() {
   const response = await playDeveloper.purchases.subscriptions.get({
@@ -89,6 +95,8 @@ router.get('/get-google-purchases', async (req, res) => {
 });
 
 router.get('/get-google-report', async (req, res) => {
+  if (req.session.idToken == undefined || req.session.idToken == null) { return; }
+
   try {
     const url = `https://storage.googleapis.com/${process.env.GOOGLE_BUCKET_BASE}/financial-stats/subscriptions/${process.env.GOOGLE_SUB_FILE_BASE}.monthly_202312_country.csv`;
 
@@ -106,5 +114,154 @@ router.get('/get-google-report', async (req, res) => {
     res.status(500).send('Error fetching data');
   }
 });
+
+// exmaple of getting data from GA
+router.get('/get-google-report2', async (req, res) => {
+  const analyticsApiUrl = ` https://analyticsdata.googleapis.com/v1beta/properties/${process.env.GA_PROP_ID}:runReport`;
+
+  const response = await axios.post(analyticsApiUrl,
+    { 
+      dateRanges: [{ startDate: "7daysAgo", endDate: "yesterday" }],
+      dimensions: [{ name: "date" }],
+      metrics: [
+        { name: "activeUsers" },
+        { name: "newUsers" }
+      ] 
+    },
+    {
+      headers: {
+        Authorization: `Bearer ${cachedAccessToken}`,
+      }
+    });
+  
+  res.send(response.data);
+});
+
+router.get('/get-kpi-report', async (req, res) => {
+  const analyticsApiUrl = `https://analyticsdata.googleapis.com/v1beta/properties/${process.env.GA_PROP_ID}:runReport`;
+
+  try {
+    
+    let newUsersPerWeek = await getNewUsersPerWeek(analyticsApiUrl);
+    let activeUsersPerMonth = await getActiveUsersPerMonth(analyticsApiUrl);
+    let sessionsPerUserPerWeek = await getSessionsPerUserPerWeek(analyticsApiUrl);
+    let activitiesLaunchedPerWeek = await getActivitiesLaunchedPerWeek(analyticsApiUrl);
+    let output = { 
+      newUsersPerWeek,
+      activeUsersPerMonth,
+      sessionsPerUserPerWeek,
+      activitiesLaunchedPerWeek,
+    };
+    res.send(output);
+  } catch (error) {
+    console.error(error);
+    res.status(500).send('Internal Server Error');
+  }
+});
+
+async function getActivitiesLaunchedPerWeek(analyticsApiUrl){
+  const response = await axios.post(analyticsApiUrl,
+    { 
+      dateRanges: [{ startDate: "7daysAgo", endDate: "yesterday" }],
+      dimensions: [{ name: "eventName" }],
+      metrics: [
+        { name: "eventCount" }
+      ] 
+    },
+    {
+      headers: {
+        Authorization: `Bearer ${cachedAccessToken}`,
+      }
+    });
+
+  const launchActivityData = response.data.rows[0].metricValues[0].value;
+  return launchActivityData;
+}
+async function getSessionsPerUserPerWeek(analyticsApiUrl){
+  const response = await axios.post(analyticsApiUrl,
+    { 
+      dateRanges: [{ startDate: "7daysAgo", endDate: "yesterday" }],
+      metrics: [
+        { name: "sessionsPerUser" }
+      ] 
+    },
+    {
+      headers: {
+        Authorization: `Bearer ${cachedAccessToken}`,
+      }
+    });
+
+  const launchActivityData = response.data.rows[0].metricValues[0].value;
+
+  return launchActivityData;
+}
+async function getNewUsersPerWeek(analyticsApiUrl){
+  const response = await axios.post(analyticsApiUrl,
+    { 
+      dateRanges: [{ startDate: "7daysAgo", endDate: "yesterday" }],
+      metrics: [
+        { name: "newUsers" }
+      ] 
+    },
+    {
+      headers: {
+        Authorization: `Bearer ${cachedAccessToken}`,
+      }
+    });
+
+  const launchActivityData = response.data.rows[0].metricValues[0].value;
+
+  return launchActivityData;
+}
+
+async function getActiveUsersPerMonth(analyticsApiUrl){
+  let results = [];
+  
+  let startDate = new Date("2023-01-01");
+  let currentDate = new Date(); // Current date
+  currentDate.setDate(1); // Set to the first of the current month
+
+  while (startDate < currentDate) {
+    let endDate = new Date(startDate.getFullYear(), startDate.getMonth() + 1, 1);
+    let formattedStartDate = startDate.toISOString().split('T')[0];
+    let formattedEndDate = endDate.toISOString().split('T')[0];
+
+    try {
+      const response = await axios.post(analyticsApiUrl,
+        {
+          dateRanges: [{ startDate: formattedStartDate, endDate: formattedEndDate }],
+          metrics: [{ name: "activeUsers" }]
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${cachedAccessToken}`,
+          }
+        });
+
+      // Check if the response has data
+      if (response.data.rows && response.data.rows.length > 0) {
+        let totalActiveUsers = response.data.rows[0].metricValues[0].value;
+        results.push({
+          month: formattedStartDate,
+          totalActiveUsers
+        });
+      } else {
+        // Handle case where no data is returned for the month
+        results.push({
+          month: formattedStartDate,
+          totalActiveUsers: 0
+        });
+      }
+
+      // Move to the next month
+      startDate = endDate;
+    } catch (error) {
+      console.error(`Error fetching data for ${formattedStartDate} - ${formattedEndDate}: ${error}`);
+      // Handle errors as required for your application
+    }
+  }
+
+  return results;
+}
 
 module.exports = router;

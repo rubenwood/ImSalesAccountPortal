@@ -1,5 +1,5 @@
 import { callUpdateConfluencePage } from "./confluence.js";
-import {fetchUserAccInfoById, fetchUserAccInfoByEmail} from "./utils.js"
+import {fetchUserAccInfoById, fetchUserAccInfoByEmail, fetchUserProfileById} from "./utils.js"
 import {setAccessLevel, canAccess} from "./access-check.js"
 
 const titleId = "29001";
@@ -226,10 +226,32 @@ function getUserData(keys) {
 export async function getPlayerEmailAddr(playFabId) {
     try{
         let playerData = await fetchUserAccInfoById(playFabId);
-        let userEmail = playerData.data.UserInfo.PrivateInfo.Email;
+        let userEmail;
+        let loginEmail = playerData.data.UserInfo.PrivateInfo.Email;
+        if(loginEmail != undefined){ 
+            userEmail = loginEmail 
+        }else{
+            // get contact email
+            userEmail = await getPlayerContactEmailAddr(playFabId);
+        }
+        console.log(userEmail);
         return userEmail;
     } catch (error) {
         console.error(`Error fetching email for PlayFab ID ${playFabId}:`, error);
         return null; // or some default value or error indicator
     }    
+}
+
+
+async function getPlayerContactEmailAddr(playFabId){
+    let playerProfileResp = await fetchUserProfileById(playFabId);
+    let playerProfile = playerProfileResp.data.PlayerProfile;
+    let contactEmailAddr = "";
+    // if(playerProfile == undefined) { return contactEmailAddr;  } 
+    // if(playerProfile.ContactEmailAddresses == undefined) { return contactEmailAddr;  } 
+    // if(playerProfile.ContactEmailAddresses.length < 1) { return contactEmailAddr;  } 
+
+    contactEmailAddr = playerProfile.ContactEmailAddresses[0].EmailAddress;
+    return contactEmailAddr;
+
 }

@@ -225,6 +225,8 @@ router.get('/get-subscriber-report', async (req, res) => {
 
 // SUBSCRIPTION REPORT
 router.get('/get-subscription-report', async (req, res) => {
+    if (req.session.idToken == undefined || req.session.idToken == null) { return; }
+
     try {
         const jwtoken = generateToken();
         const queryParams = {

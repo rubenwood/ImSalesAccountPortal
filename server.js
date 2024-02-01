@@ -7,6 +7,7 @@ const cors = require('cors');
 const AWS = require('aws-sdk');
 require('dotenv').config();
 const app = express();
+const session = require('express-session');
 // routes
 const googleRoutes = require('./google/googlestore.js');
 const appleRoutes = require('./apple/applestore.js');
@@ -211,6 +212,36 @@ app.post('/get-user-acc-info-id/:playFabID', async (req, res) => {
   }
 });
 
+// GET USER PROFILE
+app.post('/get-user-profile-id/:playFabID', async (req, res) => {
+  try {
+      const response = await axios.post(
+          `https://${process.env.PLAYFAB_TITLE_ID}.api.main.azureplayfab.com/Admin/GetPlayerProfile`,
+          { 
+            PlayFabId: req.body.playFabID,
+            ProfileConstraints: { ShowContactEmailAddresses:true }
+          },
+          {
+              headers: {
+                  'Content-Type': 'application/json',
+                  'X-SecretKey': process.env.PLAYFAB_SECRET_KEY
+              }
+          }
+      );
+
+      res.json(response.data); // send back to client
+  } catch (error) {
+    console.error('Error:', error);
+    if (error.response && error.response.data) {
+        // Sending back the specific error information from Axios
+        res.status(500).json(error.response.data);
+    } else {
+        // Sending back a general error if the response data is not available
+        res.status(500).json({ message: error.message, stack: error.stack });
+    }
+  }
+});
+
 // GET USER DATA (for report)
 app.post('/get-user-data/:playFabID', async (req, res) => {
   try {
@@ -356,6 +387,13 @@ app.use(session({
   }
 }));*/
 
+// server session
+app.use(session({
+  secret: process.env.SESSION_KEY,
+  resave: false,
+  saveUninitialized: true,
+  cookie: { secure: false }
+}));
 
 // EXEC SERVER
 app.use(express.static('public'));

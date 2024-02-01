@@ -73,10 +73,13 @@
     <input type="button" id="getSegmentPlayersButton" value="Get Players in Segment">
     <p id="totalPlayersSegment">Total players in segment:</p>
     <h2>Report</h2>
-    <!--<p id="totalPlayersReport">Total players in report:</p>-->
-    <textarea id="emailList" placeholder="Enter email addresses here, one per line"></textarea>
+    <p id="totalPlayersReport">Total players in report:</p>
+    <input class="small-toggle-button" type="button" id="toggleIdsButton" value="show / hide IDs">
+    <textarea id="playerIDList" readonly></textarea>
+    <textarea id="emailList" placeholder="Enter email addresses here, one per line"></textarea> 
     <div class="button-container">
         <input type="button" id="generateReportButton" value="Generate Report">
+        <input type="button" id="generateReportByIdButton" value="Generate Report By Ids">
         <input type="button" id="insightsButton" value="Insights">
         <input type="button" id="exportReportButton" value="Export to Excel">
     </div>
@@ -92,7 +95,7 @@
                 <th>Expiry Date</th>
                 <th>Days to Expiry</th>
                 <th>Created By</th>
-                <th>Created For</th>
+                <th>Reason</th>
                 <th>Player Data</th>
             </tr>
         </thead>

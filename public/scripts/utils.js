@@ -29,7 +29,7 @@ export function formatTimeToHHMMSS(seconds) {
 
 export function formatActivityData(activityData) {
     let formattedData = [];
-    //console.log(activityData);
+
     activityData.forEach(activity => {
         activity.plays.forEach(play => {
             formattedData.push({
@@ -110,7 +110,6 @@ export async function getAcademicAreas() {
 getAcademicAreas();
 
 
-
 export function fetchUserAccInfoById(playFabID) {
     const url = `/get-user-acc-info-id/${playFabID}`;
 
@@ -151,6 +150,27 @@ export function fetchUserAccInfoByEmail(email) {
         return response.json();
     });
 }
+
+export function fetchUserProfileById(playFabID) {
+    const url = `/get-user-profile-id/${playFabID}`;
+
+    return fetch(url, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ playFabID }) 
+    })
+    .then(response => {
+        if (!response.ok) {
+            return response.json().then(err => { 
+                throw new Error(err.error || 'An error occurred');
+            });
+        }
+        return response.json();
+    });
+}
+
 export function fetchUserData(playFabID) {
     const url = `/get-user-data/${playFabID}`;
 

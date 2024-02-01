@@ -1,46 +1,53 @@
 import { canAccess } from "./access-check.js";
-import { fetchSegmentPlayers } from "./segments.js";
+import { fetchUserAccInfoByEmail } from "./utils.js";
 
-document.addEventListener('DOMContentLoaded', () => {
-    document.getElementById('update-area-btn').addEventListener('click', ()=>UpdatePlayersAcademicArea("test", "test"));
-});
-
-async function UpdatePlayersAcademicArea(selectedSegmentId, desiredAcademicArea)
+export async function UpdateUserAcademicAreaByEmail(emailListText, desiredAcademicArea)
 {
     let hasAccess = await canAccess();
-    if(!hasAccess){ console.log("no access"); return; }else{ console.log("can access"); }
+    if(!hasAccess){ return; }
 
-    // get all plays in a segment
-    let segmentPlayers = await fetchSegmentPlayers(selectedSegmentId);
-    let playerProfiles = segmentPlayers.data.PlayerProfiles;
-    console.log(playerProfiles);
+    // Split by newline and filter out empty strings
+    const emailList = emailListText.split('\n').filter(Boolean); 
 
-    // iterate over them, update each players AcademicArea field to desiredAcademicArea
-    /*for (const player of playerProfiles) {
-        let playFabID = player.PlayFabID;
-        let AcademicArea = desiredAcademicArea;
-        let updateData = {
-            AcademicArea
-        };
+    let userAccInfoList = [];
+    for (const email of emailList) {
+        const userInfo = await fetchUserAccInfoByEmail(email);
+        userAccInfoList.push(userInfo);
+    }
 
-        const url = '/update-user-data';
-        const response = await fetch(url, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ playFabID, updateData })
-        });
+    //console.log(userAccInfoList);
+    userAccInfoList.forEach(async (userAccInfo) => {
+        console.log(userAccInfo.data.UserInfo.PlayFabId);
+        await UpdatePlayerAcademicArea(userAccInfo.data.UserInfo.PlayFabId, desiredAcademicArea);
+    })
+}
 
-        if (!response.ok) {
-            console.log(response);
-            throw new Error(`Failed to update player ${playFabID}: ${response}`);
-        }
+export async function UpdatePlayerAcademicArea(playerID, desiredAcademicArea)
+{
+    let hasAccess = await canAccess();
+    if(!hasAccess){ return; }
 
-        // You can handle the response here if needed
-        const responseData = await response.json();
-        console.log(`Updated player ${playFabID}:`, responseData);
-    }*/
-    console.log('All players updated successfully');
-    //return 'All players updated successfully';
+    let AcademicArea = desiredAcademicArea;
+    let updateData = { AcademicArea };
+
+    const url = '/update-user-data';
+    let playFabID = playerID;
+    const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ playFabID, updateData })
+    });
+
+    if (!response.ok) {
+        console.log(response);
+        throw new Error(`Failed to update player ${playFabID}: ${response}`);
+    }
+
+    // handle the response here if needed
+    //const responseData = await response.json();
+    //console.log(`Updated player ${playerID}:`, responseData);
+    console.log("player updated");
+    return 'player updated successfully';
 }

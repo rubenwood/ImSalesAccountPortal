@@ -1,8 +1,21 @@
 <html>
-    <head>
-        <link rel="stylesheet" type="text/css" href="styles.css">
-    </head>
+<head>
+    <meta charset="utf-8">
+    <title>Immersify Portal</title>
+    <script type="text/javascript" src="https://download.playfab.com/PlayFabClientApi.js"></script>
+    <link rel="stylesheet" type="text/css" href="styles.css">
+</head>
 <body>
+    <div id="loginModal" class="modal">
+        <div class="modal-content">
+            <img src="/immersify_logo.e141b23db21f4b78051561bc464eace7.svg" alt="Immersify Logo" class="login-logo">
+            <h2>Login</h2>
+            <input type="text" id="username" placeholder="Username"><br>
+            <input type="password" id="password" placeholder="Password"><br>
+            <input type="button" id="loginButton" value="Login">
+        </div>
+    </div>
+    
     <div class="form-container">
         <input id="google-login-btn" type="button" value="Login with Google" />
         <br />
@@ -12,6 +25,42 @@
         <br />
         <input id="get-apple-report-btn" type="button" value="Get Apple report" />
         <p id="output-area"></p>
+        <table id="reportTable" border="1">
+            <thead>
+                <tr>
+                    <th>Retention</th>
+                    <td>data goes here</td>
+                </tr>
+                <tr>
+                    <th>30 Day Retention</th>
+                    <td>data goes here</td>
+                </tr>
+                <tr>
+                    <th>New Users Per Week</th>
+                    <td id="newUsersPerWeek">data goes here</td>
+                </tr>
+                <tr>
+                    <th>Returning Users Per Week</th>
+                    <td>data goes here</td>
+                </tr>
+                <tr>
+                    <th>MAU</th>
+                    <td id="MAU">data goes here</td>
+                </tr>
+                <tr>
+                    <th>Active User Usage Time</th>
+                    <td>data goes here</td>
+                </tr>
+                <tr>
+                    <th>Total Sessions Per Active User</th>
+                    <td id="sessionsPerUserPerWeek">data goes here</td>
+                </tr>
+                <tr>
+                    <th>Total Activities Played Per Week</th>
+                    <td id="activitiesLaunchedPerWeek">data goes here</td>
+                </tr>
+            </thead>
+        </table>
     </div>
 
     <script type="module" src="scripts/reports-front.js"></script>
