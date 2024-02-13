@@ -50,35 +50,90 @@ function fetchGoogleReport() {
 function setupReportTable(jsonInput){
     let table = document.getElementById('reportTable');
     
-    // if (jsonInput.activeUsersPerMonth) {
-    //     let newUsersCell = table.querySelector("#activeUsersPerMonth");
-    //     if (newUsersCell) newUsersCell.innerText = jsonInput.activeUsersPerMonth;
-    // }
-
-    if (jsonInput.newUsersPerWeek) { // done (New Users Per Week)
-        let newUsersCell = table.querySelector("#newUsersPerWeek");
-        if (newUsersCell) newUsersCell.innerText = jsonInput.newUsersPerWeek;
+    if (jsonInput.userRetention) { // done (User Retention)
+        let dataCell = table.querySelector("#userRetention");
+        let day1Ret = jsonInput.userRetention[1].metricValues[0].value;
+        let day2Ret = jsonInput.userRetention[2].metricValues[0].value;
+        let day1Perc = (day1Ret * 100).toFixed(2);
+        let day2Perc = (day2Ret * 100).toFixed(2);
+        if (dataCell) dataCell.innerText = 'Day 1: ' + day1Perc + '%\nDay 2: ' + day2Perc + '%';
     }
 
-    if (jsonInput.activeUsersPerMonth) { // done (New Users Per Week)
-        let newUsersCell = table.querySelector("#MAU");
+    if (jsonInput.userRetention30Day) { // done (30 Day Retention)
+        let dataCell = table.querySelector("#userRetention30Days");
+        if (dataCell) dataCell.innerText = jsonInput.userRetention30Day;
+    }
+
+    if (jsonInput.newUsersPerWeek) { // done (New Users Per Week)
+        let dataCell = table.querySelector("#newUsersPerWeek");
+        if (dataCell) dataCell.innerText = jsonInput.newUsersPerWeek;
+    }
+
+    if (jsonInput.returningUsersPerWeek) { // done (Returning Users Per Week DAU)
+        let returningValue = calcReturning(jsonInput.returningUsersPerWeek);
+        let dataCell = table.querySelector("#returningUsersPerWeek");
+        if (dataCell) dataCell.innerText = returningValue;
+    }
+
+    if (jsonInput.activeUsersPerMonth) { // done (MAU)
+        let dataCell = table.querySelector("#MAU");
         // last months MAU
-        if (newUsersCell) newUsersCell.innerText = JSON.stringify(jsonInput.activeUsersPerMonth[jsonInput.activeUsersPerMonth.length-2]);
+        let thisMonthMAU = jsonInput.activeUsersPerMonth[jsonInput.activeUsersPerMonth.length-1];
+        let lastMonthMAU = jsonInput.activeUsersPerMonth[jsonInput.activeUsersPerMonth.length-2];
+        if (dataCell) dataCell.innerText = JSON.stringify(lastMonthMAU);
+    }
+
+    if (jsonInput.averageActiveUsageTime) { // done (Active User Useage Time)
+        let dataCell = table.querySelector("#averageActiveUsageTime");
+        let averageUsageTime = calcAverageUsageTime(jsonInput.averageActiveUsageTime);
+        if (dataCell) dataCell.innerText = averageUsageTime.toFixed(2);
     }
 
     if (jsonInput.sessionsPerUserPerWeek) { // done (Total Sessions Per Active User)
-        let newUsersCell = table.querySelector("#sessionsPerUserPerWeek");
-        if (newUsersCell) newUsersCell.innerText = jsonInput.sessionsPerUserPerWeek;
+        let dataCell = table.querySelector("#sessionsPerUserPerWeek");
+        let sessionsPerUserPerWeek = parseFloat(jsonInput.sessionsPerUserPerWeek);
+        console.log(sessionsPerUserPerWeek);
+        if (dataCell) dataCell.innerText = sessionsPerUserPerWeek.toFixed(2);
     }
 
     if (jsonInput.activitiesLaunchedPerWeek) { // done (Total Experiences Played)
-        let newUsersCell = table.querySelector("#activitiesLaunchedPerWeek");
-        if (newUsersCell) newUsersCell.innerText = jsonInput.activitiesLaunchedPerWeek;
+        let dataCell = table.querySelector("#activitiesLaunchedPerWeek");
+        if (dataCell) dataCell.innerText = jsonInput.activitiesLaunchedPerWeek;
     }
 
+    //document.getElementById('output-area').innerHTML = JSON.stringify(jsonInput.averageActiveUsageTime);
+}
 
-    document.getElementById('output-area').innerHTML = JSON.stringify(jsonInput);
+function calcReturning(rowData) {
+    let totalReturningUsers = 0;  
+    // Iterate over each row in the input JSON object
+    rowData.forEach(row => {
+      // Check if the dimension value indicates a returning user
+      const isReturning = row.dimensionValues.some(dimension => dimension.value === 'returning');      
+      // If the user is returning, add their count to the total
+      if (isReturning) { totalReturningUsers += parseInt(row.metricValues[0].value, 10); }
+    });
+  
+    console.log("Total Returning Users:", totalReturningUsers);
+    return totalReturningUsers;
+}
 
+function calcAverageUsageTime(rowData) {
+    let totalAverage = 0;
+    let daysCount = rowData.length;
+  
+    rowData.forEach(item => {
+      const users = parseInt(item.metricValues[0].value, 10); // Number of users
+      const totalUsageTime = parseInt(item.metricValues[1].value, 10); // Total usage time for all users
+  
+      const dailyAverage = totalUsageTime / users; // Average usage time per day
+      totalAverage += dailyAverage; // Summing up the daily averages
+    });
+    console.log(totalAverage);
+    // Overall average usage time across all days
+    let overallAverage = (totalAverage / (daysCount-1)) / 60;
+    overallAverage = overallAverage;
+    return overallAverage;
 }
 
 

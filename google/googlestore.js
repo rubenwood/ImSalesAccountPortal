@@ -141,14 +141,22 @@ router.get('/get-kpi-report', async (req, res) => {
   const analyticsApiUrl = `https://analyticsdata.googleapis.com/v1beta/properties/${process.env.GA_PROP_ID}:runReport`;
 
   try {
-    
+    let userRetention = await getUserRetention(analyticsApiUrl);
+    let userRetention30Day = await getUserRetention30Day(analyticsApiUrl);
     let newUsersPerWeek = await getNewUsersPerWeek(analyticsApiUrl);
+    let returningUsersPerWeek = await getReturningUsersPerWeek(analyticsApiUrl);
     let activeUsersPerMonth = await getActiveUsersPerMonth(analyticsApiUrl);
+    let averageActiveUsageTime = await getAverageActiveUsageTime(analyticsApiUrl); 
     let sessionsPerUserPerWeek = await getSessionsPerUserPerWeek(analyticsApiUrl);
     let activitiesLaunchedPerWeek = await getActivitiesLaunchedPerWeek(analyticsApiUrl);
+
     let output = { 
+      userRetention,
+      userRetention30Day,
       newUsersPerWeek,
+      returningUsersPerWeek,
       activeUsersPerMonth,
+      averageActiveUsageTime,
       sessionsPerUserPerWeek,
       activitiesLaunchedPerWeek,
     };
@@ -192,7 +200,6 @@ async function getSessionsPerUserPerWeek(analyticsApiUrl){
     });
 
   const launchActivityData = response.data.rows[0].metricValues[0].value;
-
   return launchActivityData;
 }
 async function getNewUsersPerWeek(analyticsApiUrl){
@@ -216,7 +223,6 @@ async function getNewUsersPerWeek(analyticsApiUrl){
 
 async function getActiveUsersPerMonth(analyticsApiUrl){
   let results = [];
-  
   let startDate = new Date("2023-01-01");
   let currentDate = new Date(); // Current date
   currentDate.setDate(1); // Set to the first of the current month
@@ -263,5 +269,115 @@ async function getActiveUsersPerMonth(analyticsApiUrl){
 
   return results;
 }
+
+async function getUserRetention(analyticsApiUrl){
+  const today = new Date();
+  // Calculate yesterday's date
+  const yesterday = new Date(today);
+  yesterday.setDate(yesterday.getDate() - 1);
+  // Calculate the date 42 days ago from today
+  const daysAgo42 = new Date(today);
+  daysAgo42.setDate(daysAgo42.getDate() - 42);
+  // Function to format a date into "YYYY-MM-DD"
+  function formatDate(date) {
+    const year = date.getFullYear();
+    const month = ("0" + (date.getMonth() + 1)).slice(-2); // Add leading 0 if necessary
+    const day = ("0" + date.getDate()).slice(-2); // Add leading 0 if necessary
+    return `${year}-${month}-${day}`;
+  }
+
+  // Format both dates
+  const formattedYesterday = formatDate(yesterday);
+  const formattedDaysAgo42 = formatDate(daysAgo42);
+
+  console.log("Yesterday's date: ", formattedYesterday);
+  console.log("42 days ago from today: ", formattedDaysAgo42);
+
+  const response = await axios.post(analyticsApiUrl,
+    {
+      dimensions: [{ name: "cohort" },{ name: "cohortNthDay" }],
+      metrics: [
+        { 
+          name: "cohortRetentionFraction",
+          expression: "cohortActiveUsers/cohortTotalUsers"
+        }
+      ],
+      cohortSpec: {
+        cohorts: [
+          {
+            dimension: "firstSessionDate",
+            dateRange: { startDate: formattedDaysAgo42, endDate: formattedYesterday }
+          }
+        ],
+        cohortsRange: {
+          endOffset: 42,
+          granularity: "DAILY"
+        }
+      }
+    },
+    {
+      headers: {
+        Authorization: `Bearer ${cachedAccessToken}`,
+      }
+    });
+
+    return response.data.rows;
+}
+
+
+async function getUserRetention30Day(analyticsApiUrl){
+  const response = await axios.post(analyticsApiUrl,
+    { 
+      dateRanges: [{ startDate: "30daysAgo", endDate: "yesterday" }],
+      metrics: [
+        { name: "activeUsers" }
+      ] 
+    },
+    {
+      headers: {
+        Authorization: `Bearer ${cachedAccessToken}`,
+      }
+    });
+
+  const retention30DaysData = response.data.rows[0].metricValues[0].value;
+
+  return retention30DaysData;
+}
+
+async function getReturningUsersPerWeek(analyticsApiUrl){
+  const response = await axios.post(analyticsApiUrl,
+    {
+      dateRanges: [{ startDate: "7daysAgo", endDate: "yesterday" }],
+      dimensions: [{ name: "date" },{ name: "newVsReturning" }],
+      metrics: [{ name: "totalUsers" }]
+    },
+    {
+      headers: {
+        Authorization: `Bearer ${cachedAccessToken}`,
+      }
+    });
+
+    return response.data.rows;
+}
+
+async function getAverageActiveUsageTime(analyticsApiUrl){
+  const response = await axios.post(analyticsApiUrl,
+    {
+      dateRanges: [{ startDate: "7daysAgo", endDate: "yesterday" }],
+      dimensions: [{ name: "date" }],
+      metrics: [{ name: "activeUsers" },{ name: "userEngagementDuration" }]
+    },
+    {
+      headers: {
+        Authorization: `Bearer ${cachedAccessToken}`,
+      }
+    });
+
+    console.log("ENGAGEMENT TIME PER WEEK");
+    console.log(response);
+
+    return response.data.rows;
+}
+
 
 module.exports = router;
