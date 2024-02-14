@@ -57,16 +57,16 @@ const playDeveloper = google.androidpublisher({
   auth: oauth2Client
 });
 
-async function listSubscriptions() {
+/*async function listSubscriptions() {
   const response = await playDeveloper.monetization.subscriptions.list({
     packageName: process.env.GOOGLE_APP_PACKAGE_ID
     //startTime: // 'startTime', // Optional parameters
     //endTime: // 'endTime' // Optional parameters
   });
   return response;
-}
+}*/
 
-router.get('/get-google-prods', async (req, res) => {
+/*router.get('/get-google-prods', async (req, res) => {
     let subListResp = await listSubscriptions();
     let subList = subListResp.data;
     let subscriptionProds = subList.subscriptions;
@@ -77,9 +77,9 @@ router.get('/get-google-prods', async (req, res) => {
       prodIDs.push(prod.productId);
     })
     res.send(JSON.stringify(prodIDs));
-});
+});*/
 
-async function listSubPurchases() {
+/*async function listSubPurchases() {
   const response = await playDeveloper.purchases.subscriptions.get({
     packageName: process.env.GOOGLE_APP_PACKAGE_ID,
     subscriptionId: 'com.immersifyeducation.immersifydental.monthly'
@@ -92,51 +92,47 @@ router.get('/get-google-purchases', async (req, res) => {
   let subListResp = await listSubPurchases();
   console.log(subListResp);
 
-});
+});*/
 
+// GET GOOGLE SUB REPORT
+// returns a full subscription report
 router.get('/get-google-report', async (req, res) => {
   if (req.session.idToken == undefined || req.session.idToken == null) { return; }
 
   try {
-    const url = `https://storage.googleapis.com/${process.env.GOOGLE_BUCKET_BASE}/financial-stats/subscriptions/${process.env.GOOGLE_SUB_FILE_BASE}.monthly_202312_country.csv`;
+    const url = `https://storage.googleapis.com/${process.env.GOOGLE_BUCKET_BASE}/financial-stats/subscriptions/${process.env.GOOGLE_SUB_FILE_BASE}.monthly_202402_country.csv`;
 
     const response = await axios.get(url, {
       headers: {
         'Authorization': `Bearer ${cachedAccessToken}`
-      },
-      responseType: 'stream' // Assuming you are downloading a file
+      }
+      //,responseType: 'stream' // Assuming you are downloading a file
     });
-
-    // You might want to handle the stream properly here, depending on your needs
-    response.data.pipe(res);
+    //response.data.pipe(res);
+    res.send(response.data);
   } catch (error) {
     console.error('Error fetching data:', error);
     res.status(500).send('Error fetching data');
   }
 });
 
-// exmaple of getting data from GA
-router.get('/get-google-report2', async (req, res) => {
-  const analyticsApiUrl = ` https://analyticsdata.googleapis.com/v1beta/properties/${process.env.GA_PROP_ID}:runReport`;
+// GET PURCHASERS
+// calls GA to get the number of purchasers 
+router.get('/get-google-purchasers', async (req, res) => {
+  if (req.session.idToken == undefined || req.session.idToken == null) { return; }
+  const analyticsApiUrl = `https://analyticsdata.googleapis.com/v1beta/properties/${process.env.GA_PROP_ID}:runReport`;
 
-  const response = await axios.post(analyticsApiUrl,
-    { 
-      dateRanges: [{ startDate: "7daysAgo", endDate: "yesterday" }],
-      dimensions: [{ name: "date" }],
-      metrics: [
-        { name: "activeUsers" },
-        { name: "newUsers" }
-      ] 
-    },
-    {
-      headers: {
-        Authorization: `Bearer ${cachedAccessToken}`,
-      }
-    });
-  
-  res.send(response.data);
+  try {    
+    let googlePurchasers = await getTotalPurchasers(analyticsApiUrl);
+    res.send(googlePurchasers);
+  } catch (error) {
+    console.error('Error fetching data:', error);
+    res.status(500).send('Error fetching data');
+  }
 });
 
+
+// GET KPI REPORT
 router.get('/get-kpi-report', async (req, res) => {
   const analyticsApiUrl = `https://analyticsdata.googleapis.com/v1beta/properties/${process.env.GA_PROP_ID}:runReport`;
 
@@ -220,7 +216,6 @@ async function getNewUsersPerWeek(analyticsApiUrl){
 
   return launchActivityData;
 }
-
 async function getActiveUsersPerMonth(analyticsApiUrl){
   let results = [];
   let startDate = new Date("2023-01-01");
@@ -269,7 +264,6 @@ async function getActiveUsersPerMonth(analyticsApiUrl){
 
   return results;
 }
-
 async function getUserRetention(analyticsApiUrl){
   const today = new Date();
   // Calculate yesterday's date
@@ -323,8 +317,6 @@ async function getUserRetention(analyticsApiUrl){
 
     return response.data.rows;
 }
-
-
 async function getUserRetention30Day(analyticsApiUrl){
   const response = await axios.post(analyticsApiUrl,
     { 
@@ -343,7 +335,6 @@ async function getUserRetention30Day(analyticsApiUrl){
 
   return retention30DaysData;
 }
-
 async function getReturningUsersPerWeek(analyticsApiUrl){
   const response = await axios.post(analyticsApiUrl,
     {
@@ -359,7 +350,6 @@ async function getReturningUsersPerWeek(analyticsApiUrl){
 
     return response.data.rows;
 }
-
 async function getAverageActiveUsageTime(analyticsApiUrl){
   const response = await axios.post(analyticsApiUrl,
     {
@@ -375,6 +365,23 @@ async function getAverageActiveUsageTime(analyticsApiUrl){
 
     console.log("ENGAGEMENT TIME PER WEEK");
     console.log(response);
+
+    return response.data.rows;
+}
+
+async function getTotalPurchasers(analyticsApiUrl){
+  const response = await axios.post(analyticsApiUrl,
+    {
+      dateRanges: [{ startDate: "7daysAgo", endDate: "yesterday" }],
+      metrics: [{ name: "totalPurchasers" }]
+    },
+    {
+      headers: {
+        Authorization: `Bearer ${cachedAccessToken}`,
+      }
+    });
+
+    console.log(response.data);
 
     return response.data.rows;
 }

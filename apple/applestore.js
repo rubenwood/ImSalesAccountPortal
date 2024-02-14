@@ -248,10 +248,15 @@ router.get('/get-subscription-report', async (req, res) => {
 
         let output = await decompressData(resp.data);
         // let formatted = formatDecompressedData(output);
-        // let htmlString = 'Total subs: ' + (formatted.length-1);
+        
+        // let htmlString = 'Total apple subs: ' + (formatted.length-1) + '<br/>';
         // formatted.forEach(element => {
         //     htmlString += "<br/>" + element + "<br/>";
         // });
+        // change this to be JSON,
+        //let appleSubCount = formatted.length-1;
+        //let outputJSON = { appleSubCount, htmlString }
+
         res.send(output);
     } catch (error) {
         if (error.response && error.response.data) {
@@ -337,11 +342,7 @@ async function decompressData(respData){
     
     return decompressed;
 }
-function formatDecompressedData(decompressed) {
-    let output = decompressed.split('\n');
-    let formattedOutput = output.map(line => line.replace(/\t/g, ','));
-    return formattedOutput;
-}
+
 
 const yesterday = new Date();
 const daysAgo2 = new Date();

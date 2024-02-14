@@ -1,7 +1,7 @@
 document.addEventListener('DOMContentLoaded', async () => {
     document.getElementById('google-login-btn').addEventListener('click', GoogleLoginClicked);
-    document.getElementById('get-google-report-btn').addEventListener('click', fetchGoogleReport);
-    document.getElementById('get-apple-report-btn').addEventListener('click', fetchAppleReport);
+    document.getElementById('get-google-report-btn').addEventListener('click', fetchDevKPIReport);
+    document.getElementById('get-apple-report-btn').addEventListener('click', fetchSubReport);
 });
 window.onload = function() {
     //document.getElementById('loginModal').style.display = 'block';
@@ -12,24 +12,7 @@ export function GoogleLoginClicked(){
     window.location.href = '/google/google-login';
 }
 
-function fetchGoogleReport() {
-    /*fetch('/google/get-google-report')
-    .then(response => {
-        if (!response.ok) {
-            throw new Error('Network response was not ok');
-        }
-        return response.text();
-    })
-    .then(csvText => {
-        // Convert the CSV text to an HTML table
-        const html = csvToHtmlTable(csvText);
-        document.getElementById('output-area').innerHTML = html;
-    })
-    .catch(error => {
-        console.error('There has been a problem with your fetch operation:', error);
-        document.getElementById('output-area').textContent = 'Error fetching data: ' + error.message;
-    });*/
-
+function fetchDevKPIReport() {
     fetch('/google/get-kpi-report')
     .then(response => {
         if (!response.ok) {
@@ -92,7 +75,6 @@ function setupReportTable(jsonInput){
     if (jsonInput.sessionsPerUserPerWeek) { // done (Total Sessions Per Active User)
         let dataCell = table.querySelector("#sessionsPerUserPerWeek");
         let sessionsPerUserPerWeek = parseFloat(jsonInput.sessionsPerUserPerWeek);
-        console.log(sessionsPerUserPerWeek);
         if (dataCell) dataCell.innerText = sessionsPerUserPerWeek.toFixed(2);
     }
 
@@ -114,7 +96,7 @@ function calcReturning(rowData) {
       if (isReturning) { totalReturningUsers += parseInt(row.metricValues[0].value, 10); }
     });
   
-    console.log("Total Returning Users:", totalReturningUsers);
+    //console.log("Total Returning Users:", totalReturningUsers);
     return totalReturningUsers;
 }
 
@@ -129,7 +111,7 @@ function calcAverageUsageTime(rowData) {
       const dailyAverage = totalUsageTime / users; // Average usage time per day
       totalAverage += dailyAverage; // Summing up the daily averages
     });
-    console.log(totalAverage);
+    //console.log(totalAverage);
     // Overall average usage time across all days
     let overallAverage = (totalAverage / (daysCount-1)) / 60;
     overallAverage = overallAverage;
@@ -137,24 +119,97 @@ function calcAverageUsageTime(rowData) {
 }
 
 
-function fetchAppleReport() {
-    fetch('/apple/get-subscription-report')
-    .then(response => {
-        if (!response.ok) {
-            throw new Error('Network response was not ok');
-        }
-        // Assuming the output is a string or text
-        return response.text();
-    })
-    .then(text => {
-        // Display the response in some part of your webpage
-        document.getElementById('output-area').textContent = text;
-    })
-    .catch(error => {
-        console.error('There has been a problem with your fetch operation:', error);
+// SUB REPORT
+async function fetchSubReport() {
+    try {
+        // Execute both requests concurrently and wait for both of them to complete
+        const [googleReport, googlePurchasers, appleReport] = await Promise.all([
+            fetchGoogleReport(),
+            fetchGooglePurchasers(),
+            fetchAppleReport()
+        ]);
+
+        const sevenDaysAgo = new Date();
+        sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+        const sevenDaysAgoStr = sevenDaysAgo.toISOString().split('T')[0];
+
+        // Format google report
+        let googleRepArray = googleReport.split('\n');
+        // Decode HTML entities for each line in the array
+        let decodedGoogleRepArray = googleRepArray.map(line => {
+            let tempDiv = document.createElement('div');
+            tempDiv.innerHTML = line;
+            return tempDiv.textContent || tempDiv.innerText || "";
+        });
+        //console.log(decodedGoogleRepArray);
+
+        // Filter for nonFreeTrials and freeTrials with dates within the last 14 days
+        let nonFreeTrials = decodedGoogleRepArray.filter(line => {
+            const lineDate = line.split(',')[0];
+            return !line.toLowerCase().includes("freetrial") && lineDate >= sevenDaysAgoStr;
+        });
+        let freeTrials = decodedGoogleRepArray.filter(line => {
+            const lineDate = line.split(',')[0];
+            return line.toLowerCase().includes("freetrial") && lineDate >= sevenDaysAgoStr;
+        });
+        // console.log(nonFreeTrials);
+        // console.log(freeTrials);
+        // console.log(nonFreeTrials.length);
+        // console.log(freeTrials.length);
+
+        console.log(googlePurchasers);
+        let googleHTMLString = "Total google subs: " + googlePurchasers[0].metricValues[0].value;
+
+        // format apple report
+        let formattedAppleReport = formatDecompressedData(appleReport);
+        let appleFullArr = [];
+        formattedAppleReport.forEach(element =>{
+            let rowSplit = element.split(',');
+            appleFullArr.push(rowSplit);
+        })
+        console.log(formattedAppleReport);
+        console.log(appleFullArr);
+        
+        let appleHTMLString = 'Total apple subs: ' + (formattedAppleReport.length-1) + '<br/>';
+        formattedAppleReport.forEach(element => {
+             appleHTMLString += "<br/>" + element + "<br/>";
+        });
+        
+        const combinedHTML = googleHTMLString +"<br/><br/>"+ appleHTMLString;
+        document.getElementById('output-area').innerHTML = combinedHTML;
+    } catch (error) {
+        console.error('There has been a problem with the combined fetch operation:', error);
         document.getElementById('output-area').textContent = 'Error fetching data: ' + error.message;
-    });
+    }
 }
+
+async function fetchAppleReport() {
+    const response = await fetch('/apple/get-subscription-report');
+    if (!response.ok) {
+        throw new Error('Network response was not ok');
+    }
+    const outputText = await response.text();
+    return outputText;
+}
+async function fetchGoogleReport() {
+    const response = await fetch('/google/get-google-report');
+    if (!response.ok) {
+        throw new Error('Network response was not ok');
+    }
+
+    const outputText = await response.text();
+    return outputText;
+}
+async function fetchGooglePurchasers() {
+    const response = await fetch('/google/get-google-purchasers');
+    if (!response.ok) {
+        throw new Error('Network response was not ok');
+    }
+
+    const outputText = await response.json();
+    return outputText;
+}
+
 
 function csvToHtmlTable(csvText) {
     const rows = csvText.split('\n');
@@ -172,4 +227,11 @@ function csvToHtmlTable(csvText) {
 
     html += '</table>';
     return html;
+}
+
+
+function formatDecompressedData(decompressed) {
+    let output = decompressed.split('\n');
+    let formattedOutput = output.map(line => line.replace(/\t/g, ','));
+    return formattedOutput;
 }
