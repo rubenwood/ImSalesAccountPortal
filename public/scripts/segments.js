@@ -86,3 +86,19 @@ export async function getPlayersInSegmentClicked(segmentID){
     // // Set the email list string as the value of the textarea
     // return emailListString;
 }
+
+export async function getPlayerCountInSegment(segmentID){
+    //let hasAccess = await canAccess();
+    //if(!hasAccess){ return; }
+
+    // Get the selected segment ID from the dropdown
+    const selectedSegmentId = segmentID;
+    if (!selectedSegmentId) {
+        console.log("No segment selected");
+        return;
+    }
+
+    let data = await fetchSegmentPlayers(selectedSegmentId);
+    playerProfiles = data.data;
+    return playerProfiles;
+}

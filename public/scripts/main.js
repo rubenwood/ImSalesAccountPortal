@@ -109,15 +109,15 @@ export async function generateReportById() {
     reportData = []; // reset the report data
     exportData = [];
 
-    let userAccInfo;
-    let userData;
+    //let userAccInfo;
+    //let userData;
     
     // Create an array of promises for fetching user data
     const fetchPromises = playerIDList.map(async (playerID, index) => {
         try {
             await delay(index * 700); // Delay
-            userAccInfo = await fetchUserAccInfoById(playerID);
-            userData = await fetchUserData(userAccInfo.data.UserInfo.PlayFabId);
+            let userAccInfo = await fetchUserAccInfoById(playerID);
+            let userData = await fetchUserData(userAccInfo.data.UserInfo.PlayFabId);
             await handleData(userData, userAccInfo, tableBody); // Awaiting handleData
         } catch (error) {
             console.error('Error:', error);
@@ -154,15 +154,16 @@ export async function generateReportByEmail() {
     reportData = []; // reset the report data
     exportData = [];
 
-    let userAccInfo;
-    let userData;
+    //let userAccInfo;
+    //let userData;
 
     const fetchPromises = emailList.map(async (email, index) => {
         try {
             await delay(index * 700); // Delay
-            userAccInfo = await fetchUserAccInfoByEmail(email);
-            userData = await fetchUserData(userAccInfo.data.UserInfo.PlayFabId);
-            await handleData(userData, userAccInfo, tableBody); // Awaiting handleData
+            let userAccInfo = await fetchUserAccInfoByEmail(email);
+            let userData = await fetchUserData(userAccInfo.data.UserInfo.PlayFabId);
+            await handleData(userData, userAccInfo, tableBody);
+            console.log("setup data for: " + email);
         } catch (error) {
             console.error('Error:', error);
             const row = tableBody.insertRow();
@@ -189,7 +190,9 @@ export async function generateReportByEmail() {
 async function handleData(respData, userAccInfo, tableBody){
     let userData = respData;
     //console.log(userData);
+    console.log(userAccInfo.data.UserInfo.PlayFabId);
     let email = await getPlayerEmailAddr(userAccInfo.data.UserInfo.PlayFabId);
+    console.log(email);
     let createdDate = new Date(userAccInfo.data.UserInfo.TitleInfo.Created);
     let lastLoginDate =  new Date(userAccInfo.data.UserInfo.TitleInfo.LastLogin);
     let today = new Date();
@@ -216,6 +219,7 @@ async function handleData(respData, userAccInfo, tableBody){
     // Append data to the table
     const row = tableBody.insertRow();
     row.className = 'report-row';
+    console.log(email);
     addCellToRow(row, email, false);
     addCellToRow(row, createdDate.toDateString(), false);
     addCellToRow(row, lastLoginDate.toDateString(), false);

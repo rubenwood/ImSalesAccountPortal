@@ -123,6 +123,7 @@ router.get('/get-sales-report', async (req, res) => {
         });
 
         let output = await processSalesReport(resp.data);
+        //res.send(`${resp.data}\nEND`);
         res.send(`${output}\nEND`);
     } catch (error) {
         console.error("Axios Error:", error.response ? error.response.data : error.message);
@@ -131,6 +132,7 @@ router.get('/get-sales-report', async (req, res) => {
 });
 async function processSalesReport(respData){
     let saleCount = 0;
+    let unitCount = 0;
     let htmlTable = '<table style="border-collapse: collapse; width: 100%;">';
 
     // Wrap the zlib.gunzip in a Promise
@@ -150,6 +152,7 @@ async function processSalesReport(respData){
     const rows = decompressed.split('\n');
 
     rows.forEach((row, index) => {
+        let shouldSubtract = false;
         let cells = row.split('\t');
         htmlTable += '<tr>';
 
@@ -163,6 +166,17 @@ async function processSalesReport(respData){
                 // Assuming SKU is in the third column (cellIndex === 2)
                 if (cellIndex === 2 && cell !== "1.0") {
                     saleCount++;
+                    shouldSubtract = true; // Set the flag to true if condition meets
+                }
+
+                // Process unit count based on the flag
+                if(cellIndex === 7){
+                    let unitValue = parseInt(cell, 10); // Parse the cell value as integer
+                    if(shouldSubtract){
+                        unitCount -= unitValue; // Subtract if flag is true
+                    } else {
+                        unitCount += unitValue; // Add if flag is not set (normal case)
+                    }
                 }
             }
         });
@@ -171,7 +185,7 @@ async function processSalesReport(respData){
     });
 
     htmlTable += '</table>';
-    let output = `<h2>Sale Count: ${saleCount}</h2>${htmlTable}`;
+    let output = `<h2>Sale Count: ${saleCount}</h2><h3>${unitCount}</h3><br/>${htmlTable}`;
     return output;
 }
 
@@ -343,11 +357,41 @@ async function decompressData(respData){
     return decompressed;
 }
 
+router.get('/get-apple-downloads', async (req, res) => {
+    try {
+        const jwtoken = generateToken();
+        const queryParams = {
+            'filter[frequency]': 'YEARLY', // DAILY WEEKLY MONTHLY YEARLY
+            'filter[reportType]': 'SALES', // INSTALLS SALES SUBSCRIPTION SUBSCRIBER
+            'filter[reportSubType]': 'SUMMARY',
+            'filter[vendorNumber]': process.env.APPLE_VEN,
+            'filter[reportDate]': '2023'
+        };
+
+        let resp = await axios.get(`https://api.appstoreconnect.apple.com/v1/salesReports`, {
+            headers: {
+                'Authorization': `Bearer ${jwtoken}`,
+            },
+            params: queryParams,
+            responseType: 'arraybuffer'
+        });
+
+        let output = await processSalesReport(resp.data);
+        //res.send(`${resp.data}\nEND`);
+        res.send(`${output}\nEND`);
+    } catch (error) {
+        console.error("Axios Error:", error.response ? error.response.data : error.message);
+        res.status(500).send('Error occurred');
+    }
+});
+
 
 const yesterday = new Date();
 const daysAgo2 = new Date();
+const daysAgo7 = new Date();
 yesterday.setDate(yesterday.getDate() - 1);
 daysAgo2.setDate(yesterday.getDate() - 2);
+daysAgo7.setDate(yesterday.getDate() - 7);
 const formatDate = (date) => {
     let d = new Date(date),
         month = '' + (d.getMonth() + 1),

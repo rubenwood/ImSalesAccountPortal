@@ -1,3 +1,5 @@
+import {getPlayerCountInSegment} from './segments.js';
+
 document.addEventListener('DOMContentLoaded', async () => {
     document.getElementById('google-login-btn').addEventListener('click', GoogleLoginClicked);
     document.getElementById('get-google-report-btn').addEventListener('click', fetchDevKPIReport);
@@ -37,9 +39,11 @@ function setupReportTable(jsonInput){
         let dataCell = table.querySelector("#userRetention");
         let day1Ret = jsonInput.userRetention[1].metricValues[0].value;
         let day2Ret = jsonInput.userRetention[2].metricValues[0].value;
+        let day30Ret = jsonInput.userRetention[30].metricValues[0].value;
         let day1Perc = (day1Ret * 100).toFixed(2);
         let day2Perc = (day2Ret * 100).toFixed(2);
-        if (dataCell) dataCell.innerText = 'Day 1: ' + day1Perc + '%\nDay 2: ' + day2Perc + '%';
+        let day30Perc = (day30Ret * 100).toFixed(2);
+        if (dataCell) dataCell.innerText = `Day 1: ${day1Perc}%\nDay 2: ${day2Perc}%\nDay 30: ${day30Perc}%`;
     }
 
     if (jsonInput.userRetention30Day) { // done (30 Day Retention)
@@ -121,6 +125,11 @@ function calcAverageUsageTime(rowData) {
 
 // SUB REPORT
 async function fetchSubReport() {
+    let allPlayersSeg = await getPlayerCountInSegment("1E7B6EA6970A941D");
+    console.log(allPlayersSeg.ProfilesInSegment);
+
+    let allPlayserHTMLString = "Total users: " + allPlayersSeg.ProfilesInSegment;
+
     try {
         // Execute both requests concurrently and wait for both of them to complete
         const [googleReport, googlePurchasers, appleReport] = await Promise.all([
@@ -169,13 +178,22 @@ async function fetchSubReport() {
         })
         console.log(formattedAppleReport);
         console.log(appleFullArr);
-        
-        let appleHTMLString = 'Total apple subs: ' + (formattedAppleReport.length-1) + '<br/>';
-        formattedAppleReport.forEach(element => {
-             appleHTMLString += "<br/>" + element + "<br/>";
+        let appleFreeTrials = [];
+        appleFullArr.forEach(row => {
+            // Convert the values at index 19 and 22 to integers and check if either is greater than 0
+            // Note: Using parseInt to ensure the comparison is done with numeric values
+            if (parseInt(row[19], 10) > 0 || parseInt(row[22], 10) > 0) {
+                appleFreeTrials.push(row); // Add the row to appleFreeTrials if the condition is met
+            }
         });
+        console.log(appleFreeTrials.length);
+
+        let appleHTMLString = 'Total apple subs: ' + (formattedAppleReport.length-1) + '<br/>';
+        // formattedAppleReport.forEach(element => {
+        //      appleHTMLString += "<br/>" + element + "<br/>";
+        // });
         
-        const combinedHTML = googleHTMLString +"<br/><br/>"+ appleHTMLString;
+        const combinedHTML = allPlayserHTMLString +"<br/><br/>"+ googleHTMLString +"<br/><br/>"+ appleHTMLString;
         document.getElementById('output-area').innerHTML = combinedHTML;
     } catch (error) {
         console.error('There has been a problem with the combined fetch operation:', error);
@@ -210,7 +228,6 @@ async function fetchGooglePurchasers() {
     return outputText;
 }
 
-
 function csvToHtmlTable(csvText) {
     const rows = csvText.split('\n');
     let html = '<table>';
@@ -228,7 +245,6 @@ function csvToHtmlTable(csvText) {
     html += '</table>';
     return html;
 }
-
 
 function formatDecompressedData(decompressed) {
     let output = decompressed.split('\n');
