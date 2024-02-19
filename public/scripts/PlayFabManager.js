@@ -229,15 +229,12 @@ export async function getPlayerEmailAddr(playFabId) {
         let playerData = await fetchUserAccInfoById(playFabId);
         let userEmail;
         let loginEmail = playerData.data.UserInfo.PrivateInfo.Email;
-        console.log(loginEmail);
         if(loginEmail !== undefined){ 
-            console.log("login email not undefined");
             userEmail = loginEmail 
         }else{
             console.log("login email undefined, getting contact instead");
             userEmail = await getPlayerContactEmailAddr(playFabId);
         }
-        console.log(userEmail);
         return userEmail;
     } catch (error) {
         console.error(`Error fetching email for PlayFab ID ${playFabId}:`, error);

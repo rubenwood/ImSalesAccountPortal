@@ -163,7 +163,6 @@ export async function generateReportByEmail() {
             let userAccInfo = await fetchUserAccInfoByEmail(email);
             let userData = await fetchUserData(userAccInfo.data.UserInfo.PlayFabId);
             await handleData(userData, userAccInfo, tableBody);
-            console.log("setup data for: " + email);
         } catch (error) {
             console.error('Error:', error);
             const row = tableBody.insertRow();
@@ -189,10 +188,8 @@ export async function generateReportByEmail() {
 
 async function handleData(respData, userAccInfo, tableBody){
     let userData = respData;
-    //console.log(userData);
-    console.log(userAccInfo.data.UserInfo.PlayFabId);
+    //console.log(userAccInfo.data.UserInfo.PlayFabId);
     let email = await getPlayerEmailAddr(userAccInfo.data.UserInfo.PlayFabId);
-    console.log(email);
     let createdDate = new Date(userAccInfo.data.UserInfo.TitleInfo.Created);
     let lastLoginDate =  new Date(userAccInfo.data.UserInfo.TitleInfo.LastLogin);
     let today = new Date();
@@ -219,7 +216,6 @@ async function handleData(respData, userAccInfo, tableBody){
     // Append data to the table
     const row = tableBody.insertRow();
     row.className = 'report-row';
-    console.log(email);
     addCellToRow(row, email, false);
     addCellToRow(row, createdDate.toDateString(), false);
     addCellToRow(row, lastLoginDate.toDateString(), false);
