@@ -5,7 +5,8 @@ const axios = require('axios');
 const router = express.Router();
 const zlib = require('zlib');
 
-const privateKey = fs.readFileSync(`other/${process.env.APPLE_PK}`);
+//const privateKey = fs.readFileSync(`other/${process.env.APPLE_PK}`);
+const privateKey = process.env.APPLE_PKK;
 
 let cachedToken = null;
 let tokenTimestamp = null;
