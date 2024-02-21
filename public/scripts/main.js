@@ -17,7 +17,7 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('getSegmentsButton').addEventListener('click', ()=>getSegmentsClicked(document.getElementById('segmentSelection')));
     document.getElementById('getSegmentPlayersButton').addEventListener('click', async ()=>
     { 
-        await getSegmentPlayersButton();
+        await getSegmentPlayersButtonClicked();
         document.getElementById('totalPlayersSegment').innerHTML = 'Total players in segment: ' + playerProfiles.length;
     });
 
@@ -156,17 +156,20 @@ export async function generateReportByEmail() {
 
     //let userAccInfo;
     //let userData;
-
+    //let userIDList = [];
     const fetchPromises = emailList.map(async (email, index) => {
         try {
-            await delay(index * 700); // Delay
+            await delay(index * 700);
             let userAccInfo = await fetchUserAccInfoByEmail(email);
+            if(userAccInfo.error){ throw new Error(userAccInfo.message);}  
+            //userIDList.push(userAccInfo.data.UserInfo.PlayFabId);            
             let userData = await fetchUserData(userAccInfo.data.UserInfo.PlayFabId);
             await handleData(userData, userAccInfo, tableBody);
         } catch (error) {
-            console.error('Error:', error);
+            console.log(email);
+            console.error(`Error: ${email}`, error);
             const row = tableBody.insertRow();
-            row.insertCell().textContent = 'Error for email: ' + playerID;
+            row.insertCell().textContent = 'Error for email: ' + email;
             row.insertCell().textContent = error.message;
             row.insertCell().colSpan = 4; // empty columns
             row.style.color = 'white';
@@ -178,6 +181,8 @@ export async function generateReportByEmail() {
 
     // Wait for all the fetch calls to settle
     Promise.allSettled(fetchPromises).then(results => {
+        //console.log("done " + userIDList)
+        document.getElementById('playerIDList').value = userIDList;
         confetti({
             particleCount: 100,
             spread: 70,
@@ -353,7 +358,7 @@ function addCellToRow(row, text, colSpan = 1, isCollapsible = false, collapsible
 }
 
 // GET PLAYERS IN SEGMENT BUTTON CLICKED
-async function getSegmentPlayersButton() {
+async function getSegmentPlayersButtonClicked() {
     let playersInSegOutput = await getPlayersInSegmentClicked(document.getElementById('segmentSelection').value);
 
     let playerIdList = [];
@@ -368,7 +373,7 @@ async function getSegmentPlayersButton() {
     // Wait for all getPlayerEmailAddr calls to complete
     let playerEmailAddrList = await Promise.all(playerEmailPromises);
     playerEmailAddrList = playerEmailAddrList.filter(Boolean); // filter out empty results
-    document.getElementById('totalPlayersReport').innerHTML = 'Total players in report: ' + playerEmailAddrList.length;
+    document.getElementById('totalPlayersReport').innerHTML = 'Total users in email list: ' + playerEmailAddrList.length;
 
     //console.log(playerIdList);
     //console.log(playerEmailAddrList);

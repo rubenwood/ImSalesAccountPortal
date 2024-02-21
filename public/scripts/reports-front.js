@@ -5,30 +5,51 @@ document.addEventListener('DOMContentLoaded', async () => {
     document.getElementById('get-google-report-btn').addEventListener('click', fetchDevKPIReport);
     document.getElementById('get-apple-report-btn').addEventListener('click', fetchSubReport);
 });
-window.onload = function() {
-    //document.getElementById('loginModal').style.display = 'block';
-};
 
 export function GoogleLoginClicked(){
-    //redirect to google login endpoint
     window.location.href = '/google/google-login';
 }
 
+function updateButtonText(button, text, maxTicks) {
+    let tickCount = 0; 
+    return function() {
+        let dots = ".".repeat(tickCount % (maxTicks + 1));
+        button.value = `${text}${dots}`;
+        tickCount++;
+    };
+}
+
+// KPI REPORT
+let fetchingKPIReport = false;
 function fetchDevKPIReport() {
+    if(fetchingKPIReport){ console.log("in progress"); return; }
+
+    fetchingKPIReport = true;
+    // loading animation on button
+    const button = document.getElementById('get-google-report-btn');
+    const tickUpdater = updateButtonText(button, "Getting Dev KPIs", 3);
+    tickUpdater();
+    const tickInterval = setInterval(tickUpdater, 500); 
+
     fetch('/google/get-kpi-report')
     .then(response => {
         if (!response.ok) {
-            throw new Error('Network response was not ok');
+            console.log(response);
+            if(response.status == 401){ throw new Error('Not logged in'); }
+            throw new Error(`Response was not ok: ${response.statusText}`);
         }
         return response.json();
     })
     .then(respJson => {
-        //const html = csvToHtmlTable(csvText);
         setupReportTable(respJson);
     })
     .catch(error => {
         console.error('There has been a problem with your fetch operation:', error);
         document.getElementById('output-area').textContent = 'Error fetching data: ' + error.message;
+    }).finally(() => {
+        clearInterval(tickInterval); // Stop the ticking animation
+        button.value = "Get Dev KPI report";
+        fetchingKPIReport = false;
     });
 }
 
@@ -40,10 +61,13 @@ function setupReportTable(jsonInput){
         let day1Ret = jsonInput.userRetention[1].metricValues[0].value;
         let day2Ret = jsonInput.userRetention[2].metricValues[0].value;
         let day30Ret = jsonInput.userRetention[30].metricValues[0].value;
+
         let day1Perc = (day1Ret * 100).toFixed(2);
         let day2Perc = (day2Ret * 100).toFixed(2);
         let day30Perc = (day30Ret * 100).toFixed(2);
-        if (dataCell) dataCell.innerText = `Day 1: ${day1Perc}%\nDay 2: ${day2Perc}%\nDay 30: ${day30Perc}%`;
+        let day1DropOff = (day2Perc/day1Perc * 100).toFixed(2);
+
+        if (dataCell) dataCell.innerText = `Day 1: ${day1Perc}%\nDay 2: ${day2Perc}%\nDay1-2 drop off: ${day1DropOff}%\nDay 30: ${day30Perc}%`;
     }
 
     if (jsonInput.userRetention30Day) { // done (30 Day Retention)
@@ -67,7 +91,7 @@ function setupReportTable(jsonInput){
         // last months MAU
         let thisMonthMAU = jsonInput.activeUsersPerMonth[jsonInput.activeUsersPerMonth.length-1];
         let lastMonthMAU = jsonInput.activeUsersPerMonth[jsonInput.activeUsersPerMonth.length-2];
-        if (dataCell) dataCell.innerText = JSON.stringify(lastMonthMAU);
+        if (dataCell){ dataCell.innerText = JSON.stringify(lastMonthMAU) + "\n" + JSON.stringify(thisMonthMAU); }
     }
 
     if (jsonInput.averageActiveUsageTime) { // done (Active User Useage Time)
@@ -122,15 +146,24 @@ function calcAverageUsageTime(rowData) {
     return overallAverage;
 }
 
-
 // SUB REPORT
+let fetchingSubReport = false;
 async function fetchSubReport() {
+    if(fetchingSubReport){ console.log("in progress"); return; }
+
+    fetchingSubReport = true;
+
+    const button = document.getElementById('get-apple-report-btn');
+    const tickUpdater = updateButtonText(button, "Getting Sub report", 3);
+    tickUpdater();
+    const tickInterval = setInterval(tickUpdater, 500); 
+
     let allPlayersSeg = await getPlayerCountInSegment("1E7B6EA6970A941D");
     console.log(allPlayersSeg.ProfilesInSegment);
 
-    let allPlayserHTMLString = "Total users: " + allPlayersSeg.ProfilesInSegment;
+    let allPlayersHTMLString = "Total users: " + allPlayersSeg.ProfilesInSegment;
 
-    try {
+    try {        
         // Execute both requests concurrently and wait for both of them to complete
         const [googleReport, googlePurchasers, appleReport] = await Promise.all([
             fetchGoogleReport(),
@@ -166,8 +199,8 @@ async function fetchSubReport() {
         // console.log(nonFreeTrials.length);
         // console.log(freeTrials.length);
 
-        console.log(googlePurchasers);
-        let googleHTMLString = "Total google subs: " + googlePurchasers[0].metricValues[0].value;
+        //console.log(googlePurchasers);
+        let googleHTMLString = "Total Google subs: " + googlePurchasers[0].metricValues[0].value;
 
         // format apple report
         let formattedAppleReport = formatDecompressedData(appleReport);
@@ -176,56 +209,81 @@ async function fetchSubReport() {
             let rowSplit = element.split(',');
             appleFullArr.push(rowSplit);
         })
-        console.log(formattedAppleReport);
+        //console.log(formattedAppleReport);
         console.log(appleFullArr);
+        console.log("Apple subs: " + (appleFullArr.length-2));
+
         let appleFreeTrials = [];
+        let appleIntroductory = [];
         appleFullArr.forEach(row => {
             // Convert the values at index 19 and 22 to integers and check if either is greater than 0
-            // Note: Using parseInt to ensure the comparison is done with numeric values
             if (parseInt(row[19], 10) > 0 || parseInt(row[22], 10) > 0) {
-                appleFreeTrials.push(row); // Add the row to appleFreeTrials if the condition is met
+                appleFreeTrials.push(row);
+            }
+            if (parseInt(row[20], 10) != 0 ||  parseInt(row[23], 10) != 0) {
+                appleIntroductory.push(row);
             }
         });
-        console.log(appleFreeTrials.length);
+        console.log(appleFreeTrials);
+        console.log(appleIntroductory);
 
-        let appleHTMLString = 'Total apple subs: ' + (formattedAppleReport.length-1) + '<br/>';
-        // formattedAppleReport.forEach(element => {
-        //      appleHTMLString += "<br/>" + element + "<br/>";
-        // });
+        let appleHTMLString = `Total Apple subs: ${(formattedAppleReport.length-2)}<br/>Total Apple trials:${appleFreeTrials.length}`;
+        let totalSubs = parseInt(googlePurchasers[0].metricValues[0].value)+parseInt(formattedAppleReport.length-1);
+        let totalSubsHTML = "Total subs: " + totalSubs;
         
-        const combinedHTML = allPlayserHTMLString +"<br/><br/>"+ googleHTMLString +"<br/><br/>"+ appleHTMLString;
+        const combinedHTML = allPlayersHTMLString +
+        "<br/><br/>"+
+        googleHTMLString+
+        "<br/><br/>"+ 
+        appleHTMLString+
+        "<br/><br/>"+
+        totalSubsHTML;
+
+        // sub conversion rate of total users
+        // sub conversion rate of active users
+
         document.getElementById('output-area').innerHTML = combinedHTML;
-    } catch (error) {
+    } catch (error) {        
+        let errorMessage = error.message;
+        if(error.response && error.response.data && error.response.data.error){
+            errorMessage = error.response.data.error;
+        }
         console.error('There has been a problem with the combined fetch operation:', error);
-        document.getElementById('output-area').textContent = 'Error fetching data: ' + error.message;
+        document.getElementById('output-area').textContent = 'Error fetching data: ' + errorMessage;
+    } finally {
+        clearInterval(tickInterval); // Stop the ticking animation
+        button.value = "Get Sub report";
+        fetchingSubReport = false;
     }
 }
 
 async function fetchAppleReport() {
     const response = await fetch('/apple/get-subscription-report');
-    if (!response.ok) {
-        throw new Error('Network response was not ok');
-    }
+    if (!response.ok) { responseNotOk(); }
+
     const outputText = await response.text();
+    //console.log(outputText);
     return outputText;
 }
 async function fetchGoogleReport() {
     const response = await fetch('/google/get-google-report');
-    if (!response.ok) {
-        throw new Error('Network response was not ok');
-    }
+    if (!response.ok) { responseNotOk(); }
 
     const outputText = await response.text();
     return outputText;
 }
 async function fetchGooglePurchasers() {
     const response = await fetch('/google/get-google-purchasers');
-    if (!response.ok) {
-        throw new Error('Network response was not ok');
-    }
+    if (!response.ok) { responseNotOk(); }
 
     const outputText = await response.json();
     return outputText;
+}
+
+function responseNotOk(){
+    console.log(response);
+    if(response.status == 401){ throw new Error('Not logged in'); }
+    throw new Error(`Response was not ok: ${response.statusText}`);
 }
 
 function csvToHtmlTable(csvText) {

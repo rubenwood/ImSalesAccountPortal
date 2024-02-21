@@ -1,4 +1,4 @@
-import { getPlayerEmailAddr } from './PlayFabManager.js';
+//import { getPlayerEmailAddr } from './PlayFabManager.js';
 import { canAccess } from './access-check.js';
 export let playerProfiles;
 
@@ -34,6 +34,7 @@ export function fetchSegmentPlayers(reqSegmentID){
     .then(response => {
         if (!response.ok) {
             return response.json().then(err => { 
+                console.log(err);
                 throw new Error(err.error || 'An error occurred');
             });
         }

@@ -224,7 +224,6 @@ function getUserData(keys) {
 
 // GET PLAYER EMAIL ADDR
 export async function getPlayerEmailAddr(playFabId) {
-    console.log(playFabId);
     try{
         let playerData = await fetchUserAccInfoById(playFabId);
         let userEmail;
@@ -241,7 +240,6 @@ export async function getPlayerEmailAddr(playFabId) {
         return null; // or some default value or error indicator
     }    
 }
-
 
 async function getPlayerContactEmailAddr(playFabId){
     let playerProfileResp = await fetchUserProfileById(playFabId);

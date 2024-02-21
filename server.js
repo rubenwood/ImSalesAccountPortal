@@ -352,19 +352,16 @@ app.post('/get-segment-players/:segmentID', async (req, res) => {
           }          
       );
 
-      res.json(response.data); // send back to client
+      res.json(response.data);
   } catch (error) {
     console.error('Error:', error);
     if (error.response && error.response.data) {
-        // Sending back the specific error information from Axios
         res.status(500).json(error.response.data);
     } else {
-        // Sending back a general error if the response data is not available
         res.status(500).json({ message: error.message, stack: error.stack });
     }
   }
 });
-
 
 // REDIS (SESSION STORAGE)
 /*const redisClient = redis.createClient({

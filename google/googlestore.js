@@ -28,17 +28,18 @@ router.get('/google-login', (req, res) =>{
   res.redirect(googleauthurl);
 });
 // callback
-let cachedAccessToken;
+//let cachedAccessToken;
 router.get('/google-login-callback', async (req, res) =>{
   let code = req.query.code;
   console.log(code);
   const { tokens } = await oauth2Client.getToken(code)
   oauth2Client.setCredentials(tokens);
 
-  console.log(tokens);
-  cachedAccessToken = tokens.access_token;
+  //console.log(tokens);
+  //cachedAccessToken = tokens.access_token;
+  req.session.cachedAccessToken = tokens.access_token;
   const idToken = tokens.id_token; // Accessing the id_token
-  console.log('\n----ID Token----\n', idToken);
+  //console.log('\n----ID Token----\n', idToken);
   req.session.idToken = idToken;
 
   // (for app)
@@ -97,14 +98,17 @@ router.get('/get-google-purchases', async (req, res) => {
 // GET GOOGLE SUB REPORT
 // returns a full subscription report
 router.get('/get-google-report', async (req, res) => {
-  if (req.session.idToken == undefined || req.session.idToken == null) { return; }
+  if (req.session.idToken == undefined || req.session.idToken == null) { 
+    res.status(401).json({error:"not logged in"}); 
+    return; 
+  }
 
   try {
     const url = `https://storage.googleapis.com/${process.env.GOOGLE_BUCKET_BASE}/financial-stats/subscriptions/${process.env.GOOGLE_SUB_FILE_BASE}.monthly_202402_country.csv`;
 
     const response = await axios.get(url, {
       headers: {
-        'Authorization': `Bearer ${cachedAccessToken}`
+        'Authorization': `Bearer ${req.session.cachedAccessToken}`
       }
       //,responseType: 'stream' // Assuming you are downloading a file
     });
@@ -112,39 +116,47 @@ router.get('/get-google-report', async (req, res) => {
     res.send(response.data);
   } catch (error) {
     console.error('Error fetching data:', error);
-    res.status(500).send('Error fetching data');
+    res.status(500).json({error:'Error fetching data'});
   }
 });
 
 // GET PURCHASERS
 // calls GA to get the number of purchasers 
 router.get('/get-google-purchasers', async (req, res) => {
-  if (req.session.idToken == undefined || req.session.idToken == null) { return; }
+  if (req.session.idToken == undefined || req.session.idToken == null) {
+    res.status(401).json({error:"not logged in"});
+    return; 
+  }
+
   const analyticsApiUrl = `https://analyticsdata.googleapis.com/v1beta/properties/${process.env.GA_PROP_ID}:runReport`;
 
   try {    
-    let googlePurchasers = await getTotalPurchasers(analyticsApiUrl);
+    let googlePurchasers = await getTotalPurchasers(analyticsApiUrl, req.session.cachedAccessToken);
     res.send(googlePurchasers);
   } catch (error) {
     console.error('Error fetching data:', error);
-    res.status(500).send('Error fetching data');
+    res.status(500).json({error:'Error fetching data'});
   }
 });
 
-
 // GET KPI REPORT
 router.get('/get-kpi-report', async (req, res) => {
+  if (req.session.idToken == undefined || req.session.idToken == null) {
+    res.status(401).json({error:"not logged in"});
+    return; 
+  }
+  
   const analyticsApiUrl = `https://analyticsdata.googleapis.com/v1beta/properties/${process.env.GA_PROP_ID}:runReport`;
 
   try {
-    let userRetention = await getUserRetention(analyticsApiUrl);
-    let userRetention30Day = await getUserRetention30Day(analyticsApiUrl);
-    let newUsersPerWeek = await getNewUsersPerWeek(analyticsApiUrl);
-    let returningUsersPerWeek = await getReturningUsersPerWeek(analyticsApiUrl);
-    let activeUsersPerMonth = await getActiveUsersPerMonth(analyticsApiUrl);
-    let averageActiveUsageTime = await getAverageActiveUsageTime(analyticsApiUrl); 
-    let sessionsPerUserPerWeek = await getSessionsPerUserPerWeek(analyticsApiUrl);
-    let activitiesLaunchedPerWeek = await getActivitiesLaunchedPerWeek(analyticsApiUrl);
+    let userRetention = await getUserRetention(analyticsApiUrl, req.session.cachedAccessToken);
+    let userRetention30Day = await getUserRetention30Day(analyticsApiUrl, req.session.cachedAccessToken);
+    let newUsersPerWeek = await getNewUsersPerWeek(analyticsApiUrl, req.session.cachedAccessToken);
+    let returningUsersPerWeek = await getReturningUsersPerWeek(analyticsApiUrl, req.session.cachedAccessToken);
+    let activeUsersPerMonth = await getActiveUsersPerMonth(analyticsApiUrl, req.session.cachedAccessToken);
+    let averageActiveUsageTime = await getAverageActiveUsageTime(analyticsApiUrl, req.session.cachedAccessToken); 
+    let sessionsPerUserPerWeek = await getSessionsPerUserPerWeek(analyticsApiUrl, req.session.cachedAccessToken);
+    let activitiesLaunchedPerWeek = await getActivitiesLaunchedPerWeek(analyticsApiUrl, req.session.cachedAccessToken);
 
     let output = { 
       userRetention,
@@ -163,7 +175,7 @@ router.get('/get-kpi-report', async (req, res) => {
   }
 });
 
-async function getActivitiesLaunchedPerWeek(analyticsApiUrl){
+async function getActivitiesLaunchedPerWeek(analyticsApiUrl, accessToken){
   const response = await axios.post(analyticsApiUrl,
     { 
       dateRanges: [{ startDate: "7daysAgo", endDate: "yesterday" }],
@@ -174,14 +186,14 @@ async function getActivitiesLaunchedPerWeek(analyticsApiUrl){
     },
     {
       headers: {
-        Authorization: `Bearer ${cachedAccessToken}`,
+        Authorization: `Bearer ${accessToken}`,
       }
     });
 
   const launchActivityData = response.data.rows[0].metricValues[0].value;
   return launchActivityData;
 }
-async function getSessionsPerUserPerWeek(analyticsApiUrl){
+async function getSessionsPerUserPerWeek(analyticsApiUrl, accessToken){
   const response = await axios.post(analyticsApiUrl,
     { 
       dateRanges: [{ startDate: "7daysAgo", endDate: "yesterday" }],
@@ -191,14 +203,14 @@ async function getSessionsPerUserPerWeek(analyticsApiUrl){
     },
     {
       headers: {
-        Authorization: `Bearer ${cachedAccessToken}`,
+        Authorization: `Bearer ${accessToken}`,
       }
     });
 
   const launchActivityData = response.data.rows[0].metricValues[0].value;
   return launchActivityData;
 }
-async function getNewUsersPerWeek(analyticsApiUrl){
+async function getNewUsersPerWeek(analyticsApiUrl, accessToken){
   const response = await axios.post(analyticsApiUrl,
     { 
       dateRanges: [{ startDate: "7daysAgo", endDate: "yesterday" }],
@@ -208,7 +220,7 @@ async function getNewUsersPerWeek(analyticsApiUrl){
     },
     {
       headers: {
-        Authorization: `Bearer ${cachedAccessToken}`,
+        Authorization: `Bearer ${accessToken}`,
       }
     });
 
@@ -216,7 +228,7 @@ async function getNewUsersPerWeek(analyticsApiUrl){
 
   return launchActivityData;
 }
-async function getActiveUsersPerMonth(analyticsApiUrl){
+async function getActiveUsersPerMonth(analyticsApiUrl, accessToken){
   let results = [];
   let startDate = new Date("2023-01-01");
   let currentDate = new Date(); // Current date
@@ -235,7 +247,7 @@ async function getActiveUsersPerMonth(analyticsApiUrl){
         },
         {
           headers: {
-            Authorization: `Bearer ${cachedAccessToken}`,
+            Authorization: `Bearer ${accessToken}`,
           }
         });
 
@@ -264,7 +276,7 @@ async function getActiveUsersPerMonth(analyticsApiUrl){
 
   return results;
 }
-async function getUserRetention(analyticsApiUrl){
+async function getUserRetention(analyticsApiUrl, accessToken){
   const today = new Date();
   // Calculate yesterday's date
   const yesterday = new Date(today);
@@ -311,13 +323,13 @@ async function getUserRetention(analyticsApiUrl){
     },
     {
       headers: {
-        Authorization: `Bearer ${cachedAccessToken}`,
+        Authorization: `Bearer ${accessToken}`,
       }
     });
 
     return response.data.rows;
 }
-async function getUserRetention30Day(analyticsApiUrl){
+async function getUserRetention30Day(analyticsApiUrl, accessToken){
   const response = await axios.post(analyticsApiUrl,
     { 
       dateRanges: [{ startDate: "30daysAgo", endDate: "yesterday" }],
@@ -327,7 +339,7 @@ async function getUserRetention30Day(analyticsApiUrl){
     },
     {
       headers: {
-        Authorization: `Bearer ${cachedAccessToken}`,
+        Authorization: `Bearer ${accessToken}`,
       }
     });
 
@@ -335,7 +347,7 @@ async function getUserRetention30Day(analyticsApiUrl){
 
   return retention30DaysData;
 }
-async function getReturningUsersPerWeek(analyticsApiUrl){
+async function getReturningUsersPerWeek(analyticsApiUrl, accessToken){
   const response = await axios.post(analyticsApiUrl,
     {
       dateRanges: [{ startDate: "7daysAgo", endDate: "yesterday" }],
@@ -344,13 +356,13 @@ async function getReturningUsersPerWeek(analyticsApiUrl){
     },
     {
       headers: {
-        Authorization: `Bearer ${cachedAccessToken}`,
+        Authorization: `Bearer ${accessToken}`,
       }
     });
 
     return response.data.rows;
 }
-async function getAverageActiveUsageTime(analyticsApiUrl){
+async function getAverageActiveUsageTime(analyticsApiUrl, accessToken){
   const response = await axios.post(analyticsApiUrl,
     {
       dateRanges: [{ startDate: "7daysAgo", endDate: "yesterday" }],
@@ -359,17 +371,14 @@ async function getAverageActiveUsageTime(analyticsApiUrl){
     },
     {
       headers: {
-        Authorization: `Bearer ${cachedAccessToken}`,
+        Authorization: `Bearer ${accessToken}`,
       }
     });
-
-    console.log("ENGAGEMENT TIME PER WEEK");
-    console.log(response);
 
     return response.data.rows;
 }
 
-async function getTotalPurchasers(analyticsApiUrl){
+async function getTotalPurchasers(analyticsApiUrl, accessToken){
   const response = await axios.post(analyticsApiUrl,
     {
       dateRanges: [{ startDate: "7daysAgo", endDate: "yesterday" }],
@@ -377,7 +386,7 @@ async function getTotalPurchasers(analyticsApiUrl){
     },
     {
       headers: {
-        Authorization: `Bearer ${cachedAccessToken}`,
+        Authorization: `Bearer ${accessToken}`,
       }
     });
 

@@ -239,7 +239,9 @@ router.get('/get-subscriber-report', async (req, res) => {
 
 // SUBSCRIPTION REPORT
 router.get('/get-subscription-report', async (req, res) => {
-    if (req.session.idToken == undefined || req.session.idToken == null) { return; }
+    if (req.session.idToken == undefined || req.session.idToken == null) { res.status(401).json({error:"not logged in"}); return; }
+    
+    console.log(formatDate(daysAgo2));
 
     try {
         const jwtoken = generateToken();
@@ -261,15 +263,6 @@ router.get('/get-subscription-report', async (req, res) => {
         });
 
         let output = await decompressData(resp.data);
-        // let formatted = formatDecompressedData(output);
-        
-        // let htmlString = 'Total apple subs: ' + (formatted.length-1) + '<br/>';
-        // formatted.forEach(element => {
-        //     htmlString += "<br/>" + element + "<br/>";
-        // });
-        // change this to be JSON,
-        //let appleSubCount = formatted.length-1;
-        //let outputJSON = { appleSubCount, htmlString }
 
         res.send(output);
     } catch (error) {
@@ -357,6 +350,7 @@ async function decompressData(respData){
     return decompressed;
 }
 
+// DOWNLOADS
 router.get('/get-apple-downloads', async (req, res) => {
     try {
         const jwtoken = generateToken();
