@@ -21,15 +21,18 @@ export function fetchSegments(){
     });
 }
 
-export function fetchSegmentPlayers(reqSegmentID){
+export function fetchSegmentPlayers(reqSegmentID, batchSize){
     const url = `/get-segment-players/${reqSegmentID}`;
     let segmentID = reqSegmentID;
+    let maxBatchSize = batchSize == undefined ? 10000 : batchSize;
+    console.log(maxBatchSize);
+
     return fetch(url, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ segmentID })
+        body: JSON.stringify({ segmentID, maxBatchSize})
     })
     .then(response => {
         if (!response.ok) {
@@ -42,7 +45,6 @@ export function fetchSegmentPlayers(reqSegmentID){
     });
 }
 
-
 // SEGMENT RELATED FRONT END
 export async function getSegmentsClicked(segmentDropdown){
     let hasAccess = await canAccess();
@@ -50,17 +52,18 @@ export async function getSegmentsClicked(segmentDropdown){
     
     let segmentResponse = await fetchSegments();
     let segments = segmentResponse.data.Segments;
-    populateSegmentsDropdown(segments, segmentDropdown); // change this
+    populateSegmentsDropdown(segments, segmentDropdown);
 }
 export function populateSegmentsDropdown(segments, segmentDropdown) {
     segmentDropdown.innerHTML = '';
 
     segments.forEach(segment => {
+        // filter our certain segments?
         const option = document.createElement("option");
         option.value = segment.Id;
         option.textContent = segment.Name;
         segmentDropdown.appendChild(option);
-    });
+    });    
 }
 
 export async function getPlayersInSegmentClicked(segmentID){
@@ -77,15 +80,6 @@ export async function getPlayersInSegmentClicked(segmentID){
     let data = await fetchSegmentPlayers(selectedSegmentId);
     playerProfiles = data.data.PlayerProfiles;
     return playerProfiles;
-    //  // Use map to transform each profile into a promise of email address
-    //  const emailPromises = playerProfiles.map(profile => getPlayerEmailAddr(profile.PlayerId));
-
-    //  // Wait for all promises to resolve
-    //  const emailList = await Promise.all(emailPromises);
-    //  //console.log(emailList);
-    //  const emailListString = emailList.join('\n');
-    // // Set the email list string as the value of the textarea
-    // return emailListString;
 }
 
 export async function getPlayerCountInSegment(segmentID){
@@ -99,7 +93,30 @@ export async function getPlayerCountInSegment(segmentID){
         return;
     }
 
-    let data = await fetchSegmentPlayers(selectedSegmentId);
+    let data = await fetchSegmentPlayers(selectedSegmentId, 0);
     playerProfiles = data.data;
     return playerProfiles;
+}
+
+// GET PLAYERS BY SUFFIX
+export async function fetchPlayersBySuffix(suffix){
+    const url = `/reporting/gen-suffix-rep/${suffix}`;
+    console.log(suffix);
+    console.log(typeof suffix);
+
+    return fetch(url, {
+        method: 'GET',
+        headers: {
+            'Content-Type': 'application/json',
+        }
+    })
+    .then(response => {
+        if (!response.ok) {
+            return response.json().then(err => { 
+                console.log(err);
+                throw new Error(err.error || 'An error occurred');
+            });
+        }
+        return response.json();
+    });
 }

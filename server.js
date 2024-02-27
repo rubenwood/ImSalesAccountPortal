@@ -8,9 +8,13 @@ const AWS = require('aws-sdk');
 require('dotenv').config();
 const app = express();
 const session = require('express-session');
+// file ops
+const fs = require('fs');
+const path = require('path');
 // routes
 const googleRoutes = require('./google/googlestore.js');
 const appleRoutes = require('./apple/applestore.js');
+const reportingRoutes = require('./reporting/reporting.js');
 
 app.use(express.json());
 app.use(cors());
@@ -22,6 +26,7 @@ AWS.config.update({
   region: process.env.AWS_REGION
 });
 const s3 = new AWS.S3();
+
 // GET ACADEMIC AREA JSON
 app.get('/getAcademicAreas', async (req, res) => {
   try {
@@ -173,8 +178,7 @@ app.post('/get-user-acc-info-email/:email', async (req, res) => {
           }
       );
 
-      //console.log('Success:', response.data);
-      res.json(response.data); // send back to client
+      res.json(response.data);
   } catch (error) {
     console.error('Error:', error);
     if (error.response && error.response.data) {
@@ -199,7 +203,7 @@ app.post('/get-user-acc-info-id/:playFabID', async (req, res) => {
           }
       );
 
-      res.json(response.data); // send back to client
+      res.json(response.data);
   } catch (error) {
     console.error('Error:', error);
     if (error.response && error.response.data) {
@@ -344,7 +348,10 @@ app.post('/get-segment-players/:segmentID', async (req, res) => {
   try {
       const response = await axios.post(
           `https://${process.env.PLAYFAB_TITLE_ID}.playfabapi.com/Server/GetPlayersInSegment`,
-          { SegmentId: req.body.segmentID },
+          { 
+            SegmentId: req.body.segmentID,
+            MaxBatchSize: req.body.maxBatchSize
+          },
           {
             headers: {
                 'X-SecretKey': process.env.PLAYFAB_SECRET_KEY
@@ -361,6 +368,108 @@ app.post('/get-segment-players/:segmentID', async (req, res) => {
         res.status(500).json({ message: error.message, stack: error.stack });
     }
   }
+});
+
+// GET ALL PLAYERS (write to files)
+// app.post('/get-all-players', async (req, res) => {
+//   let contToken = null;
+//   let batchNumber = 0;
+
+//   try {
+//       do {
+//           const response = await axios.post(
+//               `https://${process.env.PLAYFAB_TITLE_ID}.playfabapi.com/Server/GetPlayersInSegment`,
+//               {
+//                   SegmentId: process.env.PLAYFAB_ALLSEG_ID,
+//                   MaxBatchSize: 10000, // Maximum
+//                   ContinuationToken: contToken,
+//               },
+//               {
+//                   headers: {
+//                       'X-SecretKey': process.env.PLAYFAB_SECRET_KEY
+//                   }
+//               }
+//           );
+
+//           // Increment batch number for each file
+//           batchNumber++;
+
+//           // Generate a unique file name for this batch
+//           const fileName = `data/playfab_players_batch_${batchNumber}.json`;
+//           const filePath = path.join(__dirname, fileName);
+
+//           // Write this batch of players to a new file
+//           fs.writeFileSync(filePath, JSON.stringify(response.data.data.PlayerProfiles, null, 2));
+
+//           // Update the continuation token for the next request
+//           contToken = response.data.data.ContinuationToken;
+
+//       } while (contToken); // Continue until there's no continuation token
+
+//       res.json({ message: 'Data retrieval complete. All batches written to separate files.' });
+
+//   } catch (error) {
+//       console.error('Error:', error);
+//       if (error.response && error.response.data) {
+//           res.status(500).json(error.response.data);
+//       } else {
+//           res.status(500).json({ message: error.message, stack: error.stack });
+//       }
+//   }
+// });
+
+app.post('/get-all-players', async (req, res) => {
+    let contToken = null;
+    let batchNumber = 0;
+
+    try {
+        do {
+            const response = await axios.post(
+                `https://${process.env.PLAYFAB_TITLE_ID}.playfabapi.com/Server/GetPlayersInSegment`,
+                {
+                    SegmentId: process.env.PLAYFAB_ALLSEG_ID,
+                    MaxBatchSize: 10000, // Maximum
+                    ContinuationToken: contToken,
+                },
+                {
+                    headers: {
+                        'X-SecretKey': process.env.PLAYFAB_SECRET_KEY
+                    }
+                }
+            );
+
+            // Increment batch number for each file
+            batchNumber++;
+
+            // Generate a unique file name for this batch
+            const fileName = `playfab_players_batch_${batchNumber}.json`;
+            // Define the S3 bucket and key
+            const Bucket = process.env.AWS_BUCKET; // Replace with your S3 bucket name
+            const Key = `analytics/${fileName}`; // Replace 'your-folder-name' with your desired folder name in the S3 bucket
+
+            // Upload this batch of players to S3
+            await s3.upload({
+                Bucket,
+                Key,
+                Body: JSON.stringify(response.data.data.PlayerProfiles, null, 2),
+                ContentType: 'application/json'
+            }).promise();
+
+            // Update the continuation token for the next request
+            contToken = response.data.data.ContinuationToken;
+
+        } while (contToken); // Continue until there's no continuation token
+
+        res.json({ message: 'Data retrieval complete. All batches written to S3.' });
+
+    } catch (error) {
+        console.error('Error:', error);
+        if (error.response && error.response.data) {
+            res.status(500).json(error.response.data);
+        } else {
+            res.status(500).json({ message: error.message, stack: error.stack });
+        }
+    }
 });
 
 // REDIS (SESSION STORAGE)
@@ -396,6 +505,7 @@ app.use(session({
 app.use(express.static('public'));
 app.use('/google', googleRoutes);
 app.use('/apple', appleRoutes);
+app.use('/reporting', reportingRoutes);
 
 const PORT = process.env.PORT;
 

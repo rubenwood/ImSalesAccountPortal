@@ -281,7 +281,7 @@ router.get('/get-subscription-report', async (req, res) => {
         } else {
             console.error("Axios Error:", error.message);
         }
-        res.status(500).send('Error occurred');
+        res.status(500).send(`Error occurred ${error.message}`);
     }
 });
 

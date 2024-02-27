@@ -1,4 +1,5 @@
 csv/
 node_modules/
 other/
+data/
 .env

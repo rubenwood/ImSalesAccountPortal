@@ -259,7 +259,7 @@ async function fetchSubReport() {
 
 async function fetchAppleReport() {
     const response = await fetch('/apple/get-subscription-report');
-    if (!response.ok) { responseNotOk(); }
+    if (!response.ok) { responseNotOk(response); }
 
     const outputText = await response.text();
     //console.log(outputText);
@@ -267,20 +267,20 @@ async function fetchAppleReport() {
 }
 async function fetchGoogleReport() {
     const response = await fetch('/google/get-google-report');
-    if (!response.ok) { responseNotOk(); }
+    if (!response.ok) { responseNotOk(response); }
 
     const outputText = await response.text();
     return outputText;
 }
 async function fetchGooglePurchasers() {
     const response = await fetch('/google/get-google-purchasers');
-    if (!response.ok) { responseNotOk(); }
+    if (!response.ok) { responseNotOk(response); }
 
     const outputText = await response.json();
     return outputText;
 }
 
-function responseNotOk(){
+function responseNotOk(response){
     console.log(response);
     if(response.status == 401){ throw new Error('Not logged in'); }
     throw new Error(`Response was not ok: ${response.statusText}`);
