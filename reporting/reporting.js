@@ -103,7 +103,6 @@ async function generateReportByEmailSuffix(suffix) {
     try {
         // Get all file data first
         const allData = await getAllFilesData(Bucket, Prefix);
-        console.log("Got Data from S3");
 
         // Now process allData to find matches
         allData.forEach(user => {
