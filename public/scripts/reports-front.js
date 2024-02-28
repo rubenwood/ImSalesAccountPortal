@@ -29,7 +29,7 @@ function fetchDevKPIReport() {
     const button = document.getElementById('get-google-report-btn');
     const tickUpdater = updateButtonText(button, "Getting Dev KPIs", 3);
     tickUpdater();
-    const tickInterval = setInterval(tickUpdater, 500); 
+    const tickInterval = setInterval(tickUpdater, 500);
 
     fetch('/google/get-kpi-report')
     .then(response => {
@@ -46,7 +46,8 @@ function fetchDevKPIReport() {
     .catch(error => {
         console.error('There has been a problem with your fetch operation:', error);
         document.getElementById('output-area').textContent = 'Error fetching data: ' + error.message;
-    }).finally(() => {
+    })
+    .finally(() => {
         clearInterval(tickInterval); // Stop the ticking animation
         button.value = "Get Dev KPI report";
         fetchingKPIReport = false;
@@ -165,10 +166,11 @@ async function fetchSubReport() {
 
     try {        
         // Execute both requests concurrently and wait for both of them to complete
-        const [googleReport, googlePurchasers, appleReport] = await Promise.all([
+        const [googleReport, googlePurchasers, appleReport, stripeReport] = await Promise.all([
             fetchGoogleReport(),
             fetchGooglePurchasers(),
-            fetchAppleReport()
+            fetchAppleReport(),
+            fetchStripeReport()
         ]);
 
         const sevenDaysAgo = new Date();
@@ -231,6 +233,10 @@ async function fetchSubReport() {
         let totalSubs = parseInt(googlePurchasers[0].metricValues[0].value)+parseInt(formattedAppleReport.length-1);
         let totalSubsHTML = "Total subs: " + totalSubs;
         
+        // STRIPE
+        console.log(stripeReport);
+
+        // OUTPUT
         const combinedHTML = allPlayersHTMLString +
         "<br/><br/>"+
         googleHTMLString+
@@ -262,7 +268,6 @@ async function fetchAppleReport() {
     if (!response.ok) { responseNotOk(response); }
 
     const outputText = await response.text();
-    //console.log(outputText);
     return outputText;
 }
 async function fetchGoogleReport() {
@@ -279,11 +284,23 @@ async function fetchGooglePurchasers() {
     const outputText = await response.json();
     return outputText;
 }
+async function fetchStripeReport() {
+    const response = await fetch('/stripe/get-stripe-active-subs');
+    if (!response.ok) { responseNotOk(response); }
 
+    const outputText = await response.text();
+    return outputText;
+}
 function responseNotOk(response){
     console.log(response);
     if(response.status == 401){ throw new Error('Not logged in'); }
     throw new Error(`Response was not ok: ${response.statusText}`);
+}
+
+function formatDecompressedData(decompressed) {
+    let output = decompressed.split('\n');
+    let formattedOutput = output.map(line => line.replace(/\t/g, ','));
+    return formattedOutput;
 }
 
 function csvToHtmlTable(csvText) {
@@ -302,10 +319,4 @@ function csvToHtmlTable(csvText) {
 
     html += '</table>';
     return html;
-}
-
-function formatDecompressedData(decompressed) {
-    let output = decompressed.split('\n');
-    let formattedOutput = output.map(line => line.replace(/\t/g, ','));
-    return formattedOutput;
 }

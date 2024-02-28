@@ -3,6 +3,7 @@ import { Login, RegisterUserEmailAddress, UpdateUserDataServer, getPlayerEmailAd
 import { showInsightsModal, closeInsightsModal, getTotalPlayTime, findPlayersWithMostPlayTime, findPlayersWithMostPlays, findPlayersWithMostUniqueActivitiesPlayed, findMostPlayedActivities } from './insights.js';
 import { fetchUserData, fetchUserAccInfoById, fetchUserAccInfoByEmail, formatTime, formatTimeToHHMMSS, formatActivityData, getAcademicAreas } from './utils.js';
 import { playerProfiles, getSegmentsClicked, getPlayersInSegmentClicked, fetchPlayersBySuffix } from './segments.js';
+import { generateReportByClickId } from './click-id.js';
 
 document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('loginButton').addEventListener('click', Login);
@@ -28,6 +29,7 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('generateReportButton').addEventListener('click', generateReportByEmail);
     document.getElementById('generateReportByIdButton').addEventListener('click', generateReportById);
     document.getElementById('generateReportBySuffixButton').addEventListener('click', generateReportBySuffix);
+    document.getElementById('generateReportByClickIDButton').addEventListener('click', generateReportByClickId);
     
     document.getElementById('exportReportButton').addEventListener('click', exportToExcel);
     document.getElementById('closePlayerDataModal').addEventListener('click', closePlayerDataModal);    
@@ -98,7 +100,6 @@ initializeDropdown(document.getElementById('academicAreaUpdate'));
 // GENERATE REPORT
 // Helper function to delay execution
 const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
-
 export let reportData = [];
 
 // Generate report by email suffix
@@ -278,6 +279,7 @@ export async function generateReportById() {
             row.style.textAlign = 'center';
         }
     });
+
     // Wait for all the fetch calls to settle
     Promise.allSettled(fetchPromises).then(results => {
         confetti({
@@ -295,29 +297,29 @@ export async function generateReportByEmail() {
 
     resetButtonTexts();
 
+    let playerIDList = [];
     const emailListText = document.getElementById("emailList").value;
     const emailList = emailListText.split('\n').filter(Boolean); // Split by newline and filter out empty strings
     const tableBody = document.getElementById("reportTableBody");
-    tableBody.innerHTML = ''; // Clear out the existing rows
+    tableBody.innerHTML = '';
 
-    reportData = []; // reset the report data
+    reportData = [];
     exportData = [];
 
     //let userAccInfo;
     //let userData;
     //let userIDList = [];
 
-    let index = 0;
     const fetchPromises = emailList.map(async (email, index) => {
         try {
             await delay(index * 700);
             let userAccInfo = await fetchUserAccInfoByEmail(email);
             if(userAccInfo.error){ throw new Error(userAccInfo.message);}  
-            //userIDList.push(userAccInfo.data.UserInfo.PlayFabId);            
+            playerIDList.push(userAccInfo.data.UserInfo.PlayFabId);
             let userData = await fetchUserData(userAccInfo.data.UserInfo.PlayFabId);
             await handleData(userData, userAccInfo, tableBody);
         } catch (error) {
-            console.log(email);
+            //console.log(email);
             console.error(`Error: ${email}`, error);
             const row = tableBody.insertRow();
             row.insertCell().textContent = 'Error for email: ' + email;
@@ -328,14 +330,14 @@ export async function generateReportByEmail() {
             row.style.backgroundColor = '#700000';
             row.style.textAlign = 'center';
         }
-        index++;
-        document.getElementById('generateReportButton').value = `Generating Report By Email List...${index}/${fetchPromises.length}`;
+        let count = index;
+        count++;
+        document.getElementById('generateReportButton').value = `Generating Report By Email List...${count}/${fetchPromises.length}`;
+        updateIDList(playerIDList);
     });
 
     // Wait for all the fetch calls to settle
     Promise.allSettled(fetchPromises).then(results => {
-        //console.log("done " + userIDList)
-        //document.getElementById('playerIDList').value = userIDList;
         confetti({
             particleCount: 100,
             spread: 70,

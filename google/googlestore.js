@@ -139,35 +139,46 @@ router.get('/get-google-purchasers', async (req, res) => {
   }
 });
 
+function delay(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
 // GET KPI REPORT
 router.get('/get-kpi-report', async (req, res) => {
   if (req.session.idToken == undefined || req.session.idToken == null) {
-    res.status(401).json({error:"not logged in"});
-    return; 
+    res.status(401).json({error: "not logged in"});
+    return;
   }
-  
+
   const analyticsApiUrl = `https://analyticsdata.googleapis.com/v1beta/properties/${process.env.GA_PROP_ID}:runReport`;
-
   try {
-    let userRetention = await getUserRetention(analyticsApiUrl, req.session.cachedAccessToken);
-    let userRetention30Day = await getUserRetention30Day(analyticsApiUrl, req.session.cachedAccessToken);
-    let newUsersPerWeek = await getNewUsersPerWeek(analyticsApiUrl, req.session.cachedAccessToken);
-    let returningUsersPerWeek = await getReturningUsersPerWeek(analyticsApiUrl, req.session.cachedAccessToken);
-    let activeUsersPerMonth = await getActiveUsersPerMonth(analyticsApiUrl, req.session.cachedAccessToken);
-    let averageActiveUsageTime = await getAverageActiveUsageTime(analyticsApiUrl, req.session.cachedAccessToken); 
-    let sessionsPerUserPerWeek = await getSessionsPerUserPerWeek(analyticsApiUrl, req.session.cachedAccessToken);
-    let activitiesLaunchedPerWeek = await getActivitiesLaunchedPerWeek(analyticsApiUrl, req.session.cachedAccessToken);
+    const functions = [
+      () => getUserRetention(analyticsApiUrl, req.session.cachedAccessToken),
+      () => getUserRetention30Day(analyticsApiUrl, req.session.cachedAccessToken),
+      () => getNewUsersPerWeek(analyticsApiUrl, req.session.cachedAccessToken),
+      () => getReturningUsersPerWeek(analyticsApiUrl, req.session.cachedAccessToken),
+      () => getActiveUsersPerMonth(analyticsApiUrl, req.session.cachedAccessToken),
+      () => getAverageActiveUsageTime(analyticsApiUrl, req.session.cachedAccessToken),
+      () => getSessionsPerUserPerWeek(analyticsApiUrl, req.session.cachedAccessToken),
+      () => getActivitiesLaunchedPerWeek(analyticsApiUrl, req.session.cachedAccessToken),
+    ];
 
-    let output = { 
-      userRetention,
-      userRetention30Day,
-      newUsersPerWeek,
-      returningUsersPerWeek,
-      activeUsersPerMonth,
-      averageActiveUsageTime,
-      sessionsPerUserPerWeek,
-      activitiesLaunchedPerWeek,
+    const results = [];
+    for (const func of functions) {
+      results.push(await func());
+      await delay(700); // delay between calls to prevent overwhelming google api
+    }
+
+    let output = {
+      userRetention: results[0],
+      userRetention30Day: results[1],
+      newUsersPerWeek: results[2],
+      returningUsersPerWeek: results[3],
+      activeUsersPerMonth: results[4],
+      averageActiveUsageTime: results[5],
+      sessionsPerUserPerWeek: results[6],
+      activitiesLaunchedPerWeek: results[7],
     };
+
     res.send(output);
   } catch (error) {
     console.error(error);
@@ -394,6 +405,5 @@ async function getTotalPurchasers(analyticsApiUrl, accessToken){
 
     return response.data.rows;
 }
-
 
 module.exports = router;

@@ -14,6 +14,7 @@ const path = require('path');
 // routes
 const googleRoutes = require('./google/googlestore.js');
 const appleRoutes = require('./apple/applestore.js');
+const stripeRoutes = require('./stripe/stripestore.js');
 const reportingRoutes = require('./reporting/reporting.js');
 
 app.use(express.json());
@@ -505,6 +506,7 @@ app.use(session({
 app.use(express.static('public'));
 app.use('/google', googleRoutes);
 app.use('/apple', appleRoutes);
+app.use('/stripe', stripeRoutes);
 app.use('/reporting', reportingRoutes);
 
 const PORT = process.env.PORT;
