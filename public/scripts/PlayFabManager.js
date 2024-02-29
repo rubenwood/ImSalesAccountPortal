@@ -237,7 +237,7 @@ export async function getPlayerEmailAddr(playFabId) {
         return userEmail;
     } catch (error) {
         console.error(`Error fetching email for PlayFab ID ${playFabId}:`, error);
-        return null; // or some default value or error indicator
+        return null;
     }    
 }
 

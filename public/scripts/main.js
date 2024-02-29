@@ -189,7 +189,7 @@ export async function generateReportBySuffix() {
             writeDataForReport(element.PlayerId, email, createdDate, lastLoginDate, daysSinceLastLogin,
                 daysSinceCreation, accountExpiryDateString, daysToExpire, createdBy, createdFor, activityDataForReport,
                 totalPlays, totalPlayTime, averageTimePerPlay, loginData);      
-        } catch (error) {
+        } catch(error) {
             let errorStr = `Error fetching data for user ${element.PlayerId}: ${error.message}`;
             console.error(errorStr);
             while (row.firstChild) { row.removeChild(row.firstChild); } // clear out any cells that may have been added
@@ -200,9 +200,10 @@ export async function generateReportBySuffix() {
 
         index++;        
         document.getElementById('generateReportBySuffixButton').value = `Generating Report By Email Suffix... ${index}/${output.length}`;
+        document.getElementById('totalPlayersReport').innerHTML = 'Total users in report: ' + output.length;
+        updateIDList(playerIDList);
     };
-    updateIDList(playerIDList);
-
+    
     // confetti & confirmation of completion
     confetti({
         particleCount: 100,
@@ -302,9 +303,10 @@ export async function generateReportByEmail() {
         let count = index;
         count++;
         document.getElementById('generateReportButton').value = `Generating Report By Email List...${count}/${fetchPromises.length}`;
+        document.getElementById('totalPlayersReport').innerHTML = 'Total users in report: ' + fetchPromises.length;
         updateIDList(playerIDList);
     });
-
+    
     // Wait for all the fetch calls to settle
     Promise.allSettled(fetchPromises).then(results => {
         confetti({
@@ -556,7 +558,7 @@ async function getSegmentPlayersButtonClicked() {
     // Wait for all getPlayerEmailAddr calls to complete
     let playerEmailAddrList = await Promise.all(playerEmailPromises);
     playerEmailAddrList = playerEmailAddrList.filter(Boolean); // filter out empty results
-    document.getElementById('totalPlayersReport').innerHTML = 'Total users in email list: ' + playerEmailAddrList.length;
+    document.getElementById('totalPlayersReport').innerHTML = 'Total users in report: ' + playerEmailAddrList.length;
 
     // Update the page with the player IDs and email addresses
     updateIDList(playerIdList);
