@@ -25,7 +25,7 @@ export function fetchSegmentPlayers(reqSegmentID, batchSize){
     const url = `/get-segment-players/${reqSegmentID}`;
     let segmentID = reqSegmentID;
     let maxBatchSize = batchSize == undefined ? 10000 : batchSize;
-    console.log(maxBatchSize);
+    //console.log(maxBatchSize);
 
     return fetch(url, {
         method: 'POST',
