@@ -379,7 +379,7 @@ async function handleData(respData, userAccInfo, tableBody){
     }
 }
 function populateUseageData(playerData, loginData, state, row){
-    if(playerData == undefined){ addCellToRow(row, 'No Useage Data', false); return state; }
+    if(playerData == undefined){ addCellToRow(row, 'No Usage Data', false); return state; }
 
     let playerDataContent = '';
     playerDataContent += `<b>Last Login Android:</b> ${loginData.lastLoginAndr} <br/>
@@ -422,7 +422,7 @@ function populateUseageData(playerData, loginData, state, row){
     playerDataContent += `<h1>Total Play Time: ${formatTime(state.totalPlayTime)}</h1>`;
     state.averageTimePerPlay = Math.round(state.totalPlayTime / state.totalPlays); 
     playerDataContent += `<h1>Avg. Time per activity: ${formatTime(state.averageTimePerPlay)}</h1>`;
-    addCellToRow(row, 'Expand Useage Data', 1, true, playerDataContent);    
+    addCellToRow(row, 'Expand Usage Data', 1, true, playerDataContent);    
 
     return state;
 }
