@@ -29,7 +29,7 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('generateReportButton').addEventListener('click', generateReportByEmail);
     document.getElementById('generateReportByIdButton').addEventListener('click', generateReportById);
     document.getElementById('generateReportBySuffixButton').addEventListener('click', generateReportBySuffix);
-    document.getElementById('generateReportByClickIDButton').addEventListener('click', generateReportByClickId);
+    //document.getElementById('generateReportByClickIDButton').addEventListener('click', generateReportByClickId);
     
     document.getElementById('exportReportButton').addEventListener('click', exportToExcel);
     document.getElementById('closePlayerDataModal').addEventListener('click', closePlayerDataModal);    
