@@ -21,7 +21,7 @@ function updateButtonText(button, text, maxTicks) {
 
 // KPI REPORT
 let fetchingKPIReport = false;
-function fetchDevKPIReport() {
+async function fetchDevKPIReport() {
     if(fetchingKPIReport){ console.log("in progress"); return; }
 
     fetchingKPIReport = true;
@@ -111,8 +111,6 @@ function setupReportTable(jsonInput){
         let dataCell = table.querySelector("#activitiesLaunchedPerWeek");
         if (dataCell) dataCell.innerText = jsonInput.activitiesLaunchedPerWeek;
     }
-
-    //document.getElementById('output-area').innerHTML = JSON.stringify(jsonInput.averageActiveUsageTime);
 }
 
 function calcReturning(rowData) {
@@ -157,12 +155,10 @@ async function fetchSubReport() {
     const button = document.getElementById('get-apple-report-btn');
     const tickUpdater = updateButtonText(button, "Getting Sub report", 3);
     tickUpdater();
-    const tickInterval = setInterval(tickUpdater, 500); 
+    const tickInterval = setInterval(tickUpdater, 500);
 
     let allPlayersSeg = await getPlayerCountInSegment("1E7B6EA6970A941D");
     console.log(allPlayersSeg.ProfilesInSegment);
-
-    let allPlayersHTMLString = "Total users: " + allPlayersSeg.ProfilesInSegment;
 
     try {        
         // Execute both requests concurrently and wait for both of them to complete
@@ -177,7 +173,7 @@ async function fetchSubReport() {
         sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
         const sevenDaysAgoStr = sevenDaysAgo.toISOString().split('T')[0];
 
-        // Format google report
+        // GOOGLE
         let googleRepArray = googleReport.split('\n');
         // Decode HTML entities for each line in the array
         let decodedGoogleRepArray = googleRepArray.map(line => {
@@ -200,11 +196,9 @@ async function fetchSubReport() {
         // console.log(freeTrials);
         // console.log(nonFreeTrials.length);
         // console.log(freeTrials.length);
-
         //console.log(googlePurchasers);
-        let googleHTMLString = "Total Google subs: " + googlePurchasers[0].metricValues[0].value;
 
-        // format apple report
+        // APPLE
         let formattedAppleReport = formatDecompressedData(appleReport);
         let appleFullArr = [];
         formattedAppleReport.forEach(element =>{
@@ -229,26 +223,33 @@ async function fetchSubReport() {
         console.log(appleFreeTrials);
         console.log(appleIntroductory);
 
-        let appleHTMLString = `Total Apple subs: ${(formattedAppleReport.length-2)}<br/>Total Apple trials:${appleFreeTrials.length}`;
-        let totalSubs = parseInt(googlePurchasers[0].metricValues[0].value)+parseInt(formattedAppleReport.length-1);
-        let totalSubsHTML = "Total subs: " + totalSubs;
-        
         // STRIPE
-        console.log(stripeReport);
+        let stripeJSON = JSON.parse(stripeReport)
 
         // OUTPUT
-        const combinedHTML = allPlayersHTMLString +
-        "<br/><br/>"+
-        googleHTMLString+
-        "<br/><br/>"+ 
-        appleHTMLString+
-        "<br/><br/>"+
-        totalSubsHTML;
+        let totalSubs = parseInt(googlePurchasers[0].metricValues[0].value)+parseInt(formattedAppleReport.length-2)+parseInt(stripeJSON.length);
+
+        let table = document.getElementById('reportTable');
+        let totalUsersPlayfabCell = table.querySelector("#totalUsersPlayfab");
+        if (totalUsersPlayfabCell) totalUsersPlayfabCell.innerText = allPlayersSeg.ProfilesInSegment;
+
+        let googleSubsCell = table.querySelector("#googleSubs");
+        if (googleSubsCell) googleSubsCell.innerText = googlePurchasers[0].metricValues[0].value;
+
+        let appleSubsCell = table.querySelector("#appleSubs");
+        if (appleSubsCell) appleSubsCell.innerText = appleFullArr.length-2;
+
+        let appleTrialsCell = table.querySelector("#appleTrials");
+        if (appleTrialsCell) appleTrialsCell.innerText = appleFreeTrials.length;
+
+        let stripeSubsCell = table.querySelector("#stripeSubs");
+        if (stripeSubsCell) stripeSubsCell.innerText = stripeJSON.length;        
+
+        let totalSubsCell = table.querySelector("#totalSubs");
+        if (totalSubsCell) totalSubsCell.innerText = totalSubs;
 
         // sub conversion rate of total users
         // sub conversion rate of active users
-
-        document.getElementById('output-area').innerHTML = combinedHTML;
     } catch (error) {        
         let errorMessage = error.message;
         if(error.response && error.response.data && error.response.data.error){
@@ -291,7 +292,7 @@ async function fetchStripeReport() {
     const outputText = await response.text();
     return outputText;
 }
-function responseNotOk(response){
+function responseNotOk(response) {
     console.log(response);
     if(response.status == 401){ throw new Error('Not logged in'); }
     throw new Error(`Response was not ok: ${response.statusText}`);

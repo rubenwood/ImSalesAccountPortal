@@ -4,17 +4,26 @@ const router = express.Router();
 const stripe = require('stripe')(process.env.STRIPE_KEY);
 
 router.get('/get-stripe-customers', async (req, res) => {
-    try{
+    if (req.session.idToken == undefined || req.session.idToken == null) { 
+        res.status(401).json({error:"not logged in"}); 
+        return; 
+    }
+
+    try {
         const allCustomers = await getAllCustomers();
         res.send(allCustomers);
     } catch(error) {
         console.error('Failed to fetch customers:', error);
         res.status(500).send({ error: 'Failed to fetch customers' });
-    }
-    
+    }    
 });
 
 router.get('/get-stripe-active-subs', async (req, res) => {
+    if (req.session.idToken == undefined || req.session.idToken == null) { 
+        res.status(401).json({error:"not logged in"}); 
+        return; 
+    }
+
     try {
         const allCustomers = await getAllCustomers();
         const activeSubscribers = await filterActiveSubscribers(allCustomers);
@@ -32,7 +41,7 @@ async function getAllCustomers() {
     let startingAfter = null;
 
     while (hasMore) {
-        const params = { limit: 100 }; // You can adjust the limit up to a maximum of 100 per request
+        const params = { limit: 100 };
         if (startingAfter) {
             params.starting_after = startingAfter;
         }
@@ -48,7 +57,7 @@ async function getAllCustomers() {
     }
 
     console.log(`Got all customers:${allCustomers.length}`);
-    return allCustomers; // Return the compiled list of all customers
+    return allCustomers;
 }
 
 async function filterActiveSubscribers(customers) {
@@ -56,7 +65,6 @@ async function filterActiveSubscribers(customers) {
 
     for (const customer of customers) {
         try {
-            // Fetch subscriptions for the current customer
             const subscriptions = await stripe.subscriptions.list({
                 customer: customer.id,
                 status: 'active', // Filter by 'active' status to reduce processing
@@ -69,7 +77,6 @@ async function filterActiveSubscribers(customers) {
             }
         } catch (error) {
             console.error(`Error fetching subscriptions for customer ${customer.id}:`, error);
-            // Depending on your error handling, you might want to throw the error, return it, or log it
         }
     }
     console.log(`Got all active subs:${activeSubscribers.length}`);

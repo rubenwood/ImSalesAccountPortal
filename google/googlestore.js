@@ -10,23 +10,23 @@ const oauth2Client = new google.auth.OAuth2(
   process.env.GOOGLE_CALLBACK
 );
 
-// generate a url that asks permissions for Blogger and Google Calendar scopes
 const scopes = [
   'https://www.googleapis.com/auth/androidpublisher',
   'https://www.googleapis.com/auth/analytics.readonly',
   'https://www.googleapis.com/auth/devstorage.read_only',
   'openid'
 ];
+
 const googleauthurl = oauth2Client.generateAuthUrl({
-  // 'online' (default) or 'offline' (gets refresh_token)
-  access_type: 'offline',
-  // If you only need one scope you can pass it as a string
-  scope: scopes
+  access_type: 'offline', // 'online' (default) or 'offline' (gets refresh_token)
+  scope: scopes // If you only need one scope you can pass it as a string
 });
+
 // Login (reirect to URI)
 router.get('/google-login', (req, res) =>{
   res.redirect(googleauthurl);
 });
+
 // callback
 //let cachedAccessToken;
 router.get('/google-login-callback', async (req, res) =>{
@@ -183,6 +183,59 @@ router.get('/get-kpi-report', async (req, res) => {
   } catch (error) {
     console.error(error);
     res.status(500).send('Internal Server Error');
+  }
+});
+
+router.get('/get-click-id', async (req, res) => {
+  if (req.session.idToken == undefined || req.session.idToken == null) {
+    res.status(401).json({error: "not logged in"});
+    return;
+  }
+
+  const analyticsApiUrl = `https://analyticsdata.googleapis.com/v1beta/properties/${process.env.GA_PROP_ID}:runReport`;
+  try{
+    const response = await axios.post(analyticsApiUrl,
+      { 
+        dateRanges: [{ startDate: "3000daysAgo", endDate: "yesterday" }],
+        dimensions: [
+          { name: "customEvent:playfab_id" },
+          { name: "customEvent:click_id" }
+        ],
+        metrics: [
+          {name: "totalUsers"}        
+        ] 
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${req.session.cachedAccessToken}`,
+        }
+      });
+
+    // Extract rows from response data
+    const rows = response.data.rows || [];
+
+    const validEntries = rows.filter(row => {
+      if (row.dimensionValues.length < 2) {
+        return false;
+      }
+
+      const playfabIdDimension = row.dimensionValues[0].value;
+      const clickIdDimension = row.dimensionValues[1].value;
+
+      // Check for valid (non-empty, non-undefined, non-"(not set)") values
+      return playfabIdDimension && playfabIdDimension !== "" && playfabIdDimension !== "(not set)" &&
+             clickIdDimension && clickIdDimension !== "" && clickIdDimension !== "(not set)";
+    }).map(entry => ({
+      playfabId: entry.dimensionValues[0].value, // Adjusted to direct access
+      clickId: entry.dimensionValues[1].value, // Adjusted to direct access
+      totalUsers: entry.metricValues[0].value, // Assuming the first metric is totalUsers
+    }));
+
+    console.log(validEntries.length);
+    res.json(validEntries);
+  } catch (error) {
+    console.error("Error fetching data from Google Analytics API:", error);
+    res.status(500).json({ error: "Failed to fetch data from Google Analytics API" });
   }
 });
 

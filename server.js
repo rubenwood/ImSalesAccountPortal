@@ -459,7 +459,7 @@ app.post('/get-all-players', async (req, res) => {
             // Update the continuation token for the next request
             contToken = response.data.data.ContinuationToken;
 
-        } while (contToken); // Continue until there's no continuation token
+        } while (contToken);
 
         res.json({ message: 'Data retrieval complete. All batches written to S3.' });
 
@@ -511,9 +511,6 @@ app.use('/reporting', reportingRoutes);
 
 const PORT = process.env.PORT;
 
-app.get('/', (req, res) => {
-    res.send('Hello World!');
-});
 app.listen(PORT, () => {
     console.log(`Server running on port ${PORT} == ^_^ ==`);
 });

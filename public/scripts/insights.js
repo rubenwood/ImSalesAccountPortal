@@ -1,7 +1,9 @@
+import { reportData } from './main.js';
 import { formatTime } from './utils.js';
 
 // INSIGHT DATA MODAL
 export function showInsightsModal(reportData) {   
+    let userAccessPerPlatform = getUserAccessPerPlatformHTML(reportData);
     let totalPlayTimeAcrossAllUsers = getTotalPlayTimeHTML(reportData);
     let playersWithMostPlayTime = findPlayersWithMostPlayTimeHTML(reportData, 1, 3);
     let playersWithLeastPlayTime = findPlayersWithLeastPlayTimeHTML(reportData, 1, 3);
@@ -13,6 +15,7 @@ export function showInsightsModal(reportData) {
     let totalPlayTimeBetweenDates = totalPlayTimeBetweenDatesHTML(reportData, '01/01/2024 00:00:00', '31/01/2024 23:59:59');
 
     let content = "";
+    content += userAccessPerPlatform;
     content += totalPlayTimeAcrossAllUsers;
     content += playersWithMostPlayTime;
     content += playersWithLeastPlayTime;
@@ -28,6 +31,33 @@ export function showInsightsModal(reportData) {
 }
 export function closeInsightsModal() {
     document.getElementById('insightsModal').style.display = 'none';
+}
+
+export function getUserAccessPerPlatform(reportData){
+    let totalAndroid = 0;
+    let totalIOS = 0;
+    let totalWeb = 0;
+
+    reportData.forEach((data) => {
+        //console.log(data);
+        if(data.loginData !== undefined && data.loginData.lastLoginAndr !== undefined){
+            totalAndroid++;
+        }
+        if(data.loginData !== undefined && data.loginData.lastLoginIOS !== undefined){
+            totalIOS++;
+        }
+        if(data.loginData !== undefined && data.loginData.lastLoginWeb !== undefined){
+            totalWeb++;
+        }
+    });
+    return {totalAndroid, totalIOS, totalWeb};
+    
+}
+
+function getUserAccessPerPlatformHTML(reportData){
+    let userAccPerPlat = getUserAccessPerPlatform(reportData);
+    return `<h2>User Access per platform</h2>
+    <br/>Android: ${userAccPerPlat.totalAndroid}<br/>iOS: ${userAccPerPlat.totalIOS}<br/>Web: ${userAccPerPlat.totalWeb}`;
 }
 
 // Get total play time across all users

@@ -189,3 +189,7 @@ label {
     text-decoration: none;
     cursor: pointer;
 }
+
+#reportTable tr:empty {
+    height: 20px; 
+}

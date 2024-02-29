@@ -1,6 +1,6 @@
 import { canAccess } from './access-check.js';
-import { Login, RegisterUserEmailAddress, UpdateUserDataServer, getPlayerEmailAddr} from './PlayFabManager.js';
-import { showInsightsModal, closeInsightsModal, getTotalPlayTime, findPlayersWithMostPlayTime, findPlayersWithMostPlays, findPlayersWithMostUniqueActivitiesPlayed, findMostPlayedActivities } from './insights.js';
+import { Login, RegisterUserEmailAddress, UpdateUserDataServer, getPlayerEmailAddr } from './PlayFabManager.js';
+import { showInsightsModal, closeInsightsModal, getTotalPlayTime, findPlayersWithMostPlayTime, findPlayersWithMostPlays, findPlayersWithMostUniqueActivitiesPlayed, findMostPlayedActivities, getUserAccessPerPlatform } from './insights.js';
 import { fetchUserData, fetchUserAccInfoById, fetchUserAccInfoByEmail, formatTime, formatTimeToHHMMSS, formatActivityData, getAcademicAreas } from './utils.js';
 import { playerProfiles, getSegmentsClicked, getPlayersInSegmentClicked, fetchPlayersBySuffix } from './segments.js';
 import { generateReportByClickId } from './click-id.js';
@@ -114,7 +114,7 @@ export async function generateReportBySuffix() {
 
     let output = await fetchPlayersBySuffix(suffix);
     console.log("total users with suffix: " + output.length);
-    console.log(output);
+    //console.log(output);
     
     const tableBody = document.getElementById("reportTableBody");
     tableBody.innerHTML = ''; // Clear out the existing rows
@@ -144,13 +144,16 @@ export async function generateReportBySuffix() {
         }else{
             let contactEmail = checkForContactEmailAddr(element, suffix)
             email = contactEmail == undefined ? "no email" : contactEmail;
-
         }
 
         let createdDate = new Date(element.Created);
         let lastLoginDate = new Date(element.LastLogin);        
         let daysSinceCreation = calcDaysSinceCreation(createdDate);
         let daysSinceLastLogin = calcDaysSinceLastLogin(lastLoginDate);
+
+        // make a new row
+        const row = tableBody.insertRow();
+        row.className = 'report-row';
 
         try {
             await delay(500); // delay for each fetch req
@@ -165,13 +168,11 @@ export async function generateReportBySuffix() {
             let createdBy = userData.data.Data.CreatedBy !== undefined ? userData.data.Data.CreatedBy.Value : "";
             let createdFor = userData.data.Data.CreatedFor !== undefined ? userData.data.Data.CreatedFor.Value : "";
 
-            // make a new row
-            const row = tableBody.insertRow();
-            row.className = 'report-row';
             // Account Data
             populateAccDataRow(row, email, createdDate, lastLoginDate, daysSinceLastLogin, daysSinceCreation, accountExpiryDateString, undefined, "", "");
-            
-            // Player / Activity Data WIP
+            // Login Data per platform
+            let loginData = populateLoginData(userData.data.Data);
+            // Player / Activity Data
             let playerData = userData.data.Data.PlayerData !== undefined ? JSON.parse(userData.data.Data.PlayerData.Value) : undefined;
             let playerDataState = {
                 averageTimePerPlay: 0,
@@ -179,54 +180,22 @@ export async function generateReportBySuffix() {
                 totalPlayTime: 0,
                 activityDataForReport: []
             };
-            let newDataState = populatePlayerData(playerData, playerDataState, row);
+            let newDataState = populateUseageData(playerData, loginData, playerDataState, row);
             let averageTimePerPlay = newDataState.averageTimePerPlay;
             let totalPlays = newDataState.totalPlays;
             let totalPlayTime = newDataState.totalPlayTime;
             let activityDataForReport = newDataState.activityDataForReport;
 
-            // FIX DUPLICATE CODE
-            let playerDataForReport = { // (per user)
-                userPlayFabId: element.PlayerId, // hide from exported report
-                email:email,
-                createdDate: createdDate.toDateString(),
-                lastLoginDate: lastLoginDate.toDateString(),
-                daysSinceLastLogin: daysSinceLastLogin,
-                daysSinceCreation: daysSinceCreation,
-                accountExpiryDate: accountExpiryDateString,
-                daysToExpire: daysToExpire, 
-                createdBy: createdBy, // hide from exported report
-                createdFor: createdFor, // hide from exported report
-                activityData: activityDataForReport, // hide from exported report
-                activityDataFormatted: formatActivityData(activityDataForReport),
-                totalPlays,
-                totalPlayTime,
-                averageTimePerPlay
-            };
-            reportData.push(playerDataForReport);        
-            // slightly different data for export (not all report data needs to be exported)
-            let userExportData = {
-                email:email,
-                createdDate: createdDate.toDateString(),
-                lastLoginDate: lastLoginDate.toDateString(),
-                daysSinceLastLogin: daysSinceLastLogin,
-                daysSinceCreation: daysSinceCreation,
-                accountExpiryDate: accountExpiryDateString,
-                daysToExpire: daysToExpire, 
-                activityDataFormatted: formatActivityData(activityDataForReport),
-                totalPlays,
-                totalPlayTime,
-                averageTimePerPlay
-            }                    
-            exportData.push(userExportData);        
+            writeDataForReport(element.PlayerId, email, createdDate, lastLoginDate, daysSinceLastLogin,
+                daysSinceCreation, accountExpiryDateString, daysToExpire, createdBy, createdFor, activityDataForReport,
+                totalPlays, totalPlayTime, averageTimePerPlay, loginData);      
         } catch (error) {
             let errorStr = `Error fetching data for user ${element.PlayerId}: ${error.message}`;
             console.error(errorStr);
-            // Optionally, handle the user differently in the report if their data could not be fetched
-            const row = tableBody.insertRow();
-            row.className = 'report-row';
+            while (row.firstChild) { row.removeChild(row.firstChild); } // clear out any cells that may have been added
             row.style.backgroundColor = '#ff8c8cab'; // Highlight the cell in red
-            populateAccDataRow(row, email, createdDate, lastLoginDate, daysSinceLastLogin, daysSinceCreation, errorStr, undefined, "test", "test");
+            // re-add the rows, but with the error string
+            populateAccDataRow(row, email, createdDate, lastLoginDate, daysSinceLastLogin, daysSinceCreation, errorStr, undefined, "", "");
         }
 
         index++;        
@@ -369,6 +338,9 @@ async function handleData(respData, userAccInfo, tableBody){
     row.className = 'report-row';
     populateAccDataRow(row, email, createdDate, lastLoginDate, daysSinceLastLogin, daysSinceCreation, 
         accountExpiryDateString, daysToExpire, createdBy, createdFor);
+    
+    // get last login dates per platform
+    let loginData = populateLoginData(userData.data.Data);
 
     // process PlayerData
     let playerData = userData.data.Data.PlayerData !== undefined ? JSON.parse(userData.data.Data.PlayerData.Value) : undefined;
@@ -380,47 +352,16 @@ async function handleData(respData, userAccInfo, tableBody){
         totalPlayTime: 0,
         activityDataForReport: []
     };
-    let newDataState = populatePlayerData(playerData, playerDataState, row);
+    let newDataState = populateUseageData(playerData, loginData, playerDataState, row);
     let averageTimePerPlay = newDataState.averageTimePerPlay;
     let totalPlays = newDataState.totalPlays;
     let totalPlayTime = newDataState.totalPlayTime;
     let activityDataForReport = newDataState.activityDataForReport;
 
     // add to stored data
-    let playerDataForReport = { // (per user)
-        userPlayFabId: userAccInfo.data.UserInfo.PlayFabId, // hide from exported report
-        email:email,
-        createdDate: createdDate.toDateString(),
-        lastLoginDate: lastLoginDate.toDateString(),
-        daysSinceLastLogin: daysSinceLastLogin,
-        daysSinceCreation: daysSinceCreation,
-        accountExpiryDate: accountExpiryDateString,
-        daysToExpire: daysToExpire, 
-        createdBy: createdBy, // hide from exported report
-        createdFor: createdFor, // hide from exported report
-        activityData: activityDataForReport, // hide from exported report
-        activityDataFormatted: formatActivityData(activityDataForReport),
-        totalPlays,
-        totalPlayTime,
-        averageTimePerPlay
-    };
-    reportData.push(playerDataForReport);
-
-    // slightly different data for export (not all report data needs to be exported)
-    let userExportData = {
-        email:email,
-        createdDate: createdDate.toDateString(),
-        lastLoginDate: lastLoginDate.toDateString(),
-        daysSinceLastLogin: daysSinceLastLogin,
-        daysSinceCreation: daysSinceCreation,
-        accountExpiryDate: accountExpiryDateString,
-        daysToExpire: daysToExpire, 
-        activityDataFormatted: formatActivityData(activityDataForReport),
-        totalPlays,
-        totalPlayTime,
-        averageTimePerPlay
-    }                    
-    exportData.push(userExportData);
+    writeDataForReport(userAccInfo.data.UserInfo.PlayFabId, email, createdDate, lastLoginDate,
+        daysSinceLastLogin,daysSinceCreation,accountExpiryDateString,daysToExpire,createdBy,
+        createdFor,activityDataForReport,totalPlays,totalPlayTime,averageTimePerPlay, loginData);
     
     // highlight rules
     if(!isNaN(daysToExpire) && daysToExpire < 7)
@@ -437,54 +378,57 @@ async function handleData(respData, userAccInfo, tableBody){
         row.addEventListener('mouseleave', hideTooltip);
     }
 }
-function populatePlayerData(playerData, state, row){
-    if(playerData !== undefined){
-        let playerDataContent = '';
-        playerData.activities.forEach(activity => {
-            let activityContent =`<table><tr><td><b>Activity ID</b></td><td>${activity.activityID}</td></tr>`;
-            activityContent +=`<tr><td><b>Activity Name</b></td><td>${activity.activityTitle}</td></tr>`;
-            activityContent += `<tr><td><b>Plays</b></td><td>${activity.plays.length}</td></tr>`;
-            let totalSessionTime = 0;
-            let bestScore = 0;
-            state.totalPlays += activity.plays.length;
-            activity.plays.forEach(play => {
-                totalSessionTime += Math.round(Math.abs(play.sessionTime));
-                state.totalPlayTime += totalSessionTime;
-                if(play.normalisedScore > bestScore){
-                    bestScore = Math.round(play.normalisedScore * 100);
-                }
-            });
-            activityContent += `<tr><td><b>Total Session Length</b></td><td>${formatTime(totalSessionTime)}</td></tr><br />`;
-            activityContent += `<tr><td><b>Best Score</b></td><td>${bestScore} %</td></tr><br />`;
-            activityContent += "</table>";
-            playerDataContent += activityContent;
+function populateUseageData(playerData, loginData, state, row){
+    if(playerData == undefined){ addCellToRow(row, 'No Useage Data', false); return state; }
 
-            // add the unformatted data for the report
-            let userActivityData = {                             
-                activityID:activity.activityID,
-                activityTitle: activity.activityTitle,
-                plays:activity.plays,
-                playCount:activity.plays.length,
-                totalSessionTime:totalSessionTime,
-                bestScore:bestScore
-            };
-            state.activityDataForReport.push(userActivityData);
+    let playerDataContent = '';
+    playerDataContent += `<b>Last Login Android:</b> ${loginData.lastLoginAndr} <br/>
+                        <b>Last Login iOS:</b> ${loginData.lastLoginIOS} <br/> 
+                        <b>Last Login Web:</b> ${loginData.lastLoginWeb} <br/>`;
+    
+    playerData.activities.forEach(activity => {
+        let activityContent =`<table><tr><td><b>Activity ID</b></td><td>${activity.activityID}</td></tr>`;
+        activityContent +=`<tr><td><b>Activity Name</b></td><td>${activity.activityTitle}</td></tr>`;
+        activityContent += `<tr><td><b>Plays</b></td><td>${activity.plays.length}</td></tr>`;
+        let totalSessionTime = 0;
+        let bestScore = 0;
+        state.totalPlays += activity.plays.length;
+        activity.plays.forEach(play => {
+            totalSessionTime += Math.round(Math.abs(play.sessionTime));
+            state.totalPlayTime += totalSessionTime;
+            if(play.normalisedScore > bestScore){
+                bestScore = Math.round(play.normalisedScore * 100);
+            }
         });
-        playerDataContent += `<h1>Total Plays: ${state.totalPlays}</h1>`;
-        playerDataContent += `<h1>Total Activities Played: ${playerData.activities.length}</h1>`;
-        playerDataContent += `<h1>Total Play Time: ${formatTime(state.totalPlayTime)}</h1>`;
-        state.averageTimePerPlay = Math.round(state.totalPlayTime / state.totalPlays); 
-        playerDataContent += `<h1>Avg. Time per activity: ${formatTime(state.averageTimePerPlay)}</h1>`;
-        addCellToRow(row, 'Expand Player Data', 1, true, playerDataContent);
-    }else{
-        addCellToRow(row, 'No Player Data', false);
-    }
+        activityContent += `<tr><td><b>Total Session Length</b></td><td>${formatTime(totalSessionTime)}</td></tr><br />`;
+        activityContent += `<tr><td><b>Best Score</b></td><td>${bestScore} %</td></tr><br />`;
+        activityContent += "</table>";
+        playerDataContent += activityContent;
+
+        // add the unformatted data for the report
+        let userActivityData = {                             
+            activityID:activity.activityID,
+            activityTitle: activity.activityTitle,
+            plays:activity.plays,
+            playCount:activity.plays.length,
+            totalSessionTime:totalSessionTime,
+            bestScore:bestScore
+        };
+        state.activityDataForReport.push(userActivityData);
+    });
+
+    playerDataContent += `<h1>Total Plays: ${state.totalPlays}</h1>`;
+    playerDataContent += `<h1>Total Activities Played: ${playerData.activities.length}</h1>`;
+    playerDataContent += `<h1>Total Play Time: ${formatTime(state.totalPlayTime)}</h1>`;
+    state.averageTimePerPlay = Math.round(state.totalPlayTime / state.totalPlays); 
+    playerDataContent += `<h1>Avg. Time per activity: ${formatTime(state.averageTimePerPlay)}</h1>`;
+    addCellToRow(row, 'Expand Useage Data', 1, true, playerDataContent);    
 
     return state;
 }
 function populateAccDataRow(row, email, createdDate, lastLoginDate, daysSinceLastLogin, 
     daysSinceCreation, expiryDateString, daysToExpire, createdBy, createdFor){
-
+        
     addCellToRow(row, email, false);
     addCellToRow(row, createdDate.toDateString(), false);
     addCellToRow(row, lastLoginDate.toDateString(), false);
@@ -543,6 +487,55 @@ function addCellToRow(row, text, colSpan = 1, isCollapsible = false, collapsible
 
         cell.appendChild(collapseButton);
     }    
+}
+function populateLoginData(userData){
+    let lastLoginAndr = userData.LastLoginDateAndroid !== undefined ? userData.LastLoginDateAndroid.Value : undefined;
+    let lastLoginIOS = userData.LastLoginDateiOS !== undefined ? userData.LastLoginDateiOS.Value : undefined;
+    let lastLoginWeb = userData.LastLoginDateWeb !== undefined ? userData.LastLoginDateWeb.Value : undefined;
+    return {lastLoginAndr,lastLoginIOS,lastLoginWeb};    
+}
+
+function writeDataForReport(pID, pEmail, pCreatedDate,
+                            pLastLoginDate, pDaysSinceLastLogin, pDaysSinceCreation,
+                            pAccountExpiryDate, pDaysToExpire, pCreatedBy, pCreatedFor,
+                            pActivityDataForReport, pTotalPlays, pTotalPlayTime, pAveragePlayTimePerPlay, pLoginData){
+    
+    let playerDataForReport = { // (per user)
+        userPlayFabId: pID, // hide from exported report
+        email:pEmail,
+        createdDate: pCreatedDate.toDateString(),
+        lastLoginDate: pLastLoginDate.toDateString(),
+        daysSinceLastLogin: pDaysSinceLastLogin,
+        daysSinceCreation: pDaysSinceCreation,
+        accountExpiryDate: pAccountExpiryDate,
+        daysToExpire: pDaysToExpire, 
+        createdBy: pCreatedBy, // hide from exported report
+        createdFor: pCreatedFor, // hide from exported report
+        activityData: pActivityDataForReport, // hide from exported report
+        activityDataFormatted: formatActivityData(pActivityDataForReport),
+        totalPlays: pTotalPlays,
+        totalPlayTime: pTotalPlayTime,
+        averageTimePerPlay: pAveragePlayTimePerPlay,
+        loginData: pLoginData
+    };
+    reportData.push(playerDataForReport);
+
+    // slightly different data for export (not all report data needs to be exported)
+    let userExportData = {
+        email:pEmail,
+        createdDate: pCreatedDate.toDateString(),
+        lastLoginDate: pLastLoginDate.toDateString(),
+        daysSinceLastLogin: pDaysSinceLastLogin,
+        daysSinceCreation: pDaysSinceCreation,
+        accountExpiryDate: pAccountExpiryDate,
+        daysToExpire: pDaysToExpire, 
+        activityDataFormatted: formatActivityData(pActivityDataForReport),
+        totalPlays: pTotalPlays,
+        totalPlayTime: pTotalPlayTime,
+        averageTimePerPlay: pAveragePlayTimePerPlay,
+        loginData: pLoginData
+    }                    
+    exportData.push(userExportData);
 }
 
 // GET PLAYERS IN SEGMENT BUTTON CLICKED
@@ -634,6 +627,9 @@ function createUserRow(dataToExport, activity, isFirstActivity) {
         daysSinceCreation: dataToExport.daysSinceCreation,
         accountExpiryDate: dataToExport.accountExpiryDate,
         daysToExpire: dataToExport.daysToExpire,
+        lastLoginAndroid: dataToExport.loginData.lastLoginAndr,
+        lastLoginIOS: dataToExport.loginData.lastLoginIOS,
+        lastLoginWeb: dataToExport.loginData.lastLoginWeb,
         totalPlays: dataToExport.totalPlays,
         totalPlayTime: formatTimeToHHMMSS(dataToExport.totalPlayTime),
         averageTimePerPlay: formatTimeToHHMMSS(dataToExport.averageTimePerPlay)
@@ -644,11 +640,12 @@ function exportToExcel() {
     let workbook = XLSX.utils.book_new();
 
     // add any relevant insights data
-    let totalPlayTimeAcrossAllUsersSeconds = getTotalPlayTime(exportData); // use reportData rather than exportData??
-    let playersWithMostPlayTime = findPlayersWithMostPlayTime(exportData, 1, 3); // use reportData rather than exportData??
+    let totalPlayTimeAcrossAllUsersSeconds = getTotalPlayTime(exportData);
+    let playersWithMostPlayTime = findPlayersWithMostPlayTime(exportData, 1, 3);
     let playersWithMostPlays = findPlayersWithMostPlays(exportData, 1, 3);
     let playersWithMostUniqueActivities = findPlayersWithMostUniqueActivitiesPlayed(reportData, 1, 3);
-    let mostPlayedActivities = findMostPlayedActivities(exportData, 1, 10); // use reportData rather than exportData??
+    let mostPlayedActivities = findMostPlayedActivities(exportData, 1, 10);
+    let userAccessPerPlatform = getUserAccessPerPlatform(exportData);
 
     let insightsExportData = [
         { insight: 'Total Play Time Across All Users', value: formatTimeToHHMMSS(totalPlayTimeAcrossAllUsersSeconds) }
@@ -666,6 +663,9 @@ function exportToExcel() {
     mostPlayedActivities.forEach(activity => {
         insightsExportData.push({ insight: 'Most Played Activities', value: activity.activityTitle + ' - ' + activity.totalPlays });
     });
+    insightsExportData.push({insight: 'User Access Android', value: userAccessPerPlatform.totalAndroid});
+    insightsExportData.push({insight: 'User Access iOS', value: userAccessPerPlatform.totalIOS});
+    insightsExportData.push({insight: 'User Access Web', value: userAccessPerPlatform.totalWeb});
 
     // add user data
     let userData = [];

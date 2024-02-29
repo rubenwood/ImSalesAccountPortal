@@ -101,7 +101,6 @@ export async function getPlayerCountInSegment(segmentID){
 // GET PLAYERS BY SUFFIX
 export async function fetchPlayersBySuffix(suffix){
     const url = `/reporting/gen-suffix-rep/${suffix}`;
-    console.log(suffix);
 
     return fetch(url, {
         method: 'GET',
