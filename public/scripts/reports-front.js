@@ -162,7 +162,7 @@ async function fetchSubReport() {
 
     try {        
         // Execute both requests concurrently and wait for both of them to complete
-        const [googleReport, googlePurchasers, appleReport, stripeReport] = await Promise.all([
+        const [googleReport, googlePurchasers, appleReport, stripeActiveSubs] = await Promise.all([
             fetchGoogleReport(),
             fetchGooglePurchasers(),
             fetchAppleReport(),
@@ -174,29 +174,28 @@ async function fetchSubReport() {
         const sevenDaysAgoStr = sevenDaysAgo.toISOString().split('T')[0];
 
         // GOOGLE
-        let googleRepArray = googleReport.split('\n');
-        // Decode HTML entities for each line in the array
-        let decodedGoogleRepArray = googleRepArray.map(line => {
-            let tempDiv = document.createElement('div');
-            tempDiv.innerHTML = line;
-            return tempDiv.textContent || tempDiv.innerText || "";
+        //console.log(googleReport);
+        let googleReportJSON = JSON.parse(googleReport);
+        //console.log(googleReportJSON);
+        let googleMonthlyJSON = googleReportJSON.monthlyReport;
+        let googleYearlyJSON = googleReportJSON.yearlyReport;
+        console.log(googleMonthlyJSON);
+        console.log(googleYearlyJSON);
+        let androidSubs = [];
+        let androidTrials = [];
+        googleMonthlyJSON.forEach((element) =>{
+            console.log(element.offerID);
+            if(element.offerID == ""){
+                androidSubs.push(element);
+            }
         });
-        //console.log(decodedGoogleRepArray);
-
-        // Filter for nonFreeTrials and freeTrials with dates within the last 14 days
-        let nonFreeTrials = decodedGoogleRepArray.filter(line => {
-            const lineDate = line.split(',')[0];
-            return !line.toLowerCase().includes("freetrial") && lineDate >= sevenDaysAgoStr;
+        googleYearlyJSON.forEach((element) =>{
+            console.log(element.offerID);
+            if(element.offerID == ""){
+                androidSubs.push(element);
+            }
         });
-        let freeTrials = decodedGoogleRepArray.filter(line => {
-            const lineDate = line.split(',')[0];
-            return line.toLowerCase().includes("freetrial") && lineDate >= sevenDaysAgoStr;
-        });
-        // console.log(nonFreeTrials);
-        // console.log(freeTrials);
-        // console.log(nonFreeTrials.length);
-        // console.log(freeTrials.length);
-        //console.log(googlePurchasers);
+        console.log(androidSubs);
 
         // APPLE
         let formattedAppleReport = formatDecompressedData(appleReport);
@@ -224,7 +223,9 @@ async function fetchSubReport() {
         console.log(appleIntroductory);
 
         // STRIPE
-        let stripeJSON = JSON.parse(stripeReport)
+        //let activeStripeSubs = await fetchStripeActiveSubs();
+        console.log(stripeActiveSubs);
+        let stripeJSON = JSON.parse(stripeActiveSubs);
 
         // OUTPUT
         let totalSubs = parseInt(googlePurchasers[0].metricValues[0].value)+parseInt(formattedAppleReport.length-2)+parseInt(stripeJSON.length);

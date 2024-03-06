@@ -61,27 +61,22 @@ async function getAllCustomers() {
 }
 
 async function filterActiveSubscribers(customers) {
-    let activeSubscribers = [];
-
-    for (const customer of customers) {
-        try {
-            const subscriptions = await stripe.subscriptions.list({
-                customer: customer.id,
-                status: 'active', // Filter by 'active' status to reduce processing
-                limit: 1 // We only need to know if there is at least one active subscription
-            });
-
-            // If the customer has one or more active subscriptions, add them to the list
-            if (subscriptions.data.length > 0) {
-                activeSubscribers.push(customer);
-            }
-        } catch (error) {
+    // Use Promise.all with error handling for each subscription check
+    const activeSubscribersPromises = customers.map(customer => 
+        stripe.subscriptions.list({
+            customer: customer.id,
+            status: 'active',
+            limit: 1
+        })
+        .then(subscriptions => subscriptions.data.length > 0 ? customer : null)
+        .catch(error => {
             console.error(`Error fetching subscriptions for customer ${customer.id}:`, error);
-        }
-    }
-    console.log(`Got all active subs:${activeSubscribers.length}`);
-    return activeSubscribers;
-}
+            return null; // In case of error, return null to filter out later
+        })
+    );
 
+    const results = await Promise.all(activeSubscribersPromises);
+    return results.filter(customer => customer !== null); // Filter out nulls
+}
 
 module.exports = router;

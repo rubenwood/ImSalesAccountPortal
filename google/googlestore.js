@@ -3,6 +3,7 @@ const express = require('express');
 const router = express.Router();
 const {google} = require('googleapis');
 const { Storage } = require('@google-cloud/storage');
+const { parse } = require('csv-parse/sync');
 
 const oauth2Client = new google.auth.OAuth2(
   process.env.GOOGLE_CLIENT_ID,
@@ -31,7 +32,7 @@ router.get('/google-login', (req, res) =>{
 //let cachedAccessToken;
 router.get('/google-login-callback', async (req, res) =>{
   let code = req.query.code;
-  console.log(code);
+  //console.log(code);
   const { tokens } = await oauth2Client.getToken(code)
   oauth2Client.setCredentials(tokens);
 
@@ -52,7 +53,6 @@ router.get('/google-login-callback', async (req, res) =>{
   res.redirect(`/reports.html`);
 });
 
-// SUB STUFF
 const playDeveloper = google.androidpublisher({
   version: 'v3',
   auth: oauth2Client
@@ -84,41 +84,114 @@ const playDeveloper = google.androidpublisher({
   const response = await playDeveloper.purchases.subscriptions.get({
     packageName: process.env.GOOGLE_APP_PACKAGE_ID,
     subscriptionId: 'com.immersifyeducation.immersifydental.monthly'
-    //startTime: // 'startTime', // Optional parameters
-    //endTime: // 'endTime' // Optional parameters
   });
   return response;
-}
-router.get('/get-google-purchases', async (req, res) => {
-  let subListResp = await listSubPurchases();
-  console.log(subListResp);
+}*/
+/*router.get('/get-google-purchases', async (req, res) => {
+  const url = 'https://play.google.com/console/u/0/developers/6876057134054731100/app/4973007238115949118/reporting/subscriptions/overview?from=2024-02-26&to=2024-03-03&product_id=ALL';
 
+  try {
+    const response = await axios.get(url, {
+      headers: {
+        'Authorization': `Bearer ${req.session.cachedAccessToken}`
+      }
+    });
+
+    const htmlData = response.data;
+    console.log(htmlData);
+    // Attempt to extract the content using a regular expression
+    const regex = /<span class="value _ngcontent-jvh-86" aria-describedby="console-scorecard-label-21">(\d+)<\/span>/;
+    const match = regex.exec(htmlData);
+    let extractedValue = "";
+    if (match && match[1]) {
+      extractedValue = match[1];
+    }
+
+    console.log(`Extracted Value: ${extractedValue}`);
+    res.setHeader('Content-Type', 'text/plain');
+    res.send(htmlData);
+    //res.send(`Extracted Value: ${extractedValue}`);
+  } catch (error) {
+    console.error('Error fetching data:', error);
+    res.status(500).send('Failed to fetch data');
+  }
 });*/
 
 // GET GOOGLE SUB REPORT
 // returns a full subscription report
 router.get('/get-google-report', async (req, res) => {
-  if (req.session.idToken == undefined || req.session.idToken == null) { 
-    res.status(401).json({error:"not logged in"}); 
-    return; 
+  if (req.session.idToken === undefined || req.session.idToken === null) {
+    res.status(401).json({ error: "not logged in" });
+    return;
   }
 
   try {
-    const url = `https://storage.googleapis.com/${process.env.GOOGLE_BUCKET_BASE}/financial-stats/subscriptions/${process.env.GOOGLE_SUB_FILE_BASE}.monthly_202402_country.csv`;
+    let date = new Date();
+    // Adjust date for the previous month
+    date.setMonth(date.getMonth() - 1);
+    let year = date.getFullYear();
+    let month = ('0' + (date.getMonth() + 1)).slice(-2);
+    const formattedMonth = `${year}${month}`;
 
-    const response = await axios.get(url, {
+    const monthlyUrl = `https://storage.googleapis.com/${process.env.GOOGLE_BUCKET_BASE}/financial-stats/subscriptions/${process.env.GOOGLE_SUB_FILE_BASE}.monthly_${formattedMonth}_country.csv`;
+    const yearlyUrl = `https://storage.googleapis.com/${process.env.GOOGLE_BUCKET_BASE}/financial-stats/subscriptions/${process.env.GOOGLE_SUB_FILE_BASE}.yearly_${formattedMonth}_country.csv`;
+
+    const requestConfig = {
+      responseType: 'arraybuffer',
       headers: {
         'Authorization': `Bearer ${req.session.cachedAccessToken}`
       }
-      //,responseType: 'stream' // Assuming you are downloading a file
+    };
+
+    const [monthlyResponse, yearlyResponse] = await Promise.all([
+      axios.get(monthlyUrl, requestConfig),
+      axios.get(yearlyUrl, requestConfig)
+    ]);
+
+    // Decode the UTF-16LE encoded CSV content to strings
+    const monthlyData = Buffer.from(monthlyResponse.data, 'binary').toString('utf16le');
+    const yearlyData = Buffer.from(yearlyResponse.data, 'binary').toString('utf16le');
+
+    // Parse the CSV strings to JSON, then sanitize keys
+    const monthlyJson = sanitizeKeys(parse(monthlyData, {
+      columns: true,
+      skip_empty_lines: true
+    }));
+    const yearlyJson = sanitizeKeys(parse(yearlyData, {
+      columns: true,
+      skip_empty_lines: true
+    }));
+
+    // Combine and send the sanitized JSON data
+    res.json({
+      monthlyReport: monthlyJson,
+      yearlyReport: yearlyJson
     });
-    //response.data.pipe(res);
-    res.send(response.data);
+
   } catch (error) {
     console.error('Error fetching data:', error);
-    res.status(500).json({error:'Error fetching data'});
+    res.status(500).json({ error: 'Error fetching data' });
   }
 });
+// Function to sanitize keys in each object of an array
+function sanitizeKeys(data) {
+  return data.map(row => {
+    const sanitizedRow = {};
+    Object.keys(row).forEach(key => {
+      sanitizedRow[toCamelCase(key)] = row[key];
+    });
+    return sanitizedRow;
+  });
+}
+// Helper function to convert field names into camelCase
+function toCamelCase(str) {
+  return str
+    .replace(/[""]/g, '') // Remove double quotes
+    .replace(/(?:^\w|[A-Z]|\b\w|\s+)/g, (match, index) => {
+      if (+match === 0) return ""; // or if (/\s+/.test(match)) for white space
+      return index === 0 ? match.toLowerCase() : match.toUpperCase();
+    });
+}
 
 // GET PURCHASERS
 // calls GA to get the number of purchasers 
