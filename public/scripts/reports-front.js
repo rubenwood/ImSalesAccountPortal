@@ -179,23 +179,23 @@ async function fetchSubReport() {
         //console.log(googleReportJSON);
         let googleMonthlyJSON = googleReportJSON.monthlyReport;
         let googleYearlyJSON = googleReportJSON.yearlyReport;
-        console.log(googleMonthlyJSON);
-        console.log(googleYearlyJSON);
+        //console.log(googleMonthlyJSON);
+        //console.log(googleYearlyJSON);
         let androidSubs = [];
         let androidTrials = [];
         googleMonthlyJSON.forEach((element) =>{
-            console.log(element.offerID);
+            //console.log(element.offerID);
             if(element.offerID == ""){
                 androidSubs.push(element);
             }
         });
         googleYearlyJSON.forEach((element) =>{
-            console.log(element.offerID);
+            //console.log(element.offerID);
             if(element.offerID == ""){
                 androidSubs.push(element);
             }
         });
-        console.log(androidSubs);
+        //console.log(androidSubs);
 
         // APPLE
         let formattedAppleReport = formatDecompressedData(appleReport);
@@ -205,8 +205,8 @@ async function fetchSubReport() {
             appleFullArr.push(rowSplit);
         })
         //console.log(formattedAppleReport);
-        console.log(appleFullArr);
-        console.log("Apple subs: " + (appleFullArr.length-2));
+        //console.log(appleFullArr);
+        //console.log("Apple subs: " + (appleFullArr.length-2));
 
         let appleFreeTrials = [];
         let appleIntroductory = [];
@@ -219,8 +219,8 @@ async function fetchSubReport() {
                 appleIntroductory.push(row);
             }
         });
-        console.log(appleFreeTrials);
-        console.log(appleIntroductory);
+        //console.log(appleFreeTrials);
+        //console.log(appleIntroductory);
 
         // STRIPE
         //let activeStripeSubs = await fetchStripeActiveSubs();
