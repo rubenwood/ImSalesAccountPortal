@@ -224,7 +224,7 @@ async function fetchSubReport() {
 
         // STRIPE
         //let activeStripeSubs = await fetchStripeActiveSubs();
-        console.log(stripeActiveSubs);
+        //console.log(stripeActiveSubs);
         let stripeJSON = JSON.parse(stripeActiveSubs);
 
         // OUTPUT
