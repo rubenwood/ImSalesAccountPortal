@@ -15,7 +15,7 @@ const path = require('path');
 const googleRoutes = require('./google/googlestore.js');
 const appleRoutes = require('./apple/applestore.js');
 const stripeRoutes = require('./stripe/stripestore.js');
-const reportingRoutes = require('./reporting/reporting.js');
+const reportingRoutes = require('./other/suffix.js');
 
 app.use(express.json());
 app.use(cors());
@@ -409,7 +409,6 @@ async function getAllPlayersAndUpload() {
 
   jobInProgress = false;
 }
-
 // Gets all players and uploads resulting files to S3
 app.post('/get-all-players', async (req, res) => {
   try {
