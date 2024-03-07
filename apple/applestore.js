@@ -339,6 +339,8 @@ async function decompressData(respData){
             if (err) {
                 reject(err);
             } else {
+                //const csvFormatted = buffer.toString().replace(/\t/g, ',');
+                //console.log(csvFormatted);
                 resolve(buffer.toString());
             }
         });

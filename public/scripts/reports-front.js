@@ -174,28 +174,22 @@ async function fetchSubReport() {
         const sevenDaysAgoStr = sevenDaysAgo.toISOString().split('T')[0];
 
         // GOOGLE
-        //console.log(googleReport);
         let googleReportJSON = JSON.parse(googleReport);
-        //console.log(googleReportJSON);
         let googleMonthlyJSON = googleReportJSON.monthlyReport;
         let googleYearlyJSON = googleReportJSON.yearlyReport;
-        //console.log(googleMonthlyJSON);
-        //console.log(googleYearlyJSON);
         let androidSubs = [];
         let androidTrials = [];
         googleMonthlyJSON.forEach((element) =>{
-            //console.log(element.offerID);
             if(element.offerID == ""){
                 androidSubs.push(element);
             }
         });
         googleYearlyJSON.forEach((element) =>{
-            //console.log(element.offerID);
             if(element.offerID == ""){
                 androidSubs.push(element);
             }
         });
-        //console.log(androidSubs);
+        console.log(androidSubs);
 
         // APPLE
         let formattedAppleReport = formatDecompressedData(appleReport);
@@ -203,13 +197,10 @@ async function fetchSubReport() {
         formattedAppleReport.forEach(element =>{
             let rowSplit = element.split(',');
             appleFullArr.push(rowSplit);
-        })
-        //console.log(formattedAppleReport);
-        //console.log(appleFullArr);
-        //console.log("Apple subs: " + (appleFullArr.length-2));
-
+        });
         let appleFreeTrials = [];
         let appleIntroductory = [];
+        console.log(appleFullArr);
         appleFullArr.forEach(row => {
             // Convert the values at index 19 and 22 to integers and check if either is greater than 0
             if (parseInt(row[19], 10) > 0 || parseInt(row[22], 10) > 0) {
@@ -219,23 +210,21 @@ async function fetchSubReport() {
                 appleIntroductory.push(row);
             }
         });
-        //console.log(appleFreeTrials);
-        //console.log(appleIntroductory);
 
         // STRIPE
-        //let activeStripeSubs = await fetchStripeActiveSubs();
-        //console.log(stripeActiveSubs);
         let stripeJSON = JSON.parse(stripeActiveSubs);
 
         // OUTPUT
-        let totalSubs = parseInt(googlePurchasers[0].metricValues[0].value)+parseInt(formattedAppleReport.length-2)+parseInt(stripeJSON.length);
+        //let totalSubs = parseInt(googlePurchasers[0].metricValues[0].value)+parseInt(formattedAppleReport.length-2)+parseInt(stripeJSON.length);
+        let totalSubs = parseInt(androidSubs.length)+parseInt(formattedAppleReport.length-2)+parseInt(stripeJSON.length);
 
         let table = document.getElementById('reportTable');
         let totalUsersPlayfabCell = table.querySelector("#totalUsersPlayfab");
         if (totalUsersPlayfabCell) totalUsersPlayfabCell.innerText = allPlayersSeg.ProfilesInSegment;
 
         let googleSubsCell = table.querySelector("#googleSubs");
-        if (googleSubsCell) googleSubsCell.innerText = googlePurchasers[0].metricValues[0].value;
+        //if (googleSubsCell) googleSubsCell.innerText = googlePurchasers[0].metricValues[0].value;
+        if (googleSubsCell) googleSubsCell.innerText = androidSubs.length;
 
         let appleSubsCell = table.querySelector("#appleSubs");
         if (appleSubsCell) appleSubsCell.innerText = appleFullArr.length-2;

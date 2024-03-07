@@ -3,6 +3,8 @@ const express = require('express');
 const router = express.Router();
 const stripe = require('stripe')(process.env.STRIPE_KEY);
 
+const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
+
 router.get('/get-stripe-customers', async (req, res) => {
     if (req.session.idToken == undefined || req.session.idToken == null) { 
         res.status(401).json({error:"not logged in"}); 
@@ -61,22 +63,30 @@ async function getAllCustomers() {
 }
 
 async function filterActiveSubscribers(customers) {
-    // Use Promise.all with error handling for each subscription check
-    const activeSubscribersPromises = customers.map(customer => 
-        stripe.subscriptions.list({
-            customer: customer.id,
-            status: 'active',
-            limit: 1
-        })
-        .then(subscriptions => subscriptions.data.length > 0 ? customer : null)
-        .catch(error => {
+    let activeSubscribers = [];
+    let counter = 0;
+    for (const customer of customers) {
+        try {
+            const subscriptions = await stripe.subscriptions.list({
+                customer: customer.id,
+                status: 'active',
+                limit: 1
+            });
+            if (subscriptions.data.length > 0) {
+                activeSubscribers.push(customer);
+            }
+        } catch (error) {
             console.error(`Error fetching subscriptions for customer ${customer.id}:`, error);
-            return null; // In case of error, return null to filter out later
-        })
-    );
+        }
 
-    const results = await Promise.all(activeSubscribersPromises);
-    return results.filter(customer => customer !== null); // Filter out nulls
+        // Insert a small delay after processing 10 customers
+        // this keeps things fast, but prevents overwhelming stripe API
+        counter++;
+        if(counter >= 10){ await delay(10); counter = 0; }        
+    }
+
+    console.log(`Got all active subs:${activeSubscribers.length}`);
+    return activeSubscribers;
 }
 
 module.exports = router;
