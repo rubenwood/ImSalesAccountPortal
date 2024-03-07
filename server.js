@@ -372,91 +372,75 @@ app.post('/get-segment-players/:segmentID', async (req, res) => {
 });
 
 // GET ALL PLAYERS (write to files)
-let isGetAllPlayersRunning = false;
-app.get('/begin-get-all-players', async (req, res) => {
-  const providedSecretKey = req.headers['x-secret-key'];
+async function getAllPlayersAndUpload() {
+  let contToken = null;
+  let batchNumber = 0;
 
-  if (!providedSecretKey || providedSecretKey !== "TEST123") {
-    return res.status(401).json({ message: 'Unauthorized' });
-  }
+  do {
+      const response = await axios.post(
+          `https://${process.env.PLAYFAB_TITLE_ID}.playfabapi.com/Server/GetPlayersInSegment`,
+          {
+              SegmentId: process.env.PLAYFAB_ALLSEG_ID,
+              MaxBatchSize: 10000,
+              ContinuationToken: contToken,
+          },
+          {
+              headers: {
+                  'X-SecretKey': process.env.PLAYFAB_SECRET_KEY
+              }
+          }
+      );
 
-  if (isGetAllPlayersRunning) {
-    return res.status(409).json({ message: 'Process is already running' });
-  }
+      batchNumber++;
+      const fileName = `playfab_players_batch_${batchNumber}.json`;
+      const Bucket = process.env.AWS_BUCKET;
+      const Key = `analytics/${fileName}`;
 
-  isGetAllPlayersRunning = true;
+      await s3.upload({
+          Bucket,
+          Key,
+          Body: JSON.stringify(response.data.data.PlayerProfiles, null, 2),
+          ContentType: 'application/json'
+      }).promise();
 
+      contToken = response.data.data.ContinuationToken;
+
+  } while (contToken);
+
+  jobInProgress = false;
+}
+
+// Gets all players and uploads resulting files to S3
+app.post('/get-all-players', async (req, res) => {
   try {
-    // Trigger the /get-all-players route in a separate async function
-    await triggerGetAllPlayers();
-    res.json({ message: 'Process started successfully' });
+      await getAllPlayersAndUpload();
+      res.json({ message: 'Data retrieval complete. All batches written to S3.' });
   } catch (error) {
-    console.error('Error:', error);
-    res.status(500).json({ message: 'An error occurred while starting the process' });
-  } finally {
-    isGetAllPlayersRunning = false;
+      console.error('Error:', error);
+      if (error.response && error.response.data) {
+          res.status(500).json(error.response.data);
+      } else {
+          res.status(500).json({ message: error.message, stack: error.stack });
+      }
   }
 });
-async function triggerGetAllPlayers() {
-  try {
-    const response = await axios.post('/get-all-players');
-    console.log('Process completed:', response.data);
-  } catch (error) {
-    console.error('Error triggering /get-all-players:', error);
+// Same as above, but used by cron jobs
+let jobInProgress = false;
+app.get('/begin-get-all-players', async (req, res) => {
+  const secret = req.headers['x-secret-key'];
+  if (secret !== "TEST123") {
+      return res.status(401).json({ message: 'Invalid or missing secret.' });
   }
-}
-app.post('/get-all-players', async (req, res) => {
-    let contToken = null;
-    let batchNumber = 0;
-
-    try {
-        do {
-            const response = await axios.post(
-                `https://${process.env.PLAYFAB_TITLE_ID}.playfabapi.com/Server/GetPlayersInSegment`,
-                {
-                    SegmentId: process.env.PLAYFAB_ALLSEG_ID,
-                    MaxBatchSize: 10000, // Maximum
-                    ContinuationToken: contToken,
-                },
-                {
-                    headers: {
-                        'X-SecretKey': process.env.PLAYFAB_SECRET_KEY
-                    }
-                }
-            );
-
-            // Increment batch number for each file
-            batchNumber++;
-
-            // Generate a unique file name for this batch
-            const fileName = `playfab_players_batch_${batchNumber}.json`;
-            // Define the S3 bucket and key
-            const Bucket = process.env.AWS_BUCKET; // Replace with your S3 bucket name
-            const Key = `analytics/${fileName}`; // Replace 'your-folder-name' with your desired folder name in the S3 bucket
-
-            // Upload this batch of players to S3
-            await s3.upload({
-                Bucket,
-                Key,
-                Body: JSON.stringify(response.data.data.PlayerProfiles, null, 2),
-                ContentType: 'application/json'
-            }).promise();
-
-            // Update the continuation token for the next request
-            contToken = response.data.data.ContinuationToken;
-
-        } while (contToken);
-
-        res.json({ message: 'Data retrieval complete. All batches written to S3.' });
-
-    } catch (error) {
-        console.error('Error:', error);
-        if (error.response && error.response.data) {
-            res.status(500).json(error.response.data);
-        } else {
-            res.status(500).json({ message: error.message, stack: error.stack });
-        }
-    }
+  
+  try {
+      getAllPlayersAndUpload();
+      jobInProgress = true;
+      res.json({ message: 'Begin getting all players initiated successfully.' });
+  } catch (error) {
+      jobInProgress = false;
+      console.error('Error:', error);
+      res.status(500).json({ message: 'Failed to initiate getting all players.' });
+  }
 });
 
 // REDIS (SESSION STORAGE)
