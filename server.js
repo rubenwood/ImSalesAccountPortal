@@ -372,6 +372,7 @@ app.post('/get-segment-players/:segmentID', async (req, res) => {
 });
 
 // GET ALL PLAYERS (write to files)
+let isGetAllPlayersRunning = false;
 app.get('/begin-get-all-players', async (req, res) => {
   const providedSecretKey = req.headers['x-secret-key'];
 
