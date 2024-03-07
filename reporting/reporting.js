@@ -1,9 +1,6 @@
 const AWS = require('aws-sdk');
-//const axios = require('axios');
 const express = require('express');
 const router = express.Router();
-// const fs = require('fs').promises; // Using the promise-based version of fs
-// const path = require('path');
 
 AWS.config.update({
     region: process.env.AWS_REGION,
@@ -141,65 +138,5 @@ async function generateReportByEmailSuffix(suffix) {
         throw err;
     }
 }
-
-// async function generateReportByEmailSuffix(suffix) {
-//     const directoryPath = path.join(__dirname, '../data');
-//     let matchedUsersMap = new Map(); // Store unique matched users
-//     let encounteredEmails = new Set(); // Track encountered emails to prevent duplicates
-
-//     let suffixMappings;
-//     try {        
-//         suffixMappings = await getSuffixMappings();
-//     } catch (err) {
-//         console.error('Error fetching suffix mappings:', err);
-//         throw err;
-//     }
-
-//     //console.log(suffixMappings);
-
-//     try {
-//         const files = await fs.readdir(directoryPath);
-//         for (const file of files.filter(file => path.extname(file).toLowerCase() === '.json')) {
-//             const filePath = path.join(directoryPath, file);
-//             const data = await fs.readFile(filePath, 'utf8');
-//             const jsonData = JSON.parse(data);
-
-//             jsonData.forEach(user => {
-//                 let matchedByEmail = false;
-//                 let checkContact = true;
-                
-//                 if (Array.isArray(user.LinkedAccounts) && user.LinkedAccounts.length > 0) {
-//                     checkContact = false;
-//                     user.LinkedAccounts.forEach(account => {
-//                         if (account.Platform === "PlayFab" && account.Email && account.Email.includes(suffix) && !encounteredEmails.has(account.Email)) {
-//                             encounteredEmails.add(account.Email);
-//                             matchedUsersMap.set(user.PlayerId, user);
-//                         } else if (account.Platform === "OpenIdConnect" && account.PlatformUserId.includes(suffixMappings[suffix])) {
-//                             matchedUsersMap.set(user.PlayerId, user);
-//                         }
-//                     });
-//                 }
-
-//                 if (checkContact && !matchedUsersMap.has(user.PlayerId) && Array.isArray(user.ContactEmailAddresses)) {
-//                     user.ContactEmailAddresses.forEach(contact => {
-//                         if (contact.EmailAddress && contact.EmailAddress.includes(suffix) && !encounteredEmails.has(contact.EmailAddress)) {
-//                             encounteredEmails.add(contact.EmailAddress);
-//                             matchedByEmail = true;
-//                         }
-//                     });
-
-//                     if (matchedByEmail) {
-//                         matchedUsersMap.set(user.PlayerId, user);
-//                     }
-//                 }
-//             });
-//         }
-
-//         return Array.from(matchedUsersMap.values());
-//     } catch (err) {
-//         console.error('Error:', err);
-//         throw err;
-//     }
-// }
 
 module.exports = router;

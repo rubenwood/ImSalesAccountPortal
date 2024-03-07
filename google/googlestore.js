@@ -238,7 +238,7 @@ router.get('/get-kpi-report', async (req, res) => {
     const results = [];
     for (const func of functions) {
       results.push(await func());
-      await delay(700); // delay between calls to prevent overwhelming google api
+      await delay(700);
     }
 
     let output = {
@@ -299,8 +299,8 @@ router.get('/get-click-id', async (req, res) => {
       return playfabIdDimension && playfabIdDimension !== "" && playfabIdDimension !== "(not set)" &&
              clickIdDimension && clickIdDimension !== "" && clickIdDimension !== "(not set)";
     }).map(entry => ({
-      playfabId: entry.dimensionValues[0].value, // Adjusted to direct access
-      clickId: entry.dimensionValues[1].value, // Adjusted to direct access
+      playfabId: entry.dimensionValues[0].value,
+      clickId: entry.dimensionValues[1].value,
       totalUsers: entry.metricValues[0].value, // Assuming the first metric is totalUsers
     }));
 

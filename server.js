@@ -372,53 +372,38 @@ app.post('/get-segment-players/:segmentID', async (req, res) => {
 });
 
 // GET ALL PLAYERS (write to files)
-// app.post('/get-all-players', async (req, res) => {
-//   let contToken = null;
-//   let batchNumber = 0;
+app.get('/begin-get-all-players', async (req, res) => {
+  const providedSecretKey = req.headers['x-secret-key'];
 
-//   try {
-//       do {
-//           const response = await axios.post(
-//               `https://${process.env.PLAYFAB_TITLE_ID}.playfabapi.com/Server/GetPlayersInSegment`,
-//               {
-//                   SegmentId: process.env.PLAYFAB_ALLSEG_ID,
-//                   MaxBatchSize: 10000, // Maximum
-//                   ContinuationToken: contToken,
-//               },
-//               {
-//                   headers: {
-//                       'X-SecretKey': process.env.PLAYFAB_SECRET_KEY
-//                   }
-//               }
-//           );
+  if (!providedSecretKey || providedSecretKey !== "TEST123") {
+    return res.status(401).json({ message: 'Unauthorized' });
+  }
 
-//           // Increment batch number for each file
-//           batchNumber++;
+  if (isGetAllPlayersRunning) {
+    return res.status(409).json({ message: 'Process is already running' });
+  }
 
-//           // Generate a unique file name for this batch
-//           const fileName = `data/playfab_players_batch_${batchNumber}.json`;
-//           const filePath = path.join(__dirname, fileName);
+  isGetAllPlayersRunning = true;
 
-//           // Write this batch of players to a new file
-//           fs.writeFileSync(filePath, JSON.stringify(response.data.data.PlayerProfiles, null, 2));
-
-//           // Update the continuation token for the next request
-//           contToken = response.data.data.ContinuationToken;
-
-//       } while (contToken); // Continue until there's no continuation token
-
-//       res.json({ message: 'Data retrieval complete. All batches written to separate files.' });
-
-//   } catch (error) {
-//       console.error('Error:', error);
-//       if (error.response && error.response.data) {
-//           res.status(500).json(error.response.data);
-//       } else {
-//           res.status(500).json({ message: error.message, stack: error.stack });
-//       }
-//   }
-// });
-
+  try {
+    // Trigger the /get-all-players route in a separate async function
+    await triggerGetAllPlayers();
+    res.json({ message: 'Process started successfully' });
+  } catch (error) {
+    console.error('Error:', error);
+    res.status(500).json({ message: 'An error occurred while starting the process' });
+  } finally {
+    isGetAllPlayersRunning = false;
+  }
+});
+async function triggerGetAllPlayers() {
+  try {
+    const response = await axios.post('/get-all-players');
+    console.log('Process completed:', response.data);
+  } catch (error) {
+    console.error('Error triggering /get-all-players:', error);
+  }
+}
 app.post('/get-all-players', async (req, res) => {
     let contToken = null;
     let batchNumber = 0;

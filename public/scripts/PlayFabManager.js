@@ -32,9 +32,7 @@ export async function Login()
         if (error) {
             console.error("Error logging in:", error);
         } else {
-            //accessLevel = await getUserData(["AccessLevel"]); 
             setAccessLevel(await getUserData(["AccessLevel"])); 
-            //let accessCheckResponse = await fetchUserAccess();
             if (canAccess()) {                
                 document.getElementById('loginModal').style.display = 'none';
             }
