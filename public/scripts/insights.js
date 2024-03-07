@@ -42,7 +42,6 @@ export function getUserAccessPerPlatform(reportData){
     let totalWeb = 0;
 
     reportData.forEach((data) => {
-        //console.log(data);
         if(data.loginData !== undefined && data.loginData.lastLoginAndr !== undefined){
             totalAndroid++;
         }
