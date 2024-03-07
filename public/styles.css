@@ -193,3 +193,6 @@ label {
 #reportTable tr:empty {
     height: 20px; 
 }
+.wip-row {
+    background-color: #fae0b1;
+}

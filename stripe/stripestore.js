@@ -27,7 +27,6 @@ router.get('/get-stripe-active-subs', async (req, res) => {
     try {
         const allCustomers = await getAllCustomers();
         const activeSubscribers = await filterActiveSubscribers(allCustomers);
-        console.log(activeSubscribers.length);
         res.send(activeSubscribers);
     } catch (error) {
         console.error('Failed to fetch active subscribers:', error);

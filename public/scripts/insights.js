@@ -3,6 +3,8 @@ import { formatTime } from './utils.js';
 
 // INSIGHT DATA MODAL
 export function showInsightsModal(reportData) {   
+    //console.log(reportData);
+    let totalUsersInReport = getTotalUsersInReportHTML(reportData);
     let userAccessPerPlatform = getUserAccessPerPlatformHTML(reportData);
     let totalPlayTimeAcrossAllUsers = getTotalPlayTimeHTML(reportData);
     let playersWithMostPlayTime = findPlayersWithMostPlayTimeHTML(reportData, 1, 3);
@@ -11,10 +13,11 @@ export function showInsightsModal(reportData) {
     let playersWithLeastPlays = findPlayersWithLeastPlaysHTML(reportData, 1, 3);
     let playersWithMostUniqueActivities = findPlayersWithMostUniqueActivitiesPlayedHTML(reportData, 1, 3);
     let mostPlayedActivities = findMostPlayedActivitiesHTML(reportData, 1, 10);
-    let playsBetweenDates = findPlaysBetweenDatesHTML(reportData, '01/01/2024 00:00:00', '31/01/2024 23:59:59');
-    let totalPlayTimeBetweenDates = totalPlayTimeBetweenDatesHTML(reportData, '01/01/2024 00:00:00', '31/01/2024 23:59:59');
+    //let playsBetweenDates = findPlaysBetweenDatesHTML(reportData, '01/01/2024 00:00:00', '31/01/2024 23:59:59');
+    //let totalPlayTimeBetweenDates = totalPlayTimeBetweenDatesHTML(reportData, '01/01/2024 00:00:00', '31/01/2024 23:59:59');
 
     let content = "";
+    content += totalUsersInReport;
     content += userAccessPerPlatform;
     content += totalPlayTimeAcrossAllUsers;
     content += playersWithMostPlayTime;
@@ -23,8 +26,8 @@ export function showInsightsModal(reportData) {
     content += playersWithLeastPlays;
     content += playersWithMostUniqueActivities;
     content += mostPlayedActivities;
-    content += playsBetweenDates;
-    content += totalPlayTimeBetweenDates;
+    //content += playsBetweenDates;
+    //content += totalPlayTimeBetweenDates;
 
     document.getElementById('insightsContent').innerHTML = content;
     document.getElementById('insightsModal').style.display = 'block';
@@ -52,6 +55,10 @@ export function getUserAccessPerPlatform(reportData){
     });
     return {totalAndroid, totalIOS, totalWeb};
     
+}
+
+function getTotalUsersInReportHTML(reportData){
+    return `<h2>Total Users in Report</h2><br/>${reportData.length}`;
 }
 
 function getUserAccessPerPlatformHTML(reportData){
