@@ -3,8 +3,6 @@ const express = require('express');
 const router = express.Router();
 const stripe = require('stripe')(process.env.STRIPE_KEY);
 
-const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
-
 router.get('/get-stripe-customers', async (req, res) => {
     if (req.session.idToken == undefined || req.session.idToken == null) { 
         res.status(401).json({error:"not logged in"}); 
@@ -62,6 +60,7 @@ async function getAllCustomers() {
     return allCustomers;
 }
 
+const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
 async function filterActiveSubscribers(customers) {
     let activeSubscribers = [];
     let counter = 0;
