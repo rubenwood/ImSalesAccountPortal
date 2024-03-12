@@ -4,6 +4,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     document.getElementById('google-login-btn').addEventListener('click', GoogleLoginClicked);
     document.getElementById('get-google-report-btn').addEventListener('click', fetchDevKPIReport);
     document.getElementById('get-apple-report-btn').addEventListener('click', fetchSubReport);
+    document.getElementById('get-b2b-report-btn').addEventListener('click', fetchB2BReport);
 });
 
 export function GoogleLoginClicked(){
@@ -253,6 +254,40 @@ async function fetchSubReport() {
         fetchingSubReport = false;
     }
 }
+// B2B REPORT
+let fetchingB2BReport = false;
+async function fetchB2BReport(){
+    if(fetchingB2BReport){ console.log("in progress"); return; }
+
+    fetchingB2BReport = true;
+
+    const button = document.getElementById('get-b2b-report-btn');
+    const tickUpdater = updateButtonText(button, "Getting B2B report", 3);
+    tickUpdater();
+    const tickInterval = setInterval(tickUpdater, 500);
+
+    try{
+        const [ b2bUsers ] = await Promise.all([
+            fetchB2BUsersReport()
+        ]);
+        
+        let table = document.getElementById('reportTable');
+
+        let totalB2BUsersCell = table.querySelector("#totalB2BUsers");
+        if(totalB2BUsersCell) totalB2BUsersCell.innerText = b2bUsers;
+    }catch(error){
+        let errorMessage = error.message;
+        if(error.response && error.response.data && error.response.data.error){
+            errorMessage = error.response.data.error;
+        }
+        console.error('There has been a problem with the combined fetch operation:', error);
+        document.getElementById('output-area').textContent = 'Error fetching data: ' + errorMessage;
+    }finally{
+        clearInterval(tickInterval); // Stop the ticking animation
+        button.value = "Get B2B report";
+        fetchingB2BReport = false;
+    }    
+}
 
 async function fetchAppleReport() {
     const response = await fetch('/apple/get-subscription-report');
@@ -277,6 +312,13 @@ async function fetchGooglePurchasers() {
 }
 async function fetchStripeReport() {
     const response = await fetch('/stripe/get-stripe-active-subs');
+    if (!response.ok) { responseNotOk(response); }
+
+    const outputText = await response.text();
+    return outputText;
+}
+async function fetchB2BUsersReport() {
+    const response = await fetch('/b2b/get-total-users');
     if (!response.ok) { responseNotOk(response); }
 
     const outputText = await response.text();

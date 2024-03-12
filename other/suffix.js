@@ -2,6 +2,8 @@ const AWS = require('aws-sdk');
 const express = require('express');
 const suffixRouter = express.Router();
 
+const { anyFileModifiedSince, checkFileLastModified, checkFilesLastModifiedList } = require('./s3-utils');
+
 AWS.config.update({
     region: process.env.AWS_REGION,
     accessKeyId: process.env.AWS_ACCESS_KEY_ID,
@@ -10,11 +12,10 @@ AWS.config.update({
 const s3 = new AWS.S3();
 
 // Get suffix mappings from S3 (connections_list)
-let gotSuffixMappings = false;
 let suffixMappings;
+let lastDateGotSuffixMappings;
 async function getSuffixMappings() {
     console.log("getting s3 suffix mappings");
-    gotSuffixMappings = false;
     const params = {
         Bucket: process.env.AWS_BUCKET,
         Key: process.env.CONNECTION_LIST_PATH
@@ -38,7 +39,7 @@ async function getSuffixMappings() {
           }
         }
         console.log("got s3 suffix mappings");
-        gotSuffixMappings = true;
+        lastDateGotSuffixMappings = new Date();
         return adjustedMappings;
     } catch (err) {
         console.error('Error fetching or processing suffix mappings from S3:', err);
@@ -61,11 +62,10 @@ suffixRouter.get('/gen-suffix-rep', async (req, res) => {
 });
 
 // Get All Data from S3
-let gotAllS3AccData = false;
 let allS3AccData;
+let lastDateGotAllS3AccData;
 async function getAllS3AccFilesData(Bucket, Prefix) {
     console.log("getting s3 acc data");
-    gotAllS3AccData = false;
     let continuationToken;
     let filesData = [];
 
@@ -90,8 +90,8 @@ async function getAllS3AccFilesData(Bucket, Prefix) {
         continuationToken = response.NextContinuationToken;
     } while (continuationToken);
     
-    gotAllS3AccData = true;
-    
+    lastDateGotAllS3AccData = new Date();
+
     return filesData;
 }
 
@@ -99,13 +99,17 @@ async function generateReportByEmailSuffix(suffixes) {
     let matchedUsersMap = new Map();
     let encounteredEmails = new Set();
 
-    // if we haven't got the S3 data yet, get it 
-    const Bucket = process.env.AWS_BUCKET;
-    const Prefix = 'analytics/';
-    if(!gotAllS3AccData || allS3AccData == undefined){ 
-        allS3AccData = await getAllS3AccFilesData(Bucket, Prefix);
+    let allS3AccDataLastModifiedDates = await checkFilesLastModifiedList(process.env.AWS_BUCKET, 'analytics/');
+    let anyS3AccFilesModified = anyFileModifiedSince(allS3AccDataLastModifiedDates, lastDateGotAllS3AccData);
+    let suffixMappingsLastModifiedDates = await checkFileLastModified(process.env.AWS_BUCKET, process.env.CONNECTION_LIST_PATH);
+    let suffixMappingsFilesModified = anyFileModifiedSince(suffixMappingsLastModifiedDates, lastDateGotSuffixMappings);
+     // if we haven't got the S3 data yet, go get it 
+    if(allS3AccData == undefined || anyS3AccFilesModified){
+        console.log("-- getting s3 acc file");
+        allS3AccData = await getAllS3AccFilesData(process.env.AWS_BUCKET, 'analytics/');
     }
-    if(!gotSuffixMappings || suffixMappings == undefined){
+    if(suffixMappings == undefined || suffixMappingsFilesModified){
+        console.log("-- getting s3 suffix file");
         suffixMappings = await getSuffixMappings();
     }
 

@@ -23,7 +23,7 @@ router.get('/get-total-users', async (req, res) => {
         // Pass array of suffixes
         const matchedUsers = await generateReportByEmailSuffix(suffixes);
         console.log("Total B2B users: " + matchedUsers.length);
-        res.send(matchedUsers.length);
+        res.send(matchedUsers.length.toString());
     } catch (error) {
         console.error('Error:', error);
         res.status(500).json({ message: 'Failed to generate report', error: error.message });
