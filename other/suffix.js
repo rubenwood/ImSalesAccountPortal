@@ -37,7 +37,7 @@ async function getSuffixMappings() {
             console.warn(`Warning: Missing mechanism or authorizeURL for connectionID: ${curr.connectionID}`);
           }
         }
-
+        console.log("got s3 suffix mappings");
         gotSuffixMappings = true;
         return adjustedMappings;
     } catch (err) {
@@ -83,7 +83,6 @@ async function getAllS3AccFilesData(Bucket, Prefix) {
             };
             console.log(`S3: getting file data ${item.Key}`);
             const data = await s3.getObject(objectParams).promise();
-            console.log(`S3: got file data: ${item.Key}`);
             const jsonData = JSON.parse(data.Body.toString('utf-8'));
             filesData.push(...jsonData);
         }
