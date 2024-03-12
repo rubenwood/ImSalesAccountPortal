@@ -47,20 +47,6 @@ async function getSuffixMappings() {
     }
 }
 
-// Modified route that takes in an array of query param gen-suffix-rep?suffixes=suffix1,suffix2
-suffixRouter.get('/gen-suffix-rep', async (req, res) => {
-    try {
-        // Splits the suffixes into an array
-        let suffixes = req.query.suffixes.split(',');
-        // Pass array of suffixes
-        const matchedUsers = await generateReportByEmailSuffix(suffixes);
-        res.json(matchedUsers);
-    } catch (error) {
-        console.error('Error:', error);
-        res.status(500).json({ message: 'Failed to generate report', error: error.message });
-    }
-});
-
 // Get All Data from S3
 let allS3AccData;
 let lastDateGotAllS3AccData;
@@ -95,14 +81,30 @@ async function getAllS3AccFilesData(Bucket, Prefix) {
     return filesData;
 }
 
+// Modified route that takes in an array of query param gen-suffix-rep?suffixes=suffix1,suffix2
+suffixRouter.get('/gen-suffix-rep', async (req, res) => {
+    try {
+        // Splits the suffixes into an array
+        let suffixes = req.query.suffixes.split(',');
+        const matchedUsers = await generateReportByEmailSuffix(suffixes);
+        res.json(matchedUsers);
+    } catch (error) {
+        console.error('Error:', error);
+        res.status(500).json({ message: 'Failed to generate report', error: error.message });
+    }
+});
+
 async function generateReportByEmailSuffix(suffixes) {
     let matchedUsersMap = new Map();
     let encounteredEmails = new Set();
 
-    let allS3AccDataLastModifiedDates = await checkFilesLastModifiedList(process.env.AWS_BUCKET, 'analytics/');
+    let [allS3AccDataLastModifiedDates, suffixMappingsLastModifiedDates] = await Promise.all([
+        checkFilesLastModifiedList(process.env.AWS_BUCKET, 'analytics/'),
+        checkFileLastModified(process.env.AWS_BUCKET, process.env.CONNECTION_LIST_PATH)
+    ]);
     let anyS3AccFilesModified = anyFileModifiedSince(allS3AccDataLastModifiedDates, lastDateGotAllS3AccData);
-    let suffixMappingsLastModifiedDates = await checkFileLastModified(process.env.AWS_BUCKET, process.env.CONNECTION_LIST_PATH);
     let suffixMappingsFilesModified = anyFileModifiedSince(suffixMappingsLastModifiedDates, lastDateGotSuffixMappings);
+
      // if we haven't got the S3 data yet, go get it 
     if(allS3AccData == undefined || anyS3AccFilesModified){
         console.log("-- getting s3 acc file");
