@@ -1,6 +1,6 @@
 const AWS = require('aws-sdk');
 const express = require('express');
-const router = express.Router();
+const suffixRouter = express.Router();
 
 AWS.config.update({
     region: process.env.AWS_REGION,
@@ -47,11 +47,10 @@ async function getSuffixMappings() {
 }
 
 // Modified route that takes in an array of query param gen-suffix-rep?suffixes=suffix1,suffix2
-router.get('/gen-suffix-rep', async (req, res) => {
+suffixRouter.get('/gen-suffix-rep', async (req, res) => {
     try {
         // Splits the suffixes into an array
         let suffixes = req.query.suffixes.split(',');
-        console.log(`getting users by suffixes ${suffixes}`);
         // Pass array of suffixes
         const matchedUsers = await generateReportByEmailSuffix(suffixes);
         res.json(matchedUsers);
@@ -153,4 +152,4 @@ async function generateReportByEmailSuffix(suffixes) {
     }
 }
 
-module.exports = router;
+module.exports = { suffixRouter, generateReportByEmailSuffix };

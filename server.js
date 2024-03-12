@@ -15,7 +15,8 @@ const path = require('path');
 const googleRoutes = require('./google/googlestore.js');
 const appleRoutes = require('./apple/applestore.js');
 const stripeRoutes = require('./stripe/stripestore.js');
-const reportingRoutes = require('./other/suffix.js');
+const { suffixRouter }  = require('./other/suffix.js');
+const b2bRoutes = require('./other/b2b-processing.js');
 
 app.use(express.json());
 app.use(cors());
@@ -125,8 +126,6 @@ app.put('/update-confluence-page/:pageId', async (req, res) => {
       },
       body: bodyData
     });
-
-    //writeCSV(email, pass, area, expiry);
 
     res.json(response.data);
   } catch (error) {
@@ -478,7 +477,8 @@ app.use(express.static('public'));
 app.use('/google', googleRoutes);
 app.use('/apple', appleRoutes);
 app.use('/stripe', stripeRoutes);
-app.use('/reporting', reportingRoutes);
+app.use('/reporting', suffixRouter);
+app.use('/b2b', b2bRoutes);
 
 const PORT = process.env.PORT;
 
