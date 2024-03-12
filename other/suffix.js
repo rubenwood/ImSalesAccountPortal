@@ -105,20 +105,20 @@ async function generateReportByEmailSuffix(suffixes) {
     let anyS3AccFilesModified = anyFileModifiedSince(allS3AccDataLastModifiedDates, lastDateGotAllS3AccData);
     let suffixMappingsFilesModified = anyFileModifiedSince(suffixMappingsLastModifiedDates, lastDateGotSuffixMappings);
 
-     // if we haven't got the S3 data yet, go get it 
-    if(allS3AccData == undefined || anyS3AccFilesModified){
-        console.log("-- getting s3 acc file");
-        allS3AccData = await getAllS3AccFilesData(process.env.AWS_BUCKET, 'analytics/');
-    }
     if(suffixMappings == undefined || suffixMappingsFilesModified){
         console.log("-- getting s3 suffix file");
         suffixMappings = await getSuffixMappings();
     }
 
+    // if we haven't got the S3 data yet, go get it 
+    // TODO: rather than waiting on getting all files, just search each file as it comes in
+    if(allS3AccData == undefined || anyS3AccFilesModified){
+        console.log("-- getting s3 acc file");
+        allS3AccData = await getAllS3AccFilesData(process.env.AWS_BUCKET, 'analytics/');
+    }
+    
+
     try {
-        // TODO: report each file downloaded in UI
-        // TODO: rather than waiting on getting all files, just search each file as it comes in
-        // TODO: report each file searched in UI
         allS3AccData.forEach(user => {
             suffixes.forEach(suffix => {
                 let checkContact = true;
