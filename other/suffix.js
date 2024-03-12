@@ -67,7 +67,7 @@ async function getAllS3AccFilesData(Bucket, Prefix) {
                 Bucket,
                 Key: item.Key,
             };
-            console.log(`S3: getting file data ${item.Key}`);
+            //console.log(`S3: getting file data ${item.Key}`);
             const data = await s3.getObject(objectParams).promise();
             const jsonData = JSON.parse(data.Body.toString('utf-8'));
             filesData.push(...jsonData);
@@ -105,18 +105,16 @@ async function generateReportByEmailSuffix(suffixes) {
     let anyS3AccFilesModified = anyFileModifiedSince(allS3AccDataLastModifiedDates, lastDateGotAllS3AccData);
     let suffixMappingsFilesModified = anyFileModifiedSince(suffixMappingsLastModifiedDates, lastDateGotSuffixMappings);
 
+    // if we haven't got the S3 data yet, go get it 
     if(suffixMappings == undefined || suffixMappingsFilesModified){
         console.log("-- getting s3 suffix file");
         suffixMappings = await getSuffixMappings();
-    }
-
-    // if we haven't got the S3 data yet, go get it 
+    }    
     // TODO: rather than waiting on getting all files, just search each file as it comes in
     if(allS3AccData == undefined || anyS3AccFilesModified){
         console.log("-- getting s3 acc file");
         allS3AccData = await getAllS3AccFilesData(process.env.AWS_BUCKET, 'analytics/');
     }
-    
 
     try {
         allS3AccData.forEach(user => {
