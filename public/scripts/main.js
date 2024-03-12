@@ -110,21 +110,18 @@ export async function generateReportBySuffix() {
     resetButtonTexts();
     document.getElementById('generateReportBySuffixButton').value = "Generating Report By Email Suffix...";
 
-    let suffixes = document.getElementById("emailList").value.split('\n');
-    console.log(suffixes);
-    console.log(suffixes.toString());
+    let suffixes = document.getElementById("emailList").value.split('\n').filter(Boolean);
 
     let output = await fetchPlayersBySuffixList(suffixes.toString());
     console.log("total users with suffix: " + output.length);
     
     const tableBody = document.getElementById("reportTableBody");
-    tableBody.innerHTML = ''; // Clear out the existing rows
-
-    reportData = []; // reset the report data
+    tableBody.innerHTML = '';
+    
+    reportData = [];
     exportData = [];
 
     let playerIDList = [];
-
     let index = 0;
     for(const element of output){
         let email = "no email";
@@ -133,7 +130,6 @@ export async function generateReportBySuffix() {
             element.LinkedAccounts.forEach(linkedAcc =>{
                 if(linkedAcc.Platform == "PlayFab"){
                     suffixes.forEach(suffix => {
-                        console.log(linkedAcc.Email);
                         if(linkedAcc.Email.includes(suffix)){
                             email = linkedAcc.Email;
                             gotAcc = true;
