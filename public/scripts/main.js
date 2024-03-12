@@ -2,8 +2,8 @@ import { canAccess } from './access-check.js';
 import { Login, RegisterUserEmailAddress, UpdateUserDataServer, getPlayerEmailAddr } from './PlayFabManager.js';
 import { showInsightsModal, closeInsightsModal, getTotalPlayTime, findPlayersWithMostPlayTime, findPlayersWithMostPlays, findPlayersWithMostUniqueActivitiesPlayed, findMostPlayedActivities, getUserAccessPerPlatform } from './insights.js';
 import { fetchUserData, fetchUserAccInfoById, fetchUserAccInfoByEmail, formatTime, formatTimeToHHMMSS, formatActivityData, getAcademicAreas } from './utils.js';
-import { playerProfiles, getSegmentsClicked, getPlayersInSegmentClicked, fetchPlayersBySuffix } from './segments.js';
-import { generateReportByClickId } from './click-id.js';
+import { playerProfiles, getSegmentsClicked, getPlayersInSegmentClicked, fetchPlayersBySuffixList } from './segments.js';
+//import { generateReportByClickId } from './click-id.js';
 
 document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('loginButton').addEventListener('click', Login);
@@ -110,11 +110,12 @@ export async function generateReportBySuffix() {
     resetButtonTexts();
     document.getElementById('generateReportBySuffixButton').value = "Generating Report By Email Suffix...";
 
-    let suffix = document.getElementById("emailList").value;
+    let suffixes = document.getElementById("emailList").value.split('\n');
+    console.log(suffixes);
+    console.log(suffixes.toString());
 
-    let output = await fetchPlayersBySuffix(suffix);
+    let output = await fetchPlayersBySuffixList(suffixes.toString());
     console.log("total users with suffix: " + output.length);
-    //console.log(output);
     
     const tableBody = document.getElementById("reportTableBody");
     tableBody.innerHTML = ''; // Clear out the existing rows
@@ -126,25 +127,29 @@ export async function generateReportBySuffix() {
 
     let index = 0;
     for(const element of output){
-        // if linked accounts includes Platform=="PlayFab" then get login email
-        // if linked accounts does not include Platform, get the contact email addresses
-        // if neither login nor contact emails are set, leave empty 
         let email = "no email";
         if(element.LinkedAccounts !== undefined && element.LinkedAccounts.length > 0){
+            let gotAcc = false;
             element.LinkedAccounts.forEach(linkedAcc =>{
                 if(linkedAcc.Platform == "PlayFab"){
-                    if(linkedAcc.Email.includes(suffix)){
-                        email = linkedAcc.Email;
+                    suffixes.forEach(suffix => {
+                        console.log(linkedAcc.Email);
+                        if(linkedAcc.Email.includes(suffix)){
+                            email = linkedAcc.Email;
+                            gotAcc = true;
+                        }
+                    });
+                }else{
+                    if(!gotAcc){
+                        let contactEmail = checkForContactEmailAddr(element, suffixes);
+                        email = contactEmail == undefined ? "no email (C2)" : contactEmail;
                     }
-                }else if(linkedAcc.Platform == "OpenIdConnect"){
-                    let contactEmail = checkForContactEmailAddr(element, suffix)
-                    email = contactEmail == undefined ? "no email" : contactEmail;
                 }
             })
-        }else{
-            let contactEmail = checkForContactEmailAddr(element, suffix)
-            email = contactEmail == undefined ? "no email" : contactEmail;
-        }
+        }else{ // if there are no linked accounts, just get the contact email   
+            let contactEmail = checkForContactEmailAddr(element, suffixes);
+            email = contactEmail == undefined ? "no email (C3)" : contactEmail;
+        }  
 
         let createdDate = new Date(element.Created);
         let lastLoginDate = new Date(element.LastLogin);        
@@ -572,13 +577,15 @@ function updateIDList(playerIdList){
 }
 
 // GET CONTACT EMAIL (from ContactEmailAddresses (playfab field))
-function checkForContactEmailAddr(input, suffix){
+function checkForContactEmailAddr(input, suffixes){
     let emailAddr;
     if(input.ContactEmailAddresses !== undefined && input.ContactEmailAddresses.length > 0){
         input.ContactEmailAddresses.forEach(contactEmail =>{
-            if(contactEmail.EmailAddress.includes(suffix)){
-                emailAddr = contactEmail.EmailAddress;
-            }
+            suffixes.forEach(suffix => {
+                if(contactEmail.EmailAddress.includes(suffix)){                    
+                    emailAddr = contactEmail.EmailAddress;
+                }
+            });            
         })
     }
     return emailAddr;

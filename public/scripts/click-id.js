@@ -1,5 +1,5 @@
 import { canAccess } from './access-check.js';
-import { fetchPlayersBySuffix } from './segments.js';
+import { fetchPlayersBySuffixList } from './segments.js';
 
 export async function generateReportByClickId() {
     let hasAccess = await canAccess();
@@ -7,7 +7,7 @@ export async function generateReportByClickId() {
 
     console.log("searching by click id");
     
-    let output = await fetchPlayersBySuffix(suffix);    
+    let output = await fetchPlayersBySuffixList(suffix);    
     
     for(const element of output){
         try {

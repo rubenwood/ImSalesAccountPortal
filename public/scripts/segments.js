@@ -99,8 +99,8 @@ export async function getPlayerCountInSegment(segmentID){
 }
 
 // GET PLAYERS BY SUFFIX
-export async function fetchPlayersBySuffix(suffix){
-    const url = `/reporting/gen-suffix-rep/${suffix}`;
+export async function fetchPlayersBySuffixList(suffixList){
+    const url = `/reporting/gen-suffix-rep?suffixes=${suffixList}`;
 
     return fetch(url, {
         method: 'GET',

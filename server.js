@@ -375,6 +375,8 @@ app.post('/get-segment-players/:segmentID', async (req, res) => {
 async function getAllPlayersAndUpload() {
   let contToken = null;
   let batchNumber = 0;
+  let timestamp = new Date();
+  console.log(`getting all players ${timestamp}`);
 
   do {
       const response = await axios.post(
@@ -432,8 +434,8 @@ app.get('/begin-get-all-players', async (req, res) => {
   }
   
   try {
-      getAllPlayersAndUpload();
       jobInProgress = true;
+      getAllPlayersAndUpload();      
       res.json({ message: 'Begin getting all players initiated successfully.' });
   } catch (error) {
       jobInProgress = false;
