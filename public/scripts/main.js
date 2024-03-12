@@ -107,10 +107,11 @@ export async function generateReportBySuffix() {
     let hasAccess = await canAccess();
     if(!hasAccess){ return; }
 
+    let suffixes = document.getElementById("emailList").value.split('\n').filter(Boolean);
+    if(suffixes.length < 1){ return; }
+
     resetButtonTexts();
     document.getElementById('generateReportBySuffixButton').value = "Generating Report By Email Suffix...";
-
-    let suffixes = document.getElementById("emailList").value.split('\n').filter(Boolean);
 
     let output = await fetchPlayersBySuffixList(suffixes.toString());
     console.log("total users with suffix: " + output.length);

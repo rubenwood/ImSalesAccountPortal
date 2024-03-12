@@ -33,7 +33,6 @@ async function checkFilesLastModifiedList(bucket, prefix) {
   }
 
 async function checkFileLastModified(bucket, fileKey) {
-    console.log("checking last modified");
     const params = {
       Bucket: bucket,
       Key: fileKey,

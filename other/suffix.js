@@ -47,7 +47,7 @@ async function getSuffixMappings() {
     }
 }
 
-// Get All Data from S3
+// Get all Acc Data from S3
 let allS3AccData;
 let lastDateGotAllS3AccData;
 async function getAllS3AccFilesData(Bucket, Prefix) {
@@ -62,22 +62,25 @@ async function getAllS3AccFilesData(Bucket, Prefix) {
             ContinuationToken: continuationToken,
         }).promise();
 
+        let index = 0;
         for (const item of response.Contents) {
             const objectParams = {
                 Bucket,
                 Key: item.Key,
             };
-            //console.log(`S3: getting file data ${item.Key}`);
+            
             const data = await s3.getObject(objectParams).promise();
             const jsonData = JSON.parse(data.Body.toString('utf-8'));
             filesData.push(...jsonData);
+            index++;
+            console.log(`S3: got file ${index} / ${response.Contents.length}`);
         }
 
         continuationToken = response.NextContinuationToken;
     } while (continuationToken);
     
     lastDateGotAllS3AccData = new Date();
-
+    console.log("got all s3 acc data");
     return filesData;
 }
 
@@ -95,6 +98,8 @@ suffixRouter.get('/gen-suffix-rep', async (req, res) => {
 });
 
 async function generateReportByEmailSuffix(suffixes) {
+    if(suffixes.length < 1){ return; }
+    
     let matchedUsersMap = new Map();
     let encounteredEmails = new Set();
 
@@ -104,19 +109,23 @@ async function generateReportByEmailSuffix(suffixes) {
     ]);
     let anyS3AccFilesModified = anyFileModifiedSince(allS3AccDataLastModifiedDates, lastDateGotAllS3AccData);
     let suffixMappingsFilesModified = anyFileModifiedSince(suffixMappingsLastModifiedDates, lastDateGotSuffixMappings);
-
+    let downloadPromises = [];
     // if we haven't got the S3 data yet, go get it 
     if(suffixMappings == undefined || suffixMappingsFilesModified){
         console.log("-- getting s3 suffix file");
-        suffixMappings = await getSuffixMappings();
+        downloadPromises.push(getSuffixMappings().then(data => { suffixMappings = data; }));
+        //suffixMappings = await getSuffixMappings();
     }    
     // TODO: rather than waiting on getting all files, just search each file as it comes in
     if(allS3AccData == undefined || anyS3AccFilesModified){
-        console.log("-- getting s3 acc file");
-        allS3AccData = await getAllS3AccFilesData(process.env.AWS_BUCKET, 'analytics/');
+        console.log("-- getting s3 acc file");        
+        downloadPromises.push(getAllS3AccFilesData(process.env.AWS_BUCKET, 'analytics/').then(data => { allS3AccData = data; }));
+        //allS3AccData = await getAllS3AccFilesData(process.env.AWS_BUCKET, 'analytics/');
     }
+    await Promise.all(downloadPromises);
 
     try {
+        console.log("-- searching by suffix");
         allS3AccData.forEach(user => {
             suffixes.forEach(suffix => {
                 let checkContact = true;
