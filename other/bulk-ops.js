@@ -160,12 +160,12 @@ async function getAllPlayerDataAndUpload()
     const Bucket = process.env.AWS_BUCKET;
     const Key = `analytics/playerdata/${fileName}`;
   
-    // await s3.upload({
-    //     Bucket,
-    //     Key,
-    //     Body: JSON.stringify(playerDataBatch, null, 2),
-    //     ContentType: 'application/json'
-    // }).promise();
+    await s3.upload({
+        Bucket,
+        Key,
+        Body: JSON.stringify(playerDataBatch, null, 2),
+        ContentType: 'application/json'
+    }).promise();
 
     console.log("done getting all player data");
 }
