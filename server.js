@@ -18,6 +18,8 @@ const stripeRoutes = require('./stripe/stripestore.js');
 const { suffixRouter }  = require('./other/suffix.js');
 const b2bRoutes = require('./other/b2b-processing.js');
 
+const { getAllPlayersAndUpload } = require('./other/bulk-ops');
+
 app.use(express.json());
 app.use(cors());
 
@@ -215,7 +217,6 @@ app.post('/get-user-acc-info-id/:playFabID', async (req, res) => {
     }
   }
 });
-
 // GET USER PROFILE
 app.post('/get-user-profile-id/:playFabID', async (req, res) => {
   try {
@@ -272,10 +273,9 @@ app.post('/get-user-data/:playFabID', async (req, res) => {
     }
   }
 });
-
 // PLAYFAB UPDATE USER DATA
 app.post('/update-user-data', async (req, res) => {
-  console.log(req.body);
+  //console.log(req.body);
   try {
       const response = await axios.post(
           `https://${process.env.PLAYFAB_TITLE_ID}.playfabapi.com/Server/UpdateUserData`,
@@ -371,45 +371,45 @@ app.post('/get-segment-players/:segmentID', async (req, res) => {
 });
 
 // GET ALL PLAYERS (write to files)
-async function getAllPlayersAndUpload() {
-  let contToken = null;
-  let batchNumber = 0;
-  let timestamp = new Date();
-  console.log(`getting all players ${timestamp}`);
+// async function getAllPlayersAndUpload() {
+//   let contToken = null;
+//   let batchNumber = 0;
+//   let timestamp = new Date();
+//   console.log(`getting all players ${timestamp}`);
 
-  do {
-      const response = await axios.post(
-          `https://${process.env.PLAYFAB_TITLE_ID}.playfabapi.com/Server/GetPlayersInSegment`,
-          {
-              SegmentId: process.env.PLAYFAB_ALLSEG_ID,
-              MaxBatchSize: 10000,
-              ContinuationToken: contToken,
-          },
-          {
-              headers: {
-                  'X-SecretKey': process.env.PLAYFAB_SECRET_KEY
-              }
-          }
-      );
+//   do {
+//       const response = await axios.post(
+//           `https://${process.env.PLAYFAB_TITLE_ID}.playfabapi.com/Server/GetPlayersInSegment`,
+//           {
+//               SegmentId: process.env.PLAYFAB_ALLSEG_ID,
+//               MaxBatchSize: 10000,
+//               ContinuationToken: contToken,
+//           },
+//           {
+//               headers: {
+//                   'X-SecretKey': process.env.PLAYFAB_SECRET_KEY
+//               }
+//           }
+//       );
 
-      batchNumber++;
-      const fileName = `playfab_players_batch_${batchNumber}.json`;
-      const Bucket = process.env.AWS_BUCKET;
-      const Key = `analytics/${fileName}`;
+//       batchNumber++;
+//       const fileName = `playfab_players_batch_${batchNumber}.json`;
+//       const Bucket = process.env.AWS_BUCKET;
+//       const Key = `analytics/${fileName}`;
 
-      await s3.upload({
-          Bucket,
-          Key,
-          Body: JSON.stringify(response.data.data.PlayerProfiles, null, 2),
-          ContentType: 'application/json'
-      }).promise();
+//       await s3.upload({
+//           Bucket,
+//           Key,
+//           Body: JSON.stringify(response.data.data.PlayerProfiles, null, 2),
+//           ContentType: 'application/json'
+//       }).promise();
 
-      contToken = response.data.data.ContinuationToken;
+//       contToken = response.data.data.ContinuationToken;
 
-  } while (contToken);
+//   } while (contToken);
 
-  jobInProgress = false;
-}
+//   jobInProgress = false;
+// }
 // Gets all players and uploads resulting files to S3
 app.post('/get-all-players', async (req, res) => {
   try {
@@ -441,6 +441,11 @@ app.get('/begin-get-all-players', async (req, res) => {
       console.error('Error:', error);
       res.status(500).json({ message: 'Failed to initiate getting all players.' });
   }
+});
+
+// Gets the player data for players stored in all players
+app.post('/get-all-player-data', async (req,res) => {
+
 });
 
 // REDIS (SESSION STORAGE)

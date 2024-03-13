@@ -3,6 +3,7 @@ const express = require('express');
 const suffixRouter = express.Router();
 
 const { anyFileModifiedSince, checkFileLastModified, checkFilesLastModifiedList } = require('./s3-utils');
+const { getAllS3AccFilesData } = require('./bulk-ops');
 
 AWS.config.update({
     region: process.env.AWS_REGION,
@@ -50,39 +51,40 @@ async function getSuffixMappings() {
 // Get all Acc Data from S3
 let allS3AccData;
 let lastDateGotAllS3AccData;
-async function getAllS3AccFilesData(Bucket, Prefix) {
-    console.log("getting s3 acc data");
-    let continuationToken;
-    let filesData = [];
+// Need to allow for this to be called by the /get-all-player-data route
+// async function getAllS3AccFilesData(Bucket, Prefix) {
+//     console.log("getting s3 acc data");
+//     let continuationToken;
+//     let filesData = [];
 
-    do {
-        const response = await s3.listObjectsV2({
-            Bucket,
-            Prefix,
-            ContinuationToken: continuationToken,
-        }).promise();
+//     do {
+//         const response = await s3.listObjectsV2({
+//             Bucket,
+//             Prefix,
+//             ContinuationToken: continuationToken,
+//         }).promise();
 
-        let index = 0;
-        for (const item of response.Contents) {
-            const objectParams = {
-                Bucket,
-                Key: item.Key,
-            };
+//         let index = 0;
+//         for (const item of response.Contents) {
+//             const objectParams = {
+//                 Bucket,
+//                 Key: item.Key,
+//             };
             
-            const data = await s3.getObject(objectParams).promise();
-            const jsonData = JSON.parse(data.Body.toString('utf-8'));
-            filesData.push(...jsonData);
-            index++;
-            console.log(`S3: got file ${index} / ${response.Contents.length}`);
-        }
+//             const data = await s3.getObject(objectParams).promise();
+//             const jsonData = JSON.parse(data.Body.toString('utf-8'));
+//             filesData.push(...jsonData);
+//             index++;
+//             console.log(`S3: got file ${index} / ${response.Contents.length}`);
+//         }
 
-        continuationToken = response.NextContinuationToken;
-    } while (continuationToken);
+//         continuationToken = response.NextContinuationToken;
+//     } while (continuationToken);
     
-    lastDateGotAllS3AccData = new Date();
-    console.log("got all s3 acc data");
-    return filesData;
-}
+//     lastDateGotAllS3AccData = new Date();
+//     console.log("got all s3 acc data");
+//     return filesData;
+// }
 
 // Modified route that takes in an array of query param gen-suffix-rep?suffixes=suffix1,suffix2
 suffixRouter.get('/gen-suffix-rep', async (req, res) => {
