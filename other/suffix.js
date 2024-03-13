@@ -3,7 +3,7 @@ const express = require('express');
 const suffixRouter = express.Router();
 
 const { anyFileModifiedSince, checkFileLastModified, checkFilesLastModifiedList } = require('./s3-utils');
-const { getAllS3AccFilesData } = require('./bulk-ops');
+const { getAllS3AccData, setAllS3AccData, getLastDateGotAllS3AccData, getAllS3AccFilesData } = require('./bulk-ops');
 
 AWS.config.update({
     region: process.env.AWS_REGION,
@@ -49,43 +49,7 @@ async function getSuffixMappings() {
 }
 
 // Get all Acc Data from S3
-let allS3AccData;
-let lastDateGotAllS3AccData;
-// Need to allow for this to be called by the /get-all-player-data route
-// async function getAllS3AccFilesData(Bucket, Prefix) {
-//     console.log("getting s3 acc data");
-//     let continuationToken;
-//     let filesData = [];
-
-//     do {
-//         const response = await s3.listObjectsV2({
-//             Bucket,
-//             Prefix,
-//             ContinuationToken: continuationToken,
-//         }).promise();
-
-//         let index = 0;
-//         for (const item of response.Contents) {
-//             const objectParams = {
-//                 Bucket,
-//                 Key: item.Key,
-//             };
-            
-//             const data = await s3.getObject(objectParams).promise();
-//             const jsonData = JSON.parse(data.Body.toString('utf-8'));
-//             filesData.push(...jsonData);
-//             index++;
-//             console.log(`S3: got file ${index} / ${response.Contents.length}`);
-//         }
-
-//         continuationToken = response.NextContinuationToken;
-//     } while (continuationToken);
-    
-//     lastDateGotAllS3AccData = new Date();
-//     console.log("got all s3 acc data");
-//     return filesData;
-// }
-
+//let lastDateGotAllS3AccData;
 // Modified route that takes in an array of query param gen-suffix-rep?suffixes=suffix1,suffix2
 suffixRouter.get('/gen-suffix-rep', async (req, res) => {
     try {
@@ -109,7 +73,7 @@ async function generateReportByEmailSuffix(suffixes) {
         checkFilesLastModifiedList(process.env.AWS_BUCKET, 'analytics/'),
         checkFileLastModified(process.env.AWS_BUCKET, process.env.CONNECTION_LIST_PATH)
     ]);
-    let anyS3AccFilesModified = anyFileModifiedSince(allS3AccDataLastModifiedDates, lastDateGotAllS3AccData);
+    let anyS3AccFilesModified = anyFileModifiedSince(allS3AccDataLastModifiedDates, getLastDateGotAllS3AccData());
     let suffixMappingsFilesModified = anyFileModifiedSince(suffixMappingsLastModifiedDates, lastDateGotSuffixMappings);
     let downloadPromises = [];
     // if we haven't got the S3 data yet, go get it 
@@ -119,12 +83,14 @@ async function generateReportByEmailSuffix(suffixes) {
         //suffixMappings = await getSuffixMappings();
     }    
     // TODO: rather than waiting on getting all files, just search each file as it comes in
+    let allS3AccData = getAllS3AccData();
     if(allS3AccData == undefined || anyS3AccFilesModified){
         console.log("-- getting s3 acc file");        
-        downloadPromises.push(getAllS3AccFilesData(process.env.AWS_BUCKET, 'analytics/').then(data => { allS3AccData = data; }));
+        downloadPromises.push(getAllS3AccFilesData(process.env.AWS_BUCKET, 'analytics/').then(data => { setAllS3AccData(data); }));
         //allS3AccData = await getAllS3AccFilesData(process.env.AWS_BUCKET, 'analytics/');
     }
     await Promise.all(downloadPromises);
+    allS3AccData = getAllS3AccData(); // make sure we update the local var
 
     try {
         console.log("-- searching by suffix");
