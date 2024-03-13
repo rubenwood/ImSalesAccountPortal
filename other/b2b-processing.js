@@ -3,10 +3,6 @@ const router = express.Router();
 
 const { generateReportByEmailSuffix } = require('./suffix');
 
-// get a list of all B2B customers we work with (suffixes)
-// run the search
-// return the total
-
 // call /reporting/gen-suffix-rep?suffixes=suffix1,suffix2,suffix3
 // this will get the total users for all of those suffixes
 // do this without downloading the S3 files for each search
