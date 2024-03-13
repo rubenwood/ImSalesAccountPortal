@@ -66,13 +66,13 @@ async function getAllS3AccFilesData(Bucket, Prefix) {
         const response = await s3.listObjectsV2({
             Bucket,
             Prefix,
+            Delimiter: '/', // Ignore subfolders by treating slash as delimiter
             ContinuationToken: continuationToken,
         }).promise();
 
         let index = 0;
         for (const item of response.Contents) {
-            // skip this folder
-            if(item.Key == "analytics/playerdata/"){ continue; }
+            //if(item.Key == "analytics/playerdata/"){ continue; }
 
             const objectParams = {
                 Bucket,
@@ -124,24 +124,33 @@ async function getAllPlayerDataAndUpload()
     let batchNumber = 1;
     let maxUserPerBatchCount = 10;
     let playerDataBatch = [];
-    for(let i =0; i < allS3AccData.length; i++){
+    let totalBatches = allS3AccData.length / maxUserPerBatchCount;
+    console.log(`given ${allS3AccData.length} total users, with ${maxUserPerBatchCount} per batch, there will be ${totalBatches} batches`);
+    console.log(allS3AccData[0]);
+    console.log(allS3AccData[0].PlayerId);
+    
+    for(let i = 0; i < allS3AccData.length; i++){
         if(i >= maxUserPerBatchCount){ break; }
 
         let playerId = allS3AccData[i].PlayerId;
-        const response = await axios.post(
-            `https://${process.env.PLAYFAB_TITLE_ID}.api.main.azureplayfab.com/Admin/GetUserData`,
-            { PlayFabId: playerId },
-            {
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-SecretKey': process.env.PLAYFAB_SECRET_KEY
+        console.log(playerId);
+        try{
+            const response = await axios.post(
+                `https://${process.env.PLAYFAB_TITLE_ID}.api.main.azureplayfab.com/Admin/GetUserData`,
+                { PlayFabId: playerId },
+                {
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-SecretKey': process.env.PLAYFAB_SECRET_KEY
+                    }
                 }
-            }
-        );
-        let playerData = response.data.data;
-        console.log(playerData);
-        playerDataBatch.push(playerData);
-
+            );
+            let playerData = response.data.data;
+            //console.log(playerData);
+            playerDataBatch.push(playerData);
+        }catch(error){
+            console.log('Error:', error);
+        }
         //batchNumber++;
         //let output = {PlayFabId: playerId, PlayerData: playerData};        
         //console.log(output);
@@ -151,16 +160,16 @@ async function getAllPlayerDataAndUpload()
     const Bucket = process.env.AWS_BUCKET;
     const Key = `analytics/playerdata/${fileName}`;
   
-    await s3.upload({
-        Bucket,
-        Key,
-        Body: JSON.stringify(playerDataBatch, null, 2),
-        ContentType: 'application/json'
-    }).promise();
+    // await s3.upload({
+    //     Bucket,
+    //     Key,
+    //     Body: JSON.stringify(playerDataBatch, null, 2),
+    //     ContentType: 'application/json'
+    // }).promise();
 
     console.log("done getting all player data");
 }
-//getAllPlayerDataAndUpload();
+getAllPlayerDataAndUpload();
 
 
 // Gets the player data for players stored in all players
