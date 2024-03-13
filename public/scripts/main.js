@@ -139,13 +139,13 @@ export async function generateReportBySuffix() {
                 }else{
                     if(!gotAcc){
                         let contactEmail = checkForContactEmailAddr(element, suffixes);
-                        email = contactEmail == undefined ? "no email (C2)" : contactEmail;
+                        email = contactEmail == undefined ? "no email" : contactEmail;
                     }
                 }
             })
         }else{ // if there are no linked accounts, just get the contact email   
             let contactEmail = checkForContactEmailAddr(element, suffixes);
-            email = contactEmail == undefined ? "no email (C3)" : contactEmail;
+            email = contactEmail == undefined ? "no email" : contactEmail;
         }  
 
         let createdDate = new Date(element.Created);
