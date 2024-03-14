@@ -106,8 +106,12 @@ function getAllS3AccData() { return allS3AccData; }
 
 function getJobInProgress(){ return jobInProgress }
 
+let gettingAllPlayersInProgress = false;
 // Gets all users player data and writes it to a series of JSON files
 async function getAllPlayerDataAndUpload() {
+    if(gettingAllPlayersInProgress){ console.log("get all player data in progress"); return; }
+    gettingAllPlayersInProgress = true;
+
     let allS3AccDataLastModifiedDates = await checkFilesLastModifiedList(process.env.AWS_BUCKET, 'analytics/');
     let anyS3AccFilesModified = anyFileModifiedSince(allS3AccDataLastModifiedDates, lastDateGotAllS3AccData);
 
@@ -116,29 +120,79 @@ async function getAllPlayerDataAndUpload() {
     }
     console.log(`Length of allS3AccData: ${allS3AccData.length}`);
 
+    let maxBatches = 1;
     for (let i = 0; i < allS3AccData.length; i++) {
         console.log(`Processing chunk ${i} with ${allS3AccData[i].length} items.`);
         const playerDataBatch = [];
 
         // Process the current batch with concurrency control
-        await requestPlayerData(allS3AccData[i], 10, playerDataBatch);
+        await requestPlayerData(allS3AccData[i], 20, playerDataBatch);
 
         // Once the batch is processed, upload to S3
         const batchNum = i + 1;
-        const fileName = `playfab_playerdata_batch_${batchNum}.json`;
-        const Bucket = process.env.AWS_BUCKET;
-        const Key = `analytics/playerdata/${fileName}`;
-        await s3.upload({
-            Bucket,
-            Key,
-            Body: JSON.stringify(playerDataBatch, null, 2),
-            ContentType: 'application/json'
-        }).promise();
+        let partNum = 1;
+        const maxSize = 10 * 1024 * 1024; // 10 MB in bytes
+        let serializedData = JSON.stringify(playerDataBatch, null, 2);
+
+        if (Buffer.byteLength(serializedData) > maxSize) {
+            // If the serialized data exceeds the maximum size, split and upload in parts
+            const parts = splitIntoParts(playerDataBatch, maxSize);
+            for (const part of parts) {
+                const fileName = `playfab_playerdata_batch_${batchNum}_${partNum}.json`;
+                const Key = `analytics/playerdata/${fileName}`;
+                await uploadToS3(process.env.AWS_BUCKET, Key, part);
+                partNum++;
+            }
+        } else {
+            // If the serialized data does not exceed the maximum size, upload as a single file
+            const fileName = `playfab_playerdata_batch_${batchNum}_${partNum}.json`;
+            const Key = `analytics/playerdata/${fileName}`;
+            await uploadToS3(process.env.AWS_BUCKET, Key, playerDataBatch);
+        }
+
+        if(batchNum == maxBatches){
+            break;
+        }
     }
 
+    gettingAllPlayersInProgress = false;
     console.log("Finished processing all player data.");
 }
-//getAllPlayerDataAndUpload();
+getAllPlayerDataAndUpload();
+
+function splitIntoParts(data, maxSize) {
+    let parts = [];
+    let currentPart = [];
+    let currentSize = 0;
+
+    for (const item of data) {
+        const itemSize = Buffer.byteLength(JSON.stringify(item, null, 2));
+        if (currentSize + itemSize > maxSize) {
+            parts.push(currentPart);
+            currentPart = [item];
+            currentSize = itemSize;
+        } else {
+            currentPart.push(item);
+            currentSize += itemSize;
+        }
+    }
+
+    if (currentPart.length > 0) {
+        parts.push(currentPart);
+    }
+
+    return parts;
+}
+
+async function uploadToS3(Bucket, Key, data) {
+    await s3.upload({
+        Bucket,
+        Key,
+        Body: JSON.stringify(data, null, 2),
+        ContentType: 'application/json'
+    }).promise();
+    console.log(`Uploaded ${Key}`);
+}
 
 async function requestPlayerData(batch, maxConcurrentRequests, playerDataBatch) {
     for (let i = 0; i < batch.length; i += maxConcurrentRequests) {
@@ -149,6 +203,7 @@ async function requestPlayerData(batch, maxConcurrentRequests, playerDataBatch) 
             })
         );
         await Promise.all(promises);
+        console.log(`Processed: ${i} to ${ (i + maxConcurrentRequests) }`)
     }
 }
 
