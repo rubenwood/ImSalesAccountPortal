@@ -168,11 +168,6 @@ async function fetchPlayerData(playerId) {
     }
 }
 
-// Gets the player data for players stored in all players
-bulkRouter.post('/get-all-player-data', async (req,res) => {
-
-});
-
 module.exports = {
     bulkRouter,
     getJobInProgress,
