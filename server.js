@@ -315,7 +315,6 @@ app.post('/check-access', async (req, res) => {
   }
 });
 
-// SEGMENT RELATED
 // GET ALL SEGMENTS
 app.post('/get-segments', async (req, res) => {
   try {
@@ -368,25 +367,13 @@ app.post('/get-segment-players/:segmentID', async (req, res) => {
     }
   }
 });
+
 // GET ALL PLAYERS
 // Gets all players and uploads resulting files to S3
-app.post('/get-all-players', async (req, res) => {
-  try {
-      await getAllPlayersAndUpload();
-      res.json({ message: 'Data retrieval complete. All batches written to S3.' });
-  } catch (error) {
-      console.error('Error:', error);
-      if (error.response && error.response.data) {
-          res.status(500).json(error.response.data);
-      } else {
-          res.status(500).json({ message: error.message, stack: error.stack });
-      }
-  }
-});
-// Same as above, but used by cron jobs
+// executes asynchronously, so this will provide a response before the job completes
 app.get('/begin-get-all-players', async (req, res) => {
   const secret = req.headers['x-secret-key'];
-  if (secret !== "TEST123") {
+  if (secret !== process.env.SERVER_SEC) {
       return res.status(401).json({ message: 'Invalid or missing secret.' });
   }
   
@@ -400,7 +387,7 @@ app.get('/begin-get-all-players', async (req, res) => {
 });
 
 // Gets the player data for players stored in all players
-app.post('/get-all-player-data', async (req,res) => {
+app.post('/begin-get-all-player-data', async (req,res) => {
 
 });
 
