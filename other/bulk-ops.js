@@ -3,7 +3,7 @@ const express = require('express');
 const axios = require('axios');
 const bulkRouter = express.Router();
 
-const { anyFileModifiedSince, checkFileLastModified, checkFilesLastModifiedList } = require('./s3-utils');
+const { anyFileModifiedSince, checkFilesLastModifiedList } = require('./s3-utils');
 
 AWS.config.update({
     region: process.env.AWS_REGION,
@@ -108,6 +108,9 @@ function getJobInProgress(){ return jobInProgress }
 
 // Gets all users player data and writes it to a series of JSON files
 async function getAllPlayerDataAndUpload() {
+    let allS3AccDataLastModifiedDates = await checkFilesLastModifiedList(process.env.AWS_BUCKET, 'analytics/');
+    let anyS3AccFilesModified = anyFileModifiedSince(allS3AccDataLastModifiedDates, lastDateGotAllS3AccData);
+
     if (allS3AccData === undefined || anyS3AccFilesModified) {
         allS3AccData = await getAllS3AccFilesData(process.env.AWS_BUCKET, 'analytics/', "chunks");
     }
