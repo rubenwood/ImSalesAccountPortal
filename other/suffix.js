@@ -65,6 +65,7 @@ suffixRouter.get('/gen-suffix-rep', async (req, res) => {
 
 async function generateReportByEmailSuffix(suffixes) {
     if(suffixes.length < 1){ return; }
+    console.log(`called ${suffixes.length}`);
     
     let matchedUsersMap = new Map();
     let encounteredEmails = new Set();

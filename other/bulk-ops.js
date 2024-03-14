@@ -120,7 +120,8 @@ async function getAllPlayerDataAndUpload() {
     }
     console.log(`Length of allS3AccData: ${allS3AccData.length}`);
 
-    let maxBatches = 1;
+    let maxBatches = 1; // just for debugging
+    //let maxBatches = allS3AccData.length; // just for prod
     for (let i = 0; i < allS3AccData.length; i++) {
         console.log(`Processing chunk ${i} with ${allS3AccData[i].length} items.`);
         const playerDataBatch = [];
@@ -158,7 +159,7 @@ async function getAllPlayerDataAndUpload() {
     gettingAllPlayersInProgress = false;
     console.log("Finished processing all player data.");
 }
-getAllPlayerDataAndUpload();
+//getAllPlayerDataAndUpload(); // testing
 
 function splitIntoParts(data, maxSize) {
     let parts = [];
