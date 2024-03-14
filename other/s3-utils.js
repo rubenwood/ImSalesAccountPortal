@@ -36,8 +36,7 @@ async function checkFilesLastModifiedList(bucket, prefix) {
 async function checkFileLastModified(bucket, fileKey) {
     const params = {
       Bucket: bucket,
-      Key: fileKey,
-      Delimiter: '/', // Ignore subfolders by treating slash as delimiter
+      Key: fileKey
     };
 
     let fileTimestamps = [];

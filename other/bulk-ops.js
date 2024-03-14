@@ -57,7 +57,7 @@ async function getAllPlayersAndUpload() {
 
 let allS3AccData;
 let lastDateGotAllS3AccData;
-async function getAllS3AccFilesData(Bucket, Prefix) {
+async function getAllS3AccFilesData(Bucket, Prefix, mode) {
     console.log("getting s3 acc data");
     let continuationToken;
     let filesData = [];
@@ -72,8 +72,6 @@ async function getAllS3AccFilesData(Bucket, Prefix) {
 
         let index = 0;
         for (const item of response.Contents) {
-            //if(item.Key == "analytics/playerdata/"){ continue; }
-
             const objectParams = {
                 Bucket,
                 Key: item.Key,
@@ -81,7 +79,12 @@ async function getAllS3AccFilesData(Bucket, Prefix) {
             
             const data = await s3.getObject(objectParams).promise();
             const jsonData = JSON.parse(data.Body.toString('utf-8'));
-            filesData.push(...jsonData);
+            if(mode == "chunks"){ 
+                filesData.push(jsonData); 
+            }else{
+                filesData.push(...jsonData);
+            }            
+            
             index++;
             console.log(`S3: got file ${index} / ${response.Contents.length}`);
         }
@@ -104,73 +107,66 @@ function getAllS3AccData() { return allS3AccData; }
 function getJobInProgress(){ return jobInProgress }
 
 // Gets all users player data and writes it to a series of JSON files
-async function getAllPlayerDataAndUpload()
-{
-    let allS3AccDataLastModifiedDates = await checkFilesLastModifiedList(process.env.AWS_BUCKET, 'analytics/');
-    let anyS3AccFilesModified = anyFileModifiedSince(allS3AccDataLastModifiedDates, lastDateGotAllS3AccData);
-    // if we dont have the data, or if there is a new version on S3 then get it
-    if(allS3AccData == undefined || anyS3AccFilesModified){
-        await getAllS3AccFilesData(process.env.AWS_BUCKET, 'analytics/').then(data => { allS3AccData = data; })
+async function getAllPlayerDataAndUpload() {
+    if (allS3AccData === undefined || anyS3AccFilesModified) {
+        allS3AccData = await getAllS3AccFilesData(process.env.AWS_BUCKET, 'analytics/', "chunks");
+    }
+    console.log(`Length of allS3AccData: ${allS3AccData.length}`);
+
+    for (let i = 0; i < allS3AccData.length; i++) {
+        console.log(`Processing chunk ${i} with ${allS3AccData[i].length} items.`);
+        const playerDataBatch = [];
+
+        // Process the current batch with concurrency control
+        await requestPlayerData(allS3AccData[i], 10, playerDataBatch);
+
+        // Once the batch is processed, upload to S3
+        const batchNum = i + 1;
+        const fileName = `playfab_playerdata_batch_${batchNum}.json`;
+        const Bucket = process.env.AWS_BUCKET;
+        const Key = `analytics/playerdata/${fileName}`;
+        await s3.upload({
+            Bucket,
+            Key,
+            Body: JSON.stringify(playerDataBatch, null, 2),
+            ContentType: 'application/json'
+        }).promise();
     }
 
-    // for each entry, do the get player data call 
-    // and write to JSON 
-    // and upload to S3
-
-    //get user data call using this id
-    // do 10000 players per batch
-    // stagger API calls
-    // write each batch to a file
-    let batchNumber = 1;
-    let maxUserPerBatchCount = 10;
-    let playerDataBatch = [];
-    let totalBatches = allS3AccData.length / maxUserPerBatchCount;
-    console.log(`given ${allS3AccData.length} total users, with ${maxUserPerBatchCount} per batch, there will be ${totalBatches} batches`);
-    console.log(allS3AccData[0]);
-    console.log(allS3AccData[0].PlayerId);
-    
-    for(let i = 0; i < allS3AccData.length; i++){
-        if(i >= maxUserPerBatchCount){ break; }
-
-        let playerId = allS3AccData[i].PlayerId;
-        console.log(playerId);
-        try{
-            const response = await axios.post(
-                `https://${process.env.PLAYFAB_TITLE_ID}.api.main.azureplayfab.com/Admin/GetUserData`,
-                { PlayFabId: playerId },
-                {
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-SecretKey': process.env.PLAYFAB_SECRET_KEY
-                    }
-                }
-            );
-            let playerData = response.data.data;
-            //console.log(playerData);
-            playerDataBatch.push(playerData);
-        }catch(error){
-            console.log('Error:', error);
-        }
-        //batchNumber++;
-        //let output = {PlayFabId: playerId, PlayerData: playerData};        
-        //console.log(output);
-    }
-
-    const fileName = `playfab_playerdata_batch_${batchNumber}.json`;
-    const Bucket = process.env.AWS_BUCKET;
-    const Key = `analytics/playerdata/${fileName}`;
-  
-    await s3.upload({
-        Bucket,
-        Key,
-        Body: JSON.stringify(playerDataBatch, null, 2),
-        ContentType: 'application/json'
-    }).promise();
-
-    console.log("done getting all player data");
+    console.log("Finished processing all player data.");
 }
-getAllPlayerDataAndUpload();
+//getAllPlayerDataAndUpload();
 
+async function requestPlayerData(batch, maxConcurrentRequests, playerDataBatch) {
+    for (let i = 0; i < batch.length; i += maxConcurrentRequests) {
+        const currentSlice = batch.slice(i, i + maxConcurrentRequests);
+        const promises = currentSlice.map(element =>
+            fetchPlayerData(element.PlayerId).then(playerData => {
+                if (playerData) playerDataBatch.push(playerData);
+            })
+        );
+        await Promise.all(promises);
+    }
+}
+
+async function fetchPlayerData(playerId) {
+    try {
+        const response = await axios.post(
+            `https://${process.env.PLAYFAB_TITLE_ID}.api.main.azureplayfab.com/Admin/GetUserData`,
+            { PlayFabId: playerId },
+            {
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-SecretKey': process.env.PLAYFAB_SECRET_KEY
+                }
+            }
+        );
+        return response.data.data;
+    } catch (error) {
+        console.error('Error fetching player data:', error);
+        return null; // Handle errors as needed
+    }
+}
 
 // Gets the player data for players stored in all players
 bulkRouter.post('/get-all-player-data', async (req,res) => {
