@@ -3,6 +3,8 @@ const express = require('express');
 const router = express.Router();
 const stripe = require('stripe')(process.env.STRIPE_KEY);
 
+let allCustomers;
+
 router.get('/get-stripe-customers', async (req, res) => {
     if (req.session.idToken == undefined || req.session.idToken == null) { 
         res.status(401).json({error:"not logged in"}); 
@@ -10,8 +12,8 @@ router.get('/get-stripe-customers', async (req, res) => {
     }
 
     try {
-        const allCustomers = await getAllCustomers();
-        res.send(allCustomers);
+        allCustomers = await getAllCustomers();
+        res.status(200).send('Got customers');
     } catch(error) {
         console.error('Failed to fetch customers:', error);
         res.status(500).send({ error: 'Failed to fetch customers' });
@@ -23,9 +25,13 @@ router.get('/get-stripe-active-subs', async (req, res) => {
         res.status(401).json({error:"not logged in"}); 
         return; 
     }
+    if (allCustomers == undefined || allCustomers == null) { 
+        res.status(500).json({error:"no customer data"}); 
+        return; 
+    }
 
     try {
-        const allCustomers = await getAllCustomers();
+        //const getAllCustResp = await getAllCustomers();
         const activeSubscribers = await filterActiveSubscribers(allCustomers);
         res.send(activeSubscribers);
     } catch (error) {
@@ -62,8 +68,9 @@ async function getAllCustomers() {
 const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
 async function filterActiveSubscribers(customers) {
     let activeSubscribers = [];
-    let counter = 0;
-    for (const customer of customers) {
+
+    // Helper function to check for active subscription
+    const checkActiveSubscription = async (customer) => {
         try {
             const subscriptions = await stripe.subscriptions.list({
                 customer: customer.id,
@@ -71,19 +78,30 @@ async function filterActiveSubscribers(customers) {
                 limit: 1
             });
             if (subscriptions.data.length > 0) {
-                activeSubscribers.push(customer);
+                return customer;
             }
         } catch (error) {
             console.error(`Error fetching subscriptions for customer ${customer.id}:`, error);
         }
+        return null; // Return null if no active subscription or an error occurred
+    };
 
-        // Insert a small delay after processing 10 customers
-        // this keeps things fast, but prevents overwhelming stripe API
-        counter++;
-        if(counter >= 100){ await delay(50); counter = 0; }
+    // Split customers into chunks to manage parallel calls without overwhelming the Stripe API
+    const chunkSize = 100; // Adjust based on your rate limit analysis and testing
+    for (let i = 0; i < customers.length; i += chunkSize) {
+        const customerChunk = customers.slice(i, i + chunkSize);
+        const promises = customerChunk.map(checkActiveSubscription);
+        const results = await Promise.all(promises); // Wait for all promises in the chunk
+
+        // Filter out nulls and add to activeSubscribers
+        activeSubscribers.push(...results.filter(customer => customer !== null));
+
+        if (i + chunkSize < customers.length) {
+            await delay(50); // Delay between chunks to prevent rate limit issues
+        }
     }
 
-    console.log(`Got all active subs:${activeSubscribers.length}`);
+    console.log(`Got all active subs: ${activeSubscribers.length}`);
     return activeSubscribers;
 }
 

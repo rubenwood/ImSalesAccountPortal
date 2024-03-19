@@ -311,6 +311,9 @@ async function fetchGooglePurchasers() {
     return outputText;
 }
 async function fetchStripeReport() {
+    const getAllCustResponse = await fetch('/stripe/get-stripe-customers');
+    if (!getAllCustResponse.ok) { responseNotOk(getAllCustResponse); }
+    
     const response = await fetch('/stripe/get-stripe-active-subs');
     if (!response.ok) { responseNotOk(response); }
 
