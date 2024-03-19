@@ -311,8 +311,28 @@ async function fetchGooglePurchasers() {
     return outputText;
 }
 async function fetchStripeReport() {
-    const response = await fetch('/stripe/get-stripe-active-subs');
-    if (!response.ok) { responseNotOk(response); }
+    // Fetch Stripe customers
+    const respStripeCust = await fetch('/stripe/get-stripe-customers');
+    if (!respStripeCust.ok) {
+        responseNotOk(respStripeCust); // Make sure to handle errors appropriately
+        return;
+    }
+    const customers = await respStripeCust.json(); // Assuming this returns an array of customers
+    console.log(customers);
+
+    // Now, send these customers to get the active subscriptions
+    const response = await fetch('/stripe/get-stripe-active-subs', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(customers), // Send the customers as the request body
+    });
+
+    if (!response.ok) {
+        responseNotOk(response); // Handle errors appropriately
+        return;
+    }
 
     const outputText = await response.text();
     return outputText;

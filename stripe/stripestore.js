@@ -18,22 +18,6 @@ router.get('/get-stripe-customers', async (req, res) => {
     }    
 });
 
-router.get('/get-stripe-active-subs', async (req, res) => {
-    if (req.session.idToken == undefined || req.session.idToken == null) { 
-        res.status(401).json({error:"not logged in"}); 
-        return; 
-    }
-
-    try {
-        const allCustomers = await getAllCustomers();
-        const activeSubscribers = await filterActiveSubscribers(allCustomers);
-        res.send(activeSubscribers);
-    } catch (error) {
-        console.error('Failed to fetch active subscribers:', error);
-        res.status(500).send({ error: 'Failed to fetch active subscribers' });
-    }
-});
-
 async function getAllCustomers() {
     let allCustomers = [];
     let hasMore = true;
@@ -58,6 +42,30 @@ async function getAllCustomers() {
     console.log(`Got all customers:${allCustomers.length}`);
     return allCustomers;
 }
+
+
+router.post('/get-stripe-active-subs', async (req, res) => { // Change to POST to accept body data
+    if (req.session.idToken == undefined || req.session.idToken == null) { 
+        res.status(401).json({error:"not logged in"}); 
+        return; 
+    }
+
+    // Expecting the request body to contain an array of customers
+    const customers = req.body; // Directly use the provided customer data
+    
+    if (!Array.isArray(customers) || customers.length === 0) {
+        res.status(400).send({ error: 'Invalid customer data' });
+        return;
+    }
+
+    try {
+        const activeSubscribers = await filterActiveSubscribers(customers);
+        res.send(activeSubscribers);
+    } catch (error) {
+        console.error('Failed to fetch active subscribers:', error);
+        res.status(500).send({ error: 'Failed to fetch active subscribers' });
+    }
+});
 
 const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
 async function filterActiveSubscribers(customers) {
