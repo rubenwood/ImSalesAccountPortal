@@ -88,7 +88,7 @@ async function filterActiveSubscribers(customers) {
         // Insert a small delay after processing 10 customers
         // this keeps things fast, but prevents overwhelming stripe API
         counter++;
-        if(counter >= 10){ await delay(200); counter = 0; }
+        if(counter >= 50){ await delay(100); counter = 0; }
     }
 
     console.log(`Got all active subs:${activeSubscribers.length}`);
