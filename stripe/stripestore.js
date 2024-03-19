@@ -18,6 +18,22 @@ router.get('/get-stripe-customers', async (req, res) => {
     }    
 });
 
+router.get('/get-stripe-active-subs', async (req, res) => {
+    if (req.session.idToken == undefined || req.session.idToken == null) { 
+        res.status(401).json({error:"not logged in"}); 
+        return; 
+    }
+
+    try {
+        const allCustomers = await getAllCustomers();
+        const activeSubscribers = await filterActiveSubscribers(allCustomers);
+        res.send(activeSubscribers);
+    } catch (error) {
+        console.error('Failed to fetch active subscribers:', error);
+        res.status(500).send({ error: 'Failed to fetch active subscribers' });
+    }
+});
+
 async function getAllCustomers() {
     let allCustomers = [];
     let hasMore = true;
@@ -43,23 +59,6 @@ async function getAllCustomers() {
     return allCustomers;
 }
 
-
-router.post('/get-stripe-active-subs', async (req, res) => { // Change to POST to accept body data
-    if (req.session.idToken == undefined || req.session.idToken == null) { 
-        res.status(401).json({error:"not logged in"}); 
-        return; 
-    }
-
-    try {
-        const allCustomers = await getAllCustomers();
-        const activeSubscribers = await filterActiveSubscribers(allCustomers);
-        res.send(activeSubscribers);
-    } catch (error) {
-        console.error('Failed to fetch active subscribers:', error);
-        res.status(500).send({ error: 'Failed to fetch active subscribers' });
-    }
-});
-
 const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
 async function filterActiveSubscribers(customers) {
     let activeSubscribers = [];
@@ -81,7 +80,7 @@ async function filterActiveSubscribers(customers) {
         // Insert a small delay after processing 10 customers
         // this keeps things fast, but prevents overwhelming stripe API
         counter++;
-        if(counter >= 50){ await delay(100); counter = 0; }
+        if(counter >= 100){ await delay(50); counter = 0; }
     }
 
     console.log(`Got all active subs:${activeSubscribers.length}`);
