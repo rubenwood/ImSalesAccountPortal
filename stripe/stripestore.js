@@ -50,16 +50,9 @@ router.post('/get-stripe-active-subs', async (req, res) => { // Change to POST t
         return; 
     }
 
-    // Expecting the request body to contain an array of customers
-    const customers = req.body; // Directly use the provided customer data
-    
-    if (!Array.isArray(customers) || customers.length === 0) {
-        res.status(400).send({ error: 'Invalid customer data' });
-        return;
-    }
-
     try {
-        const activeSubscribers = await filterActiveSubscribers(customers);
+        const allCustomers = await getAllCustomers();
+        const activeSubscribers = await filterActiveSubscribers(allCustomers);
         res.send(activeSubscribers);
     } catch (error) {
         console.error('Failed to fetch active subscribers:', error);
