@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Immersify Portal</title>
+    <!--<script type="text/javascript" src="https://download.playfab.com/PlayFabClientApi.js"></script>-->
+    <!--<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.16.2/xlsx.full.min.js"></script>-->
+    <link rel="stylesheet" type="text/css" href="styles.css">
+</head>
+<body>
+    <div id="report-container" class="container">
+        <h2>Report</h2>
+        <textarea id="activityIDList" placeholder="Enter activity id's here, one per line"></textarea> 
+        <div class="button-container">
+            <input type="button" id="generateByActivityIdButton" value="Search by Activity ID">
+        </div>
+        <br /><br />
+        <table id="reportTable">
+            <thead>
+                <tr>
+                    <th>Activity ID</th>
+                    <th>Activity Name</th>
+                    <th>Unique Plays</th>
+                    <th>Plays</th>
+                    <th>Users</th>
+                </tr>
+            </thead>
+            <tbody id="reportTableBody"><!-- Rows will be added here by the generateReport() function --></tbody>
+        </table>
+    </div>
+
+    <script type="module" src="scripts/activities-front.js"></script>
+</body>
+</html>

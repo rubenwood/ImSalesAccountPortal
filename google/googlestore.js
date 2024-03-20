@@ -29,7 +29,6 @@ router.get('/google-login', (req, res) =>{
 });
 
 // callback
-//let cachedAccessToken;
 router.get('/google-login-callback', async (req, res) =>{
   let code = req.query.code;
   //console.log(code);
@@ -37,7 +36,6 @@ router.get('/google-login-callback', async (req, res) =>{
   oauth2Client.setCredentials(tokens);
 
   //console.log(tokens);
-  //cachedAccessToken = tokens.access_token;
   req.session.cachedAccessToken = tokens.access_token;
   const idToken = tokens.id_token; // Accessing the id_token
   //console.log('\n----ID Token----\n', idToken);

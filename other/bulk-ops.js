@@ -1,7 +1,20 @@
 const AWS = require('aws-sdk');
 const express = require('express');
 const axios = require('axios');
+const { Pool } = require('pg');
 const bulkRouter = express.Router();
+
+const pool = new Pool({
+    user: process.env.PGUSER,
+    host: process.env.PGHOST,
+    database: process.env.PGDATABASE,
+    password: process.env.PGPASSWORD,
+    port: process.env.PGPORT,
+    connectionString: process.env.PGURL,
+    ssl: {
+        rejectUnauthorized: false, // Note: This disables certificate validation. See below for a more secure approach.
+    },
+});
 
 const { anyFileModifiedSince, checkFilesLastModifiedList } = require('./s3-utils');
 
@@ -104,10 +117,15 @@ function getLastDateGotAllS3AccData(){ return lastDateGotAllS3AccData; }
 function setAllS3AccData(data) { allS3AccData = data; }
 function getAllS3AccData() { return allS3AccData; }
 
+function setAllS3PlayerData(data){ allS3PlayerData = data; }
+function getAllS3PlayerData(){ return allS3PlayerData; }
+
 function getJobInProgress(){ return jobInProgress }
 
 let gettingAllPlayersInProgress = false;
+let allS3PlayerData;
 // Gets all users player data and writes it to a series of JSON files
+// TODO: add a way to control which chunk to start at
 async function getAllPlayerDataAndUpload() {
     if(gettingAllPlayersInProgress){ console.log("get all player data in progress"); return; }
     gettingAllPlayersInProgress = true;
@@ -120,8 +138,10 @@ async function getAllPlayerDataAndUpload() {
     }
     console.log(`Length of allS3AccData: ${allS3AccData.length}`);
 
-    let maxBatches = 1; // just for debugging
-    //let maxBatches = allS3AccData.length; // just for prod
+    //let maxBatches = 1; // just for debugging
+    // using all account data from s3, do a get player data request
+    // get that data and write it to postgrest database
+    let maxBatches = allS3AccData.length; //just for prod
     for (let i = 0; i < allS3AccData.length; i++) {
         console.log(`Processing chunk ${i} with ${allS3AccData[i].length} items.`);
         const playerDataBatch = [];
@@ -131,27 +151,36 @@ async function getAllPlayerDataAndUpload() {
 
         // Once the batch is processed, upload to S3
         const batchNum = i + 1;
-        let partNum = 1;
-        const maxSize = 10 * 1024 * 1024; // 10 MB in bytes
-        let serializedData = JSON.stringify(playerDataBatch, null, 2);
+        // let partNum = 1;
+        // const maxSize = 10 * 1024 * 1024; // 10 MB in bytes
+        // let serializedData = JSON.stringify(playerDataBatch, null, 2);
 
-        if (Buffer.byteLength(serializedData) > maxSize) {
-            // If the serialized data exceeds the maximum size, split and upload in parts
-            const parts = splitIntoParts(playerDataBatch, maxSize);
-            for (const part of parts) {
-                const fileName = `playfab_playerdata_batch_${batchNum}_${partNum}.json`;
-                const Key = `analytics/playerdata/${fileName}`;
-                await uploadToS3(process.env.AWS_BUCKET, Key, part);
-                partNum++;
-            }
-        } else {
-            // If the serialized data does not exceed the maximum size, upload as a single file
-            const fileName = `playfab_playerdata_batch_${batchNum}_${partNum}.json`;
-            const Key = `analytics/playerdata/${fileName}`;
-            await uploadToS3(process.env.AWS_BUCKET, Key, playerDataBatch);
+        // if (Buffer.byteLength(serializedData) > maxSize) {
+        //     // If the serialized data exceeds the maximum size, split and upload in parts
+        //     const parts = splitIntoParts(playerDataBatch, maxSize);
+        //     for (const part of parts) {
+        //         const fileName = `playfab_playerdata_batch_${batchNum}_${partNum}.json`;
+        //         const Key = `analytics/playerdata/${fileName}`;
+        //         await uploadToS3(process.env.AWS_BUCKET, Key, part);
+        //         partNum++;
+        //     }
+        // } else {
+        //     // If the serialized data does not exceed the maximum size, upload as a single file
+        //     const fileName = `playfab_playerdata_batch_${batchNum}_${partNum}.json`;
+        //     const Key = `analytics/playerdata/${fileName}`;
+        //     await uploadToS3(process.env.AWS_BUCKET, Key, playerDataBatch);
+        // }
+
+        for (const playerData of playerDataBatch) {
+            console.log(playerData);
+            console.log("\n--------------\n");
+            // Adjust your INSERT query to match your database schema
+            // The following is an example query. Modify it as needed.
+            const insertQuery = 'INSERT INTO public."PlayerData"("PlayerDataJSON") VALUES($1)';
+            await pool.query(insertQuery, [playerData]);
         }
 
-        if(batchNum == maxBatches){
+        if(batchNum >= maxBatches){
             break;
         }
     }
@@ -159,7 +188,7 @@ async function getAllPlayerDataAndUpload() {
     gettingAllPlayersInProgress = false;
     console.log("Finished processing all player data.");
 }
-//getAllPlayerDataAndUpload(); // testing
+getAllPlayerDataAndUpload(); // testing
 
 function splitIntoParts(data, maxSize) {
     let parts = [];

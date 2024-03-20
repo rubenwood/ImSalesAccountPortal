@@ -24,6 +24,7 @@
     "fs": "^0.0.1-security",
     "googleapis": "^131.0.0",
     "jsonwebtoken": "^9.0.2",
+    "pg": "^8.11.3",
     "redis": "^4.6.12",
     "stripe": "^14.18.0",
     "zlib": "^1.0.5"
