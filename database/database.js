@@ -15,26 +15,63 @@ const pool = new Pool({
     },
 });
 
-// /db/playerdata?limit=100
+// /db/playerdata?start=0&end=1000 (query rows 0 to 1000)
+// /db/playerdata?start=125 (query rows 125 to END)
+// /db/playerdata (query all rows)
 dbRouter.get('/playerdata', async (req, res) => {
-    const secret = req.headers['x-secret-key'];
-    if (secret !== process.env.SERVER_SEC) {
-        return res.status(401).json({ message: 'Invalid or missing secret.' });
-    }
+  const secret = req.headers['x-secret-key'];
+  if (secret !== process.env.SERVER_SEC) {
+      return res.status(401).json({ message: 'Invalid or missing secret.' });
+  }
 
-    const limit = parseInt(req.query.limit, 10) || 100; // Default to 100 items if limit is not specified
-  
-    try {
-      const { rows } = await pool.query(`
-        SELECT * FROM public."PlayerData"
-        LIMIT $1
-      `, [limit]);
-  
+  let start = parseInt(req.query.start, 10);
+  let end = parseInt(req.query.end, 10);
+  let query = 'SELECT * FROM public."PlayerData"';
+  const queryParams = [];
+
+  // Ensure start and end are non-negative and start <= end
+  if (!isNaN(start) && !isNaN(end) && start >= 0 && end >= start) {
+      const limit = end - start + 1;
+      query += ' LIMIT $1 OFFSET $2';
+      queryParams.push(limit, start);
+  } else if (!isNaN(start) && start >= 0) {
+      query += ' OFFSET $1';
+      queryParams.push(start);
+  }
+
+  try {
+      const { rows } = await pool.query(query, queryParams);
       res.json(rows);
-    } catch (err) {
+  } catch (err) {
       console.error('Error fetching player data from db:', err);
       res.status(500).json({ error: 'Internal server error' });
-    }
+  }
 });
 
-module.exports = dbRouter;
+dbRouter.get('/get-playerdata-count', async (req, res) => {
+  const secret = req.headers['x-secret-key'];
+  if (secret !== process.env.SERVER_SEC) {
+      return res.status(401).json({ message: 'Invalid or missing secret.' });
+  }
+  try {
+      //const { rows } = await pool.query(query, queryParams);
+      let count = await getTotalRowCount();
+      res.send(`${count}`);
+  } catch (err) {
+      console.error('Error fetching player data from db:', err);
+      res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+async function getTotalRowCount() {
+  try {
+      const { rows } = await pool.query('SELECT COUNT(*) FROM public."PlayerData"');
+      const totalCount = parseInt(rows[0].count, 10);
+      return totalCount;
+  } catch (err) {
+      console.error('Error fetching total row count:', err);
+      throw err; // Rethrow and handle it in the caller
+  }
+}
+
+module.exports = { dbRouter, getTotalRowCount };

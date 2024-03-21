@@ -138,6 +138,17 @@ async function getAllPlayerDataAndUpload() {
     }
     console.log(`Length of allS3AccData: ${allS3AccData.length}`);
 
+    // REMOVE ALL DATA IN THE TABLE FIRST
+    try {
+        await pool.query('TRUNCATE TABLE public."PlayerData"');
+        console.log("Database cleared.");
+    } catch (error) {
+        console.error("Error clearing database:", error);
+        // Stop the process if clearing the database fails
+        gettingAllPlayersInProgress = false;
+        return;
+    }
+
     //let maxBatches = 1; // just for debugging
     // using all account data from s3, do a get player data request
     // get that data and write it to postgrest database

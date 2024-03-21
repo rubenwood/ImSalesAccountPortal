@@ -18,7 +18,7 @@ const stripeRoutes = require('./stripe/stripestore.js');
 const { suffixRouter }  = require('./other/suffix.js');
 const b2bRoutes = require('./other/b2b-processing.js');
 const activityRoutes = require('./other/activities.js');
-const databaseRoutes = require('./database/database.js');
+const { dbRouter }  = require('./database/database.js');
 const { getAllPlayersAndUpload } = require('./other/bulk-ops');
 
 app.use(express.json());
@@ -431,7 +431,7 @@ app.use('/stripe', stripeRoutes);
 app.use('/reporting', suffixRouter);
 app.use('/b2b', b2bRoutes);
 app.use('/activities', activityRoutes);
-app.use('/db', databaseRoutes);
+app.use('/db', dbRouter);
 const PORT = process.env.PORT;
 
 app.listen(PORT, () => {

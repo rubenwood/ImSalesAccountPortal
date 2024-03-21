@@ -3,6 +3,8 @@ const express = require('express');
 const axios = require('axios');
 const activitiesRouter = express.Router();
 
+const { getTotalRowCount } = require('../database/database');
+
 // Modified route that takes in an array of query param get-activity-report-id?activities=activity_id1,activity_id2
 activitiesRouter.get('/get-activity-report-id', async (req, res) => {
     console.log("called");
@@ -11,56 +13,68 @@ activitiesRouter.get('/get-activity-report-id', async (req, res) => {
         return res.status(401).json({ message: 'Invalid or missing secret.' });
     }
 
-    // first get a batch of playerdata (/analytics/playerdata/*)
-    // .Data.PlayerData.activities for each of these, check if we match any of the input activityIds
-    // if so, add that entry (user) to a list, this will give us the number of unique plays per activity
-
     try {
-        let activityIds = req.query.activities.split(',');
-        console.log(activityIds);
+        const activityIds = req.query.activities.split(',');
+        const config = { headers: { 'x-secret-key': process.env.SERVER_SEC } };
+        const chunkSize = 10000;
+        let totalErrors = 0;
+        let allPlayersWithActivity = [];
 
-        const config = {
-            headers: {
-                'x-secret-key': process.env.SERVER_SEC
-            }
-        };
+        // Function to process a single chunk
+        async function processChunk(startRow) {
+            try {
+                const response = await axios.get(`http://${process.env.SERVER_URL}:${process.env.PORT}/db/playerdata?start=${startRow}&end=${startRow + chunkSize - 1}`, config);
+                const respDataRows = response.data;
+                let playersWithActivity = [];
+                let errorAmount = 0;
 
-        const response = await axios.get(`http://${process.env.SERVER_URL}:${process.env.PORT}/db/playerdata?limit=1000`, config);
-        const respDataRows = response.data;
-        
-        let listOfPlayersWithActivity = [];
-        
-        // the response data is an array of rows from the "PlayerData" table, 
-        // each has a "PlayerDataJSON" field/column, which encapsulates the useful data
-        // for each row in respDataRows, check in .PlayerDataJSON.Data.PlayerData.Value
-        for(const row of respDataRows){
-            let playerData = row.PlayerDataJSON?.Data?.PlayerData ?? undefined;
-            if(playerData){
-                let playerDataToJson = JSON.parse(playerData.Value);
-                let playerActivities = playerDataToJson.activities;
-                // if playerActivities contains any of the activityIds then add row to listOfPlayersWithActivity
-                console.log(activityIds);
-                console.log(playerActivities);
-                // Map playerActivities to an array of activityIDs
-                const playerActivityIds = playerActivities.map(activity => activity.activityID);
-
-                // Check if playerActivityIds contains any of the input activityIds
-                const hasMatchingActivity = playerActivityIds.some(activityId => activityIds.includes(activityId));
-
-                if (hasMatchingActivity) {listOfPlayersWithActivity.push(row);}
-     
-                console.log("\n--------------------\n");
-            }else{
-
+                for (const row of respDataRows) {
+                    try {
+                        let playerData = row.PlayerDataJSON?.Data?.PlayerData ?? undefined;
+                        if (playerData) {
+                            let playerDataToJson = JSON.parse(playerData.Value);
+                            let playerActivities = playerDataToJson.activities;
+                            const playerActivityIds = playerActivities.map(activity => activity.activityID);
+                            const hasMatchingActivity = playerActivityIds.some(activityId => activityIds.includes(activityId));
+                            if (hasMatchingActivity) { playersWithActivity.push(row); }
+                        }
+                    } catch (error) {
+                        errorAmount++;
+                        console.error('Error processing player data:', error);
+                    }
+                }
+                return { playersWithActivity, errorAmount };
+            } catch (error) {
+                console.error('Error processing chunk:', error.message);
+                return { playersWithActivity: [], errorAmount: 1 }; // Assuming 1 error if chunk processing fails
             }
         }
-        console.log(listOfPlayersWithActivity.length);
-        res.json(listOfPlayersWithActivity);
+
+        // Determine the total number of chunks required
+        const totalRows = await getTotalRowCount();
+        console.log(`total rows: ${totalRows}`);
+        const totalChunks = Math.ceil(totalRows / chunkSize);
+        const chunkPromises = [];
+
+        for (let i = 0; i < totalChunks; i++) {
+            const startRow = i * chunkSize;
+            chunkPromises.push(processChunk(startRow));
+        }
+
+        // Process all chunks concurrently
+        const results = await Promise.all(chunkPromises);
+        results.forEach(({ playersWithActivity, errorAmount }) => {
+            allPlayersWithActivity = allPlayersWithActivity.concat(playersWithActivity);
+            totalErrors += errorAmount;
+        });
+
+        console.log(`Processed ${totalChunks} chunks (chunk size: ${chunkSize} rows) with ${totalErrors} errors.
+        \nTotal users who played ${activityIds} = ${allPlayersWithActivity.length} (of ${totalRows})`);
+        res.json(allPlayersWithActivity);
     } catch (error) {
         console.error('Error:', error);
         res.status(500).json({ message: 'Failed to generate report', error: error.message });
     }
 });
-
 
 module.exports = activitiesRouter;
