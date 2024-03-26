@@ -44,6 +44,16 @@ export function formatActivityData(activityData) {
     return formattedData;
 }
 
+// Used to display loading "ticks" on a button
+export function updateButtonText(button, text, maxTicks) {
+    let tickCount = 0; 
+    return function() {
+        let dots = ".".repeat(tickCount % (maxTicks + 1));
+        button.value = `${text}${dots}`;
+        tickCount++;
+    };
+}
+
 // GET LESSON INFO & PRAC INFO
 function getLessonInfo(){
     const url = `/getLessonInfo`;

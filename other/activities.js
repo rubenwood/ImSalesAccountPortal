@@ -8,10 +8,10 @@ const { getTotalRowCount } = require('../database/database');
 // Modified route that takes in an array of query param get-activity-report-id?activities=activity_id1,activity_id2
 activitiesRouter.get('/get-activity-report-id', async (req, res) => {
     console.log("called");
-    const secret = req.headers['x-secret-key'];
-    if (secret !== process.env.SERVER_SEC) {
-        return res.status(401).json({ message: 'Invalid or missing secret.' });
-    }
+    // const secret = req.headers['x-secret-key'];
+    // if (secret !== process.env.SERVER_SEC) {
+    //     return res.status(401).json({ message: 'Invalid or missing secret.' });
+    // }
 
     try {
         const activityIds = req.query.activities.split(',');
@@ -62,6 +62,7 @@ activitiesRouter.get('/get-activity-report-id', async (req, res) => {
         }
 
         // Process all chunks concurrently
+        console.log("processing....");
         const results = await Promise.all(chunkPromises);
         results.forEach(({ playersWithActivity, errorAmount }) => {
             allPlayersWithActivity = allPlayersWithActivity.concat(playersWithActivity);
@@ -70,7 +71,21 @@ activitiesRouter.get('/get-activity-report-id', async (req, res) => {
 
         console.log(`Processed ${totalChunks} chunks (chunk size: ${chunkSize} rows) with ${totalErrors} errors.
         \nTotal users who played ${activityIds} = ${allPlayersWithActivity.length} (of ${totalRows})`);
-        res.json(allPlayersWithActivity);
+
+        let outputList = [];
+        for(const activityId of activityIds){
+            let output = {
+                activityID:activityId,
+                activityName:activityId,
+                uniquePlays:allPlayersWithActivity.length,
+                plays:"NYI",
+                users:allPlayersWithActivity
+            }
+            outputList.push(output);
+        }
+        
+        //res.json(allPlayersWithActivity);
+        res.json(outputList);
     } catch (error) {
         console.error('Error:', error);
         res.status(500).json({ message: 'Failed to generate report', error: error.message });

@@ -199,7 +199,7 @@ async function getAllPlayerDataAndUpload() {
     gettingAllPlayersInProgress = false;
     console.log("Finished processing all player data.");
 }
-getAllPlayerDataAndUpload(); // testing
+//getAllPlayerDataAndUpload(); // testing
 
 function splitIntoParts(data, maxSize) {
     let parts = [];

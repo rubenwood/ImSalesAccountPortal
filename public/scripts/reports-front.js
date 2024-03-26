@@ -1,4 +1,5 @@
 import {getPlayerCountInSegment} from './segments.js';
+import {updateButtonText} from './utils.js';
 
 document.addEventListener('DOMContentLoaded', async () => {
     document.getElementById('google-login-btn').addEventListener('click', GoogleLoginClicked);
@@ -11,14 +12,14 @@ export function GoogleLoginClicked(){
     window.location.href = '/google/google-login';
 }
 
-function updateButtonText(button, text, maxTicks) {
-    let tickCount = 0; 
-    return function() {
-        let dots = ".".repeat(tickCount % (maxTicks + 1));
-        button.value = `${text}${dots}`;
-        tickCount++;
-    };
-}
+// function updateButtonText(button, text, maxTicks) {
+//     let tickCount = 0; 
+//     return function() {
+//         let dots = ".".repeat(tickCount % (maxTicks + 1));
+//         button.value = `${text}${dots}`;
+//         tickCount++;
+//     };
+// }
 
 // KPI REPORT
 let fetchingKPIReport = false;
@@ -337,22 +338,4 @@ function formatDecompressedData(decompressed) {
     let output = decompressed.split('\n');
     let formattedOutput = output.map(line => line.replace(/\t/g, ','));
     return formattedOutput;
-}
-
-function csvToHtmlTable(csvText) {
-    const rows = csvText.split('\n');
-    let html = '<table>';
-
-    for (let row of rows) {
-        html += '<tr>';
-        const cells = row.split(',');
-
-        for (let cell of cells) {
-            html += `<td>${cell}</td>`;
-        }
-        html += '</tr>';
-    }
-
-    html += '</table>';
-    return html;
 }
