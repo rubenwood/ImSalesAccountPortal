@@ -8,10 +8,6 @@ const { getTotalRowCount } = require('../database/database');
 // Modified route that takes in an array of query param get-activity-report-id?activities=activity_id1,activity_id2
 activitiesRouter.get('/get-activity-report-id', async (req, res) => {
     console.log("called");
-    // const secret = req.headers['x-secret-key'];
-    // if (secret !== process.env.SERVER_SEC) {
-    //     return res.status(401).json({ message: 'Invalid or missing secret.' });
-    // }
 
     try {
         const activityIds = req.query.activities.split(',');
@@ -20,10 +16,11 @@ activitiesRouter.get('/get-activity-report-id', async (req, res) => {
         let totalErrors = 0;
         let allPlayersWithActivity = [];
 
-        // Function to process a single chunk
         async function processChunk(startRow) {
             try {
-                const response = await axios.get(`http://${process.env.SERVER_URL}:${process.env.PORT}/db/playerdata?start=${startRow}&end=${startRow + chunkSize - 1}`, config);
+                let url = `http://${process.env.SERVER_URL}:${process.env.PORT}/db/playerdata`+
+                `?start=${startRow}&end=${startRow + chunkSize - 1}`;
+                const response = await axios.get(url, config);
                 const respDataRows = response.data;
                 let playersWithActivity = [];
                 let errorAmount = 0;
@@ -65,7 +62,7 @@ activitiesRouter.get('/get-activity-report-id', async (req, res) => {
         console.log("processing....");
         const results = await Promise.all(chunkPromises);
         results.forEach(({ playersWithActivity, errorAmount }) => {
-            allPlayersWithActivity = allPlayersWithActivity.concat(playersWithActivity);
+            allPlayersWithActivity = allPlayersWithActivity.concat(playersWithActivity); // this only works for 1 activity?
             totalErrors += errorAmount;
         });
 
@@ -74,22 +71,39 @@ activitiesRouter.get('/get-activity-report-id', async (req, res) => {
 
         let outputList = [];
         for(const activityId of activityIds){
+            let totalPlays = calcTotalPlaysPerActivity(allPlayersWithActivity, activityId);
             let output = {
                 activityID:activityId,
                 activityName:activityId,
                 uniquePlays:allPlayersWithActivity.length,
-                plays:"NYI",
+                plays:totalPlays,
                 users:allPlayersWithActivity
             }
             outputList.push(output);
         }
-        
-        //res.json(allPlayersWithActivity);
+
         res.json(outputList);
     } catch (error) {
         console.error('Error:', error);
         res.status(500).json({ message: 'Failed to generate report', error: error.message });
     }
 });
+
+function calcTotalPlaysPerActivity(allPlayersWithActivity, activityId){
+    let totalPlays = 0;
+    allPlayersWithActivity.forEach(player => {
+        let playerDataJSON = player.PlayerDataJSON;
+        let playerData = JSON.parse(playerDataJSON.Data.PlayerData.Value);
+        //console.log("----");
+        let activities = playerData.activities;
+        activities.forEach(activity => {
+            if(activityId == activity.activityID){
+                totalPlays += activity.plays.length;
+            }             
+        });
+        //console.log(activities);
+    });
+    return totalPlays;
+}
 
 module.exports = activitiesRouter;
