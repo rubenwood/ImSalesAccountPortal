@@ -1,10 +1,19 @@
+import {canAccess} from './access-check.js';
+import {Login} from './PlayFabManager.js';
 import {formatTimeToHHMMSS,updateButtonText} from './utils.js';
 
 document.addEventListener('DOMContentLoaded', async () => {
+    document.getElementById('loginButton').addEventListener('click', Login);
     document.getElementById('generateByActivityIdButton').addEventListener('click', fetchActivityReport);
 });
+window.onload = function() {
+    document.getElementById('loginModal').style.display = 'block';
+};
 
 async function fetchActivityReport(){
+    let hasAccess = await canAccess();
+    if(!hasAccess){ return; }
+    
     // update the button text, so we can see something is happening
     const button = document.getElementById('generateByActivityIdButton');
     const tickUpdater = updateButtonText(button, "Search by Activity ID", 3);

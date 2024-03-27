@@ -1,9 +1,10 @@
-//import { reportData } from './main.js';
-import { formatTime } from './utils.js';
+//import {reportData} from './main.js';
+import {formatTime} from './utils.js';
+import {showLessonInsights} from './lesson-insights.js';
+import {showSimInsights} from './sim-insights.js';
 
 // INSIGHT DATA MODAL
-export function showInsightsModal(reportData) {   
-    console.log(reportData);
+export function showInsightsModal(reportData) {
     let totalUsersInReport = getTotalUsersInReportHTML(reportData);
     let userAccessPerPlatform = getUserAccessPerPlatformHTML(reportData);
     let totalPlayTimeAcrossAllUsers = getTotalPlayTimeHTML(reportData);
@@ -18,6 +19,7 @@ export function showInsightsModal(reportData) {
     //let totalPlayTimeBetweenDates = totalPlayTimeBetweenDatesHTML(reportData, '01/01/2024 00:00:00', '31/01/2024 23:59:59');
 
     let content = "";
+    content += setupTabsHTML();
     content += totalUsersInReport;
     content += userAccessPerPlatform;
     content += totalPlayTimeAcrossAllUsers;
@@ -33,9 +35,31 @@ export function showInsightsModal(reportData) {
 
     document.getElementById('insightsContent').innerHTML = content;
     document.getElementById('insightsModal').style.display = 'block';
+
+    setupInsightTabs(reportData);
 }
 export function closeInsightsModal() {
     document.getElementById('insightsModal').style.display = 'none';
+}
+export function setupTabsHTML() {
+    return `
+        <div id="modalTabs">
+            <input type="button" id="overviewTab" class="modalTab" value="Overview">
+            <input type="button" id="lessonInsightsTab" class="modalTab" value="Lesson Insights">
+            <input type="button" id="simInsightsTab" class="modalTab" value="Sim Insights">
+        </div>
+    `;
+}
+export function setupInsightTabs(reportData){
+    document.getElementById('overviewTab').addEventListener('click', function() {
+        showInsightsModal(reportData);
+    });
+    document.getElementById('lessonInsightsTab').addEventListener('click', function() {
+        showLessonInsights(reportData);
+    });
+    document.getElementById('simInsightsTab').addEventListener('click', function() {
+        showSimInsights(reportData);
+    });
 }
 
 export function getUserAccessPerPlatform(reportData){

@@ -3,12 +3,20 @@
 <head>
     <meta charset="utf-8">
     <title>Immersify Portal</title>
-    <!--<script type="text/javascript" src="https://download.playfab.com/PlayFabClientApi.js"></script>-->
+    <script type="text/javascript" src="https://download.playfab.com/PlayFabClientApi.js"></script>
     <!--<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.16.2/xlsx.full.min.js"></script>-->
     <link rel="stylesheet" type="text/css" href="styles.css">
 </head>
 <body>
-    <!-- Modal Structure TODO: use css from styles -->
+    <div id="loginModal" class="modal">
+        <div class="modal-content">
+            <img src="/immersify_logo.e141b23db21f4b78051561bc464eace7.svg" alt="Immersify Logo" class="login-logo">
+            <h2>Login</h2>
+            <input type="text" id="username" placeholder="Username"><br>
+            <input type="password" id="password" placeholder="Password"><br>
+            <input type="button" id="loginButton" value="Login">
+        </div>
+    </div>
     <div id="userModal" class="modal" style="display:none; position: fixed; z-index: 1; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgb(0,0,0); background-color: rgba(0,0,0,0.4); padding-top: 60px;">
         <div class="modal-content" style="background-color: #fefefe; margin: 5% auto; padding: 20px; border: 1px solid #888; width: 80%;">
             <span class="close">&times;</span>

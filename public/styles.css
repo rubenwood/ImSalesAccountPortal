@@ -176,6 +176,13 @@ label {
     width: 80%;
 }
 
+#modalTabs {
+    display: flex;
+    justify-content: space-around; /* This will distribute space around the buttons */
+    align-items: center; /* This aligns buttons vertically center */
+    width: 100%; /* Ensure this div fills the modal width */
+}
+
 .close {
     color: #aaa;
     float: right;
