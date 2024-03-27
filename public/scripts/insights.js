@@ -1,9 +1,9 @@
-import { reportData } from './main.js';
+//import { reportData } from './main.js';
 import { formatTime } from './utils.js';
 
 // INSIGHT DATA MODAL
 export function showInsightsModal(reportData) {   
-    //console.log(reportData);
+    console.log(reportData);
     let totalUsersInReport = getTotalUsersInReportHTML(reportData);
     let userAccessPerPlatform = getUserAccessPerPlatformHTML(reportData);
     let totalPlayTimeAcrossAllUsers = getTotalPlayTimeHTML(reportData);
@@ -13,6 +13,7 @@ export function showInsightsModal(reportData) {
     let playersWithLeastPlays = findPlayersWithLeastPlaysHTML(reportData, 1, 3);
     let playersWithMostUniqueActivities = findPlayersWithMostUniqueActivitiesPlayedHTML(reportData, 1, 3);
     let mostPlayedActivities = findMostPlayedActivitiesHTML(reportData, 1, 10);
+    let highestPlayTimeActivities = findHighestPlayTimeActivitiesHTML(reportData, 1, 10);
     //let playsBetweenDates = findPlaysBetweenDatesHTML(reportData, '01/01/2024 00:00:00', '31/01/2024 23:59:59');
     //let totalPlayTimeBetweenDates = totalPlayTimeBetweenDatesHTML(reportData, '01/01/2024 00:00:00', '31/01/2024 23:59:59');
 
@@ -26,6 +27,7 @@ export function showInsightsModal(reportData) {
     content += playersWithLeastPlays;
     content += playersWithMostUniqueActivities;
     content += mostPlayedActivities;
+    content += highestPlayTimeActivities;
     //content += playsBetweenDates;
     //content += totalPlayTimeBetweenDates;
 
@@ -166,7 +168,6 @@ function findPlayersWithLeastPlaysHTML(reportData, start, end){
     return output;
 }
 
-
 // Get player with most activities played & Get player with least activities played
 export function findPlayersWithMostUniqueActivitiesPlayed(reportData, start, end) {
     // Map each player to an object with email and count of unique activity IDs
@@ -248,6 +249,50 @@ function findMostPlayedActivitiesHTML(reportData, start, end) {
     return output;
 }
 
+export function findHighestPlayTimeActivities(reportData, start, end) {
+    let activityPlayTimeTotals = {};
+
+    reportData.forEach(data => {
+        if (data.activityData && Array.isArray(data.activityData)) {
+            data.activityData.forEach(activity => {
+                let activityKey = activity.activityID + ' - ' + activity.activityTitle;
+                activity.plays.forEach(play => {
+                    if (activityPlayTimeTotals[activityKey]) {
+                        activityPlayTimeTotals[activityKey].totalTime += play.sessionTime;
+                    } else {
+                        activityPlayTimeTotals[activityKey] = {
+                            id: activity.activityID,
+                            title: activity.activityTitle,
+                            totalTime: play.sessionTime
+                        };
+                    }
+                });
+            });
+        }
+    });
+
+    // Convert the object into an array and sort it by totalTime in descending order
+    const sortedActivitiesByTime = Object.values(activityPlayTimeTotals).sort((a, b) => b.totalTime - a.totalTime);
+    // Adjusting start and end to be zero-based index
+    start = Math.max(start - 1, 0);
+    end = Math.min(end, sortedActivitiesByTime.length);
+
+    // Slice the array to get the specified range
+    const highestPlayTimeActivities = sortedActivitiesByTime.slice(start, end);
+    return highestPlayTimeActivities;
+}
+function findHighestPlayTimeActivitiesHTML(reportData, start, end){
+    let mostPlayedActivities = findHighestPlayTimeActivities(reportData, start, end);
+    let output = '<h2>Most Played Activities (Play Time)</h2><br/>';
+
+    mostPlayedActivities.forEach((activity, index) => {
+        //console.log(activity);
+        output += `${start + index}. ID: ${activity.id}, Title: ${activity.title}, Total Play Time: ${formatTime(Math.round(activity.totalTime))}<br/>`;
+    });
+
+    return output;
+}
+
 // Get total plays between dates
 function findPlaysBetweenDates(reportData, startDate, endDate) {
     const parseDate = (dateString) => {
@@ -288,7 +333,6 @@ function findPlaysBetweenDatesHTML(reportData, startDate, endDate) {
     output += playsBetweenDates.length;
     return output;
 }
-
 
 function findTotalPlayTimeBetweenDates(reportData, startDate, endDate) {
     const parseDate = (dateString) => {

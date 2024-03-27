@@ -125,7 +125,6 @@ function calcReturning(rowData) {
       if (isReturning) { totalReturningUsers += parseInt(row.metricValues[0].value, 10); }
     });
   
-    //console.log("Total Returning Users:", totalReturningUsers);
     return totalReturningUsers;
 }
 
@@ -140,7 +139,6 @@ function calcAverageUsageTime(rowData) {
       const dailyAverage = totalUsageTime / users; // Average usage time per day
       totalAverage += dailyAverage; // Summing up the daily averages
     });
-    //console.log(totalAverage);
     // Overall average usage time across all days
     let overallAverage = (totalAverage / (daysCount-1)) / 60;
     overallAverage = overallAverage;
@@ -160,11 +158,10 @@ async function fetchSubReport() {
     const tickInterval = setInterval(tickUpdater, 500);
 
     let allPlayersSeg = await getPlayerCountInSegment("1E7B6EA6970A941D");
-    console.log(allPlayersSeg.ProfilesInSegment);
 
-    try {        
+    try {
         // Execute both requests concurrently and wait for both of them to complete
-        const [googleReport, googlePurchasers, appleReport, stripeActiveSubs] = await Promise.all([
+        const [googleReport, googlePurchasers, appleReport, stripeSubs] = await Promise.all([
             fetchGoogleReport(),
             fetchGooglePurchasers(),
             fetchAppleReport(),
@@ -191,7 +188,6 @@ async function fetchSubReport() {
                 androidSubs.push(element);
             }
         });
-        console.log(androidSubs);
 
         // APPLE
         let formattedAppleReport = formatDecompressedData(appleReport);
@@ -202,7 +198,6 @@ async function fetchSubReport() {
         });
         let appleFreeTrials = [];
         let appleIntroductory = [];
-        console.log(appleFullArr);
         appleFullArr.forEach(row => {
             // Convert the values at index 19 and 22 to integers and check if either is greater than 0
             if (parseInt(row[19], 10) > 0 || parseInt(row[22], 10) > 0) {
@@ -214,11 +209,16 @@ async function fetchSubReport() {
         });
 
         // STRIPE
-        let stripeJSON = JSON.parse(stripeActiveSubs);
+        let stripeJSON = JSON.parse(stripeSubs);
+        let stripeActiveSubs = stripeJSON.totalActiveSubs;
+        let stripeActiveTrials = stripeJSON.totalActiveTrials;
+        let stripePastDueUnpaid = stripeJSON.totalPastDueUnpaid;
+        let stripeNonSubs = stripeJSON.totalNonSubs;
+        console.log(stripeJSON);
 
         // OUTPUT
         //let totalSubs = parseInt(googlePurchasers[0].metricValues[0].value)+parseInt(formattedAppleReport.length-2)+parseInt(stripeJSON.length);
-        let totalSubs = parseInt(androidSubs.length)+parseInt(formattedAppleReport.length-2)+parseInt(stripeJSON.length);
+        let totalSubs = parseInt(androidSubs.length)+parseInt(formattedAppleReport.length-2)+parseInt(stripeActiveSubs);
 
         let table = document.getElementById('reportTable');
         let totalUsersPlayfabCell = table.querySelector("#totalUsersPlayfab");
@@ -235,7 +235,7 @@ async function fetchSubReport() {
         if (appleTrialsCell) appleTrialsCell.innerText = appleFreeTrials.length;
 
         let stripeSubsCell = table.querySelector("#stripeSubs");
-        if (stripeSubsCell) stripeSubsCell.innerText = stripeJSON.length;        
+        if (stripeSubsCell) stripeSubsCell.innerText = `Active Subs: ${stripeActiveSubs}\nActive Trials: ${stripeActiveTrials}\nPast Due/ Unpaid: ${stripePastDueUnpaid}\nNon Subs (cancelled): ${stripeNonSubs}`;
 
         let totalSubsCell = table.querySelector("#totalSubs");
         if (totalSubsCell) totalSubsCell.innerText = totalSubs;
