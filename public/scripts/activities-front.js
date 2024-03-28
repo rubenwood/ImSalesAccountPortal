@@ -13,7 +13,7 @@ window.onload = function() {
 async function fetchActivityReport(){
     let hasAccess = await canAccess();
     if(!hasAccess){ return; }
-    
+
     // update the button text, so we can see something is happening
     const button = document.getElementById('generateByActivityIdButton');
     const tickUpdater = updateButtonText(button, "Search by Activity ID", 3);
@@ -88,24 +88,36 @@ function showModal(users) {
 
     // Clear previous list
     userList.innerHTML = '';
-
     // Populate list with users
     users.forEach(user => {
-        let li = document.createElement('li');
-        li.textContent = `${user.PlayerDataJSON.PlayFabId} , ${user}`;
+        let li = document.createElement('li');        
+        let button = document.createElement('input');
+        button.type = 'button';
+        button.value = 'Inspect';
+        button.style.width = '70px';
+        button.style.height = '30px'; 
+        button.style.marginRight = '5px';
+        button.style.padding = '5px';
+        button.addEventListener('click', () => inspectClicked(user.PlayerDataJSON));
+
+        li.appendChild(button);
+        li.append(` ${user.PlayerDataJSON.PlayFabId}`);
+        
         userList.appendChild(li);
     });
 
-    // Show the modal
+    // Modal
     modal.style.display = "block";
-
     span.onclick = function() {
         modal.style.display = "none";
     }
-
     window.onclick = function(event) {
         if (event.target == modal) {
             modal.style.display = "none";
         }
     }
+}
+
+export function inspectClicked(PlayerDataJSON){
+    console.log(PlayerDataJSON.PlayFabId + " Inspect clicked");
 }

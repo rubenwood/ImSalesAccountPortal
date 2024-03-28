@@ -71,6 +71,7 @@ activitiesRouter.get('/get-activity-report-id', async (req, res) => {
 
         let outputList = [];
         for(const activityId of activityIds){
+            // can get the activity title like this too
             let totalPlays = calcTotalPlaysPerActivity(allPlayersWithActivity, activityId);
             let output = {
                 activityID:activityId,
