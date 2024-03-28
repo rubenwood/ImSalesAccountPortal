@@ -21,45 +21,103 @@ export function GoogleLoginClicked(){
 //     };
 // }
 
+// Utility function to parse CSV and map it to JSON objects with camelCase property names
+function parseCSV(csvText) {
+    const lines = csvText.trim().split('\n');
+    const keys = lines[0].split(',').map(key => 
+      key.trim().replace(/\s+/g, '_') // Replace spaces with underscores
+    );
+  
+    return lines.slice(1).map(line => {
+      const values = line.split(',');
+      return keys.reduce((object, key, index) => {
+        object[key] = values[index].trim();
+        return object;
+      }, {});
+    });
+  }
+  
+function getCohortDate() {
+    // Get the current date
+    const today = new Date();
+  
+    // Set the time to the beginning of the day
+    today.setHours(0, 0, 0, 0);
+  
+    // Subtract 31 days from the current date
+    const cohortDate = new Date(today.setDate(today.getDate() - 31));
+  
+    // Return the date as a string in the desired format
+    const year = cohortDate.getFullYear();
+    const month = String(cohortDate.getMonth() + 1).padStart(2, '0'); // Months are 0-indexed, add 1
+    const day = String(cohortDate.getDate()).padStart(2, '0');
+    let output = `${year}-${month}-${day}T00:00:00.0000000`;
+    console.log(output);
+    return output;
+  }
 // KPI REPORT
 let fetchingKPIReport = false;
 async function fetchDevKPIReport() {
-    if(fetchingKPIReport){ console.log("in progress"); return; }
+    if (fetchingKPIReport) {
+        console.log("in progress");
+        return;
+    }
 
     fetchingKPIReport = true;
-    // loading animation on button
+    // Loading animation on button
     const button = document.getElementById('get-google-report-btn');
     const tickUpdater = updateButtonText(button, "Getting Dev KPIs", 3);
     tickUpdater();
     const tickInterval = setInterval(tickUpdater, 500);
 
-    fetch('/google/get-kpi-report')
-    .then(response => {
-        if (!response.ok) {
-            console.log(response);
-            if(response.status == 401){ throw new Error('Not logged in'); }
-            throw new Error(`Response was not ok: ${response.statusText}`);
+    try {
+        const playFabResponse = await fetch('/get-playfab-report', {
+            method: 'POST'
+        });
+        if (!playFabResponse.ok) {
+            throw new Error(`PlayFab Response was not ok: ${playFabResponse.statusText}`);
         }
-        return response.json();
-    })
-    .then(respJson => {
-        setupReportTable(respJson);
-    })
-    .catch(error => {
+
+        const csvText = await playFabResponse.text();
+        const data = parseCSV(csvText);
+        // is it always 31 / 32 days behind today? check on PlayFab
+        const cohortDate = getCohortDate();
+        const filteredAndSortedData = data
+            .filter(row => row.Cohort.startsWith(cohortDate))
+            .sort((a, b) => parseInt(a['Days_Later']) - parseInt(b['Days_Later']));
+        console.log('Filtered and Sorted Data:', filteredAndSortedData);
+
+        let table = document.getElementById('reportTable');
+        let dataCell = table.querySelector("#userRetentionPlayfab");
+        if (dataCell) dataCell.innerText = `Day 1: ${filteredAndSortedData[1].Percent_Retained}%
+        Day 2: ${filteredAndSortedData[2].Percent_Retained}%
+        Day 30: ${filteredAndSortedData[30].Percent_Retained}%`;
+
+        // Handling for the Google KPI report remains unchanged
+        const googleKPIResponse = await fetch('/google/get-kpi-report');
+        if (!googleKPIResponse.ok) {
+            console.log(googleKPIResponse);
+            if (googleKPIResponse.status === 401) {
+                throw new Error('Not logged in');
+            }
+            throw new Error(`Google KPI Response was not ok: ${googleKPIResponse.statusText}`);
+        }
+        const googleKPIReport = await googleKPIResponse.json();
+        setupReportTable(googleKPIReport);
+    } catch (error) {
         console.error('There has been a problem with your fetch operation:', error);
         document.getElementById('output-area').textContent = 'Error fetching data: ' + error.message;
-    })
-    .finally(() => {
-        clearInterval(tickInterval); // Stop the ticking animation
+    } finally {
+        clearInterval(tickInterval);
         button.value = "Get Dev KPI report";
         fetchingKPIReport = false;
-    });
+    }
 }
 
 function setupReportTable(jsonInput){
     let table = document.getElementById('reportTable');
     
-    if (jsonInput.userRetention) { // done (User Retention)
+    if (jsonInput.userRetention) {
         let dataCell = table.querySelector("#userRetention");
         let day1Ret = jsonInput.userRetention[1].metricValues[0].value;
         let day2Ret = jsonInput.userRetention[2].metricValues[0].value;

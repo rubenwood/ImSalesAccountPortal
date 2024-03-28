@@ -371,6 +371,46 @@ app.post('/get-segment-players/:segmentID', async (req, res) => {
   }
 });
 
+// GET PLAYFAB DATA REPORT
+app.post('/get-playfab-report', async (req, res) => {
+  try {
+    const today = new Date();
+    const yesterday = new Date(today.setDate(today.getDate() - 1));
+    const day = yesterday.getDate();
+    const month = yesterday.getMonth() + 1; // JavaScript months are 0-indexed
+    const year = yesterday.getFullYear();
+    
+    const playFabResponse = await axios.post(
+      `https://${process.env.PLAYFAB_TITLE_ID}.playfabapi.com/Admin/GetDataReport`, {
+        Day: day,
+        Month: month,
+        Year: year,
+        ReportName: 'Thirty Day Retention Report'
+      }, {
+        headers: {
+          'X-SecretKey': process.env.PLAYFAB_SECRET_KEY
+        }
+      }
+    );
+
+    const reportURL = playFabResponse.data.data.DownloadUrl;
+    const csvResponse = await fetch(reportURL);
+    if (!csvResponse.ok) {
+      throw new Error('Failed to fetch CSV report from PlayFab');
+    }
+    const csvData = await csvResponse.text();
+
+    res.header('Content-Type', 'text/csv');
+    res.send(csvData);
+  } catch (error) {
+    console.error('Error:', error);
+    res.status(500).json({
+      message: error.message,
+      stack: error.stack
+    });
+  }
+});
+
 // GET ALL PLAYERS
 // Gets all players and uploads resulting files to S3
 // executes asynchronously, so this will provide a response before the job completes
