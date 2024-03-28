@@ -23,7 +23,7 @@ async function fetchDevKPIReport() {
     
     await getPlayFab30DayReport();
     let mauPlayfabList = [];
-    const monthsToGoBack = 6;
+    const monthsToGoBack = 12;
     for (let i = 1; i <= monthsToGoBack; i++) {
         let date = new Date();
         date.setMonth(date.getMonth() - i);
