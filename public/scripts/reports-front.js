@@ -1,5 +1,6 @@
 import {getPlayerCountInSegment} from './segments.js';
 import {updateButtonText} from './utils.js';
+import {getPlayFab30DayReport, getPlayFabMonthlyTotalsReport} from './playfab_reporting/playfab-reports.js';
 
 document.addEventListener('DOMContentLoaded', async () => {
     document.getElementById('google-login-btn').addEventListener('click', GoogleLoginClicked);
@@ -12,55 +13,31 @@ export function GoogleLoginClicked(){
     window.location.href = '/google/google-login';
 }
 
-// function updateButtonText(button, text, maxTicks) {
-//     let tickCount = 0; 
-//     return function() {
-//         let dots = ".".repeat(tickCount % (maxTicks + 1));
-//         button.value = `${text}${dots}`;
-//         tickCount++;
-//     };
-// }
-
-// Utility function to parse CSV and map it to JSON objects with camelCase property names
-function parseCSV(csvText) {
-    const lines = csvText.trim().split('\n');
-    const keys = lines[0].split(',').map(key => 
-      key.trim().replace(/\s+/g, '_') // Replace spaces with underscores
-    );
-  
-    return lines.slice(1).map(line => {
-      const values = line.split(',');
-      return keys.reduce((object, key, index) => {
-        object[key] = values[index].trim();
-        return object;
-      }, {});
-    });
-  }
-  
-function getCohortDate() {
-    // Get the current date
-    const today = new Date();
-  
-    // Set the time to the beginning of the day
-    today.setHours(0, 0, 0, 0);
-  
-    // Subtract 31 days from the current date
-    const cohortDate = new Date(today.setDate(today.getDate() - 31));
-  
-    // Return the date as a string in the desired format
-    const year = cohortDate.getFullYear();
-    const month = String(cohortDate.getMonth() + 1).padStart(2, '0'); // Months are 0-indexed, add 1
-    const day = String(cohortDate.getDate()).padStart(2, '0');
-    let output = `${year}-${month}-${day}T00:00:00.0000000`;
-    console.log(output);
-    return output;
-  }
 // KPI REPORT
 let fetchingKPIReport = false;
 async function fetchDevKPIReport() {
     if (fetchingKPIReport) {
         console.log("in progress");
         return;
+    }
+    
+    await getPlayFab30DayReport();
+    let mauPlayfabList = [];
+    const monthsToGoBack = 6;
+    for (let i = 1; i <= monthsToGoBack; i++) {
+        let date = new Date();
+        date.setMonth(date.getMonth() - i);
+        const month = date.getMonth() + 1;
+        const year = date.getFullYear();
+
+        let playFabMAU = await getPlayFabMonthlyTotalsReport(month, year);
+        mauPlayfabList.push(`Month ${month}/${year}: ${playFabMAU}`);
+    }
+
+    let table = document.getElementById('reportTable');
+    let dataCell = table.querySelector("#MAUPlayfab");
+    if (dataCell) {
+        dataCell.innerHTML = mauPlayfabList.join('<br>');
     }
 
     fetchingKPIReport = true;
@@ -71,28 +48,6 @@ async function fetchDevKPIReport() {
     const tickInterval = setInterval(tickUpdater, 500);
 
     try {
-        const playFabResponse = await fetch('/get-playfab-report', {
-            method: 'POST'
-        });
-        if (!playFabResponse.ok) {
-            throw new Error(`PlayFab Response was not ok: ${playFabResponse.statusText}`);
-        }
-
-        const csvText = await playFabResponse.text();
-        const data = parseCSV(csvText);
-        // is it always 31 / 32 days behind today? check on PlayFab
-        const cohortDate = getCohortDate();
-        const filteredAndSortedData = data
-            .filter(row => row.Cohort.startsWith(cohortDate))
-            .sort((a, b) => parseInt(a['Days_Later']) - parseInt(b['Days_Later']));
-        console.log('Filtered and Sorted Data:', filteredAndSortedData);
-
-        let table = document.getElementById('reportTable');
-        let dataCell = table.querySelector("#userRetentionPlayfab");
-        if (dataCell) dataCell.innerText = `Day 1: ${filteredAndSortedData[1].Percent_Retained}%
-        Day 2: ${filteredAndSortedData[2].Percent_Retained}%
-        Day 30: ${filteredAndSortedData[30].Percent_Retained}%`;
-
         // Handling for the Google KPI report remains unchanged
         const googleKPIResponse = await fetch('/google/get-kpi-report');
         if (!googleKPIResponse.ok) {

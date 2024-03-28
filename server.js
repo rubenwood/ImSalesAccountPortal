@@ -374,18 +374,15 @@ app.post('/get-segment-players/:segmentID', async (req, res) => {
 // GET PLAYFAB DATA REPORT
 app.post('/get-playfab-report', async (req, res) => {
   try {
-    const today = new Date();
-    const yesterday = new Date(today.setDate(today.getDate() - 1));
-    const day = yesterday.getDate();
-    const month = yesterday.getMonth() + 1; // JavaScript months are 0-indexed
-    const year = yesterday.getFullYear();
-    
+    // Use the provided day, month, and year from the request body
+    const { day, month, year, ReportName: reportName } = req.body;
+
     const playFabResponse = await axios.post(
       `https://${process.env.PLAYFAB_TITLE_ID}.playfabapi.com/Admin/GetDataReport`, {
         Day: day,
         Month: month,
         Year: year,
-        ReportName: 'Thirty Day Retention Report'
+        ReportName: reportName // Use the report name from the request body
       }, {
         headers: {
           'X-SecretKey': process.env.PLAYFAB_SECRET_KEY
