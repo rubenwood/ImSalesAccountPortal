@@ -3,12 +3,6 @@ import {formatTime} from './utils.js';
 
 export function showLessonInsights(reportData){
     let lessonStats = getLessonStats(reportData);
-    //let totalLessonsAttempted = getTotalLessonsAttempted(reportData);
-    //let totalLessonsCompleted
-    //console.log(totalLessonsAttempted);
-
-    // average lesson play time
-    // total lesson play time
 
     let content = "";
     content += setupTabsHTML();

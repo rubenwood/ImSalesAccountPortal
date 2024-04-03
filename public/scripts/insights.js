@@ -315,7 +315,6 @@ export function findHighestPlayTimeActivities(reportData, start, end, activityTy
 }
 export function generateHighestPlayTimeHTML(mostPlayedActivities, start){
     let output = "";
-    console.log(mostPlayedActivities)
     mostPlayedActivities.forEach((activity, index) => {
         output += `${start + index}. ID: ${activity.id}, Title: ${activity.title}, Total Play Time: ${formatTime(Math.round(activity.totalTime))}<br/>`;
     });
