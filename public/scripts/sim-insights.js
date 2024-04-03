@@ -2,7 +2,6 @@ import {setupInsightTabs, setupTabsHTML, findMostPlayedActivities, generateMostP
 import {formatTime} from './utils.js';
 
 export function showSimInsights(reportData){
-    console.log(reportData);
     let simStats = getSimStats(reportData);
 
     let content = "";
@@ -18,7 +17,6 @@ export function showSimInsights(reportData){
     let mostPlayedHTML = generateMostPlayedHTML(simStats.mostPlayedSims, 1);
     content += mostPlayedHTML;
     content += "<h2>Average Scores per Simulation</h2>";
-    console.log(simStats);
     let averageScoresHTML = generateAverageScoredHTML(simStats.averageScores);
     content += averageScoresHTML;
 
