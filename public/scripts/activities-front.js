@@ -120,4 +120,6 @@ function showModal(users) {
 
 export function inspectClicked(PlayerDataJSON){
     console.log(PlayerDataJSON.PlayFabId + " Inspect clicked");
+    console.log(PlayerDataJSON);
+    let playerData = PlayerDataJSON.Data.PlayerData;
 }

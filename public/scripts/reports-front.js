@@ -20,7 +20,15 @@ async function fetchDevKPIReport() {
         console.log("in progress");
         return;
     }
-    
+
+    fetchingKPIReport = true;
+    // Loading animation on button
+    const button = document.getElementById('get-google-report-btn');
+    const tickUpdater = updateButtonText(button, "Getting Dev KPIs", 3);
+    tickUpdater();
+    const tickInterval = setInterval(tickUpdater, 500);
+
+    // Get 30 day report from playfab and display
     await getPlayFab30DayReport();
     let mauPlayfabList = [];
     const monthsToGoBack = 12;
@@ -39,13 +47,6 @@ async function fetchDevKPIReport() {
     if (dataCell) {
         dataCell.innerHTML = mauPlayfabList.join('<br>');
     }
-
-    fetchingKPIReport = true;
-    // Loading animation on button
-    const button = document.getElementById('get-google-report-btn');
-    const tickUpdater = updateButtonText(button, "Getting Dev KPIs", 3);
-    tickUpdater();
-    const tickInterval = setInterval(tickUpdater, 500);
 
     try {
         // Handling for the Google KPI report remains unchanged

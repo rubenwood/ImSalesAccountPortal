@@ -1,4 +1,5 @@
 import {setupInsightTabs, setupTabsHTML} from './insights.js';
+import {formatTime} from './utils.js';
 
 export function showSimInsights(reportData){
     let simsStats = getTotalSimsAttempted(reportData);
@@ -10,7 +11,9 @@ export function showSimInsights(reportData){
 
     let content = "";
     content += setupTabsHTML();
-    content += "<h2>Simulation insights</h2>";
+    content += "<h2>Simulation Insights</h2>";
+    content += "<h2>Total Simulations Play Time</h2>";
+    content += formatTime(simsStats.totalSimPlayTime);
     content += "<h2>Total Simulations Attempted</h2>";
     content += simsStats.totalSimsAttempted;
     content += "<h2>Total Simulation Plays</h2>";
@@ -24,6 +27,7 @@ export function showSimInsights(reportData){
 
 function getTotalSimsAttempted(reportData){
     let output = {
+        totalSimPlayTime:0,
         totalSimsAttempted:0,
         totalSimPlays:0,
         totalSimsCompleted:0
@@ -33,9 +37,11 @@ function getTotalSimsAttempted(reportData){
         if (data.activityData && Array.isArray(data.activityData)) {
             data.activityData.forEach(activity => {
                 if(activity.activityID.includes("_prac")){ 
+                    activity.plays.forEach(play =>{
+                        output.totalSimPlayTime += Math.round(Math.abs(play.sessionTime));
+                    });
                     output.totalSimsAttempted++;
                     output.totalSimPlays += activity.playCount;
-
                 }
             });
         }

@@ -397,20 +397,22 @@ function populateUseageData(playerData, loginData, state, row){
         let totalSessionTime = 0;
         let bestScore = 0;
         state.totalPlays += activity.plays.length;
+        
         activity.plays.forEach(play => {
             totalSessionTime += Math.round(Math.abs(play.sessionTime));
-            state.totalPlayTime += totalSessionTime;
             if(play.normalisedScore > bestScore){
                 bestScore = Math.round(play.normalisedScore * 100);
             }
         });
+        state.totalPlayTime += totalSessionTime;
+
         activityContent += `<tr><td><b>Total Session Length</b></td><td>${formatTime(totalSessionTime)}</td></tr><br />`;
         activityContent += `<tr><td><b>Best Score</b></td><td>${bestScore} %</td></tr><br />`;
         activityContent += "</table>";
         playerDataContent += activityContent;
 
         // add the unformatted data for the report
-        let userActivityData = {                             
+        let userActivityData = {
             activityID:activity.activityID,
             activityTitle: activity.activityTitle,
             plays:activity.plays,

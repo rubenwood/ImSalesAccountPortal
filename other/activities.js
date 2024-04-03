@@ -6,6 +6,7 @@ const activitiesRouter = express.Router();
 const { getTotalRowCount } = require('../database/database');
 
 // Modified route that takes in an array of query param get-activity-report-id?activities=activity_id1,activity_id2
+// dentalID_prac,instrumentID_prac
 activitiesRouter.get('/get-activity-report-id', async (req, res) => {
     console.log("called");
 
@@ -14,7 +15,7 @@ activitiesRouter.get('/get-activity-report-id', async (req, res) => {
         const config = { headers: { 'x-secret-key': process.env.SERVER_SEC } };
         const chunkSize = 10000;
         let totalErrors = 0;
-        let allPlayersWithActivity = [];
+        let allPlayersWithActivity = new Map(activityIds.map(id => [id, new Set()]));
 
         async function processChunk(startRow) {
             try {
@@ -22,7 +23,7 @@ activitiesRouter.get('/get-activity-report-id', async (req, res) => {
                 `?start=${startRow}&end=${startRow + chunkSize - 1}`;
                 const response = await axios.get(url, config);
                 const respDataRows = response.data;
-                let playersWithActivity = [];
+
                 let errorAmount = 0;
 
                 for (const row of respDataRows) {
@@ -31,19 +32,21 @@ activitiesRouter.get('/get-activity-report-id', async (req, res) => {
                         if (playerData) {
                             let playerDataToJson = JSON.parse(playerData.Value);
                             let playerActivities = playerDataToJson.activities;
-                            const playerActivityIds = playerActivities.map(activity => activity.activityID);
-                            const hasMatchingActivity = playerActivityIds.some(activityId => activityIds.includes(activityId));
-                            if (hasMatchingActivity) { playersWithActivity.push(row); }
+                            playerActivities.forEach(activity => {
+                                if (activityIds.includes(activity.activityID)) {
+                                    allPlayersWithActivity.get(activity.activityID).add(row);
+                                }
+                            });
                         }
                     } catch (error) {
                         errorAmount++;
                         console.error('Error processing player data:', error);
                     }
                 }
-                return { playersWithActivity, errorAmount };
+                return { errorAmount };
             } catch (error) {
                 console.error('Error processing chunk:', error.message);
-                return { playersWithActivity: [], errorAmount: 1 }; // Assuming 1 error if chunk processing fails
+                return { errorAmount: 1 }; // Assuming 1 error if chunk processing fails
             }
         }
 
@@ -61,27 +64,24 @@ activitiesRouter.get('/get-activity-report-id', async (req, res) => {
         // Process all chunks concurrently
         console.log("processing....");
         const results = await Promise.all(chunkPromises);
-        results.forEach(({ playersWithActivity, errorAmount }) => {
-            allPlayersWithActivity = allPlayersWithActivity.concat(playersWithActivity); // this only works for 1 activity?
+        results.forEach(({ errorAmount }) => {
             totalErrors += errorAmount;
         });
 
-        console.log(`Processed ${totalChunks} chunks (chunk size: ${chunkSize} rows) with ${totalErrors} errors.
-        \nTotal users who played ${activityIds} = ${allPlayersWithActivity.length} (of ${totalRows})`);
-
         let outputList = [];
-        for(const activityId of activityIds){
-            // can get the activity title like this too
-            let totalPlays = calcTotalPlaysPerActivity(allPlayersWithActivity, activityId);
+        allPlayersWithActivity.forEach((players, activityId) => {
+            let totalPlays = calcTotalPlaysPerActivity(Array.from(players), activityId);
             let output = {
-                activityID:activityId,
-                activityName:activityId,
-                uniquePlays:allPlayersWithActivity.length,
-                plays:totalPlays,
-                users:allPlayersWithActivity
+                activityID: activityId,
+                activityName: activityId,// TODO: get activity title
+                uniquePlays: players.size,
+                plays: totalPlays,
+                users: Array.from(players)
             }
             outputList.push(output);
-        }
+        });
+
+        console.log(`Processed ${totalChunks} chunks (chunk size: ${chunkSize} rows) with ${totalErrors} errors.`);
 
         res.json(outputList);
     } catch (error) {

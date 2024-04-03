@@ -1,7 +1,7 @@
 import {setupInsightTabs, setupTabsHTML} from './insights.js';
+import {formatTime} from './utils.js';
 
 export function showLessonInsights(reportData){
-    console.log(reportData);
     let lessonStats = getLessonStats(reportData);
     //let totalLessonsAttempted = getTotalLessonsAttempted(reportData);
     //let totalLessonsCompleted
@@ -12,7 +12,9 @@ export function showLessonInsights(reportData){
 
     let content = "";
     content += setupTabsHTML();
-    content += "<h2>Lessons insights</h2>";
+    content += "<h2>Lessons Insights</h2>";
+    content += "<h2>Total Lessons Play Time</h2>";
+    content += formatTime(lessonStats.totalLessonPlayTime);
     content += "<h2>Total Lessons Attempted</h2>";
     content += lessonStats.totalLessonsAttempted;
     content += "<h2>Total Lesson Plays</h2>";
@@ -28,16 +30,22 @@ export function showLessonInsights(reportData){
 
 function getLessonStats(reportData){
     let output = {
+        totalLessonPlayTime:0,
         totalLessonsAttempted:0,
         totalLessonPlays:0,
         totalLessonsCompleted:0
     };
+    
     reportData.forEach(data => {
         // Ensure the player has valid activity data
         if (data.activityData && Array.isArray(data.activityData)) {
             data.activityData.forEach(activity => {
                 if(activity.activityID.includes("_lesson")){ 
-                    output.totalLessonsAttempted++;
+                    activity.plays.forEach(play =>{
+                        output.totalLessonPlayTime += Math.round(Math.abs(play.sessionTime));
+                    });
+                    
+                    output.totalLessonsAttempted++
                     output.totalLessonPlays += activity.playCount;
                     if(activity.bestScore >= 100){
                         output.totalLessonsCompleted++;
