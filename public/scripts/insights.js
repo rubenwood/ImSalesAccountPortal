@@ -237,7 +237,6 @@ export function findMostPlayedActivities(reportData, start, end, activityType = 
         // Ensure the player has valid activity data
         if (data.activityData && Array.isArray(data.activityData)) {
             data.activityData.forEach(activity => {
-                // If activityType is provided, only include activities of that type
                 if (activityType === null || activity.activityID.includes(activityType)) {
                     const activityKey = activity.activityID + ' - ' + activity.activityTitle;
                     if (activityCounts[activityKey]) {
@@ -280,24 +279,26 @@ function findMostPlayedActivitiesHTML(reportData, start, end) {
     return output;
 }
 
-export function findHighestPlayTimeActivities(reportData, start, end) {
+export function findHighestPlayTimeActivities(reportData, start, end, activityType = null) {
     let activityPlayTimeTotals = {};
 
     reportData.forEach(data => {
         if (data.activityData && Array.isArray(data.activityData)) {
             data.activityData.forEach(activity => {
-                let activityKey = activity.activityID + ' - ' + activity.activityTitle;
-                activity.plays.forEach(play => {
-                    if (activityPlayTimeTotals[activityKey]) {
-                        activityPlayTimeTotals[activityKey].totalTime += play.sessionTime;
-                    } else {
-                        activityPlayTimeTotals[activityKey] = {
-                            id: activity.activityID,
-                            title: activity.activityTitle,
-                            totalTime: play.sessionTime
-                        };
-                    }
-                });
+                if (activityType === null || activity.activityID.includes(activityType)) {
+                    let activityKey = activity.activityID + ' - ' + activity.activityTitle;
+                    activity.plays.forEach(play => {
+                        if (activityPlayTimeTotals[activityKey]) {
+                            activityPlayTimeTotals[activityKey].totalTime += play.sessionTime;
+                        } else {
+                            activityPlayTimeTotals[activityKey] = {
+                                id: activity.activityID,
+                                title: activity.activityTitle,
+                                totalTime: play.sessionTime
+                            };
+                        }
+                    });
+                }
             });
         }
     });
@@ -312,15 +313,18 @@ export function findHighestPlayTimeActivities(reportData, start, end) {
     const highestPlayTimeActivities = sortedActivitiesByTime.slice(start, end);
     return highestPlayTimeActivities;
 }
+export function generateHighestPlayTimeHTML(mostPlayedActivities, start){
+    let output = "";
+    console.log(mostPlayedActivities)
+    mostPlayedActivities.forEach((activity, index) => {
+        output += `${start + index}. ID: ${activity.id}, Title: ${activity.title}, Total Play Time: ${formatTime(Math.round(activity.totalTime))}<br/>`;
+    });
+    return output;
+}
 function findHighestPlayTimeActivitiesHTML(reportData, start, end){
     let mostPlayedActivities = findHighestPlayTimeActivities(reportData, start, end);
     let output = '<h2>Most Played Activities (Play Time)</h2><br/>';
-
-    mostPlayedActivities.forEach((activity, index) => {
-        //console.log(activity);
-        output += `${start + index}. ID: ${activity.id}, Title: ${activity.title}, Total Play Time: ${formatTime(Math.round(activity.totalTime))}<br/>`;
-    });
-
+    output += generateHighestPlayTimeHTML(mostPlayedActivities, start);
     return output;
 }
 

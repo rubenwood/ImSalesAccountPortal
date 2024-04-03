@@ -1,4 +1,4 @@
-import {setupInsightTabs, setupTabsHTML, findMostPlayedActivities, generateMostPlayedHTML} from './insights.js';
+import {setupInsightTabs, setupTabsHTML, findMostPlayedActivities, generateMostPlayedHTML, findHighestPlayTimeActivities, generateHighestPlayTimeHTML} from './insights.js';
 import {formatTime} from './utils.js';
 
 export function showSimInsights(reportData){
@@ -16,6 +16,9 @@ export function showSimInsights(reportData){
     content += "<h2>Most Played Simulations</h2>";
     let mostPlayedHTML = generateMostPlayedHTML(simStats.mostPlayedSims, 1);
     content += mostPlayedHTML;
+    content += "<h2>Most Played Simulations (Play Time)</h2>";
+    let highestPlayTimeHTML = generateHighestPlayTimeHTML(simStats.highestPlayTimeSims, 1);
+    content += highestPlayTimeHTML;
     content += "<h2>Average Scores per Simulation</h2>";
     let averageScoresHTML = generateAverageScoredHTML(simStats.averageScores);
     content += averageScoresHTML;
@@ -33,6 +36,7 @@ function getSimStats(reportData){
         totalSimPlays:0,
         totalSimsCompleted:0,
         mostPlayedSims:[],
+        highestPlayTimeSims:[],
         averageScores:[]
     };
     reportData.forEach(data => {
@@ -50,6 +54,7 @@ function getSimStats(reportData){
     });
 
     output.mostPlayedSims = findMostPlayedActivities(reportData, 1, 10, '_prac');
+    output.highestPlayTimeSims = findHighestPlayTimeActivities(reportData, 1, 10, '_prac');
     output.averageScores = calculateAverageScores(reportData);
 
     return output;

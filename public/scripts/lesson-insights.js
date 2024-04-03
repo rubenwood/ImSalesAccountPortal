@@ -1,4 +1,4 @@
-import {setupInsightTabs, setupTabsHTML, findMostPlayedActivities, generateMostPlayedHTML} from './insights.js';
+import {setupInsightTabs, setupTabsHTML, findMostPlayedActivities, generateMostPlayedHTML, findHighestPlayTimeActivities, generateHighestPlayTimeHTML} from './insights.js';
 import {formatTime} from './utils.js';
 
 export function showLessonInsights(reportData){
@@ -24,6 +24,9 @@ export function showLessonInsights(reportData){
     content += "<h2>Most Played Lessons</h2>";
     let mostPlayedHTML = generateMostPlayedHTML(lessonStats.mostPlayedLessons, 1);
     content += mostPlayedHTML;
+    content += "<h2>Most Played Lessons (Play Time)</h2>";
+    let highestPlayTimeHTML = generateHighestPlayTimeHTML(lessonStats.highestPlayTimeLessons, 1);
+    content += highestPlayTimeHTML;
 
     document.getElementById('insightsContent').innerHTML = content;
     document.getElementById('insightsModal').style.display = 'block';
@@ -37,7 +40,8 @@ function getLessonStats(reportData){
         totalLessonsAttempted:0,
         totalLessonPlays:0,
         totalLessonsCompleted:0,
-        mostPlayedLessons:[]
+        mostPlayedLessons:[],
+        highestPlayTimeLessons:[]
     };
 
     reportData.forEach(data => {
@@ -60,6 +64,7 @@ function getLessonStats(reportData){
     });
 
     output.mostPlayedLessons = findMostPlayedActivities(reportData, 1, 10, '_lesson');
+    output.highestPlayTimeLessons = findHighestPlayTimeActivities(reportData, 1, 10, '_lesson');
 
     return output;
 }
