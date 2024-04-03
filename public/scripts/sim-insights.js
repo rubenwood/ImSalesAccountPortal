@@ -1,23 +1,26 @@
-import {setupInsightTabs, setupTabsHTML} from './insights.js';
+import {setupInsightTabs, setupTabsHTML, findMostPlayedActivities, generateMostPlayedHTML} from './insights.js';
 import {formatTime} from './utils.js';
 
 export function showSimInsights(reportData){
-    let simsStats = getTotalSimsAttempted(reportData);
-    //let totalSimsCompleted
-
-    // average sim play time
-    // total sim play time
-    // average sim score
+    console.log(reportData);
+    let simStats = getSimStats(reportData);
 
     let content = "";
     content += setupTabsHTML();
     content += "<h2>Simulation Insights</h2>";
     content += "<h2>Total Simulations Play Time</h2>";
-    content += formatTime(simsStats.totalSimPlayTime);
+    content += formatTime(simStats.totalSimPlayTime);
     content += "<h2>Total Simulations Attempted</h2>";
-    content += simsStats.totalSimsAttempted;
+    content += simStats.totalSimsAttempted;
     content += "<h2>Total Simulation Plays</h2>";
-    content += simsStats.totalSimPlays;
+    content += simStats.totalSimPlays;
+    content += "<h2>Most Played Simulations</h2>";
+    let mostPlayedHTML = generateMostPlayedHTML(simStats.mostPlayedSims, 1);
+    content += mostPlayedHTML;
+    content += "<h2>Average Scores per Simulation</h2>";
+    console.log(simStats);
+    let averageScoresHTML = generateAverageScoredHTML(simStats.averageScores);
+    content += averageScoresHTML;
 
     document.getElementById('insightsContent').innerHTML = content;
     document.getElementById('insightsModal').style.display = 'block';
@@ -25,18 +28,19 @@ export function showSimInsights(reportData){
     setupInsightTabs(reportData);
 }
 
-function getTotalSimsAttempted(reportData){
+function getSimStats(reportData){
     let output = {
         totalSimPlayTime:0,
         totalSimsAttempted:0,
         totalSimPlays:0,
-        totalSimsCompleted:0
+        totalSimsCompleted:0,
+        mostPlayedSims:[],
+        averageScores:[]
     };
     reportData.forEach(data => {
-        // Ensure the player has valid activity data
         if (data.activityData && Array.isArray(data.activityData)) {
             data.activityData.forEach(activity => {
-                if(activity.activityID.includes("_prac")){ 
+                if(activity.activityID.includes('_prac')){ 
                     activity.plays.forEach(play =>{
                         output.totalSimPlayTime += Math.round(Math.abs(play.sessionTime));
                     });
@@ -47,5 +51,56 @@ function getTotalSimsAttempted(reportData){
         }
     });
 
+    output.mostPlayedSims = findMostPlayedActivities(reportData, 1, 10, '_prac');
+    output.averageScores = calculateAverageScores(reportData);
+
+    return output;
+}
+
+function calculateAverageScores(reportData) {
+    let scoreSum = {};
+    let playCount = {};
+    let activityTitles = {};
+
+    reportData.forEach(data => {
+        if (data.activityData && Array.isArray(data.activityData)) {
+            data.activityData.forEach(activity => {
+                if(activity.activityID.includes('_prac')){ 
+                    if (!(activity.activityID in scoreSum)) {
+                        scoreSum[activity.activityID] = 0;
+                        playCount[activity.activityID] = 0;
+                        activityTitles[activity.activityID] = activity.activityTitle;
+                    }
+
+                    activity.plays.forEach(play => {
+                        if ('normalisedScore' in play) {
+                            scoreSum[activity.activityID] += play.normalisedScore;
+                            playCount[activity.activityID]++;
+                        }
+                    });
+                }
+            });
+        }
+    });
+
+    // Transform the accumulated data into an array of objects
+    let averageScoresArray = Object.keys(scoreSum).map(activityID => ({
+        id: activityID,
+        activityTitle: activityTitles[activityID],
+        averageScore: playCount[activityID] > 0 ? scoreSum[activityID] / playCount[activityID] : 0,
+    }));
+
+    // Sort the array from highest average score to lowest
+    averageScoresArray.sort((a, b) => b.averageScore - a.averageScore);
+
+    return averageScoresArray;
+}
+
+function generateAverageScoredHTML(averageScores){
+    let output = "";
+    averageScores.forEach((activity, index) => {
+        let scoreAsPercentage = activity.averageScore * 100;
+        output += `${index + 1}. ID: ${activity.id}, Title: ${activity.activityTitle}, Average Score: ${Math.round(scoreAsPercentage)}%<br/>`;
+    });
     return output;
 }

@@ -230,13 +230,15 @@ function findPlayersWithMostUniqueActivitiesPlayedHTML(reportData, start, end) {
 }
 
 // Get most played activity & Get least played activity
-export function findMostPlayedActivities(reportData, start, end) {
+export function findMostPlayedActivities(reportData, start, end, activityType = null) {
     let activityCounts = {};
 
     reportData.forEach(data => {
         // Ensure the player has valid activity data
         if (data.activityData && Array.isArray(data.activityData)) {
-                data.activityData.forEach(activity => {
+            data.activityData.forEach(activity => {
+                // If activityType is provided, only include activities of that type
+                if (activityType === null || activity.activityID.includes(activityType)) {
                     const activityKey = activity.activityID + ' - ' + activity.activityTitle;
                     if (activityCounts[activityKey]) {
                         activityCounts[activityKey].count += activity.playCount;
@@ -244,9 +246,11 @@ export function findMostPlayedActivities(reportData, start, end) {
                         activityCounts[activityKey] = {
                             id: activity.activityID,
                             title: activity.activityTitle,
+                            type: activity.activityType, // Assuming each activity has a type attribute
                             count: activity.playCount
                         };
                     }
+                }
             });
         }
     });
@@ -261,15 +265,18 @@ export function findMostPlayedActivities(reportData, start, end) {
     const mostPlayedActivities = sortedActivities.slice(start, end);
     return mostPlayedActivities;
 }
-function findMostPlayedActivitiesHTML(reportData, start, end) {
-    let mostPlayedActivities = findMostPlayedActivities(reportData, start, end);
-    let output = '<h2>Most Played Activities</h2><br/>';
-
-    // Format the result for display
+export function generateMostPlayedHTML(mostPlayedActivities, start){
+    let output = "";
     mostPlayedActivities.forEach((activity, index) => {
         output += `${start + index}. ID: ${activity.id}, Title: ${activity.title}, Total Times Played: ${activity.count}<br/>`;
     });
-
+    return output;
+}
+function findMostPlayedActivitiesHTML(reportData, start, end) {
+    let mostPlayedActivities = findMostPlayedActivities(reportData, start, end);
+    let output = '<h2>Most Played Activities</h2><br/>';
+    // Format the result for display
+    output += generateMostPlayedHTML(mostPlayedActivities, start);
     return output;
 }
 

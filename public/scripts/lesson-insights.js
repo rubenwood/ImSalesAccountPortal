@@ -1,4 +1,4 @@
-import {setupInsightTabs, setupTabsHTML} from './insights.js';
+import {setupInsightTabs, setupTabsHTML, findMostPlayedActivities, generateMostPlayedHTML} from './insights.js';
 import {formatTime} from './utils.js';
 
 export function showLessonInsights(reportData){
@@ -21,6 +21,9 @@ export function showLessonInsights(reportData){
     content += lessonStats.totalLessonPlays;
     content += "<h2>Total Lessons Completed</h2>";
     content += lessonStats.totalLessonsCompleted;
+    content += "<h2>Most Played Lessons</h2>";
+    let mostPlayedHTML = generateMostPlayedHTML(lessonStats.mostPlayedLessons, 1);
+    content += mostPlayedHTML;
 
     document.getElementById('insightsContent').innerHTML = content;
     document.getElementById('insightsModal').style.display = 'block';
@@ -33,14 +36,15 @@ function getLessonStats(reportData){
         totalLessonPlayTime:0,
         totalLessonsAttempted:0,
         totalLessonPlays:0,
-        totalLessonsCompleted:0
+        totalLessonsCompleted:0,
+        mostPlayedLessons:[]
     };
-    
+
     reportData.forEach(data => {
         // Ensure the player has valid activity data
         if (data.activityData && Array.isArray(data.activityData)) {
             data.activityData.forEach(activity => {
-                if(activity.activityID.includes("_lesson")){ 
+                if(activity.activityID.includes('_lesson')){ 
                     activity.plays.forEach(play =>{
                         output.totalLessonPlayTime += Math.round(Math.abs(play.sessionTime));
                     });
@@ -54,6 +58,8 @@ function getLessonStats(reportData){
             });
         }
     });
+
+    output.mostPlayedLessons = findMostPlayedActivities(reportData, 1, 10, '_lesson');
 
     return output;
 }
