@@ -67,6 +67,8 @@ async function fetchDevKPIReport() {
         clearInterval(tickInterval);
         button.value = "Get Dev KPI report";
         fetchingKPIReport = false;
+
+        doConfetti();
     }
 }
 
@@ -267,6 +269,8 @@ async function fetchSubReport() {
         clearInterval(tickInterval); // Stop the ticking animation
         button.value = "Get Sub report";
         fetchingSubReport = false;
+
+        doConfetti();
     }
 }
 // B2B REPORT
@@ -281,7 +285,7 @@ async function fetchB2BReport(){
     tickUpdater();
     const tickInterval = setInterval(tickUpdater, 500);
 
-    try{
+    try {
         const [ b2bUsers ] = await Promise.all([
             fetchB2BUsersReport()
         ]);
@@ -290,17 +294,18 @@ async function fetchB2BReport(){
 
         let totalB2BUsersCell = table.querySelector("#totalB2BUsers");
         if(totalB2BUsersCell) totalB2BUsersCell.innerText = b2bUsers;
-    }catch(error){
+    } catch(error) {
         let errorMessage = error.message;
         if(error.response && error.response.data && error.response.data.error){
             errorMessage = error.response.data.error;
         }
         console.error('There has been a problem with the combined fetch operation:', error);
         document.getElementById('output-area').textContent = 'Error fetching data: ' + errorMessage;
-    }finally{
-        clearInterval(tickInterval); // Stop the ticking animation
+    } finally {
+        clearInterval(tickInterval);
         button.value = "Get B2B report";
         fetchingB2BReport = false;
+        doConfetti();
     }    
 }
 
@@ -352,4 +357,12 @@ function formatDecompressedData(decompressed) {
     let output = decompressed.split('\n');
     let formattedOutput = output.map(line => line.replace(/\t/g, ','));
     return formattedOutput;
+}
+
+function doConfetti(){
+    confetti({
+        particleCount: 100,
+        spread: 70,
+        origin: { y: 0.6 }
+    });
 }
