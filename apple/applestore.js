@@ -41,14 +41,13 @@ const generateToken = () => {
 router.get('/appletest', async (req, res) => {
     try {
         const jwtoken = generateToken();
-        console.log(jwtoken);
+        //console.log(jwtoken);
         let resp = await axios.get("https://api.appstoreconnect.apple.com/v1/apps", {
             headers: {
                 'Authorization': `Bearer ${jwtoken}`,
             }
         });
-        console.log("\n-------\n");
-        console.log("SUCCESS");
+        console.log("\n-------\nSUCCESS\n");
         console.log(resp.data);
         res.send(`you made it!<br/>${JSON.stringify(resp.data)}`);
     } catch (error) {
@@ -66,10 +65,9 @@ router.get('/get-sub-groups', async (req, res) => {
                 'Authorization': `Bearer ${jwtoken}`,
             }
         });
-        console.log("\n-------\n");
-        console.log("SUCCESS");
+        console.log("\n-------\nSUCCESS\n");
         let subGroups = resp.data.data;
-        console.log(subGroups);
+        //console.log(subGroups);
         subGroupIds = subGroups.map((subGroup) => subGroup.id);
         res.send(subGroupIds);
     } catch (error) {
@@ -92,8 +90,7 @@ router.get('/list-subs', async (req, res) => {
                 'Authorization': `Bearer ${jwtoken}`,
             }
         });
-        console.log("\n-------\n");
-        console.log("SUCCESS");
+        console.log("\n-------\nSUCCESS\n");
         console.log(resp.data);
         res.send(JSON.stringify(resp.data));
     } catch (error) {

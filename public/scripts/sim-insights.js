@@ -92,8 +92,7 @@ function calculateAverageScores(reportData) {
         activityTitle: activityTitles[activityID],
         averageScore: playCount[activityID] > 0 ? scoreSum[activityID] / playCount[activityID] : 0,
     }));
-
-    // Sort the array from highest average score to lowest
+    // sort array
     averageScoresArray.sort((a, b) => b.averageScore - a.averageScore);
 
     return averageScoresArray;
@@ -103,7 +102,7 @@ function generateAverageScoredHTML(averageScores){
     let output = "";
     averageScores.forEach((activity, index) => {
         let scoreAsPercentage = activity.averageScore * 100;
-        output += `${index + 1}. ID: ${activity.id}, Title: ${activity.activityTitle}, Average Score: ${Math.round(scoreAsPercentage)}%<br/>`;
+        output += `${index + 1}. <b>ID:</b> ${activity.id}, <b>Title:</b> ${activity.activityTitle}, <b>Average Score:</b> ${Math.round(scoreAsPercentage)}%<br/>`;
     });
     return output;
 }

@@ -245,7 +245,6 @@ export function findMostPlayedActivities(reportData, start, end, activityType = 
                         activityCounts[activityKey] = {
                             id: activity.activityID,
                             title: activity.activityTitle,
-                            type: activity.activityType, // Assuming each activity has a type attribute
                             count: activity.playCount
                         };
                     }
@@ -267,7 +266,7 @@ export function findMostPlayedActivities(reportData, start, end, activityType = 
 export function generateMostPlayedHTML(mostPlayedActivities, start){
     let output = "";
     mostPlayedActivities.forEach((activity, index) => {
-        output += `${start + index}. ID: ${activity.id}, Title: ${activity.title}, Total Times Played: ${activity.count}<br/>`;
+        output += `${start + index}. <b>ID:</b> ${activity.id}, <b>Title:</b> ${activity.title}, <b>Total Times Played:</b> ${activity.count}<br/>`;
     });
     return output;
 }
@@ -316,7 +315,7 @@ export function findHighestPlayTimeActivities(reportData, start, end, activityTy
 export function generateHighestPlayTimeHTML(mostPlayedActivities, start){
     let output = "";
     mostPlayedActivities.forEach((activity, index) => {
-        output += `${start + index}. ID: ${activity.id}, Title: ${activity.title}, Total Play Time: ${formatTime(Math.round(activity.totalTime))}<br/>`;
+        output += `${start + index}. <b><b>ID:</b></b> ${activity.id}, <b>Title:</b> ${activity.title}, <b>Total Play Time:</b> ${formatTime(Math.round(activity.totalTime))}<br/>`;
     });
     return output;
 }
