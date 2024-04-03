@@ -1,4 +1,3 @@
-//import {reportData} from './main.js';
 import {formatTime} from './utils.js';
 import {showLessonInsights} from './lesson-insights.js';
 import {showSimInsights} from './sim-insights.js';

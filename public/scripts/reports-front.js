@@ -22,43 +22,47 @@ async function fetchDevKPIReport() {
     }
 
     fetchingKPIReport = true;
-    // Loading animation on button
     const button = document.getElementById('get-google-report-btn');
     const tickUpdater = updateButtonText(button, "Getting Dev KPIs", 3);
     tickUpdater();
     const tickInterval = setInterval(tickUpdater, 500);
 
-    // Get 30 day report from playfab and display
-    await getPlayFab30DayReport();
-    let mauPlayfabList = [];
-    const monthsToGoBack = 12;
-    for (let i = 1; i <= monthsToGoBack; i++) {
-        let date = new Date();
-        date.setMonth(date.getMonth() - i);
-        const month = date.getMonth() + 1;
-        const year = date.getFullYear();
-
-        let playFabMAU = await getPlayFabMonthlyTotalsReport(month, year);
-        mauPlayfabList.push(`Month ${month}/${year}: ${playFabMAU}`);
-    }
-
-    let table = document.getElementById('reportTable');
-    let dataCell = table.querySelector("#MAUPlayfab");
-    if (dataCell) {
-        dataCell.innerHTML = mauPlayfabList.join('<br>');
-    }
-
     try {
-        // Handling for the Google KPI report remains unchanged
-        const googleKPIResponse = await fetch('/google/get-kpi-report');
-        if (!googleKPIResponse.ok) {
-            console.log(googleKPIResponse);
-            if (googleKPIResponse.status === 401) {
-                throw new Error('Not logged in');
+        // Get the PlayFab and Google KPI reports concurrently
+        const monthsToGoBack = 12;
+        const playFabPromises = Array.from({ length: monthsToGoBack }, (_, i) => {
+            const date = new Date();
+            date.setMonth(date.getMonth() - (i + 1));
+            const month = date.getMonth() + 1;
+            const year = date.getFullYear();
+            return getPlayFabMonthlyTotalsReport(month, year).then(playFabMAU => `Month ${month}/${year}: ${playFabMAU}`);
+        });
+
+        const googleKPIPromise = fetch('/google/get-kpi-report').then(async response => {
+            if (!response.ok) {
+                console.log(response);
+                if (response.status === 401) {
+                    throw new Error('Not logged in');
+                }
+                throw new Error(`Google KPI Response was not ok: ${response.statusText}`);
             }
-            throw new Error(`Google KPI Response was not ok: ${googleKPIResponse.statusText}`);
+            return response.json();
+        });
+
+        // Use Promise.all to wait for all the promises to resolve
+        const [mauPlayfabList, googleKPIReport] = await Promise.all([
+            Promise.all(playFabPromises),
+            googleKPIPromise
+        ]);
+
+        // Update the PlayFab report table
+        let table = document.getElementById('reportTable');
+        let dataCell = table.querySelector("#MAUPlayfab");
+        if (dataCell) {
+            dataCell.innerHTML = mauPlayfabList.join('<br>');
         }
-        const googleKPIReport = await googleKPIResponse.json();
+
+        // Setup the Google KPI report table
         setupReportTable(googleKPIReport);
     } catch (error) {
         console.error('There has been a problem with your fetch operation:', error);
@@ -67,7 +71,6 @@ async function fetchDevKPIReport() {
         clearInterval(tickInterval);
         button.value = "Get Dev KPI report";
         fetchingKPIReport = false;
-
         doConfetti();
     }
 }
@@ -89,23 +92,23 @@ function setupReportTable(jsonInput){
         if (dataCell) dataCell.innerText = `Day 1: ${day1Perc}%\nDay 2: ${day2Perc}%\nDay1-2 drop off: ${day1DropOff}%\nDay 30: ${day30Perc}%`;
     }
 
-    if (jsonInput.userRetention30Day) { // done (30 Day Retention)
+    if (jsonInput.userRetention30Day) { // (30 Day Retention)
         let dataCell = table.querySelector("#userRetention30Days");
         if (dataCell) dataCell.innerText = jsonInput.userRetention30Day;
     }
 
-    if (jsonInput.newUsersPerWeek) { // done (New Users Per Week)
+    if (jsonInput.newUsersPerWeek) { // (New Users Per Week)
         let dataCell = table.querySelector("#newUsersPerWeek");
         if (dataCell) dataCell.innerText = jsonInput.newUsersPerWeek;
     }
 
-    if (jsonInput.returningUsersPerWeek) { // done (Returning Users Per Week DAU)
+    if (jsonInput.returningUsersPerWeek) { // (Returning Users Per Week DAU)
         let returningValue = calcReturning(jsonInput.returningUsersPerWeek);
         let dataCell = table.querySelector("#returningUsersPerWeek");
         if (dataCell) dataCell.innerText = returningValue;
     }
 
-    if (jsonInput.activeUsersPerMonth) { // done (MAU)
+    if (jsonInput.activeUsersPerMonth) { // (MAU)
         let dataCell = table.querySelector("#MAU");
         // last months MAU
         let thisMonthMAU = jsonInput.activeUsersPerMonth[jsonInput.activeUsersPerMonth.length-1];
@@ -113,19 +116,19 @@ function setupReportTable(jsonInput){
         if (dataCell){ dataCell.innerText = JSON.stringify(lastMonthMAU) + "\n" + JSON.stringify(thisMonthMAU); }
     }
 
-    if (jsonInput.averageActiveUsageTime) { // done (Active User Useage Time)
+    if (jsonInput.averageActiveUsageTime) { // (Active User Useage Time)
         let dataCell = table.querySelector("#averageActiveUsageTime");
         let averageUsageTime = calcAverageUsageTime(jsonInput.averageActiveUsageTime);
         if (dataCell) dataCell.innerText = averageUsageTime.toFixed(2);
     }
 
-    if (jsonInput.sessionsPerUserPerWeek) { // done (Total Sessions Per Active User)
+    if (jsonInput.sessionsPerUserPerWeek) { // (Total Sessions Per Active User)
         let dataCell = table.querySelector("#sessionsPerUserPerWeek");
         let sessionsPerUserPerWeek = parseFloat(jsonInput.sessionsPerUserPerWeek);
         if (dataCell) dataCell.innerText = sessionsPerUserPerWeek.toFixed(2);
     }
 
-    if (jsonInput.activitiesLaunchedPerWeek) { // done (Total Experiences Played)
+    if (jsonInput.activitiesLaunchedPerWeek) { // (Total Experiences Played)
         let dataCell = table.querySelector("#activitiesLaunchedPerWeek");
         if (dataCell) dataCell.innerText = jsonInput.activitiesLaunchedPerWeek;
     }
@@ -176,7 +179,7 @@ async function fetchSubReport() {
     let allPlayersSeg = await getPlayerCountInSegment("1E7B6EA6970A941D");
 
     try {
-        // Execute both requests concurrently and wait for both of them to complete
+        // Execute all requests concurrently and wait for all of them to complete
         const [googleReport, googlePurchasers, appleReport, stripeSubs] = await Promise.all([
             fetchGoogleReport(),
             fetchGooglePurchasers(),
