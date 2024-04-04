@@ -28,19 +28,19 @@ async function fetchDevKPIReport() {
     const tickInterval = setInterval(tickUpdater, 500);
 
     try {
-        // Get the PlayFab and Google KPI reports concurrently
+        const playFab30DayReportPromise = getPlayFab30DayReport();
         const monthsToGoBack = 12;
-        const playFabPromises = Array.from({ length: monthsToGoBack }, (_, i) => {
-            const date = new Date();
-            date.setMonth(date.getMonth() - (i + 1));
-            const month = date.getMonth() + 1;
-            const year = date.getFullYear();
+        const playFabMonthlyTotalsPromises = Array.from({ length: monthsToGoBack }, (_, monthIndex) => {
+            const targetDate = new Date();
+            targetDate.setMonth(targetDate.getMonth() - (monthIndex + 1));
+            const month = targetDate.getMonth() + 1;
+            const year = targetDate.getFullYear();
+        
             return getPlayFabMonthlyTotalsReport(month, year).then(playFabMAU => `Month ${month}/${year}: ${playFabMAU}`);
         });
 
         const googleKPIPromise = fetch('/google/get-kpi-report').then(async response => {
             if (!response.ok) {
-                console.log(response);
                 if (response.status === 401) {
                     throw new Error('Not logged in');
                 }
@@ -49,17 +49,25 @@ async function fetchDevKPIReport() {
             return response.json();
         });
 
-        // Use Promise.all to wait for all the promises to resolve
-        const [mauPlayfabList, googleKPIReport] = await Promise.all([
-            Promise.all(playFabPromises),
+        // Correctly use Promise.all to wait for all promises including the 30-day report
+        const [playFab30DayReport, mauPlayfabList, googleKPIReport] = await Promise.all([
+            playFab30DayReportPromise,
+            Promise.all(playFabMonthlyTotalsPromises),
             googleKPIPromise
         ]);
 
-        // Update the PlayFab report table
         let table = document.getElementById('reportTable');
-        let dataCell = table.querySelector("#MAUPlayfab");
-        if (dataCell) {
-            dataCell.innerHTML = mauPlayfabList.join('<br>');
+        //console.log(playFab30DayReport);
+        let retentionDataCell = table.querySelector("#userRetentionPlayfab");
+        if (retentionDataCell) {
+            retentionDataCell.innerText = `Day 1: ${playFab30DayReport[1]?.Percent_Retained ?? 'N/A'}%
+            Day 2: ${playFab30DayReport[2]?.Percent_Retained ?? 'N/A'}%
+            Day 30: ${playFab30DayReport[30]?.Percent_Retained ?? 'N/A'}%`;
+        }
+
+        let mauDataCell = table.querySelector("#MAUPlayfab");
+        if (mauDataCell) {
+            mauDataCell.innerHTML = mauPlayfabList.join('<br>');
         }
 
         // Setup the Google KPI report table
@@ -74,6 +82,7 @@ async function fetchDevKPIReport() {
         doConfetti();
     }
 }
+
 
 function setupReportTable(jsonInput){
     let table = document.getElementById('reportTable');

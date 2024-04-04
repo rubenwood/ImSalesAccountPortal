@@ -81,14 +81,7 @@ export async function getPlayFab30DayReport() {
         .filter(row => row.Cohort.startsWith(cohortDate))
         .sort((a, b) => parseInt(a['Days_Later']) - parseInt(b['Days_Later']));
 
-    // CHANGE THIS (move to report-front)
-    let table = document.getElementById('reportTable');
-    let dataCell = table.querySelector("#userRetentionPlayfab");
-    if (dataCell) {
-        dataCell.innerText = `Day 1: ${filteredAndSortedData[1]?.Percent_Retained ?? 'N/A'}%
-        Day 2: ${filteredAndSortedData[2]?.Percent_Retained ?? 'N/A'}%
-        Day 30: ${filteredAndSortedData[30]?.Percent_Retained ?? 'N/A'}%`;
-    }
+    return filteredAndSortedData;
 }
 
 // Gets the monthly total report
