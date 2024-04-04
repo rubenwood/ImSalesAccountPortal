@@ -15,7 +15,7 @@ router.get('/get-total-users', async (req, res) => {
 
     try {
         // Splits the suffixes into an array (could pull from suffix_list?)
-        let suffixes = ["qmul.ac.uk", "cardiff.ac.uk", "jcu.edu.au", "phoenixdentalacademy.co.uk", "uos.ac.uk"]
+        let suffixes = ["qmul.ac.uk", "cardiff.ac.uk", "jcu.edu.au", "phoenixdentalacademy.co.uk", "uos.ac.uk", "highpoint.edu"]
         // Pass array of suffixes
         const matchedUsers = await generateReportByEmailSuffix(suffixes);
         console.log("Total B2B users: " + matchedUsers.length);

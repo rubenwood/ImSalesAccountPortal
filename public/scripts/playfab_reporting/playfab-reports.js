@@ -109,8 +109,7 @@ export async function getPlayFabMonthlyTotalsReport(month, year) {
     const respText = await playFabResponse.text();
     const data = parseCSV(respText);
 
-    // Assuming the first row of the data contains the metrics you need
-    // Adjust the property names according to your actual CSV format
+    // Assuming the first row of the data contains the metrics
     let MAU = data.find(row => row.Unique_Logins !== undefined)?.Unique_Logins ?? 'N/A';
     //console.log("PF MAU: ", MAU);
     return MAU;

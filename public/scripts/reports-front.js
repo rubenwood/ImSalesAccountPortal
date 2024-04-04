@@ -30,7 +30,7 @@ async function fetchDevKPIReport() {
     try {
         const playFab30DayReportPromise = getPlayFab30DayReport();
         const monthsToGoBack = 12;
-        const playFabMonthlyTotalsPromises = Array.from({ length: monthsToGoBack }, (_, monthIndex) => {
+        const playFabMonthlyTotalsPromises = Array.from({ length: monthsToGoBack }, (element, monthIndex) => {
             const targetDate = new Date();
             targetDate.setMonth(targetDate.getMonth() - (monthIndex + 1));
             const month = targetDate.getMonth() + 1;
