@@ -84,7 +84,7 @@ export async function getPlayFab30DayReport() {
     return filteredAndSortedData;
 }
 
-// Gets the monthly total report
+// Gets the monthly total report (MAU)
 export async function getPlayFabMonthlyTotalsReport(month, year) {
     console.log("Getting Monthly report from Playfab");
 
@@ -110,7 +110,13 @@ export async function getPlayFabMonthlyTotalsReport(month, year) {
     const data = parseCSV(respText);
 
     // Assuming the first row of the data contains the metrics
-    let MAU = data.find(row => row.Unique_Logins !== undefined)?.Unique_Logins ?? 'N/A';
+    let outputMAU = data.find(row => row.Unique_Logins !== undefined)?.Unique_Logins ?? 'N/A';
+    let outputNewUsers = data.find(row => row.New_Users !== undefined)?.New_Users ?? 'N/A';
+    let output = {
+        MAU: outputMAU,
+        newUsers:outputNewUsers
+    }
+    
     //console.log("PF MAU: ", MAU);
-    return MAU;
+    return output;
 }

@@ -18,12 +18,11 @@ export async function generateReportByArea()
     
     const tableBody = document.getElementById("reportTableBody");
     tableBody.innerHTML = '';
-
 }
 
 export async function fetchPlayersByAreaList(areaList){
     // once we know how many pages, we should make a loop 
-    // and make this call with the right page index until there are no futher pages
+    // and make this call with the right page index until there are no further pages
     const url = `/aca-area/gen-area-rep?areas=${areaList}`;
 
     return fetch(url, {

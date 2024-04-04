@@ -30,13 +30,14 @@ async function fetchDevKPIReport() {
     try {
         const playFab30DayReportPromise = getPlayFab30DayReport();
         const monthsToGoBack = 12;
-        const playFabMonthlyTotalsPromises = Array.from({ length: monthsToGoBack }, (element, monthIndex) => {
+
+        const playFabMonthlyTotalsPromises = Array.from({ length: monthsToGoBack }, (_, monthIndex) => {
             const targetDate = new Date();
-            targetDate.setMonth(targetDate.getMonth() - (monthIndex + 1));
+            targetDate.setMonth(targetDate.getMonth() - monthIndex - 1);
             const month = targetDate.getMonth() + 1;
             const year = targetDate.getFullYear();
         
-            return getPlayFabMonthlyTotalsReport(month, year).then(playFabMAU => `Month ${month}/${year}: ${playFabMAU}`);
+            return getPlayFabMonthlyTotalsReport(month, year);
         });
 
         const googleKPIPromise = fetch('/google/get-kpi-report').then(async response => {
@@ -49,15 +50,32 @@ async function fetchDevKPIReport() {
             return response.json();
         });
 
-        // Correctly use Promise.all to wait for all promises including the 30-day report
-        const [playFab30DayReport, mauPlayfabList, googleKPIReport] = await Promise.all([
+        const [playFab30DayReport, monthlyTotalsReports, googleKPIReport] = await Promise.all([
             playFab30DayReportPromise,
             Promise.all(playFabMonthlyTotalsPromises),
             googleKPIPromise
         ]);
 
+        // Process monthly reports to separate MAU and new users data
+        let MAUs = monthlyTotalsReports.map((report, index) => {
+            const targetDate = new Date();
+            targetDate.setMonth(targetDate.getMonth() - index - 1);
+            const month = targetDate.getMonth() + 1;
+            const year = targetDate.getFullYear();
+            return `Month ${month}/${year}: ${report.MAU}`;
+        });
+
+        let newUsers = monthlyTotalsReports.map((report, index) => {
+            const targetDate = new Date();
+            targetDate.setMonth(targetDate.getMonth() - index - 1);
+            const month = targetDate.getMonth() + 1;
+            const year = targetDate.getFullYear();
+            return `Month ${month}/${year}: ${report.newUsers}`;
+        });
+
         let table = document.getElementById('reportTable');
-        //console.log(playFab30DayReport);
+
+        // Update retention data
         let retentionDataCell = table.querySelector("#userRetentionPlayfab");
         if (retentionDataCell) {
             retentionDataCell.innerText = `Day 1: ${playFab30DayReport[1]?.Percent_Retained ?? 'N/A'}%
@@ -65,13 +83,21 @@ async function fetchDevKPIReport() {
             Day 30: ${playFab30DayReport[30]?.Percent_Retained ?? 'N/A'}%`;
         }
 
+        // Update MAU data
         let mauDataCell = table.querySelector("#MAUPlayfab");
         if (mauDataCell) {
-            mauDataCell.innerHTML = mauPlayfabList.join('<br>');
+            mauDataCell.innerHTML = MAUs.join('<br>');
+        }
+
+        // Update new users data
+        let newUsersDataCell = table.querySelector("#NewUsersPerMonthPlayfab");
+        if (newUsersDataCell) {
+            newUsersDataCell.innerHTML = newUsers.join('<br>');
         }
 
         // Setup the Google KPI report table
         setupReportTable(googleKPIReport);
+
     } catch (error) {
         console.error('There has been a problem with your fetch operation:', error);
         document.getElementById('output-area').textContent = 'Error fetching data: ' + error.message;
