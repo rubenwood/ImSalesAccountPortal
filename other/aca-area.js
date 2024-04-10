@@ -1,107 +1,97 @@
-const AWS = require('aws-sdk');
 const express = require('express');
-const axios = require('axios');
+//const axios = require('axios');
+const { Pool } = require('pg');
 const acaAreaRouter = express.Router();
 
-const { getTotalRowCount } = require('../database/database');
+const pool = new Pool({
+    user: process.env.PGUSER,
+    host: process.env.PGHOST,
+    database: process.env.PGDATABASE,
+    password: process.env.PGPASSWORD,
+    port: process.env.PGPORT,
+    connectionString: process.env.PGURL,
+    ssl: {
+        rejectUnauthorized: false,
+    },
+});
+
+acaAreaRouter.get('/area-rep-count', async (req, res) => {
+    console.log("called area report count");
+    try {
+        let areas = req.query.areas.split(',');        
+        areas = areas.map(area => area.toLowerCase());
+
+        const countQuery = `
+            SELECT COUNT(*)
+            FROM public."UsageData"
+            WHERE "UsageDataJSON"->'Data'->'AcademicArea'->>'Value' ILIKE ANY (ARRAY[${areas.map(area => `'${area}'`).join(',')}])
+        `;
+        const countResult = await pool.query(countQuery);
+        const totalRows = parseInt(countResult.rows[0].count, 10);
+        const pageSize = 100; // Assuming page size is 100
+        const totalPages = Math.ceil(totalRows / pageSize);
+
+        res.json({
+            totalRows: totalRows,
+            totalPages: totalPages
+        });
+    } catch (error) {
+        console.error('Error:', error);
+        res.status(500).json({ message: 'Failed to get count', error: error.message });
+    }
+});
+
 
 acaAreaRouter.get('/gen-area-rep', async (req, res) => {
     console.log("called aca area search");
     try {
-        let page = parseInt(req.query.page) || 1; // Default to page 1 if not specified
-        let pageSize = parseInt(req.query.pageSize) || 100; // Default page size
-        let areas = req.query.areas.split(',');
+        let areas = req.query.areas.split(',');        
+        areas = areas.map(area => area.toLowerCase());
         console.log(areas);
 
-        // Convert areas to lowercase
-        areas = areas.map(area => area.toLowerCase());
-        const config = { headers: { 'x-secret-key': process.env.SERVER_SEC } };
-        const chunkSize = 10000;
-        let allPlayersWithAcademicArea = new Map(areas.map(id => [id, new Set()]));
-        console.log("1 ", allPlayersWithAcademicArea);
+        const page = parseInt(req.query.page || '1', 10);
+        const pageSize = 100; // Fixed page size
+        const offset = (page - 1) * pageSize;
 
-        async function processChunk(startRow) {
-            try {
-                let url = `http://${process.env.SERVER_URL}:${process.env.PORT}/db/playerdata` +
-                    `?start=${startRow}&end=${startRow + chunkSize - 1}`;
-                const response = await axios.get(url, config);
-                const respDataRows = response.data;
+        // Query to count total matching rows for pagination
+        const countQuery = `
+            SELECT COUNT(*)
+            FROM public."UsageData"
+            WHERE "UsageDataJSON"->'Data'->'AcademicArea'->>'Value' ILIKE ANY (ARRAY[${areas.map(area => `'${area}'`).join(',')}])
+        `;
+        const countResult = await pool.query(countQuery);
+        const totalRows = parseInt(countResult.rows[0].count, 10);
+        const totalPages = Math.ceil(totalRows / pageSize);
 
-                let errorAmount = 0;
+        // Query to fetch usage data with pagination
+        const usageDataQuery = `
+            SELECT *
+            FROM public."UsageData"
+            WHERE "UsageDataJSON"->'Data'->'AcademicArea'->>'Value' ILIKE ANY (ARRAY[${areas.map(area => `'${area}'`).join(',')}])
+            LIMIT ${pageSize} OFFSET ${offset}
+        `;
+        const usageDataResult = await pool.query(usageDataQuery);
+        //console.log(usageDataResult.rows);
 
-                for (const row of respDataRows) {
-                    try {
-                        let academicArea = row.PlayerDataJSON?.Data?.AcademicArea ?? undefined;
-                        if (academicArea != undefined && academicArea.Value) {
-                            let academicAreaString = academicArea.Value.toLowerCase();
-                            if (academicAreaString != undefined && areas.includes(academicAreaString)) {
-                                if (allPlayersWithAcademicArea.has(academicAreaString)) {
-                                    allPlayersWithAcademicArea.get(academicAreaString).add(row);
-                                } else {
-                                    console.log(`Academic area not found in the initial list: ${academicAreaString}`);
-                                }
-                            }
-                        }
-                    } catch (error) {
-                        errorAmount++;
-                        console.error('Error processing player data:', error);
-                    }
-                }
-                return { errorAmount };
-            } catch (error) {
-                console.error('Error processing chunk:', error.message);
-                return { errorAmount: 1 };
-            }
-        }
+        // Extract PlayFabIds to use in the next query
+        const playFabIds = usageDataResult.rows.map(row => row.PlayFabId);
 
-        const totalRows = await getTotalRowCount();
-        console.log(`total rows: ${totalRows}`);
-        const totalChunks = Math.ceil(totalRows / chunkSize);
-        console.log("chunks ", totalChunks);
-        const chunkPromises = [];
-
-        for (let i = 0; i < totalChunks; i++) {
-            const startRow = i * chunkSize;
-            chunkPromises.push(processChunk(startRow));
-        }
-
-        // Process all chunks concurrently
-        console.log("processing....");
-        await Promise.all(chunkPromises);
-
-        // After processing all chunks and before compiling the final list
-        let totalUsers = 0;
-        allPlayersWithAcademicArea.forEach(players => {
-            totalUsers += players.size; // Count total users across all areas
-        });
-
-        const startIndex = (page - 1) * pageSize;
-        let remaining = pageSize; // Number of user entries to include in this page
-
-        let outputList = [];
-        allPlayersWithAcademicArea.forEach((players, areaId) => {
-            if (remaining <= 0) return; // Skip adding more users if we've reached the page size
-
-            let usersArray = Array.from(players).slice(0, remaining); // Take up to 'remaining' users
-            remaining -= usersArray.length; // Decrease the 'remaining' count
-
-            let output = {
-                academicArea: areaId,
-                users: usersArray
-            };
-            outputList.push(output);
-        });
-
-        // Note: This adjusted approach does not fully paginate across all academic areas consistently.
-        // It will fill up to 'pageSize' users starting from the first academic area, 
-        // and may not include users from later areas if 'pageSize' is reached.
+        // Query to fetch account data based on PlayFabIds
+        const accountDataQuery = `
+            SELECT *
+            FROM public."AccountData"
+            WHERE "PlayFabId" = ANY ($1)
+        `;
+        const accountDataResult = await pool.query(accountDataQuery, [playFabIds]);
+        //console.log(accountDataResult.rows);
 
         res.json({
-            page,
-            pageSize,
-            total: totalUsers, // Reflects total users, but pagination logic might need further adjustment
-            totalPages: Math.ceil(totalUsers / pageSize),
-            data: outputList // Now limits the number of user entries based on pageSize
+            totalRows: totalRows,
+            totalPages: totalPages,
+            currentPage: page,
+            pageSize: pageSize,
+            usageData: usageDataResult.rows,
+            accountData: accountDataResult.rows
         });
     } catch (error) {
         console.error('Error:', error);

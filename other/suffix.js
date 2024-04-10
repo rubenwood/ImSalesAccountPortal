@@ -1,6 +1,7 @@
 const AWS = require('aws-sdk');
 const express = require('express');
 const suffixRouter = express.Router();
+const { Pool } = require('pg');
 
 const { anyFileModifiedSince, checkFileLastModified, checkFilesLastModifiedList } = require('./s3-utils');
 const { getAllS3AccData, setAllS3AccData, getLastDateGotAllS3AccData, getAllS3AccFilesData } = require('./bulk-ops');
@@ -48,14 +49,12 @@ async function getSuffixMappings() {
     }
 }
 
-// Get all Acc Data from S3
-//let lastDateGotAllS3AccData;
-// Modified route that takes in an array of query param gen-suffix-rep?suffixes=suffix1,suffix2
+// Route that takes in an array of query param gen-suffix-rep?suffixes=suffix1,suffix2
 suffixRouter.get('/gen-suffix-rep', async (req, res) => {
     try {
         // Splits the suffixes into an array
         let suffixes = req.query.suffixes.split(',');
-        const matchedUsers = await generateReportByEmailSuffix(suffixes);
+        const matchedUsers = await generateReportByEmailSuffixDB(suffixes);
         res.json(matchedUsers);
     } catch (error) {
         console.error('Error:', error);
@@ -63,74 +62,99 @@ suffixRouter.get('/gen-suffix-rep', async (req, res) => {
     }
 });
 
-async function generateReportByEmailSuffix(suffixes) {
-    if(suffixes.length < 1){ return; }
-    console.log(`called ${suffixes.length}`);
-    
-    let matchedUsersMap = new Map();
-    let encounteredEmails = new Set();
+const pool = new Pool({
+    user: process.env.PGUSER,
+    host: process.env.PGHOST,
+    database: process.env.PGDATABASE,
+    password: process.env.PGPASSWORD,
+    port: process.env.PGPORT,
+    connectionString: process.env.PGURL,
+    ssl: {
+        rejectUnauthorized: false,
+    },
+});
+async function generateReportByEmailSuffixDB(suffixes) {
+    if (suffixes.length < 1) { return; }
 
-    let [allS3AccDataLastModifiedDates, suffixMappingsLastModifiedDates] = await Promise.all([
-        checkFilesLastModifiedList(process.env.AWS_BUCKET, 'analytics/'),
+    let [suffixMappingsLastModifiedDates] = await Promise.all([
         checkFileLastModified(process.env.AWS_BUCKET, process.env.CONNECTION_LIST_PATH)
     ]);
-    let anyS3AccFilesModified = anyFileModifiedSince(allS3AccDataLastModifiedDates, getLastDateGotAllS3AccData());
     let suffixMappingsFilesModified = anyFileModifiedSince(suffixMappingsLastModifiedDates, lastDateGotSuffixMappings);
     let downloadPromises = [];
     // if we haven't got the S3 data yet, go get it 
     if(suffixMappings == undefined || suffixMappingsFilesModified){
         console.log("-- getting s3 suffix file");
         downloadPromises.push(getSuffixMappings().then(data => { suffixMappings = data; }));
-        //suffixMappings = await getSuffixMappings();
-    }    
-    // TODO: rather than waiting on getting all files, just search each file as it comes in
-    let allS3AccData = getAllS3AccData();
-    if(allS3AccData == undefined || anyS3AccFilesModified){
-        console.log("-- getting s3 acc file");        
-        downloadPromises.push(getAllS3AccFilesData(process.env.AWS_BUCKET, 'analytics/').then(data => { setAllS3AccData(data); }));
-        //allS3AccData = await getAllS3AccFilesData(process.env.AWS_BUCKET, 'analytics/');
     }
     await Promise.all(downloadPromises);
-    allS3AccData = getAllS3AccData(); // make sure we update the local var
 
-    try {
-        console.log("-- searching by suffix");
-        allS3AccData.forEach(user => {
-            suffixes.forEach(suffix => {
-                let checkContact = true;
+    // Construct LIKE patterns for suffixes and their corresponding mapped values for OpenIDConnect
+    const likePatterns = suffixes.map(suffix => `%${suffix}%`);
+    const mappedPatterns = suffixes.map(suffix => suffixMappings[suffix])
+    .filter(mapping => mapping !== undefined)
+    .map(mapping => `%${mapping}%`);
 
-                if (Array.isArray(user.LinkedAccounts) && user.LinkedAccounts.length > 0) {
-                    user.LinkedAccounts.forEach(account => {
-                        // if the user has PlayFab or OpenIdConnect account, then don't check contact address
-                        if(account.Platform == "PlayFab" || account.Platform == "OpenIdConnect"){ checkContact = false; }
+    // Prepare SQL Parameters: one like pattern for ContactEmailAddresses,
+    // one for PlayFab login email, and one for OpenIDConnect
+    const params = [likePatterns, likePatterns, mappedPatterns];
 
-                        if (account.Platform == "PlayFab" && account.Email && account.Email.includes(suffix)){// && !encounteredEmails.has(account.Email)) {
-                            encounteredEmails.add(account.Email);
-                            matchedUsersMap.set(user.PlayerId, user);
-                            checkContact = false;
-                        } else if (account.Platform == "OpenIdConnect" && account.PlatformUserId.includes(suffixMappings[suffix])) {
-                            matchedUsersMap.set(user.PlayerId, user);
-                            checkContact = false;
-                        }
-                    });
-                }
+    // get all accounts that have a login email, or contact email that match a given suffix or 
+    // an OpenIDConnect login that matches a given auth url (based off of the suffix)
+    const query = `
+        SELECT public."AccountData".*
+        FROM public."AccountData"
+        WHERE EXISTS (
+            SELECT *
+            FROM jsonb_array_elements(public."AccountData"."AccountDataJSON"::jsonb->'ContactEmailAddresses') AS cea
+            WHERE cea->>'EmailAddress' LIKE ANY ($1)
+        ) OR EXISTS (
+            SELECT *
+            FROM jsonb_array_elements(public."AccountData"."AccountDataJSON"::jsonb->'LinkedAccounts') AS la
+            WHERE (la->>'Platform' = 'PlayFab' AND la->>'Email' LIKE ANY ($2))
+            OR (la->>'Platform' = 'OpenIdConnect' AND la->>'PlatformUserId' LIKE ANY ($3))
+        );
+    `;
 
-                if (checkContact && Array.isArray(user.ContactEmailAddresses) && !matchedUsersMap.has(user.PlayerId)) {
-                    user.ContactEmailAddresses.forEach(contact => {
-                        if (contact.EmailAddress && contact.EmailAddress.includes(suffix) && !encounteredEmails.has(contact.EmailAddress)) {
-                            encounteredEmails.add(contact.EmailAddress);
-                            matchedUsersMap.set(user.PlayerId, user);
-                        }
-                    });
-                }
-            });
+    let pgResult = await pool.query(query, params);
+    let pgResultRows = pgResult.rows;
+
+    let matchedUsersMap = new Map();
+    let encounteredEmails = new Set();
+
+    pgResultRows.forEach(row => {
+        let user = row.AccountDataJSON;
+        suffixes.forEach(suffix => {
+            let checkContact = true;
+
+            if (Array.isArray(user.LinkedAccounts) && user.LinkedAccounts.length > 0) {
+                user.LinkedAccounts.forEach(account => {
+                    // if the user has PlayFab or OpenIdConnect account, then don't check contact address
+                    if(account.Platform == "PlayFab" || account.Platform == "OpenIdConnect"){ checkContact = false; }
+
+                    if (account.Platform == "PlayFab" && account.Email && account.Email.includes(suffix)){// && !encounteredEmails.has(account.Email)) {
+                        encounteredEmails.add(account.Email);
+                        matchedUsersMap.set(user.PlayerId, user);
+                        checkContact = false;
+                    } else if (account.Platform == "OpenIdConnect" && account.PlatformUserId.includes(suffixMappings[suffix])) {
+                        matchedUsersMap.set(user.PlayerId, user);
+                        checkContact = false;
+                    }
+                });
+            }
+
+            if (checkContact && Array.isArray(user.ContactEmailAddresses) && !matchedUsersMap.has(user.PlayerId)) {
+                user.ContactEmailAddresses.forEach(contact => {
+                    if (contact.EmailAddress && contact.EmailAddress.includes(suffix) && 
+                    !encounteredEmails.has(contact.EmailAddress)) {
+                        encounteredEmails.add(contact.EmailAddress);
+                        matchedUsersMap.set(user.PlayerId, user);
+                    }
+                });
+            }
         });
+    });
 
-        return Array.from(matchedUsersMap.values());
-    } catch (err) {
-        console.error('Error:', err);
-        throw err;
-    }
+    return Array.from(matchedUsersMap.values());
 }
 
-module.exports = { suffixRouter, generateReportByEmailSuffix };
+module.exports = { suffixRouter, generateReportByEmailSuffixDB };

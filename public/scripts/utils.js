@@ -44,6 +44,17 @@ export function formatActivityData(activityData) {
     return formattedData;
 }
 
+// Upload to S3
+async function uploadToS3(Bucket, Key, data) {
+    await s3.upload({
+        Bucket,
+        Key,
+        Body: JSON.stringify(data, null, 2),
+        ContentType: 'application/json'
+    }).promise();
+    console.log(`Uploaded ${Key}`);
+}
+
 // Used to display loading "ticks" on a button
 export function updateButtonText(button, text, maxTicks) {
     let tickCount = 0; 

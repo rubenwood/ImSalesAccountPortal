@@ -3,7 +3,7 @@ const express = require('express');
 const axios = require('axios');
 const activitiesRouter = express.Router();
 
-const { getTotalRowCount } = require('../database/database');
+const { getTotalUsageRowCount } = require('../database/database');
 
 // Modified route that takes in an array of query param get-activity-report-id?activities=activity_id1,activity_id2
 // dentalID_prac,instrumentID_prac
@@ -19,7 +19,7 @@ activitiesRouter.get('/get-activity-report-id', async (req, res) => {
 
         async function processChunk(startRow) {
             try {
-                let url = `http://${process.env.SERVER_URL}:${process.env.PORT}/db/playerdata`+
+                let url = `http://${process.env.SERVER_URL}:${process.env.PORT}/db/usagedata`+
                 `?start=${startRow}&end=${startRow + chunkSize - 1}`;
                 const response = await axios.get(url, config);
                 const respDataRows = response.data;
@@ -51,7 +51,7 @@ activitiesRouter.get('/get-activity-report-id', async (req, res) => {
         }
 
         // Determine the total number of chunks required
-        const totalRows = await getTotalRowCount();
+        const totalRows = await getTotalUsageRowCount();
         console.log(`total rows: ${totalRows}`);
         const totalChunks = Math.ceil(totalRows / chunkSize);
         const chunkPromises = [];

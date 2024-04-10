@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 
-const { generateReportByEmailSuffix } = require('./suffix');
+const { generateReportByEmailSuffixDB } = require('./suffix');
 
 // call /reporting/gen-suffix-rep?suffixes=suffix1,suffix2,suffix3
 // this will get the total users for all of those suffixes
@@ -17,7 +17,7 @@ router.get('/get-total-users', async (req, res) => {
         // Splits the suffixes into an array (could pull from suffix_list?)
         let suffixes = ["qmul.ac.uk", "cardiff.ac.uk", "jcu.edu.au", "phoenixdentalacademy.co.uk", "uos.ac.uk", "highpoint.edu"]
         // Pass array of suffixes
-        const matchedUsers = await generateReportByEmailSuffix(suffixes);
+        const matchedUsers = await generateReportByEmailSuffixDB(suffixes);
         console.log("Total B2B users: " + matchedUsers.length);
         res.send(matchedUsers.length.toString());
     } catch (error) {

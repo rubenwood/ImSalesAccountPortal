@@ -1,9 +1,12 @@
 import { canAccess } from './access-check.js';
+import { populateAccDataRow, addCellToRow, populateUsageData, populateLoginData, calcDaysSinceLastLogin, calcDaysSinceCreation, calcDaysToExpiry, checkForContactEmailAddrSuffix, closePlayerDataModal } from './user-report-formatting.js';
 import { Login, RegisterUserEmailAddress, UpdateUserDataServer, getPlayerEmailAddr } from './PlayFabManager.js';
 import { showInsightsModal, closeInsightsModal, getTotalPlayTime, findPlayersWithMostPlayTime, findPlayersWithMostPlays, findPlayersWithMostUniqueActivitiesPlayed, findMostPlayedActivities, getUserAccessPerPlatform } from './insights.js';
-import { fetchUserData, fetchUserAccInfoById, fetchUserAccInfoByEmail, formatTime, formatTimeToHHMMSS, formatActivityData, getAcademicAreas } from './utils.js';
-import { playerProfiles, getSegmentsClicked, getPlayersInSegmentClicked, fetchPlayersBySuffixList } from './segments.js';
+import { fetchUserData, fetchUserAccInfoById, fetchUserAccInfoByEmail, fetchUserProfileById, formatTimeToHHMMSS, formatActivityData, getAcademicAreas } from './utils.js';
+import { playerProfiles, getSegmentsClicked, getPlayersInSegmentClicked } from './segments.js';
+import { fetchPlayersBySuffixList } from './suffix-front.js';
 //import { generateReportByClickId } from './click-id.js';
+import { fetchAllPlayersByArea } from './academic-area.js'
 
 document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('loginButton').addEventListener('click', Login);
@@ -29,6 +32,7 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('generateReportButton').addEventListener('click', generateReportByEmail);
     document.getElementById('generateReportByIdButton').addEventListener('click', generateReportById);
     document.getElementById('generateReportBySuffixButton').addEventListener('click', generateReportBySuffix);
+    document.getElementById('generateReportByAreaButton').addEventListener('click', fetchAllPlayersByArea);
     //document.getElementById('generateReportByClickIDButton').addEventListener('click', generateReportByClickId);
     
     document.getElementById('exportReportButton').addEventListener('click', exportToExcel);
@@ -115,6 +119,7 @@ export async function generateReportBySuffix() {
 
     let output = await fetchPlayersBySuffixList(suffixes.toString());
     console.log("total users with suffix: " + output.length);
+    console.log(output);
     
     const tableBody = document.getElementById("reportTableBody");
     tableBody.innerHTML = '';
@@ -126,6 +131,7 @@ export async function generateReportBySuffix() {
     let index = 0;
     for(const element of output){
         let email = "no email";
+        // can replace this with: getUserEmailFromAccData
         if(element.LinkedAccounts !== undefined && element.LinkedAccounts.length > 0){
             let gotAcc = false;
             element.LinkedAccounts.forEach(linkedAcc =>{
@@ -138,13 +144,13 @@ export async function generateReportBySuffix() {
                     });
                 }else{
                     if(!gotAcc){
-                        let contactEmail = checkForContactEmailAddr(element, suffixes);
+                        let contactEmail = checkForContactEmailAddrSuffix(element, suffixes);
                         email = contactEmail == undefined ? "no email" : contactEmail;
                     }
                 }
             })
         }else{ // if there are no linked accounts, just get the contact email   
-            let contactEmail = checkForContactEmailAddr(element, suffixes);
+            let contactEmail = checkForContactEmailAddrSuffix(element, suffixes);
             email = contactEmail == undefined ? "no email" : contactEmail;
         }  
 
@@ -170,8 +176,11 @@ export async function generateReportBySuffix() {
             let createdBy = userData.data.Data.CreatedBy !== undefined ? userData.data.Data.CreatedBy.Value : "";
             let createdFor = userData.data.Data.CreatedFor !== undefined ? userData.data.Data.CreatedFor.Value : "";
 
+            let linkedAccounts = element.LinkedAccounts ? element.LinkedAccounts.map(acc => acc.Platform).join(", ") : "N/A";
+
             // Account Data
-            populateAccDataRow(row, email, createdDate, lastLoginDate, daysSinceLastLogin, daysSinceCreation, accountExpiryDateString, undefined, "", "");
+            populateAccDataRow(row, email, createdDate, lastLoginDate, daysSinceLastLogin, daysSinceCreation, 
+                accountExpiryDateString, "", "", "", linkedAccounts);
             // Login Data per platform
             let loginData = populateLoginData(userData.data.Data);
             // Player / Activity Data
@@ -182,14 +191,14 @@ export async function generateReportBySuffix() {
                 totalPlayTime: 0,
                 activityDataForReport: []
             };
-            let newDataState = populateUseageData(playerData, loginData, playerDataState, row);
+            let newDataState = populateUsageData(playerData, loginData, playerDataState, row);
             let averageTimePerPlay = newDataState.averageTimePerPlay;
             let totalPlays = newDataState.totalPlays;
             let totalPlayTime = newDataState.totalPlayTime;
             let activityDataForReport = newDataState.activityDataForReport;
 
             writeDataForReport(element.PlayerId, email, createdDate, lastLoginDate, daysSinceLastLogin,
-                daysSinceCreation, accountExpiryDateString, daysToExpire, createdBy, createdFor, activityDataForReport,
+                daysSinceCreation, accountExpiryDateString, daysToExpire, createdBy, createdFor, linkedAccounts, activityDataForReport,
                 totalPlays, totalPlayTime, averageTimePerPlay, loginData);      
         } catch(error) {
             let errorStr = `Error fetching data for user ${element.PlayerId}: ${error.message}`;
@@ -197,7 +206,8 @@ export async function generateReportBySuffix() {
             while (row.firstChild) { row.removeChild(row.firstChild); } // clear out any cells that may have been added
             row.style.backgroundColor = '#ff8c8cab'; // Highlight the cell in red
             // re-add the rows, but with the error string
-            populateAccDataRow(row, email, createdDate, lastLoginDate, daysSinceLastLogin, daysSinceCreation, errorStr, undefined, "", "");
+            populateAccDataRow(row, email, createdDate, lastLoginDate, daysSinceLastLogin, daysSinceCreation, errorStr, 
+                "", "", "", "");
         }
 
         index++;        
@@ -229,16 +239,14 @@ export async function generateReportById() {
     reportData = []; // reset the report data
     exportData = [];
 
-    //let userAccInfo;
-    //let userData;
-    
     // Create an array of promises for fetching user data
     const fetchPromises = playerIDList.map(async (playerID, index) => {
         try {
             await delay(index * 700); // Delay
-            let userAccInfo = await fetchUserAccInfoById(playerID);
+            let userAccInfo = await fetchUserAccInfoById(playerID);            
             let userData = await fetchUserData(userAccInfo.data.UserInfo.PlayFabId);
-            await handleData(userData, userAccInfo, tableBody); // Awaiting handleData
+            //let userProfile = await fetchUserProfileById(userAccInfo.data.UserInfo.PlayFabId);
+            await handleData(userData, userAccInfo, tableBody);
         } catch (error) {
             console.error('Error:', error);
             const row = tableBody.insertRow();
@@ -278,10 +286,6 @@ export async function generateReportByEmail() {
     reportData = [];
     exportData = [];
 
-    //let userAccInfo;
-    //let userData;
-    //let userIDList = [];
-
     const fetchPromises = emailList.map(async (email, index) => {
         try {
             await delay(index * 700);
@@ -289,6 +293,7 @@ export async function generateReportByEmail() {
             if(userAccInfo.error){ throw new Error(userAccInfo.message);}  
             playerIDList.push(userAccInfo.data.UserInfo.PlayFabId);
             let userData = await fetchUserData(userAccInfo.data.UserInfo.PlayFabId);
+            //let userProfile = await fetchUserProfileById(userAccInfo.data.UserInfo.PlayFabId);
             await handleData(userData, userAccInfo, tableBody);
         } catch (error) {
             //console.log(email);
@@ -326,7 +331,6 @@ async function handleData(respData, userAccInfo, tableBody){
     let email = await getPlayerEmailAddr(userAccInfo.data.UserInfo.PlayFabId);
     let createdDate = new Date(userAccInfo.data.UserInfo.TitleInfo.Created);
     let lastLoginDate =  new Date(userAccInfo.data.UserInfo.TitleInfo.LastLogin);
-    //let today = new Date();
     let daysSinceCreation = calcDaysSinceCreation(createdDate);
     let daysSinceLastLogin = calcDaysSinceLastLogin(lastLoginDate);
 
@@ -336,12 +340,12 @@ async function handleData(respData, userAccInfo, tableBody){
 
     let createdBy = userData.data.Data.CreatedBy !== undefined ? userData.data.Data.CreatedBy.Value : "";
     let createdFor = userData.data.Data.CreatedFor !== undefined ? userData.data.Data.CreatedFor.Value : "";
-    
+
     // Append account data to the table
     const row = tableBody.insertRow();
     row.className = 'report-row';
     populateAccDataRow(row, email, createdDate, lastLoginDate, daysSinceLastLogin, daysSinceCreation, 
-        accountExpiryDateString, daysToExpire, createdBy, createdFor);
+        accountExpiryDateString, daysToExpire, createdBy, createdFor, "");
     
     // get last login dates per platform
     let loginData = populateLoginData(userData.data.Data);
@@ -356,7 +360,7 @@ async function handleData(respData, userAccInfo, tableBody){
         totalPlayTime: 0,
         activityDataForReport: []
     };
-    let newDataState = populateUseageData(playerData, loginData, playerDataState, row);
+    let newDataState = populateUsageData(playerData, loginData, playerDataState, row);
     let averageTimePerPlay = newDataState.averageTimePerPlay;
     let totalPlays = newDataState.totalPlays;
     let totalPlayTime = newDataState.totalPlayTime;
@@ -365,7 +369,7 @@ async function handleData(respData, userAccInfo, tableBody){
     // add to stored data
     writeDataForReport(userAccInfo.data.UserInfo.PlayFabId, email, createdDate, lastLoginDate,
         daysSinceLastLogin,daysSinceCreation,accountExpiryDateString,daysToExpire,createdBy,
-        createdFor,activityDataForReport,totalPlays,totalPlayTime,averageTimePerPlay, loginData);
+        createdFor, "", activityDataForReport,totalPlays,totalPlayTime,averageTimePerPlay, loginData);
     
     // highlight rules
     if(!isNaN(daysToExpire) && daysToExpire < 7)
@@ -382,128 +386,13 @@ async function handleData(respData, userAccInfo, tableBody){
         row.addEventListener('mouseleave', hideTooltip);
     }
 }
-function populateUseageData(playerData, loginData, state, row){
-    if(playerData == undefined){ addCellToRow(row, 'No Usage Data', false); return state; }
 
-    let playerDataContent = '';
-    playerDataContent += `<b>Last Login Android:</b> ${loginData.lastLoginAndr} <br/>
-                        <b>Last Login iOS:</b> ${loginData.lastLoginIOS} <br/> 
-                        <b>Last Login Web:</b> ${loginData.lastLoginWeb} <br/>`;
-    
-    playerData.activities.forEach(activity => {
-        let activityContent =`<table><tr><td><b>Activity ID</b></td><td>${activity.activityID}</td></tr>`;
-        activityContent +=`<tr><td><b>Activity Name</b></td><td>${activity.activityTitle}</td></tr>`;
-        activityContent += `<tr><td><b>Plays</b></td><td>${activity.plays.length}</td></tr>`;
-        let totalSessionTime = 0;
-        let bestScore = 0;
-        state.totalPlays += activity.plays.length;
-        
-        activity.plays.forEach(play => {
-            totalSessionTime += Math.round(Math.abs(play.sessionTime));
-            if(play.normalisedScore > bestScore){
-                bestScore = Math.round(play.normalisedScore * 100);
-            }
-        });
-        state.totalPlayTime += totalSessionTime;
 
-        activityContent += `<tr><td><b>Total Session Length</b></td><td>${formatTime(totalSessionTime)}</td></tr><br />`;
-        activityContent += `<tr><td><b>Best Score</b></td><td>${bestScore} %</td></tr><br />`;
-        activityContent += "</table>";
-        playerDataContent += activityContent;
 
-        // add the unformatted data for the report
-        let userActivityData = {
-            activityID:activity.activityID,
-            activityTitle: activity.activityTitle,
-            plays:activity.plays,
-            playCount:activity.plays.length,
-            totalSessionTime:totalSessionTime,
-            bestScore:bestScore
-        };
-        state.activityDataForReport.push(userActivityData);
-    });
-
-    playerDataContent += `<h1>Total Plays: ${state.totalPlays}</h1>`;
-    playerDataContent += `<h1>Total Activities Played: ${playerData.activities.length}</h1>`;
-    playerDataContent += `<h1>Total Play Time: ${formatTime(state.totalPlayTime)}</h1>`;
-    state.averageTimePerPlay = Math.round(state.totalPlayTime / state.totalPlays); 
-    playerDataContent += `<h1>Avg. Time per activity: ${formatTime(state.averageTimePerPlay)}</h1>`;
-    addCellToRow(row, 'Expand Usage Data', 1, true, playerDataContent);    
-
-    return state;
-}
-function populateAccDataRow(row, email, createdDate, lastLoginDate, daysSinceLastLogin, 
-    daysSinceCreation, expiryDateString, daysToExpire, createdBy, createdFor){
-        
-    addCellToRow(row, email, false);
-    addCellToRow(row, createdDate.toDateString(), false);
-    addCellToRow(row, lastLoginDate.toDateString(), false);
-    addCellToRow(row, daysSinceLastLogin, false);
-    addCellToRow(row, daysSinceCreation, false);
-    addCellToRow(row, expiryDateString, false);
-    addCellToRow(row, daysToExpire, false);
-    addCellToRow(row, createdBy, false);
-    addCellToRow(row, createdFor, false);
-}
-function calcDaysSinceLastLogin(lastLoginDate){
-    let today = new Date();
-    let diffTimeLastLogin = Math.abs(today - lastLoginDate);
-    let daysSinceLastLogin = Math.ceil(diffTimeLastLogin / (1000 * 60 * 60 * 24));
-    return daysSinceLastLogin;
-}
-function calcDaysSinceCreation(createdDate){
-    let today = new Date();
-    let diffTime = Math.abs(today - createdDate);
-    let daysSinceCreation = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-    return daysSinceCreation;
-}
-function calcDaysToExpiry(accountExpiryDate){
-    let today = new Date();
-    let daysToExpire;
-    if (accountExpiryDate instanceof Date && !isNaN(accountExpiryDate)) {
-        let diffTime2 = Math.abs(today - accountExpiryDate);
-        daysToExpire = Math.ceil(diffTime2 / (1000 * 60 * 60 * 24));
-    } else {
-        daysToExpire = "N/A";
-        accountExpiryDate = "N/A";
-    }
-    return daysToExpire;
-}
-function addCellToRow(row, text, colSpan = 1, isCollapsible = false, collapsibleContent = '') {
-    const cell = row.insertCell();
-    if(!isCollapsible){     
-        cell.textContent = text;
-        cell.style.textAlign = 'center';
-        cell.colSpan = colSpan;
-    }else{
-        const collapseButton = document.createElement('button');
-        collapseButton.textContent = text;
-        collapseButton.onclick = function() {
-            showPlayerDataModal(collapsibleContent);
-        };
-        collapseButton.className = 'collapsible-button';
-
-        const collapsibleDiv = document.createElement('div');
-        collapsibleDiv.style.display = 'none';
-        collapsibleDiv.innerHTML = collapsibleContent;
-
-        cell.appendChild(collapseButton);
-        cell.appendChild(collapsibleDiv);
-        collapsibleDiv.className = 'collapsible-content';
-
-        cell.appendChild(collapseButton);
-    }    
-}
-function populateLoginData(userData){
-    let lastLoginAndr = userData.LastLoginDateAndroid !== undefined ? userData.LastLoginDateAndroid.Value : undefined;
-    let lastLoginIOS = userData.LastLoginDateiOS !== undefined ? userData.LastLoginDateiOS.Value : undefined;
-    let lastLoginWeb = userData.LastLoginDateWeb !== undefined ? userData.LastLoginDateWeb.Value : undefined;
-    return {lastLoginAndr,lastLoginIOS,lastLoginWeb};    
-}
 
 function writeDataForReport(pID, pEmail, pCreatedDate,
                             pLastLoginDate, pDaysSinceLastLogin, pDaysSinceCreation,
-                            pAccountExpiryDate, pDaysToExpire, pCreatedBy, pCreatedFor,
+                            pAccountExpiryDate, pDaysToExpire, pCreatedBy, pCreatedFor, pLinkedAccounts,
                             pActivityDataForReport, pTotalPlays, pTotalPlayTime, pAveragePlayTimePerPlay, pLoginData){
     
     let playerDataForReport = { // (per user)
@@ -517,7 +406,8 @@ function writeDataForReport(pID, pEmail, pCreatedDate,
         daysToExpire: pDaysToExpire, 
         createdBy: pCreatedBy, // hide from exported report
         createdFor: pCreatedFor, // hide from exported report
-        activityData: pActivityDataForReport, // hide from exported report
+        activityData: pActivityDataForReport,
+        linkedAccounts: pLinkedAccounts,
         activityDataFormatted: formatActivityData(pActivityDataForReport),
         totalPlays: pTotalPlays,
         totalPlayTime: pTotalPlayTime,
@@ -535,6 +425,7 @@ function writeDataForReport(pID, pEmail, pCreatedDate,
         daysSinceCreation: pDaysSinceCreation,
         accountExpiryDate: pAccountExpiryDate,
         daysToExpire: pDaysToExpire, 
+        linkedAccounts: pLinkedAccounts,
         activityDataFormatted: formatActivityData(pActivityDataForReport),
         totalPlays: pTotalPlays,
         totalPlayTime: pTotalPlayTime,
@@ -575,30 +466,6 @@ function updateIDList(playerIdList){
     if(document.getElementById("playerIDList")){ document.getElementById("playerIDList").value = playerIdList.join('\n') }
 }
 
-// GET CONTACT EMAIL (from ContactEmailAddresses (playfab field))
-function checkForContactEmailAddr(input, suffixes){
-    let emailAddr;
-    if(input.ContactEmailAddresses !== undefined && input.ContactEmailAddresses.length > 0){
-        input.ContactEmailAddresses.forEach(contactEmail =>{
-            suffixes.forEach(suffix => {
-                if(contactEmail.EmailAddress.includes(suffix)){                    
-                    emailAddr = contactEmail.EmailAddress;
-                }
-            });            
-        })
-    }
-    return emailAddr;
-}
-
-// PLAYER DATA MODAL
-function showPlayerDataModal(content) {
-    document.getElementById('playerDataModalBody').innerHTML = content;
-    document.getElementById('playerDataModal').style.display = 'block';
-}
-function closePlayerDataModal() {
-    document.getElementById('playerDataModal').style.display = 'none';
-}
-
 // REPORT TOOLTIPS
 function showTooltip(event, message) {
     // Create tooltip element if it doesn't exist
@@ -635,6 +502,7 @@ function createUserRow(dataToExport, activity, isFirstActivity) {
         daysSinceCreation: dataToExport.daysSinceCreation,
         accountExpiryDate: dataToExport.accountExpiryDate,
         daysToExpire: dataToExport.daysToExpire,
+        linkedAccounts: dataToExport.linkedAccounts,
         lastLoginAndroid: dataToExport.loginData.lastLoginAndr,
         lastLoginIOS: dataToExport.loginData.lastLoginIOS,
         lastLoginWeb: dataToExport.loginData.lastLoginWeb,
@@ -645,8 +513,6 @@ function createUserRow(dataToExport, activity, isFirstActivity) {
     return isFirstActivity ? { ...userRow, ...activity } : activity;
 }
 function exportToExcel() {
-    let workbook = XLSX.utils.book_new();
-
     // add any relevant insights data
     let totalPlayTimeAcrossAllUsersSeconds = getTotalPlayTime(exportData);
     let playersWithMostPlayTime = findPlayersWithMostPlayTime(exportData, 1, 3);
@@ -678,7 +544,7 @@ function exportToExcel() {
     // add user data
     let userData = [];
     exportData.forEach(dataToExport => {
-        if (dataToExport.activityDataFormatted && dataToExport.activityDataFormatted.length > 0) {
+        if (dataToExport.activityDataFormatted != undefined && dataToExport.activityDataFormatted.length > 0){
             let isFirstActivity = true;
             dataToExport.activityDataFormatted.forEach(activity => {
                 let activityRow = {
@@ -691,25 +557,26 @@ function exportToExcel() {
                 userData.push(createUserRow(dataToExport, activityRow, isFirstActivity));
                 isFirstActivity = false;
             });
-        } else {
+        }else{
             userData.push(createUserRow(dataToExport, {}, true));
         }
         userData.push({}); // Add an empty row to divide user data chunks
     });
 
+    let workbook = XLSX.utils.book_new();
     let insightsWorksheet = XLSX.utils.json_to_sheet(insightsExportData);
     let userDataWorksheet = XLSX.utils.json_to_sheet(userData);
-
     XLSX.utils.book_append_sheet(workbook, insightsWorksheet, "Insights");
     XLSX.utils.book_append_sheet(workbook, userDataWorksheet, "Report");
     XLSX.writeFile(workbook, "Report.xlsx");
 }
 
 // RESET BUTTONS
-function resetButtonTexts(){
+export function resetButtonTexts(){
     document.getElementById('generateReportButton').value = "Generate Report By Email List";
     document.getElementById('generateReportByIdButton').value = "Generate Report By Ids";
     document.getElementById('generateReportBySuffixButton').value = "Generate Report By Suffix";
+    document.getElementById('generateReportByAreaButton').value = "Generate Report By Academic Area";
 }
 
 // TOGGLE PLAYER ID TEXT

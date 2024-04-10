@@ -20,7 +20,7 @@ const { acaAreaRouter }  = require('./other/aca-area.js');
 const b2bRoutes = require('./other/b2b-processing.js');
 const activityRoutes = require('./other/activities.js');
 const { dbRouter }  = require('./database/database.js');
-const { getAllPlayersAndUpload } = require('./other/bulk-ops');
+const { getAllPlayerAccDataAndWriteToDB } = require('./other/bulk-ops');
 
 app.use(express.json());
 app.use(cors());
@@ -418,40 +418,14 @@ app.get('/begin-get-all-players', async (req, res) => {
       return res.status(401).json({ message: 'Invalid or missing secret.' });
   }
   
-  try {
-      getAllPlayersAndUpload();      
+  try { 
+      getAllPlayerAccDataAndWriteToDB();  
       res.json({ message: 'Begin getting all players initiated successfully.' });
   } catch (error) {
       console.error('Error:', error);
       res.status(500).json({ message: 'Failed to initiate getting all players.' });
   }
 });
-
-// Gets the player data for players stored in all players
-app.post('/begin-get-all-player-data', async (req,res) => {
-
-});
-
-// REDIS (SESSION STORAGE)
-/*const redisClient = redis.createClient({
-  url: process.env.REDIS_URL // Replace with your Redis URL
-});
-
-app.use(session({
-  store: new RedisStore({
-      client: redisClient,
-      ttl: 24 * 60 * 60 // TTL in seconds (24 hours)
-  }),
-  secret: 'your_secret',
-  resave: false,
-  saveUninitialized: false,
-  cookie: {
-      maxAge: 24 * 60 * 60 * 1000, // Cookie max age in milliseconds (24 hours)
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production", // Secure cookie in production
-      sameSite: true
-  }
-}));*/
 
 // server session
 app.use(session({

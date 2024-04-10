@@ -1,43 +1,114 @@
 import { canAccess } from './access-check.js';
+import { resetButtonTexts } from './main.js';
 
-export async function generateReportByArea()
-{
+import { populateAccDataRow, populateLoginData, populateUsageData, getUserEmailFromAccData, calcDaysSinceLastLogin, calcDaysSinceCreation } from './user-report-formatting.js';
+
+export async function fetchAllPlayersByArea() {
     let hasAccess = await canAccess();
-    if(!hasAccess){ return; }
+    if (!hasAccess) { return; }
 
     console.log("generate report by academic area clicked");
-
-    let areas = document.getElementById("emailList").value.split('\n').filter(Boolean);
-    if(areas.length < 1){ return; }
+    let areaList = document.getElementById("emailList").value.split('\n').filter(Boolean);
+    if (areaList.length < 1) { return; }
 
     resetButtonTexts();
     document.getElementById('generateReportByAreaButton').value = "Generating Report By Academic Area...";
 
-    let output = await fetchPlayersByAreaList(areas.toString());
-    console.log("total users in area: " + output.length);
-    
-    const tableBody = document.getElementById("reportTableBody");
-    tableBody.innerHTML = '';
+    try {
+        // Fetch the total number of pages first
+        const countUrl = `/aca-area/area-rep-count?areas=${encodeURIComponent(areaList.toString())}`;
+        const countResponse = await fetch(countUrl, {
+            method: 'GET',
+            headers: { 'Content-Type': 'application/json' }
+        });
+        const data = await countResponse.json();
+        const totalPages = data.totalPages;
+
+        const fetchPromises = [];
+        for (let page = 1; page <= totalPages; page++) {
+            fetchPromises.push(fetchPlayersByAreaList(areaList.toString(), page));
+        }
+
+        const results = await Promise.all(fetchPromises);
+
+        // Combine results from all pages and match usageData with accountData
+        const sortedData = results.reduce((acc, curr) => {
+            curr.usageData.forEach(ud => {
+                const accountDataMatch = curr.accountData.find(ad => ad.PlayFabId === ud.PlayFabId);
+                if (accountDataMatch) {
+                    acc.push({
+                        usageData: ud,
+                        accountData: accountDataMatch
+                    });
+                }
+            });
+            return acc;
+        }, []);
+
+        console.log(`Total matched users in area: ${sortedData.length}`);
+        console.log(sortedData);
+
+        populateForm(sortedData);        
+
+        resetButtonTexts();
+        confetti({
+            particleCount: 100,
+            spread: 70,
+            origin: { y: 0.6 }
+        });
+    } catch (error) {
+        console.error("Error during data fetch: ", error);
+    }
 }
 
-export async function fetchPlayersByAreaList(areaList){
-    // once we know how many pages, we should make a loop 
-    // and make this call with the right page index until there are no further pages
-    const url = `/aca-area/gen-area-rep?areas=${areaList}`;
+function populateForm(data){
+    const tableBody = document.getElementById("reportTableBody");
+    tableBody.innerHTML = '';
 
-    return fetch(url, {
-        method: 'GET',
-        headers: {
-            'Content-Type': 'application/json',
-        }
-    })
-    .then(response => {
-        if (!response.ok) {
-            return response.json().then(err => { 
-                console.log(err);
-                throw new Error(err.error || 'An error occurred');
-            });
-        }
-        return response.json();
+    data.forEach(element =>{
+        const row = tableBody.insertRow();
+        row.className = 'report-row';
+
+        let email = getUserEmailFromAccData(element.accountData.AccountDataJSON);
+        let createdDate = new Date(element.accountData.AccountDataJSON.Created);
+        let lastLoginDate = new Date(element.accountData.AccountDataJSON.LastLogin);
+        let daysSinceLastLogin = calcDaysSinceLastLogin(lastLoginDate);    
+        let daysSinceCreation = calcDaysSinceCreation(createdDate);
+        let userData = element.usageData.UsageDataJSON.Data;
+        let accountExpiryDate = userData.TestAccountExpiryDate !== undefined ? new Date(userData.TestAccountExpiryDate.Value) : undefined;
+        let accountExpiryDateString = accountExpiryDate !== undefined ? accountExpiryDate.toDateString() : "N/A";
+        
+        let linkedAccounts = element.accountData.AccountDataJSON.LinkedAccounts ? 
+            element.accountData.AccountDataJSON.LinkedAccounts.map(acc => acc.Platform).join(", ") : "N/A";
+
+        populateAccDataRow(row, email, createdDate, lastLoginDate, daysSinceLastLogin, daysSinceCreation, 
+            accountExpiryDateString, "", "", "", linkedAccounts);
+        let loginData = populateLoginData(userData);
+        let playerData = userData.PlayerData !== undefined ? JSON.parse(userData.PlayerData.Value) : undefined;
+        let playerDataState = {
+            averageTimePerPlay: 0,
+            totalPlays: 0,
+            totalPlayTime: 0,
+            activityDataForReport: []
+        };
+        let newDataState = populateUsageData(playerData, loginData, playerDataState, row);
+        // TODO: write report data for export
+        // TODO: populate insights
     });
+}
+
+async function fetchPlayersByAreaList(areaList, page = 1) {
+    const url = `/aca-area/gen-area-rep?areas=${encodeURIComponent(areaList)}&page=${page}`;
+
+    const response = await fetch(url, {
+        method: 'GET',
+        headers: { 'Content-Type': 'application/json' }
+    });
+
+    if (!response.ok) {
+        const errorDetails = await response.json();
+        throw new Error(errorDetails.message || 'An error occurred');
+    }
+
+    return response.json();
 }

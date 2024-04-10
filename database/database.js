@@ -11,14 +11,14 @@ const pool = new Pool({
     port: process.env.PGPORT,
     connectionString: process.env.PGURL,
     ssl: {
-        rejectUnauthorized: false, // Note: This disables certificate validation. See below for a more secure approach.
+        rejectUnauthorized: false,
     },
 });
 
-// /db/playerdata?start=0&end=1000 (query rows 0 to 1000)
-// /db/playerdata?start=125 (query rows 125 to END)
-// /db/playerdata (query all rows)
-dbRouter.get('/playerdata', async (req, res) => {
+// /db/usagedata?start=0&end=1000 (query rows 0 to 1000)
+// /db/usagedata?start=125 (query rows 125 to END)
+// /db/usagedata (query all rows)
+dbRouter.get('/usagedata', async (req, res) => {
   const secret = req.headers['x-secret-key'];
   if (secret !== process.env.SERVER_SEC) {
       return res.status(401).json({ message: 'Invalid or missing secret.' });
@@ -26,7 +26,7 @@ dbRouter.get('/playerdata', async (req, res) => {
 
   let start = parseInt(req.query.start, 10);
   let end = parseInt(req.query.end, 10);
-  let query = 'SELECT * FROM public."PlayerData"';
+  let query = 'SELECT * FROM public."UsageData"';
   const queryParams = [];
 
   // Ensure start and end are non-negative and start <= end
@@ -43,29 +43,28 @@ dbRouter.get('/playerdata', async (req, res) => {
       const { rows } = await pool.query(query, queryParams);
       res.json(rows);
   } catch (err) {
-      console.error('Error fetching player data from db:', err);
+      console.error('Error fetching usage data from db:', err);
       res.status(500).json({ error: 'Internal server error' });
   }
 });
 
-dbRouter.get('/get-playerdata-count', async (req, res) => {
+dbRouter.get('/get-usagedata-count', async (req, res) => {
   const secret = req.headers['x-secret-key'];
   if (secret !== process.env.SERVER_SEC) {
       return res.status(401).json({ message: 'Invalid or missing secret.' });
   }
   try {
-      //const { rows } = await pool.query(query, queryParams);
-      let count = await getTotalRowCount();
+      let count = await getTotalUsageRowCount();
       res.send(`${count}`);
   } catch (err) {
-      console.error('Error fetching player data from db:', err);
+      console.error('Error fetching usage data from db:', err);
       res.status(500).json({ error: 'Internal server error' });
   }
 });
 
-async function getTotalRowCount() {
+async function getTotalUsageRowCount() {
   try {
-      const { rows } = await pool.query('SELECT COUNT(*) FROM public."PlayerData"');
+      const { rows } = await pool.query('SELECT COUNT(*) FROM public."UsageData"');
       const totalCount = parseInt(rows[0].count, 10);
       return totalCount;
   } catch (err) {
@@ -74,4 +73,35 @@ async function getTotalRowCount() {
   }
 }
 
-module.exports = { dbRouter, getTotalRowCount };
+// USED TO UPDATE THE DATABASE
+async function extractAndSetJsonValue(tableName, jsonColumnName, keyName, newColumnName) {
+    const client = await pool.connect();
+
+    try {
+        await client.query('BEGIN');
+
+        // Add the new column if it doesn't exist
+        await client.query(`
+            ALTER TABLE "${tableName}"
+            ADD COLUMN IF NOT EXISTS "${newColumnName}" TEXT;
+        `);
+
+        // Extract value from the JSON column and set it in the new column
+        await client.query(`
+            UPDATE "${tableName}"
+            SET "${newColumnName}" = ("${jsonColumnName}"->>'${keyName}')::TEXT;
+        `);
+
+        await client.query('COMMIT');
+        console.log(`${newColumnName} column has been successfully updated with ${keyName} values from ${jsonColumnName}.`);
+    } catch (error) {
+        await client.query('ROLLBACK');
+        console.error('Error occurred:', error);
+    } finally {
+        client.release();
+    }
+}
+//extractAndSetJsonValue('AccountData', 'AccountDataJSON', 'PlayerId', 'PlayFabId').catch(err => console.error(err)); // done 17:44 09/04/2024
+//extractAndSetJsonValue('UsageData', 'UsageDataJSON', 'PlayFabId', 'PlayFabId').catch(err => console.error(err)); // done 18:49 09/04/2024
+
+module.exports = { dbRouter, getTotalUsageRowCount };
