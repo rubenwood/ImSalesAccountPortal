@@ -46,6 +46,30 @@ function getCohortDate() {
     return output;
 }
 
+export async function getPlayFabDailyTotalsReport(day, month, year){
+    console.log(`Getting daily totals report from Playfab ${day} ${month} ${year}`);
+
+    const reportName = "Daily Totals Report";
+
+    const playFabResponse = await fetch('/get-playfab-report', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            day, month, year, reportName
+        })
+    });
+
+    if (!playFabResponse.ok) {
+        throw new Error(`PlayFab Response was not ok: ${playFabResponse.statusText}`);
+    }
+
+    const csvText = await playFabResponse.text();
+    const data = parseCSV(csvText);
+    return data;
+}
+
 export async function getPlayFab30DayReport() {
     console.log("Getting 30 day report from Playfab");
 
@@ -64,8 +88,7 @@ export async function getPlayFab30DayReport() {
             'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-            ReportName: reportName,
-            day, month, year
+            day, month, year, reportName
         })
     });
 
@@ -97,8 +120,7 @@ export async function getPlayFabMonthlyTotalsReport(month, year) {
             'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-            ReportName: reportName,
-            day, month, year
+            day, month, year, reportName
         })
     });
 
@@ -108,15 +130,5 @@ export async function getPlayFabMonthlyTotalsReport(month, year) {
 
     const respText = await playFabResponse.text();
     const data = parseCSV(respText);
-
-    // Assuming the first row of the data contains the metrics
-    let outputMAU = data.find(row => row.Unique_Logins !== undefined)?.Unique_Logins ?? 'N/A';
-    let outputNewUsers = data.find(row => row.New_Users !== undefined)?.New_Users ?? 'N/A';
-    let output = {
-        MAU: outputMAU,
-        newUsers:outputNewUsers
-    }
-    
-    //console.log("PF MAU: ", MAU);
-    return output;
+    return data;
 }

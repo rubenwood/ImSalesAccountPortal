@@ -1,6 +1,6 @@
 import {getPlayerCountInSegment} from './segments.js';
 import {updateButtonText} from './utils.js';
-import {getPlayFab30DayReport, getPlayFabMonthlyTotalsReport} from './playfab_reporting/playfab-reports.js';
+import {getPlayFabDailyTotalsReport, getPlayFab30DayReport, getPlayFabMonthlyTotalsReport} from './playfab_reporting/playfab-reports.js';
 
 document.addEventListener('DOMContentLoaded', async () => {
     document.getElementById('google-login-btn').addEventListener('click', GoogleLoginClicked);
@@ -16,10 +16,7 @@ export function GoogleLoginClicked(){
 // KPI REPORT
 let fetchingKPIReport = false;
 async function fetchDevKPIReport() {
-    if (fetchingKPIReport) {
-        console.log("in progress");
-        return;
-    }
+    if (fetchingKPIReport) { console.log("in progress"); return; }
 
     fetchingKPIReport = true;
     const button = document.getElementById('get-google-report-btn');
@@ -28,9 +25,21 @@ async function fetchDevKPIReport() {
     const tickInterval = setInterval(tickUpdater, 500);
 
     try {
+        // Get Daily totals for the past 7 days
+        const daysToGoBack = 7;
+        const playFabDailyTotalsPromises = Array.from({ length: daysToGoBack }, (_, monthIndex) => {
+            const today = new Date();
+            const yesterday = new Date(today.setDate(today.getDate() - 1));
+            const day = yesterday.getDate() - monthIndex;
+            const month = yesterday.getMonth() + 1;
+            const year = yesterday.getFullYear();
+        
+            return getPlayFabDailyTotalsReport(day, month, year);
+        });
+        // Get 30 day retention report
         const playFab30DayReportPromise = getPlayFab30DayReport();
+        // Get Monthly totals for the past 12 Months
         const monthsToGoBack = 12;
-
         const playFabMonthlyTotalsPromises = Array.from({ length: monthsToGoBack }, (_, monthIndex) => {
             const targetDate = new Date();
             targetDate.setMonth(targetDate.getMonth() - monthIndex - 1);
@@ -50,28 +59,12 @@ async function fetchDevKPIReport() {
             return response.json();
         });
 
-        const [playFab30DayReport, monthlyTotalsReports, googleKPIReport] = await Promise.all([
+        const [playFabDailyTotalsReport, playFab30DayReport, monthlyTotalsReports, googleKPIReport] = await Promise.all([
+            Promise.all(playFabDailyTotalsPromises),
             playFab30DayReportPromise,
             Promise.all(playFabMonthlyTotalsPromises),
             googleKPIPromise
         ]);
-
-        // Process monthly reports to separate MAU and new users data
-        let MAUs = monthlyTotalsReports.map((report, index) => {
-            const targetDate = new Date();
-            targetDate.setMonth(targetDate.getMonth() - index - 1);
-            const month = targetDate.getMonth() + 1;
-            const year = targetDate.getFullYear();
-            return `Month ${month}/${year}: ${report.MAU}`;
-        });
-
-        let newUsers = monthlyTotalsReports.map((report, index) => {
-            const targetDate = new Date();
-            targetDate.setMonth(targetDate.getMonth() - index - 1);
-            const month = targetDate.getMonth() + 1;
-            const year = targetDate.getFullYear();
-            return `Month ${month}/${year}: ${report.newUsers}`;
-        });
 
         let table = document.getElementById('reportTable');
 
@@ -83,16 +76,32 @@ async function fetchDevKPIReport() {
             Day 30: ${playFab30DayReport[30]?.Percent_Retained ?? 'N/A'}%`;
         }
 
-        // Update MAU data
-        let mauDataCell = table.querySelector("#MAUPlayfab");
-        if (mauDataCell) {
-            mauDataCell.innerHTML = MAUs.join('<br>');
-        }
+        // Process Monthly Total Report
+        let MAUs = monthlyTotalsReports.map((report, index) => {
+            return `<b>${report[0].Ts.replace("T00:00:00.0000000", "")}</b>: ${report[0].Unique_Logins}`;
+        });
+        let newUsers = monthlyTotalsReports.map((report, index) => {
+            return `<b>${report[0].Ts.replace("T00:00:00.0000000", "")}</b>: ${report[0].New_Users}`;
+        });
+        // Process Daily Totals Report
+        let totalDAUPer7Days = 0
+        let DAUPast7Days = playFabDailyTotalsReport.map((report, index) =>{
+            totalDAUPer7Days += parseInt(report[0].Unique_Logins, 10);
+            return `<b>${report[0].Ts.replace("T00:00:00.0000000", "")}</b>: ${report[0].Unique_Logins}`;
+        });
 
-        // Update new users data
+        // Update MAU cell
+        let mauDataCell = table.querySelector("#MAUPlayfab");
+        if (mauDataCell) { mauDataCell.innerHTML = MAUs.join('<br>'); }
+        // Update New Users cell
         let newUsersDataCell = table.querySelector("#NewUsersPerMonthPlayfab");
-        if (newUsersDataCell) {
-            newUsersDataCell.innerHTML = newUsers.join('<br>');
+        if (newUsersDataCell) { newUsersDataCell.innerHTML = newUsers.join('<br>'); }
+        // Update DAU cell
+        let DAUDataCell = table.querySelector("#DAUPlayfab");
+        if (DAUDataCell) { 
+            DAUDataCell.innerHTML = DAUPast7Days.join('<br>'); 
+            DAUDataCell.innerHTML += `<br><b>Total</b>: ${totalDAUPer7Days}
+            <br><b>Average</b>:${parseInt(totalDAUPer7Days/7, 10)}`; 
         }
 
         // Setup the Google KPI report table
@@ -108,7 +117,6 @@ async function fetchDevKPIReport() {
         doConfetti();
     }
 }
-
 
 function setupReportTable(jsonInput){
     let table = document.getElementById('reportTable');

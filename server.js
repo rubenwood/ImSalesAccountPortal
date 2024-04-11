@@ -375,15 +375,14 @@ app.post('/get-segment-players/:segmentID', async (req, res) => {
 // GET PLAYFAB DATA REPORT
 app.post('/get-playfab-report', async (req, res) => {
   try {
-    // Use the provided day, month, and year from the request body
-    const { day, month, year, ReportName: reportName } = req.body;
+    const { day, month, year, reportName } = req.body;
 
     const playFabResponse = await axios.post(
       `https://${process.env.PLAYFAB_TITLE_ID}.playfabapi.com/Admin/GetDataReport`, {
         Day: day,
         Month: month,
         Year: year,
-        ReportName: reportName // Use the report name from the request body
+        ReportName: reportName
       }, {
         headers: {
           'X-SecretKey': process.env.PLAYFAB_SECRET_KEY
