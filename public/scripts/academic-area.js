@@ -1,5 +1,5 @@
 import { canAccess } from './access-check.js';
-import { resetButtonTexts } from './main.js';
+import { writeDataForReport, resetExportData, resetButtonTexts } from './main.js';
 
 import { populateAccDataRow, populateLoginData, populateUsageData, getUserEmailFromAccData, calcDaysSinceLastLogin, calcDaysSinceCreation } from './user-report-formatting.js';
 
@@ -62,13 +62,15 @@ export async function fetchAllPlayersByArea() {
 }
 
 function populateForm(data){
+    resetExportData();
+
     const tableBody = document.getElementById("reportTableBody");
     tableBody.innerHTML = '';
 
     data.forEach(element =>{
         const row = tableBody.insertRow();
         row.className = 'report-row';
-
+        let playFabId = element.accountData.PlayFabId;
         let email = getUserEmailFromAccData(element.accountData.AccountDataJSON);
         let createdDate = new Date(element.accountData.AccountDataJSON.Created);
         let lastLoginDate = new Date(element.accountData.AccountDataJSON.LastLogin);
@@ -92,8 +94,15 @@ function populateForm(data){
             activityDataForReport: []
         };
         let newDataState = populateUsageData(playerData, loginData, playerDataState, row);
-        // TODO: write report data for export
-        // TODO: populate insights
+        let activityDataForReport = newDataState.activityDataForReport;
+        let averageTimePerPlay = newDataState.averageTimePerPlay;
+        let totalPlays = newDataState.totalPlays;
+        let totalPlayTime = newDataState.totalPlayTime;
+
+        // write the data for the insights & export data
+        writeDataForReport(playFabId, email, createdDate, lastLoginDate, daysSinceLastLogin, daysSinceCreation,
+             accountExpiryDate, 0, "", "", linkedAccounts, activityDataForReport, totalPlays, totalPlayTime,
+             averageTimePerPlay, loginData);
     });
 }
 

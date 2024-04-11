@@ -6,7 +6,7 @@ import { fetchUserData, fetchUserAccInfoById, fetchUserAccInfoByEmail, fetchUser
 import { playerProfiles, getSegmentsClicked, getPlayersInSegmentClicked } from './segments.js';
 import { fetchPlayersBySuffixList } from './suffix-front.js';
 //import { generateReportByClickId } from './click-id.js';
-//import { fetchAllPlayersByArea } from './academic-area.js'
+import { fetchAllPlayersByArea } from './academic-area.js'
 
 document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('loginButton').addEventListener('click', Login);
@@ -32,7 +32,7 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('generateReportButton').addEventListener('click', generateReportByEmail);
     document.getElementById('generateReportByIdButton').addEventListener('click', generateReportById);
     document.getElementById('generateReportBySuffixButton').addEventListener('click', generateReportBySuffix);
-    //document.getElementById('generateReportByAreaButton').addEventListener('click', fetchAllPlayersByArea);
+    document.getElementById('generateReportByAreaButton').addEventListener('click', fetchAllPlayersByArea);
     //document.getElementById('generateReportByClickIDButton').addEventListener('click', generateReportByClickId);
     
     document.getElementById('exportReportButton').addEventListener('click', exportToExcel);
@@ -122,8 +122,7 @@ export async function generateReportBySuffix() {
     const tableBody = document.getElementById("reportTableBody");
     tableBody.innerHTML = '';
     
-    reportData = [];
-    exportData = [];
+    resetExportData();
 
     let playerIDList = [];
     let index = 0;
@@ -235,8 +234,7 @@ export async function generateReportById() {
     const tableBody = document.getElementById("reportTableBody");
     tableBody.innerHTML = ''; // Clear out the existing rows
 
-    reportData = []; // reset the report data
-    exportData = [];
+    resetExportData();
 
     // Create an array of promises for fetching user data
     const fetchPromises = playerIDList.map(async (playerID, index) => {
@@ -282,8 +280,7 @@ export async function generateReportByEmail() {
     const tableBody = document.getElementById("reportTableBody");
     tableBody.innerHTML = '';
 
-    reportData = [];
-    exportData = [];
+    resetExportData();
 
     const fetchPromises = emailList.map(async (email, index) => {
         try {
@@ -386,10 +383,13 @@ async function handleData(respData, userAccInfo, tableBody){
     }
 }
 
+// Clears exportData, required when producing a new report
+export function resetExportData(){
+    reportData = [];
+    exportData = [];
+}
 
-
-
-function writeDataForReport(pID, pEmail, pCreatedDate,
+export function writeDataForReport(pID, pEmail, pCreatedDate,
                             pLastLoginDate, pDaysSinceLastLogin, pDaysSinceCreation,
                             pAccountExpiryDate, pDaysToExpire, pCreatedBy, pCreatedFor, pLinkedAccounts,
                             pActivityDataForReport, pTotalPlays, pTotalPlayTime, pAveragePlayTimePerPlay, pLoginData){
