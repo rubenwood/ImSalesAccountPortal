@@ -6,7 +6,7 @@ import { fetchUserData, fetchUserAccInfoById, fetchUserAccInfoByEmail, fetchUser
 import { playerProfiles, getSegmentsClicked, getPlayersInSegmentClicked } from './segments.js';
 import { fetchPlayersBySuffixList } from './suffix-front.js';
 //import { generateReportByClickId } from './click-id.js';
-import { fetchAllPlayersByArea } from './academic-area.js'
+//import { fetchAllPlayersByArea } from './academic-area.js'
 
 document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('loginButton').addEventListener('click', Login);
@@ -118,8 +118,6 @@ export async function generateReportBySuffix() {
     document.getElementById('generateReportBySuffixButton').value = "Generating Report By Email Suffix...";
 
     let output = await fetchPlayersBySuffixList(suffixes.toString());
-    console.log("total users with suffix: " + output.length);
-    console.log(output);
     
     const tableBody = document.getElementById("reportTableBody");
     tableBody.innerHTML = '';
@@ -165,6 +163,7 @@ export async function generateReportBySuffix() {
 
         try {
             await delay(500); // delay for each fetch req
+            // TODO: change this to come from DB
             let userData = await fetchUserData(element.PlayerId);
             playerIDList.push(element.PlayerId);
 

@@ -15,8 +15,8 @@ function isValidExpiryDate(expiry){
     return expiry !== "";
 }
 
-export async function Login()
-{  
+// LOGIN
+export async function Login(){  
     PlayFab.settings.titleId = titleId;
 
     const email = document.getElementById('username').value;
@@ -39,7 +39,7 @@ export async function Login()
         }
     });
 }
-
+// REGISTER USER
 export async function RegisterUserEmailAddress(){
     let hasAccess = await canAccess();
     if(!hasAccess){ return; }
@@ -74,7 +74,6 @@ export async function RegisterUserEmailAddress(){
 
     PlayFabClientSDK.RegisterPlayFabUser(registerRequest, RegisterCallback);
 }
-
 var RegisterCallback = async function (result, error){
     if (result !== null) {
         document.getElementById("resultOutput").innerHTML = "Account created!";
@@ -122,6 +121,7 @@ var RegisterCallback = async function (result, error){
     }
 }
 
+// UPDATE USER DATA
 var updatingUserData = false;
 function UpdateUserData(updateData){
     updatingUserData = true;
@@ -134,8 +134,6 @@ function UpdateUserData(updateData){
     };
     PlayFabClientSDK.UpdateUserData(updateUserDataRequest, UpdateUserDataCallback);
 }
-
-// UPDATE USER DATA
 var UpdateUserDataCallback = function (result, error){
     if (result !== null) {
         document.getElementById("resultOutput").innerHTML = "Account created & user data updated... Updating confluence...";
@@ -199,7 +197,7 @@ export async function UpdateUserDataServer(){
 }
 
 // GET USER DATA
-function getUserData(keys) {
+function getUserData(keys){
     return new Promise((resolve, reject) => {
         var requestData = {
             Keys: keys
@@ -221,7 +219,7 @@ function getUserData(keys) {
 }
 
 // GET PLAYER EMAIL ADDR
-export async function getPlayerEmailAddr(playFabId) {
+export async function getPlayerEmailAddr(playFabId){
     try{
         let playerData = await fetchUserAccInfoById(playFabId);
         let userEmail;
@@ -229,11 +227,11 @@ export async function getPlayerEmailAddr(playFabId) {
         if(loginEmail !== undefined){ 
             userEmail = loginEmail 
         }else{
-            console.log("login email undefined, getting contact instead");
+            //console.log("login email undefined, getting contact instead");
             userEmail = await getPlayerContactEmailAddr(playFabId);
         }
         return userEmail;
-    } catch (error) {
+    }catch(error){
         console.error(`Error fetching email for PlayFab ID ${playFabId}:`, error);
         return null;
     }    
@@ -243,11 +241,8 @@ async function getPlayerContactEmailAddr(playFabId){
     let playerProfileResp = await fetchUserProfileById(playFabId);
     let playerProfile = playerProfileResp.data.PlayerProfile;
     let contactEmailAddr = "";
-    // if(playerProfile == undefined) { return contactEmailAddr;  } 
-    // if(playerProfile.ContactEmailAddresses == undefined) { return contactEmailAddr;  } 
-    // if(playerProfile.ContactEmailAddresses.length < 1) { return contactEmailAddr;  } 
 
-    contactEmailAddr = playerProfile.ContactEmailAddresses[0].EmailAddress;
+    contactEmailAddr = playerProfile.ContactEmailAddresses[0]?.EmailAddress;
     return contactEmailAddr;
 
 }

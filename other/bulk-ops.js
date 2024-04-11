@@ -1,4 +1,3 @@
-const AWS = require('aws-sdk');
 const express = require('express');
 const axios = require('axios');
 const { Pool } = require('pg');
@@ -15,14 +14,6 @@ const pool = new Pool({
         rejectUnauthorized: false,
     },
 });
-
-//const { anyFileModifiedSince, checkFilesLastModifiedList } = require('./s3-utils');
-// AWS.config.update({
-//     region: process.env.AWS_REGION,
-//     accessKeyId: process.env.AWS_ACCESS_KEY_ID,
-//     secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY
-// });
-// const s3 = new AWS.S3();
 
 let getPlayerAccDataJobInProgress = false;
 
@@ -126,6 +117,7 @@ async function updateUsageDataInDB() {
     }
 }
 //updateUsageDataInDB(); // DONE 18:49 09/04/2024
+
 async function processBatch(playerIds) {
     const fetchPromises = playerIds.map(playerId => fetchPlayerData(playerId).then(data => ({
         playerId,
@@ -135,18 +127,6 @@ async function processBatch(playerIds) {
     return Promise.all(fetchPromises);
 }
 
-async function requestPlayerData(batch, maxConcurrentRequests, playerDataBatch) {
-    for (let i = 0; i < batch.length; i += maxConcurrentRequests) {
-        const currentSlice = batch.slice(i, i + maxConcurrentRequests);
-        const promises = currentSlice.map(element =>
-            fetchPlayerData(element.PlayerId).then(playerData => {
-                if (playerData) playerDataBatch.push(playerData);
-            })
-        );
-        await Promise.all(promises);
-        console.log(`Processed: ${i} to ${ (i + maxConcurrentRequests) }`)
-    }
-}
 async function fetchPlayerData(playerId) {
     console.log(playerId);
     try {
@@ -174,7 +154,5 @@ module.exports = {
     setAllS3AccData,
     getLastDateGotAllS3AccData,
     setLastDateGotAllS3AccData,
-    //getAllPlayersAndUpload,
-    getAllPlayerAccDataAndWriteToDB,
-    //getAllS3AccFilesData,
+    getAllPlayerAccDataAndWriteToDB
 };

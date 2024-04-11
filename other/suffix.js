@@ -4,7 +4,7 @@ const suffixRouter = express.Router();
 const { Pool } = require('pg');
 
 const { anyFileModifiedSince, checkFileLastModified, checkFilesLastModifiedList } = require('./s3-utils');
-const { getAllS3AccData, setAllS3AccData, getLastDateGotAllS3AccData, getAllS3AccFilesData } = require('./bulk-ops');
+//const { getAllS3AccData, setAllS3AccData, getLastDateGotAllS3AccData, getAllS3AccFilesData } = require('./bulk-ops');
 
 AWS.config.update({
     region: process.env.AWS_REGION,

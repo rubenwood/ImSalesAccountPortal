@@ -189,8 +189,6 @@ export function populateUsageData(playerData, loginData, state, row){
     playerDataContent += `<h1>Total Activities Played: ${playerData.activities.length}</h1>`;
     playerDataContent += `<h1>Total Play Time: ${formatTime(state.totalPlayTime)}</h1>`;
     state.averageTimePerPlay = Math.round(state.totalPlayTime / state.totalPlays); 
-    console.log("total playtime: ", state.totalPlayTime);
-    console.log("total plays: ", state.totalPlays);
     playerDataContent += `<h1>Avg. Time per activity: ${formatTime(state.averageTimePerPlay)}</h1>`;
     addCellToRow(row, 'Expand Usage Data', 1, true, playerDataContent);    
 
