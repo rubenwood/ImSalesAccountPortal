@@ -1,12 +1,13 @@
 import { canAccess } from './access-check.js';
-import { populateAccDataRow, addCellToRow, populateUsageData, populateLoginData, calcDaysSinceLastLogin, calcDaysSinceCreation, calcDaysToExpiry, checkForContactEmailAddrSuffix, closePlayerDataModal } from './user-report-formatting.js';
+import { populateAccDataRow, populateUsageData, populateLoginData, calcDaysSinceLastLogin, calcDaysSinceCreation, calcDaysToExpiry, checkForContactEmailAddrSuffix, closePlayerDataModal } from './user-report-formatting.js';
 import { Login, RegisterUserEmailAddress, UpdateUserDataServer, getPlayerEmailAddr } from './PlayFabManager.js';
 import { showInsightsModal, closeInsightsModal, getTotalPlayTime, findPlayersWithMostPlayTime, findPlayersWithMostPlays, findPlayersWithMostUniqueActivitiesPlayed, findMostPlayedActivities, getUserAccessPerPlatform } from './insights.js';
-import { fetchUserData, fetchUserAccInfoById, fetchUserAccInfoByEmail, fetchUserProfileById, formatTimeToHHMMSS, formatActivityData, getAcademicAreas } from './utils.js';
+import { fetchUserData, fetchUserAccInfoById, fetchUserAccInfoByEmail, formatTimeToHHMMSS, formatActivityData, getAcademicAreas } from './utils.js';
 import { playerProfiles, getSegmentsClicked, getPlayersInSegmentClicked } from './segments.js';
 import { fetchPlayersBySuffixList } from './suffix-front.js';
+import { populateForm, sortAndCombineData, fetchAllPlayersByArea } from './academic-area.js';
+import { fetchUsersByID } from './db/db-front.js';
 //import { generateReportByClickId } from './click-id.js';
-import { fetchAllPlayersByArea } from './academic-area.js'
 
 document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('loginButton').addEventListener('click', Login);
@@ -30,7 +31,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // reports
     document.getElementById('generateReportButton').addEventListener('click', generateReportByEmail);
-    document.getElementById('generateReportByIdButton').addEventListener('click', generateReportById);
+    //document.getElementById('generateReportByIdButton').addEventListener('click', generateReportById);
+    document.getElementById('generateReportByIdButton').addEventListener('click', generateReportByIdDB);
     document.getElementById('generateReportBySuffixButton').addEventListener('click', generateReportBySuffix);
     document.getElementById('generateReportByAreaButton').addEventListener('click', fetchAllPlayersByArea);
     //document.getElementById('generateReportByClickIDButton').addEventListener('click', generateReportByClickId);
@@ -162,7 +164,7 @@ export async function generateReportBySuffix() {
 
         try {
             await delay(500); // delay for each fetch req
-            // TODO: change this to come from DB
+            // TODO: fetch data from DB
             let userData = await fetchUserData(element.PlayerId);
             playerIDList.push(element.PlayerId);
 
@@ -239,10 +241,11 @@ export async function generateReportById() {
     // Create an array of promises for fetching user data
     const fetchPromises = playerIDList.map(async (playerID, index) => {
         try {
-            await delay(index * 700); // Delay
-            let userAccInfo = await fetchUserAccInfoById(playerID);            
+            await delay(index * 700); // Delay (remove once we get from DB)
+            // TODO: fetch data from DB
+            let userAccInfo = await fetchUserAccInfoById(playerID);
+            // TODO: fetch data from DB
             let userData = await fetchUserData(userAccInfo.data.UserInfo.PlayFabId);
-            //let userProfile = await fetchUserProfileById(userAccInfo.data.UserInfo.PlayFabId);
             await handleData(userData, userAccInfo, tableBody);
         } catch (error) {
             console.error('Error:', error);
@@ -267,6 +270,45 @@ export async function generateReportById() {
     });
 }
 
+// Generate report by ID (Database)
+export async function generateReportByIdDB() {
+    let hasAccess = await canAccess();
+    if (!hasAccess) { return; }
+
+    resetButtonTexts();
+
+    const playerIDText = document.getElementById("playerIDList").value;
+    const playerIDList = playerIDText.split('\n').filter(Boolean);
+    const tableBody = document.getElementById("reportTableBody");
+    tableBody.innerHTML = '';
+
+    resetExportData();
+
+    try {
+        let totalPages = 1;
+        const fetchPromises = [];
+        for (let page = 1; page <= totalPages; page++) {
+            fetchPromises.push(fetchUsersByID(playerIDList, page));
+        }
+        const results = await Promise.all(fetchPromises);
+
+        let sortedData = sortAndCombineData(results);
+
+        await populateForm(sortedData);
+
+    } catch (error) {
+        console.error('Error:', error);
+        const row = tableBody.insertRow();
+        row.insertCell().textContent = 'Error fetching data';
+        row.insertCell().textContent = error.message;
+        row.insertCell().colSpan = 4; // assuming 4 columns for simplicity
+        row.style.color = 'white';
+        row.style.fontWeight = 'bold';
+        row.style.backgroundColor = '#700000';
+        row.style.textAlign = 'center';
+    }
+}
+
 // Generate report by email list
 export async function generateReportByEmail() {
     let hasAccess = await canAccess();
@@ -285,14 +327,16 @@ export async function generateReportByEmail() {
     const fetchPromises = emailList.map(async (email, index) => {
         try {
             await delay(index * 700);
+            // TODO: Get data from db
             let userAccInfo = await fetchUserAccInfoByEmail(email);
             if(userAccInfo.error){ throw new Error(userAccInfo.message);}  
             playerIDList.push(userAccInfo.data.UserInfo.PlayFabId);
+            // TODO: Get data from db
             let userData = await fetchUserData(userAccInfo.data.UserInfo.PlayFabId);
-            //let userProfile = await fetchUserProfileById(userAccInfo.data.UserInfo.PlayFabId);
+            console.log(userData);
+            console.log(userAccInfo);
             await handleData(userData, userAccInfo, tableBody);
         } catch (error) {
-            //console.log(email);
             console.error(`Error: ${email}`, error);
             const row = tableBody.insertRow();
             row.insertCell().textContent = 'Error for email: ' + email;

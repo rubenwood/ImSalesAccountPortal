@@ -15,6 +15,7 @@ const pool = new Pool({
     },
 });
 
+// Returns the total number of rows (and pages) for a given academic area
 acaAreaRouter.get('/area-rep-count', async (req, res) => {
     console.log("called area report count");
     try {
@@ -41,7 +42,9 @@ acaAreaRouter.get('/area-rep-count', async (req, res) => {
     }
 });
 
-
+// Searches database for users who  have an AcademicArea equal one of req.query.areas list
+// returns a json object detailing the total rows, pages, currentPage, pageSize,
+// and most importantly; usageData and accountData for each user 
 acaAreaRouter.get('/gen-area-rep', async (req, res) => {
     console.log("called aca area search");
     try {

@@ -1,7 +1,8 @@
 import { canAccess } from './access-check.js';
 import { writeDataForReport, resetExportData, resetButtonTexts } from './main.js';
 
-import { populateAccDataRow, populateLoginData, populateUsageData, getUserEmailFromAccData, calcDaysSinceLastLogin, calcDaysSinceCreation } from './user-report-formatting.js';
+import { populateAccDataRow, populateLoginData, populateUsageData, getUserEmailFromAccData, calcDaysSinceLastLogin, 
+    calcDaysSinceCreation } from './user-report-formatting.js';
 
 export async function fetchAllPlayersByArea() {
     let hasAccess = await canAccess();
@@ -30,23 +31,10 @@ export async function fetchAllPlayersByArea() {
         }
 
         const results = await Promise.all(fetchPromises);
-
-        // Combine results from all pages and match usageData with accountData
-        const sortedData = results.reduce((acc, curr) => {
-            curr.usageData.forEach(ud => {
-                const accountDataMatch = curr.accountData.find(ad => ad.PlayFabId === ud.PlayFabId);
-                if (accountDataMatch) {
-                    acc.push({
-                        usageData: ud,
-                        accountData: accountDataMatch
-                    });
-                }
-            });
-            return acc;
-        }, []);
-
-        console.log(`Total matched users in area: ${sortedData.length}`);
+        console.log(results);
+        const sortedData = sortAndCombineData(results);
         console.log(sortedData);
+        console.log(`Total matched users in area: ${sortedData.length}`);
 
         populateForm(sortedData);        
 
@@ -60,8 +48,40 @@ export async function fetchAllPlayersByArea() {
         console.error("Error during data fetch: ", error);
     }
 }
+export function sortAndCombineData(results) {
+    console.log(results);
+    return results.reduce((acc, curr) => {
+        console.log(curr);
+        curr.usageData.forEach(ud => {
+            const accountDataMatch = curr.accountData.find(ad => ad.PlayFabId === ud.PlayFabId);
+            if (accountDataMatch) {
+                acc.push({
+                    usageData: ud,
+                    accountData: accountDataMatch
+                });
+            }
+        });
+        return acc;
+    }, []);
+}
 
-function populateForm(data){
+async function fetchPlayersByAreaList(areaList, page = 1) {
+    const url = `/aca-area/gen-area-rep?areas=${encodeURIComponent(areaList)}&page=${page}`;
+
+    const response = await fetch(url, {
+        method: 'GET',
+        headers: { 'Content-Type': 'application/json' }
+    });
+
+    if (!response.ok) {
+        const errorDetails = await response.json();
+        throw new Error(errorDetails.message || 'An error occurred');
+    }
+
+    return response.json();
+}
+
+export function populateForm(data){
     resetExportData();
 
     const tableBody = document.getElementById("reportTableBody");
@@ -104,20 +124,4 @@ function populateForm(data){
              accountExpiryDate, 0, "", "", linkedAccounts, activityDataForReport, totalPlays, totalPlayTime,
              averageTimePerPlay, loginData);
     });
-}
-
-async function fetchPlayersByAreaList(areaList, page = 1) {
-    const url = `/aca-area/gen-area-rep?areas=${encodeURIComponent(areaList)}&page=${page}`;
-
-    const response = await fetch(url, {
-        method: 'GET',
-        headers: { 'Content-Type': 'application/json' }
-    });
-
-    if (!response.ok) {
-        const errorDetails = await response.json();
-        throw new Error(errorDetails.message || 'An error occurred');
-    }
-
-    return response.json();
 }

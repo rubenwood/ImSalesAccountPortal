@@ -3,6 +3,8 @@ const axios = require('axios');
 const { Pool } = require('pg');
 const bulkRouter = express.Router();
 
+const { extractAndSetJsonValue } = require('../database/database');
+
 const pool = new Pool({
     user: process.env.PGUSER,
     host: process.env.PGHOST,
@@ -15,8 +17,18 @@ const pool = new Pool({
     },
 });
 
-let getPlayerAccDataJobInProgress = false;
+async function updateDatabase(){
+    console.log("getting all player segment and writing to db...");
+    await getAllPlayerAccDataAndWriteToDB();
+    console.log("updating account data fields...");
+    await extractAndSetJsonValue('AccountData', 'AccountDataJSON', 'PlayerId', 'PlayFabId').catch(err => console.error(err));
+    console.log("getting all usage data and writing to db...");
+    await updateUsageDataInDB();
+    console.log("updating usage data fields");
+    await extractAndSetJsonValue('UsageData', 'UsageDataJSON', 'PlayFabId', 'PlayFabId').catch(err => console.error(err));
+}
 
+let getPlayerAccDataJobInProgress = false;
 async function getAllPlayerAccDataAndWriteToDB() {
     let contToken = null;
     let timestamp = new Date();
@@ -71,7 +83,6 @@ function setAllS3PlayerData(data){ allS3PlayerData = data; }
 function getAllS3PlayerData(){ return allS3PlayerData; }
 
 function getJobInProgress(){ return getPlayerAccDataJobInProgress }
-
 
 async function updateUsageDataInDB() {
     const client = await pool.connect();

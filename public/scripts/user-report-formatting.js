@@ -76,6 +76,7 @@ export function calcDaysToExpiry(accountExpiryDate){
 
 export function getUserEmailFromAccData(element){
     let email = "no email";
+    console.log(element);
     if(element.LinkedAccounts !== undefined && element.LinkedAccounts.length > 0){
         let gotAcc = false;
         element.LinkedAccounts.forEach(linkedAcc =>{
@@ -93,12 +94,13 @@ export function getUserEmailFromAccData(element){
         let contactEmail = checkForContactEmailAddr(element);
         email = contactEmail == undefined ? "no email" : contactEmail;
     }
+    console.log(email);
     return email;
 }
 export function checkForContactEmailAddr(input){
     let emailAddr;
     if(input.ContactEmailAddresses !== undefined && input.ContactEmailAddresses.length > 0){
-        emailAddr = input.ContactEmailAddresses[0]; // assume the first contact email
+        emailAddr = input.ContactEmailAddresses[0].EmailAddress; // assume the first contact email
     }
     return emailAddr;
 }

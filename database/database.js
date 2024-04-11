@@ -1,5 +1,4 @@
 const express = require('express');
-const axios = require('axios');
 const { Pool } = require('pg');
 const dbRouter = express.Router();
 
@@ -15,6 +14,49 @@ const pool = new Pool({
     },
 });
 
+
+dbRouter.post('/get-users-by-id', async (req, res) => {
+    const playFabIds = req.body.playFabIds;
+    console.log(playFabIds);
+
+    if (!playFabIds || playFabIds.length === 0) {
+        return res.status(400).json({ error: 'A non-empty array of PlayFabIds must be provided' });
+    }
+
+    try {
+        // Using ANY to select rows matching any PlayFabId in the provided list
+        const accountDataQuery = 'SELECT * FROM public."AccountData" WHERE "PlayFabId" = ANY($1)';
+        const accountDataResult = await pool.query(accountDataQuery, [playFabIds]);
+
+        const usageDataQuery = 'SELECT * FROM public."UsageData" WHERE "PlayFabId" = ANY($1)';
+        const usageDataResult = await pool.query(usageDataQuery, [playFabIds]);
+
+        // Simplified response assuming no pagination
+        const totalRows = accountDataResult.rowCount + usageDataResult.rowCount;
+        const totalPages = 1; // Placeholder values for pagination
+        const currentPage = 1;
+        const pageSize = totalRows; // This assumes no pagination. Adjust as necessary.
+
+        res.json({
+            totalRows: totalRows,
+            totalPages: totalPages,
+            currentPage: currentPage,
+            pageSize: pageSize,
+            usageData: usageDataResult.rows,
+            accountData: accountDataResult.rows
+        });
+    } catch (error) {
+        console.error('Database query error', error.stack);
+        res.status(500).json({ error: 'Internal Server Error' });
+    }
+});
+
+dbRouter.get('/get-users-by-email', async (req, res) => {
+    
+});
+
+
+// gets all usage data from start to end (row numbers)
 // /db/usagedata?start=0&end=1000 (query rows 0 to 1000)
 // /db/usagedata?start=125 (query rows 125 to END)
 // /db/usagedata (query all rows)
@@ -104,4 +146,4 @@ async function extractAndSetJsonValue(tableName, jsonColumnName, keyName, newCol
 //extractAndSetJsonValue('AccountData', 'AccountDataJSON', 'PlayerId', 'PlayFabId').catch(err => console.error(err)); // done 17:44 09/04/2024
 //extractAndSetJsonValue('UsageData', 'UsageDataJSON', 'PlayFabId', 'PlayFabId').catch(err => console.error(err)); // done 18:49 09/04/2024
 
-module.exports = { dbRouter, getTotalUsageRowCount };
+module.exports = { dbRouter, getTotalUsageRowCount, extractAndSetJsonValue };
