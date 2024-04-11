@@ -200,7 +200,7 @@ export async function generateReportBySuffix() {
                 daysSinceCreation, accountExpiryDateString, daysToExpire, createdBy, createdFor, linkedAccounts, activityDataForReport,
                 totalPlays, totalPlayTime, averageTimePerPlay, loginData);      
         } catch(error) {
-            let errorStr = `Error fetching data for user ${element.PlayerId}: ${error.message}`;
+            let errorStr = `Error fetching data for user: ${error.message}`;
             console.error(errorStr);
             while (row.firstChild) { row.removeChild(row.firstChild); } // clear out any cells that may have been added
             row.style.backgroundColor = '#ff8c8cab'; // Highlight the cell in red
