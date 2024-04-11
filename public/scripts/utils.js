@@ -1,4 +1,9 @@
 export function formatTime(secondsTotal) {
+    // Handle case where input is 0
+    if (secondsTotal <= 0) {
+        return "0 seconds";
+    }
+
     const hours = Math.floor(secondsTotal / 3600);
     const minutes = Math.floor((secondsTotal % 3600) / 60);
     const seconds = secondsTotal % 60;
@@ -7,12 +12,15 @@ export function formatTime(secondsTotal) {
     if (hours > 0) {
         formattedTime += `${hours} hours `;
     }
-    if (minutes > 0 || hours > 0) { // Include minutes if there are hours
+    if (minutes > 0 || hours > 0) { // Include minutes if there are hours, or if minutes is not 0
         formattedTime += `${minutes} minutes `;
     }
-    formattedTime += `${seconds} seconds`;
+    // Include seconds if there are minutes or hours, or if seconds is not 0
+    if (seconds > 0 || minutes > 0 || hours > 0) {
+        formattedTime += `${seconds} seconds`;
+    }
 
-    return formattedTime;
+    return formattedTime.trim(); // Trim to remove any trailing space
 }
 export function formatTimeToHHMMSS(seconds) {
     seconds = Math.round(seconds);

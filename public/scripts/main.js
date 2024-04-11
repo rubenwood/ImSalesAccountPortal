@@ -32,7 +32,7 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('generateReportButton').addEventListener('click', generateReportByEmail);
     document.getElementById('generateReportByIdButton').addEventListener('click', generateReportById);
     document.getElementById('generateReportBySuffixButton').addEventListener('click', generateReportBySuffix);
-    document.getElementById('generateReportByAreaButton').addEventListener('click', fetchAllPlayersByArea);
+    //document.getElementById('generateReportByAreaButton').addEventListener('click', fetchAllPlayersByArea);
     //document.getElementById('generateReportByClickIDButton').addEventListener('click', generateReportByClickId);
     
     document.getElementById('exportReportButton').addEventListener('click', exportToExcel);
@@ -572,11 +572,18 @@ function exportToExcel() {
 }
 
 // RESET BUTTONS
-export function resetButtonTexts(){
-    document.getElementById('generateReportButton').value = "Generate Report By Email List";
-    document.getElementById('generateReportByIdButton').value = "Generate Report By Ids";
-    document.getElementById('generateReportBySuffixButton').value = "Generate Report By Suffix";
-    document.getElementById('generateReportByAreaButton').value = "Generate Report By Academic Area";
+export function resetButtonTexts() {
+    const generateReportButton = document.getElementById('generateReportButton');
+    generateReportButton ? generateReportButton.value = "Generate Report By Email List" : null;
+
+    const generateReportByIdButton = document.getElementById('generateReportByIdButton');
+    generateReportByIdButton ? generateReportByIdButton.value = "Generate Report By Ids" : null;
+
+    const generateReportBySuffixButton = document.getElementById('generateReportBySuffixButton');
+    generateReportBySuffixButton ? generateReportBySuffixButton.value = "Generate Report By Suffix" : null;
+
+    const generateReportByAreaButton = document.getElementById('generateReportByAreaButton');
+    generateReportByAreaButton ? generateReportByAreaButton.value = "Generate Report By Academic Area" : null;
 }
 
 // TOGGLE PLAYER ID TEXT
