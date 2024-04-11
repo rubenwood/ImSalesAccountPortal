@@ -20,9 +20,11 @@ export function formatTime(secondsTotal) {
         formattedTime += `${seconds} seconds`;
     }
 
-    return formattedTime.trim(); // Trim to remove any trailing space
+    return formattedTime.trim();
 }
 export function formatTimeToHHMMSS(seconds) {
+    if(isNaN(seconds)){ return '00:00:00'; }
+
     seconds = Math.round(seconds);
     const hours = Math.floor(seconds / 3600);
     const minutes = Math.floor((seconds % 3600) / 60);

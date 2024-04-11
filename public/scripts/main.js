@@ -551,7 +551,7 @@ function exportToExcel() {
                     activityTitle: activity.activityTitle,
                     playDate: activity.playDate,
                     score: Math.round(activity.score * 100) + '%',
-                    sessionTime: formatTimeToHHMMSS(activity.sessionTime)
+                    sessionTime: formatTimeToHHMMSS(Math.abs(activity.sessionTime))
                 };
                 userData.push(createUserRow(dataToExport, activityRow, isFirstActivity));
                 isFirstActivity = false;
