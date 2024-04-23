@@ -2,6 +2,8 @@ const express = require('express');
 const { Pool } = require('pg');
 const dbRouter = express.Router();
 
+const { updateDatabase } = require('../other/bulk-ops');
+
 const pool = new Pool({
     user: process.env.PGUSER,
     host: process.env.PGHOST,
@@ -12,6 +14,18 @@ const pool = new Pool({
     ssl: {
         rejectUnauthorized: false,
     },
+});
+
+// Update the database
+dbRouter.get('/update', async (req, res) => {
+    const secret = req.headers['x-secret-key'];
+    if (secret !== process.env.SERVER_SEC) {
+        return res.status(401).json({ message: 'Invalid or missing secret.' });
+    }
+
+    updateDatabase();
+    console.log("Update database started...");
+    res.send("Update stated...");
 });
 
 dbRouter.post('/get-users-by-id', async (req, res) => {
@@ -159,35 +173,4 @@ async function getTotalUsageRowCount() {
   }
 }
 
-// USED TO UPDATE THE DATABASE
-async function extractAndSetJsonValue(tableName, jsonColumnName, keyName, newColumnName) {
-    const client = await pool.connect();
-
-    try {
-        await client.query('BEGIN');
-
-        // Add the new column if it doesn't exist
-        await client.query(`
-            ALTER TABLE "${tableName}"
-            ADD COLUMN IF NOT EXISTS "${newColumnName}" TEXT;
-        `);
-
-        // Extract value from the JSON column and set it in the new column
-        await client.query(`
-            UPDATE "${tableName}"
-            SET "${newColumnName}" = ("${jsonColumnName}"->>'${keyName}')::TEXT;
-        `);
-
-        await client.query('COMMIT');
-        console.log(`${newColumnName} column has been successfully updated with ${keyName} values from ${jsonColumnName}.`);
-    } catch (error) {
-        await client.query('ROLLBACK');
-        console.error('Error occurred:', error);
-    } finally {
-        client.release();
-    }
-}
-//extractAndSetJsonValue('AccountData', 'AccountDataJSON', 'PlayerId', 'PlayFabId').catch(err => console.error(err)); // done 17:44 09/04/2024
-//extractAndSetJsonValue('UsageData', 'UsageDataJSON', 'PlayFabId', 'PlayFabId').catch(err => console.error(err)); // done 18:49 09/04/2024
-
-module.exports = { dbRouter, getTotalUsageRowCount, extractAndSetJsonValue };
+module.exports = { dbRouter, getTotalUsageRowCount };

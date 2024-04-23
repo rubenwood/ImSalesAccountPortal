@@ -32,17 +32,49 @@
         <table id="reportTable" border="1">
             <thead>
                 <tr>
-                    <th>Total Users (PlayFab)</th>
+                    <th>
+                        <span class="info-tooltip">
+                        Total Users (PlayFab)                        
+                        <span class="info-tooltiptext">
+                            Total number of users registered via PlayFab
+                            <br/><br/>
+                            Data source: PlayFab API
+                            <br/><br/>
+                            "GetPlayersInSegment" call with "All Players" segment
+                        </span>
+                        </span>
+                    </th>
                     <td id="totalUsersPlayfab">data goes here</td>
                 </tr>
                 <tr><td style="height: 20px;" colspan="2"></td></tr>
                 <tr>
-                    <th>Total B2B Users (PlayFab)</th>
+                    <th>
+                        <span class="info-tooltip">
+                        Total B2B Users (PlayFab)
+                        <span class="info-tooltiptext">
+                            Total number of B2B Users
+                            <br/><br/>
+                            Data source: PlayFab
+                            <br/><br/>
+                            Iterates over all users and checks; "login email", "contact email" and "platform" [SSO] 
+                            to see if any match a predefined list
+                        </span>
+                        </span>
+                    </th>
                     <td id="totalB2BUsers">data goes here</td>
                 </tr>
                 <tr><td style="height: 20px;" colspan="2"></td></tr>
                 <tr>
-                    <th>Total Google Subs</th>
+                    <th>
+                        <span class="info-tooltip">
+                        Total Google Subs
+                        <span class="info-tooltiptext">
+                            Total number of subscribers via Google Play Store
+                            <br/><br/>
+                            Data source: Google Play Store
+                        </span>
+                        </span>
+                    </th>
                     <td class="wip-row" id="googleSubs">data goes here</td>
                 </tr>
                 <tr><td style="height: 20px;" colspan="2"></td></tr>

@@ -3,8 +3,6 @@ const axios = require('axios');
 const { Pool } = require('pg');
 const bulkRouter = express.Router();
 
-const { extractAndSetJsonValue } = require('../database/database');
-
 const pool = new Pool({
     user: process.env.PGUSER,
     host: process.env.PGHOST,
@@ -17,14 +15,23 @@ const pool = new Pool({
     },
 });
 
-async function updateDatabase(){
+// This call updates the entire database
+// it gets all the player data from PlayFab 
+// and then constructs the AccountData table
+// Then it gets the usage data 
+// and then constructs the UsageData table
+async function updateDatabase(){    
     console.log("getting all player segment and writing to db...");
-    await getAllPlayerAccDataAndWriteToDB();
+    // get account data from playfab and write to DB
+    await getAllPlayerAccDataAndWriteToDB(); 
     console.log("updating account data fields...");
+    // extract out the PlayerId field and make that a separate column PlayFabId, also store the playfab data in AccountDataJSON
     await extractAndSetJsonValue('AccountData', 'AccountDataJSON', 'PlayerId', 'PlayFabId').catch(err => console.error(err));
     console.log("getting all usage data and writing to db...");
+    // get usage data (Player Title Data) from playfab and write to DB
     await updateUsageDataInDB();
     console.log("updating usage data fields");
+    // extract out the PlayFabId field and make that a separate column PlayFabId, also store the playfab data in UsageDataJSON
     await extractAndSetJsonValue('UsageData', 'UsageDataJSON', 'PlayFabId', 'PlayFabId').catch(err => console.error(err));
 }
 
@@ -60,9 +67,9 @@ async function getAllPlayerAccDataAndWriteToDB() {
         for (const profile of response.data.data.PlayerProfiles) {
             await pool.query('INSERT INTO public."AccountData"("AccountDataJSON") VALUES ($1)', [profile]);
         }
-        console.log("updated db " , contToken);
-
+        
         contToken = response.data.data.ContinuationToken;
+        console.log("updated db " , contToken);
 
     } while (contToken);
 
@@ -139,7 +146,7 @@ async function processBatch(playerIds) {
 }
 
 async function fetchPlayerData(playerId) {
-    console.log(playerId);
+    //console.log(playerId);
     try {
         const response = await axios.post(
             `https://${process.env.PLAYFAB_TITLE_ID}.api.main.azureplayfab.com/Admin/GetUserData`,
@@ -158,6 +165,35 @@ async function fetchPlayerData(playerId) {
     }
 }
 
+// USED TO UPDATE THE DATABASE
+async function extractAndSetJsonValue(tableName, jsonColumnName, keyName, newColumnName) {
+    const client = await pool.connect();
+
+    try {
+        await client.query('BEGIN');
+
+        // Add the new column if it doesn't exist
+        await client.query(`
+            ALTER TABLE "${tableName}"
+            ADD COLUMN IF NOT EXISTS "${newColumnName}" TEXT;
+        `);
+
+        // Extract value from the JSON column and set it in the new column
+        await client.query(`
+            UPDATE "${tableName}"
+            SET "${newColumnName}" = ("${jsonColumnName}"->>'${keyName}')::TEXT;
+        `);
+
+        await client.query('COMMIT');
+        console.log(`${newColumnName} column has been successfully updated with ${keyName} values from ${jsonColumnName}.`);
+    } catch (error) {
+        await client.query('ROLLBACK');
+        console.error('Error occurred:', error);
+    } finally {
+        client.release();
+    }
+}
+
 module.exports = {
     bulkRouter,
     getJobInProgress,
@@ -165,5 +201,6 @@ module.exports = {
     setAllS3AccData,
     getLastDateGotAllS3AccData,
     setLastDateGotAllS3AccData,
-    getAllPlayerAccDataAndWriteToDB
+    getAllPlayerAccDataAndWriteToDB,
+    updateDatabase
 };

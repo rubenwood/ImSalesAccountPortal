@@ -379,8 +379,7 @@ export async function generateReportByEmailDB() {
 
     resetButtonTexts();
 
-    // clear this, we will repopulate later...
-    document.getElementById("playerIDList").value = '';
+    let playerIDList = [];// clear this, we will repopulate later...
     const emailListText = document.getElementById("emailList").value;
     const emailList = emailListText.split('\n').filter(Boolean); // Split by newline and filter out empty strings
     const tableBody = document.getElementById("reportTableBody");
@@ -398,6 +397,12 @@ export async function generateReportByEmailDB() {
         const results = await Promise.all(fetchPromises);
         
         console.log(results);
+        results.forEach(element => {
+            element.accountData.forEach(acc => {
+                console.log(acc.PlayFabId);
+                playerIDList.push(acc.PlayFabId);
+            })            
+        })
 
         let sortedData = sortAndCombineData(results);
         
@@ -411,6 +416,7 @@ export async function generateReportByEmailDB() {
                 }
             })            
         })*/
+        updateIDList(playerIDList);
         await populateForm(sortedData);
         //await populateForm(output);
     } catch (error) {
@@ -432,14 +438,6 @@ export async function generateReportByEmailDB() {
             origin: { y: 0.6 }
         });
     });
-}
-function findAccountInResults(PlayFabId, sortedData) {
-    for (const element of sortedData) {
-        if (element.accountData.PlayFabId === PlayFabId) {
-            return element;
-        }        
-    }
-    return null; // Return null if no matching account is found
 }
 
 // HANDLE DATA (populate report)

@@ -127,6 +127,36 @@ label {
     display: block;
 }
 
+/* */
+.info-tooltip {
+    position: relative;
+    display: inline-block;
+    border-bottom: 1px dotted black; /* Optional styling for the tooltip */
+}
+
+.info-tooltip .info-tooltiptext {
+    visibility: hidden;
+    width: 220px;
+    background-color: black;
+    color: #fff;
+    text-align: center;
+    border-radius: 6px;
+    padding: 5px 0;
+    position: absolute;
+    z-index: 1;
+    bottom: 100%;
+    left: 50%;
+    margin-left: -60px;
+    opacity: 0;
+    transition: opacity 0.3s;
+    font-size: 12px; /* Smaller text size for tooltips */
+}
+
+.info-tooltip:hover .info-tooltiptext {
+    visibility: visible;
+    opacity: 1;
+}
+
 /* styles.css */
 .collapsible-content {
     padding: 10px;
