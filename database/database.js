@@ -14,10 +14,8 @@ const pool = new Pool({
     },
 });
 
-
 dbRouter.post('/get-users-by-id', async (req, res) => {
     const playFabIds = req.body.playFabIds;
-    console.log(playFabIds);
 
     if (!playFabIds || playFabIds.length === 0) {
         return res.status(400).json({ error: 'A non-empty array of PlayFabIds must be provided' });
@@ -51,10 +49,56 @@ dbRouter.post('/get-users-by-id', async (req, res) => {
     }
 });
 
-dbRouter.get('/get-users-by-email', async (req, res) => {
-    
-});
+dbRouter.post('/get-users-by-email', async (req, res) => {
+    const playerEmails = req.body.playerEmails;
 
+    if (!playerEmails || playerEmails.length === 0) {
+        return res.status(400).json({ error: 'A non-empty list of player emails must be provided' });
+    }
+
+    const placeholders = playerEmails.map((_, index) => `$${index + 1}`).join(',');
+
+    try {
+        // account data
+        const query = `
+        SELECT *
+        FROM public."AccountData"
+        WHERE EXISTS (
+          SELECT 1 FROM jsonb_array_elements("AccountDataJSON"::jsonb->'LinkedAccounts') AS la
+          WHERE la->>'Platform' = 'PlayFab' AND la->>'Email' = ANY(ARRAY[${placeholders}]::text[])
+        )
+        OR EXISTS (
+          SELECT 1 FROM jsonb_array_elements("AccountDataJSON"::jsonb->'ContactEmailAddresses') AS cea
+          WHERE cea->>'EmailAddress' = ANY(ARRAY[${placeholders}]::text[])
+        );
+        `;
+        const accountDataResult = await pool.query(query, playerEmails);
+
+        //console.log(accountDataResult);
+        const playFabIds = accountDataResult.rows.map(row => row.PlayFabId);
+        // usage data
+        const usageDataQuery = 'SELECT * FROM public."UsageData" WHERE "PlayFabId" = ANY($1)';
+        const usageDataResult = await pool.query(usageDataQuery, [playFabIds]);
+
+        // Simplified response assuming no pagination
+        const totalRows = accountDataResult.rowCount + usageDataResult.rowCount;
+        const totalPages = 1; // Placeholder values for pagination
+        const currentPage = 1;
+        const pageSize = totalRows; // This assumes no pagination. Adjust as necessary.
+
+        res.json({
+            totalRows: totalRows,
+            totalPages: totalPages,
+            currentPage: currentPage,
+            pageSize: pageSize,
+            usageData: usageDataResult.rows,
+            accountData: accountDataResult.rows
+        });
+    } catch (error) {
+        console.error('Database query error', error.stack);
+        res.status(500).json({ error: 'Internal Server Error' });
+    }
+});
 
 // gets all usage data from start to end (row numbers)
 // /db/usagedata?start=0&end=1000 (query rows 0 to 1000)

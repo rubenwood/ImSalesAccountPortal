@@ -31,9 +31,9 @@ export async function fetchAllPlayersByArea() {
         }
 
         const results = await Promise.all(fetchPromises);
-        console.log(results);
+        //console.log(results);
         const sortedData = sortAndCombineData(results);
-        console.log(sortedData);
+        //console.log(sortedData);
         console.log(`Total matched users in area: ${sortedData.length}`);
 
         populateForm(sortedData);        
@@ -49,7 +49,7 @@ export async function fetchAllPlayersByArea() {
     }
 }
 export function sortAndCombineData(results) {
-    console.log(results);
+    //console.log(results);
     return results.reduce((acc, curr) => {
         console.log(curr);
         curr.usageData.forEach(ud => {
@@ -82,6 +82,7 @@ async function fetchPlayersByAreaList(areaList, page = 1) {
 }
 
 export function populateForm(data){
+    console.log(data);
     resetExportData();
 
     const tableBody = document.getElementById("reportTableBody");

@@ -6,7 +6,7 @@ import { fetchUserData, fetchUserAccInfoById, fetchUserAccInfoByEmail, formatTim
 import { playerProfiles, getSegmentsClicked, getPlayersInSegmentClicked } from './segments.js';
 import { fetchPlayersBySuffixList } from './suffix-front.js';
 import { populateForm, sortAndCombineData, fetchAllPlayersByArea } from './academic-area.js';
-import { fetchUsersByID } from './db/db-front.js';
+import { fetchUsersByID, fetchUsersByEmail } from './db/db-front.js';
 //import { generateReportByClickId } from './click-id.js';
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -30,7 +30,8 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('toggleIdsButton').addEventListener('click', togglePlayerIdsTextArea);
 
     // reports
-    document.getElementById('generateReportButton').addEventListener('click', generateReportByEmail);
+    //document.getElementById('generateReportButton').addEventListener('click', generateReportByEmail);
+    document.getElementById('generateReportButton').addEventListener('click', generateReportByEmailDB);
     //document.getElementById('generateReportByIdButton').addEventListener('click', generateReportById);
     document.getElementById('generateReportByIdButton').addEventListener('click', generateReportByIdDB);
     document.getElementById('generateReportBySuffixButton').addEventListener('click', generateReportBySuffix);
@@ -269,7 +270,6 @@ export async function generateReportById() {
         });
     });
 }
-
 // Generate report by ID (Database)
 export async function generateReportByIdDB() {
     let hasAccess = await canAccess();
@@ -284,16 +284,16 @@ export async function generateReportByIdDB() {
 
     resetExportData();
 
+    const fetchPromises = [];
+    
     try {
-        let totalPages = 1;
-        const fetchPromises = [];
+        let totalPages = 1;        
         for (let page = 1; page <= totalPages; page++) {
             fetchPromises.push(fetchUsersByID(playerIDList, page));
         }
         const results = await Promise.all(fetchPromises);
-
-        let sortedData = sortAndCombineData(results);
-
+        // sorts and combines the accountData and usageData from the results
+        let sortedData = sortAndCombineData(results); 
         await populateForm(sortedData);
 
     } catch (error) {
@@ -307,6 +307,14 @@ export async function generateReportByIdDB() {
         row.style.backgroundColor = '#700000';
         row.style.textAlign = 'center';
     }
+
+    Promise.allSettled(fetchPromises).then(results => {
+        confetti({
+            particleCount: 100,
+            spread: 70,
+            origin: { y: 0.6 }
+        });
+    });
 }
 
 // Generate report by email list
@@ -362,6 +370,115 @@ export async function generateReportByEmail() {
             origin: { y: 0.6 }
         });
     });
+}
+// Generate report by email list (Database)
+export async function generateReportByEmailDB() {
+    let hasAccess = await canAccess();
+    if (!hasAccess) { return; }
+
+    resetButtonTexts();
+
+    //let playerIDList = []; // clear this, we will repopulate later...
+    const emailListText = document.getElementById("emailList").value;
+    const emailList = emailListText.split('\n').filter(Boolean); // Split by newline and filter out empty strings
+    const tableBody = document.getElementById("reportTableBody");
+    tableBody.innerHTML = '';
+
+    resetExportData();
+
+    const fetchPromises = [];
+
+    try {
+        let totalPages = 1;        
+        for (let page = 1; page <= totalPages; page++) {
+            fetchPromises.push(fetchUsersByEmail(emailList, page));
+        }
+        const results = await Promise.all(fetchPromises);
+        
+        console.log(results);             
+        //console.log(nonMatchingLinkedAccounts);
+
+        let sortedData = sortAndCombineData(results);
+        console.log(sortedData);
+
+        const matchingAccounts = [];
+        const nonMatchingLinkedAccounts = [];
+
+        sortedData.forEach(res => {
+            let accData = res.accountData.AccountDataJSON;
+            //console.log(accData);
+            const linkedAccounts = accData.LinkedAccounts || [];
+            const hasNonMatchingPlayFabAccount = linkedAccounts.some(la => 
+                la.Platform == 'PlayFab' && !emailList.includes(la.Email)
+            );
+
+            if (hasNonMatchingPlayFabAccount) {
+                nonMatchingLinkedAccounts.push(accData);
+            } else {
+                matchingAccounts.push(accData);
+            }       
+        });
+        console.log(matchingAccounts);
+        let fullyMatchedAccounts = [];
+        matchingAccounts.forEach(acc => {
+            // Initial flag to track if any email matches in linked accounts
+            let foundMatch = false;        
+            // Checking each linked account for a match
+            const linkedAccounts = acc.LinkedAccounts || [];
+            linkedAccounts.forEach(la => {
+                if (la.Platform === 'PlayFab' && emailList.includes(la.Email)) {
+                    foundMatch = true;
+                }
+            });        
+            // If no matches in linked accounts, check the ContactEmailAddresses
+            if (!foundMatch) {
+                const contactEmails = acc.ContactEmailAddresses || [];
+                contactEmails.forEach(email => {
+                    if (emailList.includes(email)) {
+                        fullyMatchedAccounts.push(acc);
+                    }
+                });
+            }else{
+                fullyMatchedAccounts.push(acc);
+            }
+        });
+        console.log(fullyMatchedAccounts);
+
+        // for each of the fullyMatchedAccounts, find the matching entry in results  
+        let matchedResults = [];
+        fullyMatchedAccounts.forEach(acc => {
+            const matchedAccount = findAccountInResults(acc.PlayerId, sortedData);
+            matchedResults.push(matchedAccount);
+        });
+        console.log(matchedResults);
+        await populateForm(matchedResults);
+    } catch (error) {
+        console.error('Error:', error);
+        const row = tableBody.insertRow();
+        row.insertCell().textContent = 'Error fetching data';
+        row.insertCell().textContent = error.message;
+        row.insertCell().colSpan = 4; // assuming 4 columns for simplicity
+        row.style.color = 'white';
+        row.style.fontWeight = 'bold';
+        row.style.backgroundColor = '#700000';
+        row.style.textAlign = 'center';
+    }
+
+    Promise.allSettled(fetchPromises).then(results => {
+        confetti({
+            particleCount: 100,
+            spread: 70,
+            origin: { y: 0.6 }
+        });
+    });
+}
+function findAccountInResults(PlayFabId, sortedData) {
+    for (const element of sortedData) {
+        if (element.accountData.PlayFabId === PlayFabId) {
+            return element;
+        }        
+    }
+    return null; // Return null if no matching account is found
 }
 
 // HANDLE DATA (populate report)
