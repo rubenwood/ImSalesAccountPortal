@@ -400,7 +400,8 @@ export async function generateReportByEmailDB() {
         console.log(results);
 
         let sortedData = sortAndCombineData(results);
-        let output = [];
+        
+        /*let output = [];
         sortedData.forEach(element =>{
             console.log(element);
             let linkedAccs = element.accountData.AccountDataJSON.LinkedAccounts;
@@ -408,9 +409,8 @@ export async function generateReportByEmailDB() {
                 if(linkedAcc.Platform == "PlayFab" && emailList.includes(linkedAcc.Email)){
                     output.push(element);
                 }
-            })
-            
-        })
+            })            
+        })*/
         await populateForm(sortedData);
         //await populateForm(output);
     } catch (error) {
