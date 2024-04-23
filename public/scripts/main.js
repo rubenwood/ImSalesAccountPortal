@@ -109,7 +109,7 @@ initializeDropdown(document.getElementById('academicAreaUpdate'));
 const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
 export let reportData = [];
 
-// Generate report by email suffix
+// Generate report by email suffix (Database)
 export async function generateReportBySuffix() {
     let hasAccess = await canAccess();
     if(!hasAccess){ return; }
@@ -120,6 +120,7 @@ export async function generateReportBySuffix() {
     resetButtonTexts();
     document.getElementById('generateReportBySuffixButton').value = "Generating Report By Email Suffix...";
 
+    // fetch from database
     let output = await fetchPlayersBySuffixList(suffixes.toString());
     
     const tableBody = document.getElementById("reportTableBody");
@@ -378,7 +379,8 @@ export async function generateReportByEmailDB() {
 
     resetButtonTexts();
 
-    //let playerIDList = []; // clear this, we will repopulate later...
+    // clear this, we will repopulate later...
+    document.getElementById("playerIDList").value = '';
     const emailListText = document.getElementById("emailList").value;
     const emailList = emailListText.split('\n').filter(Boolean); // Split by newline and filter out empty strings
     const tableBody = document.getElementById("reportTableBody");
@@ -395,63 +397,22 @@ export async function generateReportByEmailDB() {
         }
         const results = await Promise.all(fetchPromises);
         
-        console.log(results);             
-        //console.log(nonMatchingLinkedAccounts);
+        console.log(results);
 
         let sortedData = sortAndCombineData(results);
-        console.log(sortedData);
-
-        const matchingAccounts = [];
-        const nonMatchingLinkedAccounts = [];
-
-        sortedData.forEach(res => {
-            let accData = res.accountData.AccountDataJSON;
-            //console.log(accData);
-            const linkedAccounts = accData.LinkedAccounts || [];
-            const hasNonMatchingPlayFabAccount = linkedAccounts.some(la => 
-                la.Platform == 'PlayFab' && !emailList.includes(la.Email)
-            );
-
-            if (hasNonMatchingPlayFabAccount) {
-                nonMatchingLinkedAccounts.push(accData);
-            } else {
-                matchingAccounts.push(accData);
-            }       
-        });
-        console.log(matchingAccounts);
-        let fullyMatchedAccounts = [];
-        matchingAccounts.forEach(acc => {
-            // Initial flag to track if any email matches in linked accounts
-            let foundMatch = false;        
-            // Checking each linked account for a match
-            const linkedAccounts = acc.LinkedAccounts || [];
-            linkedAccounts.forEach(la => {
-                if (la.Platform === 'PlayFab' && emailList.includes(la.Email)) {
-                    foundMatch = true;
+        let output = [];
+        sortedData.forEach(element =>{
+            console.log(element);
+            let linkedAccs = element.accountData.AccountDataJSON.LinkedAccounts;
+            linkedAccs.forEach(linkedAcc => {
+                if(linkedAcc.Platform == "PlayFab" && emailList.includes(linkedAcc.Email)){
+                    output.push(element);
                 }
-            });        
-            // If no matches in linked accounts, check the ContactEmailAddresses
-            if (!foundMatch) {
-                const contactEmails = acc.ContactEmailAddresses || [];
-                contactEmails.forEach(email => {
-                    if (emailList.includes(email)) {
-                        fullyMatchedAccounts.push(acc);
-                    }
-                });
-            }else{
-                fullyMatchedAccounts.push(acc);
-            }
-        });
-        console.log(fullyMatchedAccounts);
-
-        // for each of the fullyMatchedAccounts, find the matching entry in results  
-        let matchedResults = [];
-        fullyMatchedAccounts.forEach(acc => {
-            const matchedAccount = findAccountInResults(acc.PlayerId, sortedData);
-            matchedResults.push(matchedAccount);
-        });
-        console.log(matchedResults);
-        await populateForm(matchedResults);
+            })
+            
+        })
+        await populateForm(sortedData);
+        //await populateForm(output);
     } catch (error) {
         console.error('Error:', error);
         const row = tableBody.insertRow();
