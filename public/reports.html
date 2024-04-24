@@ -71,7 +71,7 @@
                         <span class="info-tooltiptext">
                             Total number of subscribers via Google Play Store
                             <br/><br/>
-                            Data source: Google Play Store
+                            Data source: Google Reporting API
                         </span>
                         </span>
                     </th>
@@ -79,21 +79,56 @@
                 </tr>
                 <tr><td style="height: 20px;" colspan="2"></td></tr>
                 <tr>
-                    <th>Total Apple Subs</th>
+                    <th>
+                        <span class="info-tooltip">
+                        Total Apple Subs
+                        <span class="info-tooltiptext">
+                            Total number of subscribers via Apple App Store
+                            <br/><br/>
+                            Data source: Apple Reporting API, "subscription report"
+                        </span>
+                        </span>
+                    </th>
                     <td class="wip-row" id="appleSubs">data goes here</td>
                 </tr>
                 <tr>
-                    <th>Apple Trials</th>
+                    <th>
+                        <span class="info-tooltip">
+                        Apple Trials
+                        <span class="info-tooltiptext">
+                            Total number of subscribers via Apple App Store
+                            <br/><br/>
+                            Data source: Apple Reporting API, "subscription report"
+                        </span>
+                        </span>
+                    </th>
                     <td class="wip-row" id="appleTrials">data goes here</td>
                 </tr>
                 <tr><td style="height: 20px;" colspan="2"></td></tr>
                 <tr>
-                    <th>Total Stripe Subs</th>
+                    <th>
+                        <span class="info-tooltip">
+                        Total Stripe Subs
+                        <span class="info-tooltiptext">
+                            Total number of subscribers via Stripe, 
+                            also reports active trials, and non-subs (cancellations / past due) 
+                            <br/><br/>
+                            Data source: Stripe API, "stripe.subscriptions.list() per customer"
+                        </span>
+                        </span>
+                    </th>
                     <td id="stripeSubs">data goes here</td>
                 </tr>
                 <tr><td style="height: 20px;" colspan="2"></td></tr>
                 <tr>
-                    <th>Total Subs</th>
+                    <th>
+                        <span class="info-tooltip">
+                        Total Subs
+                        <span class="info-tooltiptext">
+                            Total number of subscribers (Google Subs+Apple Subs+Stripe Subs)
+                        </span>
+                        </span>
+                    </th>
                     <td class="wip-row" id="totalSubs">data goes here</td>
                 </tr>
                 <tr><td style="height: 20px;" colspan="2"></td></tr>

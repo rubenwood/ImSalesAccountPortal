@@ -34,7 +34,8 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('generateReportButton').addEventListener('click', generateReportByEmailDB);
     //document.getElementById('generateReportByIdButton').addEventListener('click', generateReportById);
     document.getElementById('generateReportByIdButton').addEventListener('click', generateReportByIdDB);
-    document.getElementById('generateReportBySuffixButton').addEventListener('click', generateReportBySuffix);
+    //document.getElementById('generateReportBySuffixButton').addEventListener('click', generateReportBySuffix);
+    document.getElementById('generateReportBySuffixButton').addEventListener('click', generateReportBySuffixDB);
     document.getElementById('generateReportByAreaButton').addEventListener('click', fetchAllPlayersByArea);
     //document.getElementById('generateReportByClickIDButton').addEventListener('click', generateReportByClickId);
     
@@ -122,6 +123,7 @@ export async function generateReportBySuffix() {
 
     // fetch from database
     let output = await fetchPlayersBySuffixList(suffixes.toString());
+    console.log(output);
     
     const tableBody = document.getElementById("reportTableBody");
     tableBody.innerHTML = '';
@@ -130,7 +132,8 @@ export async function generateReportBySuffix() {
 
     let playerIDList = [];
     let index = 0;
-    for(const element of output){
+    // SHOULD BE ABLE TO REMOVE ALL THIS SHIT
+    for(const element of output.matchedUsers){
         let email = "no email";
         // can replace this with: getUserEmailFromAccData
         if(element.LinkedAccounts !== undefined && element.LinkedAccounts.length > 0){
@@ -213,8 +216,8 @@ export async function generateReportBySuffix() {
         }
 
         index++;        
-        document.getElementById('generateReportBySuffixButton').value = `Generating Report By Email Suffix... ${index}/${output.length}`;
-        document.getElementById('totalPlayersReport').innerHTML = 'Total users in report: ' + output.length;
+        document.getElementById('generateReportBySuffixButton').value = `Generating Report By Email Suffix... ${index}/${output.matchedUsers.length}`;
+        document.getElementById('totalPlayersReport').innerHTML = 'Total users in report: ' + output.matchedUsers.length;
         updateIDList(playerIDList);
     };
     
@@ -224,6 +227,40 @@ export async function generateReportBySuffix() {
         spread: 70,
         origin: { y: 0.6 }
     });
+}
+export async function generateReportBySuffixDB(){
+    let hasAccess = await canAccess();
+    if(!hasAccess){ return; }
+
+    let suffixes = document.getElementById("emailList").value.split('\n').filter(Boolean);
+    if(suffixes.length < 1){ return; }
+
+    resetButtonTexts();
+    document.getElementById('generateReportBySuffixButton').value = "Generating Report By Email Suffix...";
+
+    // fetch from database
+    //let results = await fetchPlayersBySuffixList(suffixes.toString());
+    //console.log(results);
+    
+    const tableBody = document.getElementById("reportTableBody");
+    tableBody.innerHTML = '';
+    
+    resetExportData();
+
+    let playerIDList = [];
+    let index = 0;
+
+    const fetchPromises = [];
+   
+    let totalPages = 1;        
+    for (let page = 1; page <= totalPages; page++) {
+        fetchPromises.push(fetchPlayersBySuffixList(suffixes.toString(), page));
+    }
+    const results = await Promise.all(fetchPromises);
+
+    let sortedData = sortAndCombineData(results); 
+    document.getElementById('totalPlayersReport').innerHTML = 'Total users in report: ' + sortedData.length;
+    await populateForm(sortedData);
 }
 
 // Generate report by ID
@@ -277,6 +314,7 @@ export async function generateReportByIdDB() {
     if (!hasAccess) { return; }
 
     resetButtonTexts();
+    document.getElementById('generateReportByIdButton').value = `Generating Report By Ids...`;  
 
     const playerIDText = document.getElementById("playerIDList").value;
     const playerIDList = playerIDText.split('\n').filter(Boolean);
@@ -295,8 +333,8 @@ export async function generateReportByIdDB() {
         const results = await Promise.all(fetchPromises);
         // sorts and combines the accountData and usageData from the results
         let sortedData = sortAndCombineData(results); 
+        document.getElementById('totalPlayersReport').innerHTML = 'Total users in report: ' + sortedData.length;
         await populateForm(sortedData);
-
     } catch (error) {
         console.error('Error:', error);
         const row = tableBody.insertRow();
@@ -310,6 +348,7 @@ export async function generateReportByIdDB() {
     }
 
     Promise.allSettled(fetchPromises).then(results => {
+        resetButtonTexts();
         confetti({
             particleCount: 100,
             spread: 70,
@@ -378,6 +417,7 @@ export async function generateReportByEmailDB() {
     if (!hasAccess) { return; }
 
     resetButtonTexts();
+    document.getElementById('generateReportButton').value = `Generating Report By Email List...`;  
 
     let playerIDList = [];// clear this, we will repopulate later...
     const emailListText = document.getElementById("emailList").value;
@@ -390,32 +430,23 @@ export async function generateReportByEmailDB() {
     const fetchPromises = [];
 
     try {
+        let count = 0;
         let totalPages = 1;        
         for (let page = 1; page <= totalPages; page++) {
             fetchPromises.push(fetchUsersByEmail(emailList, page));
-        }
-        const results = await Promise.all(fetchPromises);
-        
-        console.log(results);
+            count++;
+        }     
+
+        const results = await Promise.all(fetchPromises);        
+        // update the player ID field 
         results.forEach(element => {
             element.accountData.forEach(acc => {
-                console.log(acc.PlayFabId);
                 playerIDList.push(acc.PlayFabId);
             })            
         })
 
         let sortedData = sortAndCombineData(results);
-        
-        /*let output = [];
-        sortedData.forEach(element =>{
-            console.log(element);
-            let linkedAccs = element.accountData.AccountDataJSON.LinkedAccounts;
-            linkedAccs.forEach(linkedAcc => {
-                if(linkedAcc.Platform == "PlayFab" && emailList.includes(linkedAcc.Email)){
-                    output.push(element);
-                }
-            })            
-        })*/
+        document.getElementById('totalPlayersReport').innerHTML = 'Total users in report: ' + sortedData.length;
         updateIDList(playerIDList);
         await populateForm(sortedData);
         //await populateForm(output);
@@ -432,6 +463,7 @@ export async function generateReportByEmailDB() {
     }
 
     Promise.allSettled(fetchPromises).then(results => {
+        resetButtonTexts();
         confetti({
             particleCount: 100,
             spread: 70,

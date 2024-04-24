@@ -1,5 +1,5 @@
 // GET PLAYERS BY SUFFIX
-export async function fetchPlayersBySuffixList(suffixList){
+export async function fetchPlayersBySuffixList(suffixList, page){
     const url = `/reporting/gen-suffix-rep?suffixes=${suffixList}`;
 
     return fetch(url, {

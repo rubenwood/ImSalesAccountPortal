@@ -31,9 +31,8 @@ export async function fetchAllPlayersByArea() {
         }
 
         const results = await Promise.all(fetchPromises);
-        //console.log(results);
         const sortedData = sortAndCombineData(results);
-        //console.log(sortedData);
+        document.getElementById('totalPlayersReport').innerHTML = 'Total users in report: ' + sortedData.length;
         console.log(`Total matched users in area: ${sortedData.length}`);
 
         populateForm(sortedData);        
@@ -49,9 +48,8 @@ export async function fetchAllPlayersByArea() {
     }
 }
 export function sortAndCombineData(results) {
-    //console.log(results);
+    console.log(results);
     return results.reduce((acc, curr) => {
-        console.log(curr);
         curr.usageData.forEach(ud => {
             const accountDataMatch = curr.accountData.find(ad => ad.PlayFabId === ud.PlayFabId);
             if (accountDataMatch) {
@@ -82,15 +80,12 @@ async function fetchPlayersByAreaList(areaList, page = 1) {
 }
 
 export function populateForm(data){
-    console.log(data);
     resetExportData();
 
     const tableBody = document.getElementById("reportTableBody");
     tableBody.innerHTML = '';
 
     data.forEach(element =>{
-        const row = tableBody.insertRow();
-        row.className = 'report-row';
         let playFabId = element.accountData.PlayFabId;
         let email = getUserEmailFromAccData(element.accountData.AccountDataJSON);
         let createdDate = new Date(element.accountData.AccountDataJSON.Created);
@@ -101,28 +96,41 @@ export function populateForm(data){
         let accountExpiryDate = userData.TestAccountExpiryDate !== undefined ? new Date(userData.TestAccountExpiryDate.Value) : undefined;
         let accountExpiryDateString = accountExpiryDate !== undefined ? accountExpiryDate.toDateString() : "N/A";
         
-        let linkedAccounts = element.accountData.AccountDataJSON.LinkedAccounts ? 
-            element.accountData.AccountDataJSON.LinkedAccounts.map(acc => acc.Platform).join(", ") : "N/A";
+        try{
+            const row = tableBody.insertRow();
+            row.className = 'report-row';
+            
+            let linkedAccounts = element.accountData.AccountDataJSON.LinkedAccounts ? 
+                element.accountData.AccountDataJSON.LinkedAccounts.map(acc => acc.Platform).join(", ") : "N/A";
 
-        populateAccDataRow(row, email, createdDate, lastLoginDate, daysSinceLastLogin, daysSinceCreation, 
-            accountExpiryDateString, "", "", "", linkedAccounts);
-        let loginData = populateLoginData(userData);
-        let playerData = userData.PlayerData !== undefined ? JSON.parse(userData.PlayerData.Value) : undefined;
-        let playerDataState = {
-            averageTimePerPlay: 0,
-            totalPlays: 0,
-            totalPlayTime: 0,
-            activityDataForReport: []
-        };
-        let newDataState = populateUsageData(playerData, loginData, playerDataState, row);
-        let activityDataForReport = newDataState.activityDataForReport;
-        let averageTimePerPlay = newDataState.averageTimePerPlay;
-        let totalPlays = newDataState.totalPlays;
-        let totalPlayTime = newDataState.totalPlayTime;
+            populateAccDataRow(row, email, createdDate, lastLoginDate, daysSinceLastLogin, daysSinceCreation, 
+                accountExpiryDateString, "", "", "", linkedAccounts);
+            let loginData = populateLoginData(userData);
+            let playerData = userData.PlayerData !== undefined ? JSON.parse(userData.PlayerData.Value) : undefined;
+            let playerDataState = {
+                averageTimePerPlay: 0,
+                totalPlays: 0,
+                totalPlayTime: 0,
+                activityDataForReport: []
+            };
+            let newDataState = populateUsageData(playerData, loginData, playerDataState, row);
+            let activityDataForReport = newDataState.activityDataForReport;
+            let averageTimePerPlay = newDataState.averageTimePerPlay;
+            let totalPlays = newDataState.totalPlays;
+            let totalPlayTime = newDataState.totalPlayTime;
 
-        // write the data for the insights & export data
-        writeDataForReport(playFabId, email, createdDate, lastLoginDate, daysSinceLastLogin, daysSinceCreation,
-             accountExpiryDate, 0, "", "", linkedAccounts, activityDataForReport, totalPlays, totalPlayTime,
-             averageTimePerPlay, loginData);
+            // write the data for the insights & export data
+            writeDataForReport(playFabId, email, createdDate, lastLoginDate, daysSinceLastLogin, daysSinceCreation,
+                accountExpiryDate, 0, "", "", linkedAccounts, activityDataForReport, totalPlays, totalPlayTime,
+                averageTimePerPlay, loginData);
+        }catch(error){
+            console.error('Error:', error);
+            const row = tableBody.insertRow();
+            let errorStr = `Error fetching data for user: ${error.message}`;
+            row.style.backgroundColor = '#ff8c8cab'; // Highlight the cell in red
+            // re-add the rows, but with the error string
+            populateAccDataRow(row, email, createdDate, lastLoginDate, daysSinceLastLogin, daysSinceCreation, errorStr, 
+                "", "", "", "");
+        }
     });
 }

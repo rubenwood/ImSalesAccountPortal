@@ -67,7 +67,7 @@ async function getAllPlayerAccDataAndWriteToDB() {
         for (const profile of response.data.data.PlayerProfiles) {
             await pool.query('INSERT INTO public."AccountData"("AccountDataJSON") VALUES ($1)', [profile]);
         }
-        
+
         contToken = response.data.data.ContinuationToken;
         console.log("updated db " , contToken);
 
@@ -112,7 +112,7 @@ async function updateUsageDataInDB() {
         for (let i = 0; i < playerIds.length; i += maxConcurrentRequests) {
             const currentBatch = playerIds.slice(i, i + maxConcurrentRequests);
             console.log(`Processing batch ${(i / maxConcurrentRequests) + 1} of ${Math.ceil(playerIds.length / maxConcurrentRequests)}: Processing ${currentBatch.length} player IDs.`);
-            const results = await processBatch(currentBatch);
+            const results = await processBatch(currentBatch); // make this faster?
 
             for (const { playerId, data } of results) {
                 if (data) {
@@ -134,7 +134,6 @@ async function updateUsageDataInDB() {
         client.release();
     }
 }
-//updateUsageDataInDB(); // DONE 18:49 09/04/2024
 
 async function processBatch(playerIds) {
     const fetchPromises = playerIds.map(playerId => fetchPlayerData(playerId).then(data => ({
@@ -146,7 +145,6 @@ async function processBatch(playerIds) {
 }
 
 async function fetchPlayerData(playerId) {
-    //console.log(playerId);
     try {
         const response = await axios.post(
             `https://${process.env.PLAYFAB_TITLE_ID}.api.main.azureplayfab.com/Admin/GetUserData`,

@@ -19,6 +19,16 @@ router.get('/get-total-users', async (req, res) => {
         // Pass array of suffixes
         const matchedUsers = await generateReportByEmailSuffixDB(suffixes);
         console.log("Total B2B users: " + matchedUsers.length);
+
+        // Alternative method to break down matchedUsers into groups per suffix
+        // this is a bit silly but should work
+        //let suffixes = [["qmul.ac.uk"], ["cardiff.ac.uk"], ["jcu.edu.au"], ["phoenixdentalacademy.co.uk"], ["uos.ac.uk"], ["highpoint.edu"]]
+        // let matchedUsersKVP = [];
+        // for(const suffixArr of suffixes){
+        //     let matchedUsers = await generateReportByEmailSuffixDB(suffixArr);
+        //     matchedUsersKVP.push({suffix: suffixArr, users: matchedUsers});
+        // }        
+
         res.send(matchedUsers.length.toString());
     } catch (error) {
         console.error('Error:', error);

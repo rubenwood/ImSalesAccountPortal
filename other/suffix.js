@@ -115,13 +115,17 @@ async function generateReportByEmailSuffixDB(suffixes) {
         );
     `;
 
-    let pgResult = await pool.query(query, params);
-    let pgResultRows = pgResult.rows;
+    let accountDataResult = await pool.query(query, params);
+
+    const playFabIds = accountDataResult.rows.map(row => row.PlayFabId);
+    // usage data
+    const usageDataQuery = 'SELECT * FROM public."UsageData" WHERE "PlayFabId" = ANY($1)';
+    const usageDataResult = await pool.query(usageDataQuery, [playFabIds]);
 
     let matchedUsersMap = new Map();
     let encounteredEmails = new Set();
 
-    pgResultRows.forEach(row => {
+    accountDataResult.rows.forEach(row => {
         let user = row.AccountDataJSON;
         suffixes.forEach(suffix => {
             let checkContact = true;
@@ -154,6 +158,18 @@ async function generateReportByEmailSuffixDB(suffixes) {
         });
     });
 
+    // remove any users from usageData and accountData that are not in matchedUsers
+    const matchedUserIds = new Set(matchedUsersMap.keys());
+    let matchedAccountData = accountDataResult.rows.filter(row => matchedUserIds.has(row.PlayFabId));
+    let matchedUsageData = usageDataResult.rows.filter(row => matchedUserIds.has(row.PlayFabId));
+
+    let output = {
+        usageData:matchedUsageData,
+        accountData:matchedAccountData,
+        matchedUsers: Array.from(matchedUsersMap.values())
+    }
+    
+    return output;
     return Array.from(matchedUsersMap.values());
 }
 
