@@ -261,6 +261,15 @@ export async function generateReportBySuffixDB(){
     let sortedData = sortAndCombineData(results); 
     document.getElementById('totalPlayersReport').innerHTML = 'Total users in report: ' + sortedData.length;
     await populateForm(sortedData);
+
+    Promise.allSettled(fetchPromises).then(results => {
+        resetButtonTexts();
+        confetti({
+            particleCount: 100,
+            spread: 70,
+            origin: { y: 0.6 }
+        });
+    });
 }
 
 // Generate report by ID

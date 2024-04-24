@@ -48,7 +48,7 @@ export async function fetchAllPlayersByArea() {
     }
 }
 export function sortAndCombineData(results) {
-    console.log(results);
+    //console.log(results);
     return results.reduce((acc, curr) => {
         curr.usageData.forEach(ud => {
             const accountDataMatch = curr.accountData.find(ad => ad.PlayFabId === ud.PlayFabId);
