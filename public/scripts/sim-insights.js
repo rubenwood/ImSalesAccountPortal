@@ -106,3 +106,11 @@ function generateAverageScoredHTML(averageScores){
     });
     return output;
 }
+
+
+// this function will filter the display sims by the chosen area,
+// it will need to update all the other stats too
+function filterByArea(simList, chosenArea)
+{
+
+}

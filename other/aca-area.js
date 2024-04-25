@@ -15,6 +15,8 @@ const pool = new Pool({
     },
 });
 
+const pageSizeValue = 200;
+
 // Returns the total number of rows (and pages) for a given academic area
 acaAreaRouter.get('/area-rep-count', async (req, res) => {
     console.log("called area report count");
@@ -29,7 +31,7 @@ acaAreaRouter.get('/area-rep-count', async (req, res) => {
         `;
         const countResult = await pool.query(countQuery);
         const totalRows = parseInt(countResult.rows[0].count, 10);
-        const pageSize = 100; // Assuming page size is 100
+        const pageSize = pageSizeValue; // Fixed page size
         const totalPages = Math.ceil(totalRows / pageSize);
 
         res.json({
@@ -46,14 +48,14 @@ acaAreaRouter.get('/area-rep-count', async (req, res) => {
 // returns a json object detailing the total rows, pages, currentPage, pageSize,
 // and most importantly; usageData and accountData for each user 
 acaAreaRouter.get('/gen-area-rep', async (req, res) => {
-    console.log("called aca area search");
+    console.log("called aca area search ", req.query.page);
     try {
         let areas = req.query.areas.split(',');        
         areas = areas.map(area => area.toLowerCase());
-        console.log(areas);
+        //console.log(areas);
 
         const page = parseInt(req.query.page || '1', 10);
-        const pageSize = 100; // Fixed page size
+        const pageSize = pageSizeValue; // Fixed page size
         const offset = (page - 1) * pageSize;
 
         // Query to count total matching rows for pagination

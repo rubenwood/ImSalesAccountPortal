@@ -123,7 +123,7 @@ export async function generateReportBySuffix() {
 
     // fetch from database
     let output = await fetchPlayersBySuffixList(suffixes.toString());
-    console.log(output);
+    //console.log(output);
     
     const tableBody = document.getElementById("reportTableBody");
     tableBody.innerHTML = '';
@@ -237,10 +237,6 @@ export async function generateReportBySuffixDB(){
 
     resetButtonTexts();
     document.getElementById('generateReportBySuffixButton').value = "Generating Report By Email Suffix...";
-
-    // fetch from database
-    //let results = await fetchPlayersBySuffixList(suffixes.toString());
-    //console.log(results);
     
     const tableBody = document.getElementById("reportTableBody");
     tableBody.innerHTML = '';
@@ -248,8 +244,6 @@ export async function generateReportBySuffixDB(){
     resetExportData();
 
     let playerIDList = [];
-    let index = 0;
-
     const fetchPromises = [];
    
     let totalPages = 1;        
@@ -257,6 +251,13 @@ export async function generateReportBySuffixDB(){
         fetchPromises.push(fetchPlayersBySuffixList(suffixes.toString(), page));
     }
     const results = await Promise.all(fetchPromises);
+    // update the player ID field 
+    results.forEach(element => {
+        element.accountData.forEach(acc => {
+            playerIDList.push(acc.PlayFabId);
+        })            
+    })
+    updateIDList(playerIDList);
 
     let sortedData = sortAndCombineData(results); 
     document.getElementById('totalPlayersReport').innerHTML = 'Total users in report: ' + sortedData.length;
@@ -390,8 +391,8 @@ export async function generateReportByEmail() {
             playerIDList.push(userAccInfo.data.UserInfo.PlayFabId);
             // TODO: Get data from db
             let userData = await fetchUserData(userAccInfo.data.UserInfo.PlayFabId);
-            console.log(userData);
-            console.log(userAccInfo);
+            //console.log(userData);
+            //console.log(userAccInfo);
             await handleData(userData, userAccInfo, tableBody);
         } catch (error) {
             console.error(`Error: ${email}`, error);
@@ -453,10 +454,10 @@ export async function generateReportByEmailDB() {
                 playerIDList.push(acc.PlayFabId);
             })            
         })
+        updateIDList(playerIDList);
 
         let sortedData = sortAndCombineData(results);
-        document.getElementById('totalPlayersReport').innerHTML = 'Total users in report: ' + sortedData.length;
-        updateIDList(playerIDList);
+        document.getElementById('totalPlayersReport').innerHTML = 'Total users in report: ' + sortedData.length;        
         await populateForm(sortedData);
         //await populateForm(output);
     } catch (error) {
@@ -621,7 +622,7 @@ async function getSegmentPlayersButtonClicked() {
 }
 
 // UPDATE ID LIST
-function updateIDList(playerIdList){
+export function updateIDList(playerIdList){
     document.getElementById("playerIDList").value = "";
     if(document.getElementById("playerIDList")){ document.getElementById("playerIDList").value = playerIdList.join('\n') }
 }

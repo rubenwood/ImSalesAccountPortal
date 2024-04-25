@@ -1,5 +1,5 @@
 import { canAccess } from './access-check.js';
-import { writeDataForReport, resetExportData, resetButtonTexts } from './main.js';
+import { writeDataForReport, resetExportData, resetButtonTexts, updateIDList } from './main.js';
 
 import { populateAccDataRow, populateLoginData, populateUsageData, getUserEmailFromAccData, calcDaysSinceLastLogin, 
     calcDaysSinceCreation } from './user-report-formatting.js';
@@ -8,7 +8,6 @@ export async function fetchAllPlayersByArea() {
     let hasAccess = await canAccess();
     if (!hasAccess) { return; }
 
-    console.log("generate report by academic area clicked");
     let areaList = document.getElementById("emailList").value.split('\n').filter(Boolean);
     if (areaList.length < 1) { return; }
 
@@ -25,12 +24,21 @@ export async function fetchAllPlayersByArea() {
         const data = await countResponse.json();
         const totalPages = data.totalPages;
 
+        let playerIDList = [];
         const fetchPromises = [];
+
         for (let page = 1; page <= totalPages; page++) {
             fetchPromises.push(fetchPlayersByAreaList(areaList.toString(), page));
         }
-
         const results = await Promise.all(fetchPromises);
+        // update the player ID field
+        results.forEach(element => {
+            element.accountData.forEach(acc => {
+                playerIDList.push(acc.PlayFabId);
+            })            
+        })
+        updateIDList(playerIDList);
+
         const sortedData = sortAndCombineData(results);
         document.getElementById('totalPlayersReport').innerHTML = 'Total users in report: ' + sortedData.length;
         console.log(`Total matched users in area: ${sortedData.length}`);
