@@ -25,6 +25,12 @@ async function fetchDevKPIReport() {
     const tickInterval = setInterval(tickUpdater, 500);
 
     try {
+        let table = document.getElementById('reportTable');
+
+        let allPlayersSeg = await getPlayerCountInSegment("1E7B6EA6970A941D");
+        let totalUsersPlayfabCell = table.querySelector("#totalUsersPlayfab");
+        if (totalUsersPlayfabCell) totalUsersPlayfabCell.innerText = allPlayersSeg.ProfilesInSegment;
+
         // Get Daily totals for the past 7 days
         const daysToGoBack = 7;
         const playFabDailyTotalsPromises = Array.from({ length: daysToGoBack }, (_, monthIndex) => {
@@ -66,10 +72,12 @@ async function fetchDevKPIReport() {
             googleKPIPromise
         ]);
 
-        let table = document.getElementById('reportTable');
-
         // Update retention data
         let retentionDataCell = table.querySelector("#userRetentionPlayfab");
+        let day1Perc = parseInt(playFab30DayReport[1]?.Percent_Retained);
+        let day2Perc = parseInt(playFab30DayReport[2]?.Percent_Retained);
+        let day30Perc = parseInt(playFab30DayReport[30]?.Percent_Retained);
+        let day1DropOff = (day2Perc/day1Perc * 100).toFixed(2); //TODO: check this
         if (retentionDataCell) {
             retentionDataCell.innerText = `Day 1: ${playFab30DayReport[1]?.Percent_Retained ?? 'N/A'}%
             Day 2: ${playFab30DayReport[2]?.Percent_Retained ?? 'N/A'}%
@@ -219,8 +227,6 @@ async function fetchSubReport() {
     tickUpdater();
     const tickInterval = setInterval(tickUpdater, 500);
 
-    let allPlayersSeg = await getPlayerCountInSegment("1E7B6EA6970A941D");
-
     try {
         // Execute all requests concurrently and wait for all of them to complete
         const [googleReport, googlePurchasers, appleReport, stripeSubs] = await Promise.all([
@@ -283,8 +289,6 @@ async function fetchSubReport() {
         let totalSubs = parseInt(androidSubs.length)+parseInt(formattedAppleReport.length-2)+parseInt(stripeActiveSubs);
 
         let table = document.getElementById('reportTable');
-        let totalUsersPlayfabCell = table.querySelector("#totalUsersPlayfab");
-        if (totalUsersPlayfabCell) totalUsersPlayfabCell.innerText = allPlayersSeg.ProfilesInSegment;
 
         let googleSubsCell = table.querySelector("#googleSubs");
         //if (googleSubsCell) googleSubsCell.innerText = googlePurchasers[0].metricValues[0].value;

@@ -17,8 +17,8 @@ router.get('/get-total-users', async (req, res) => {
         // Splits the suffixes into an array (could pull from suffix_list?)
         let suffixes = ["qmul.ac.uk", "cardiff.ac.uk", "jcu.edu.au", "phoenixdentalacademy.co.uk", "uos.ac.uk", "highpoint.edu"]
         // Pass array of suffixes
-        const matchedUsers = await generateReportByEmailSuffixDB(suffixes);
-        console.log("Total B2B users: " + matchedUsers.length);
+        const result = await generateReportByEmailSuffixDB(suffixes);
+        console.log("Total B2B users: " + result.matchedUsers.length);
 
         // Alternative method to break down matchedUsers into groups per suffix
         // this is a bit silly but should work
@@ -29,7 +29,7 @@ router.get('/get-total-users', async (req, res) => {
         //     matchedUsersKVP.push({suffix: suffixArr, users: matchedUsers});
         // }        
 
-        res.send(matchedUsers.length.toString());
+        res.send(result.matchedUsers.length.toString());
     } catch (error) {
         console.error('Error:', error);
         res.status(500).json({ message: 'Failed to generate report', error: error.message });

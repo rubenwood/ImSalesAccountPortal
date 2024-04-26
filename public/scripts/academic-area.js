@@ -27,6 +27,7 @@ export async function fetchAllPlayersByArea() {
         let playerIDList = [];
         const fetchPromises = [];
 
+        // TODO: change this so that each response/page is written to the page when its required 
         for (let page = 1; page <= totalPages; page++) {
             fetchPromises.push(fetchPlayersByAreaList(areaList.toString(), page));
         }
