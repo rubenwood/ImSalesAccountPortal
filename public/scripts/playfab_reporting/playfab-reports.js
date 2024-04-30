@@ -109,10 +109,10 @@ export async function getPlayFab30DayReport() {
 
 // Gets the monthly total report (MAU)
 export async function getPlayFabMonthlyTotalsReport(month, year) {
-    console.log("Getting Monthly report from Playfab");
-
     const reportName = "Monthly Totals Report";
     const day = 1; // always first of month for monthly reports
+
+    console.log(`Getting Monthly report from Playfab ${day} ${month} ${year}`);
 
     const playFabResponse = await fetch('/get-playfab-report', {
         method: 'POST',

@@ -44,14 +44,19 @@ async function fetchDevKPIReport() {
         });
         // Get 30 day retention report
         const playFab30DayReportPromise = getPlayFab30DayReport();
+
         // Get Monthly totals for the past 12 Months
         const monthsToGoBack = 12;
         const playFabMonthlyTotalsPromises = Array.from({ length: monthsToGoBack }, (_, monthIndex) => {
             const targetDate = new Date();
+            targetDate.setDate(1); // Set the date to the first to avoid issues with months having different numbers of days
             targetDate.setMonth(targetDate.getMonth() - monthIndex - 1);
-            const month = targetDate.getMonth() + 1;
+            const month = targetDate.getMonth() + 1; // months are zero-indexed
             const year = targetDate.getFullYear();
-        
+
+            console.log(`month index: ${monthIndex}`);
+            console.log(`target date: ${month} ${year} -- ${targetDate}`);
+            
             return getPlayFabMonthlyTotalsReport(month, year);
         });
 
