@@ -1,10 +1,10 @@
 import { canAccess } from './access-check.js';
 import { writeDataForReport, resetExportData, resetButtonTexts, updateIDList } from './main.js';
 
-export async function fetchUsersByClickIDList(page = 1) {
+export async function fetchUsersByClickIDList(test, page = 1) {
     let hasAccess = await canAccess();
     if (!hasAccess) { return; }
-    
+
     let clickIDList = document.getElementById("emailList").value.split('\n').filter(Boolean);
     if (clickIDList.length < 1) { return; }
     console.log(clickIDList);
@@ -13,7 +13,7 @@ export async function fetchUsersByClickIDList(page = 1) {
     document.getElementById('generateReportByClickIDButton').value = "Generating Report By Click ID...";
 
     try{
-        const url = `/click-id/click-id-count?clickids=${encodeURIComponent(clickIDList.toString())}&page=${page.toString()}`;
+        const url = `/click-id/click-id-count?clickids=${encodeURIComponent(clickIDList.toString())}&page=${page}`;
 
         const response = await fetch(url, {
             method: 'GET',
@@ -27,7 +27,6 @@ export async function fetchUsersByClickIDList(page = 1) {
 
         // Parse the JSON from the response
         const jsonResponse = await response.json();
-        // Log the JSON response object
         console.log(jsonResponse);
 
         resetButtonTexts();

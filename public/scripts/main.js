@@ -37,7 +37,7 @@ document.addEventListener('DOMContentLoaded', () => {
     //document.getElementById('generateReportBySuffixButton').addEventListener('click', generateReportBySuffix);
     document.getElementById('generateReportBySuffixButton').addEventListener('click', generateReportBySuffixDB);
     document.getElementById('generateReportByAreaButton').addEventListener('click', fetchAllUsersByArea);
-    document.getElementById('generateReportByClickIDButton').addEventListener('click', ()=>fetchUsersByClickIDList(1));
+    document.getElementById('generateReportByClickIDButton').addEventListener('click', fetchUsersByClickIDList);
     
     document.getElementById('exportReportButton').addEventListener('click', exportToExcel);
     document.getElementById('closePlayerDataModal').addEventListener('click', closePlayerDataModal);    
