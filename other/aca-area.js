@@ -15,7 +15,7 @@ const pool = new Pool({
     },
 });
 
-const pageSizeValue = 200;
+const pageSizeValue = 100;
 
 // Returns the total number of rows (and pages) for a given academic area
 acaAreaRouter.get('/area-rep-count', async (req, res) => {
@@ -50,7 +50,7 @@ acaAreaRouter.get('/area-rep-count', async (req, res) => {
 acaAreaRouter.get('/gen-area-rep', async (req, res) => {
     console.log("called aca area search ", req.query.page);
     try {
-        let areas = req.query.areas.split(',');        
+        let areas = req.query.areas.split(',');
         areas = areas.map(area => area.toLowerCase());
         //console.log(areas);
 
