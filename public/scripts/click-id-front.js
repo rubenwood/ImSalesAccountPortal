@@ -14,11 +14,20 @@ export async function fetchUsersByClickIDList() {
     document.getElementById('generateReportByClickIDButton').value = "Generating Report By Click ID...";
 
     try{
+        // Fetch the total number of pages first
+        const countUrl = `/click-id/click-id-count?clickids=${encodeURIComponent(clickIDList.toString())}`;
+        const countResponse = await fetch(countUrl, {
+            method: 'GET',
+            headers: { 'Content-Type': 'application/json' }
+        });
+        const data = await countResponse.json();
+        const totalPages = data.totalPages;
+
         let playerIDList = [];
         const fetchPromises = [];
 
         // TODO: change this so that each response/page is written to the page when its required 
-        for (let page = 1; page <= 1; page++) {
+        for (let page = 1; page <= totalPages; page++) {
             fetchPromises.push(fetchUsersByClickID(clickIDList.toString(), page));
         }
         const results = await Promise.all(fetchPromises);
