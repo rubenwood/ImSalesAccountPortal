@@ -17,8 +17,35 @@ const pool = new Pool({
 
 const pageSizeValue = 100;
 
-// Returns the total number of rows (and pages) for a given click id(s)
+// Returns the total number of rows (and pages) for a given academic area
 clickIDRouter.get('/click-id-count', async (req, res) => {
+    console.log("called click id report count");
+    try {
+        let clickIDs = req.query.clickids.split(',');        
+        clickIDs = clickIDs.map(area => area.toLowerCase());
+
+        const countQuery = `
+            SELECT COUNT(*)
+            FROM public."UsageData"
+            WHERE "UsageDataJSON"->'Data'->'ClickID'->>'Value' ILIKE ANY (ARRAY[${clickIDs.map(clickid => `'${clickid}'`).join(',')}])
+        `;
+        const countResult = await pool.query(countQuery);
+        const totalRows = parseInt(countResult.rows[0].count, 10);
+        const pageSize = pageSizeValue; // Fixed page size
+        const totalPages = Math.ceil(totalRows / pageSize);
+
+        res.json({
+            totalRows: totalRows,
+            totalPages: totalPages
+        });
+    } catch (error) {
+        console.error('Error:', error);
+        res.status(500).json({ message: 'Failed to get count', error: error.message });
+    }
+});
+
+// Returns the total number of rows (and pages) for a given click id(s)
+clickIDRouter.get('/gen-click-id-rep', async (req, res) => {
     console.log("called click id report");
     try {
         let clickIDs = req.query.clickids.split(',');

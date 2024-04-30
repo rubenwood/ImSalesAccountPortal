@@ -54,7 +54,7 @@ export async function fetchUsersByClickIDList() {
 async function fetchUsersByClickID(clickIDList, page = 1){
     console.log(clickIDList);
     try{
-        const url = `/click-id/click-id-count?clickids=${encodeURIComponent(clickIDList.toString())}&page=${page}`;
+        const url = `/click-id/gen-click-id-rep?clickids=${encodeURIComponent(clickIDList.toString())}&page=${page}`;
         
         const response = await fetch(url, {
             method: 'GET',
