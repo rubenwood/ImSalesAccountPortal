@@ -64,10 +64,6 @@ acaAreaRouter.get('/gen-area-rep', async (req, res) => {
             FROM public."UsageData"
             WHERE "UsageDataJSON"->'Data'->'AcademicArea'->>'Value' ILIKE ANY (ARRAY[${areas.map(area => `'${area}'`).join(',')}])
         `;
-        const countResult = await pool.query(countQuery);
-        const totalRows = parseInt(countResult.rows[0].count, 10);
-        const totalPages = Math.ceil(totalRows / pageSize);
-
         // Query to fetch usage data with pagination
         const usageDataQuery = `
             SELECT *
@@ -75,12 +71,20 @@ acaAreaRouter.get('/gen-area-rep', async (req, res) => {
             WHERE "UsageDataJSON"->'Data'->'AcademicArea'->>'Value' ILIKE ANY (ARRAY[${areas.map(area => `'${area}'`).join(',')}])
             LIMIT ${pageSize} OFFSET ${offset}
         `;
-        const usageDataResult = await pool.query(usageDataQuery);
+
+        //const countResult = await pool.query(countQuery);
+        const [countResult, usageDataResult] = await Promise.all([
+            pool.query(countQuery),
+            pool.query(usageDataQuery)
+        ]);
+        //const usageDataResult = await pool.query(usageDataQuery);
         //console.log(usageDataResult.rows);
+
+        const totalRows = parseInt(countResult.rows[0].count, 10);
+        const totalPages = Math.ceil(totalRows / pageSize);        
 
         // Extract PlayFabIds to use in the next query
         const playFabIds = usageDataResult.rows.map(row => row.PlayFabId);
-
         // Query to fetch account data based on PlayFabIds
         const accountDataQuery = `
             SELECT *
@@ -89,7 +93,8 @@ acaAreaRouter.get('/gen-area-rep', async (req, res) => {
         `;
         const accountDataResult = await pool.query(accountDataQuery, [playFabIds]);
         //console.log(accountDataResult.rows);
-
+        console.log("aca area search done");
+        
         res.json({
             totalRows: totalRows,
             totalPages: totalPages,
