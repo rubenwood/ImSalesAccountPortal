@@ -21,7 +21,7 @@ const pageSizeValue = 100;
 clickIDRouter.get('/click-id-count', async (req, res) => {
     console.log("called click id report");
     try {
-        let clickIDs = req.query.clickids.split(',');        
+        let clickIDs = req.query.clickids.split(',');
         clickIDs = clickIDs.map(clickid => clickid.toLowerCase());
 
         //console.log(clickIDs);
@@ -41,10 +41,22 @@ clickIDRouter.get('/click-id-count', async (req, res) => {
         const totalRows = parseInt(usageDataResult.rows.length, 10);
         const totalPages = Math.ceil(totalRows / pageSize);
 
+        // Extract PlayFabIds to use in the next query
+        const playFabIds = usageDataResult.rows.map(row => row.PlayFabId);
+        const accountDataQuery = `
+            SELECT *
+            FROM public."AccountData"
+            WHERE "PlayFabId" = ANY ($1)
+        `;
+        const accountDataResult = await pool.query(accountDataQuery, [playFabIds]);
+
         res.json({
             totalRows: totalRows,
             totalPages: totalPages,
-            usageData: usageDataResult.rows
+            currentPage: page,
+            pageSize: pageSize,
+            usageData: usageDataResult.rows,
+            accountData: accountDataResult.rows
         });
     } catch (error) {
         console.error('Error:', error);
