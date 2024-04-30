@@ -4,7 +4,7 @@ import { writeDataForReport, resetExportData, resetButtonTexts, updateIDList } f
 import { populateAccDataRow, populateLoginData, populateUsageData, getUserEmailFromAccData, calcDaysSinceLastLogin, 
     calcDaysSinceCreation } from './user-report-formatting.js';
 
-export async function fetchAllPlayersByArea() {
+export async function fetchAllUsersByArea() {
     let hasAccess = await canAccess();
     if (!hasAccess) { return; }
 
@@ -29,7 +29,7 @@ export async function fetchAllPlayersByArea() {
 
         // TODO: change this so that each response/page is written to the page when its required 
         for (let page = 1; page <= totalPages; page++) {
-            fetchPromises.push(fetchPlayersByAreaList(areaList.toString(), page));
+            fetchPromises.push(fetchUsersByAreaList(areaList.toString(), page));
         }
         const results = await Promise.all(fetchPromises);
         // update the player ID field
@@ -72,7 +72,7 @@ export function sortAndCombineData(results) {
     }, []);
 }
 
-async function fetchPlayersByAreaList(areaList, page = 1) {
+async function fetchUsersByAreaList(areaList, page = 1) {
     const url = `/aca-area/gen-area-rep?areas=${encodeURIComponent(areaList)}&page=${page}`;
 
     const response = await fetch(url, {

@@ -5,9 +5,9 @@ import { showInsightsModal, closeInsightsModal, getTotalPlayTime, findPlayersWit
 import { fetchUserData, fetchUserAccInfoById, fetchUserAccInfoByEmail, formatTimeToHHMMSS, formatActivityData, getAcademicAreas } from './utils.js';
 import { playerProfiles, getSegmentsClicked, getPlayersInSegmentClicked } from './segments.js';
 import { fetchPlayersBySuffixList } from './suffix-front.js';
-import { populateForm, sortAndCombineData, fetchAllPlayersByArea } from './academic-area.js';
+import { populateForm, sortAndCombineData, fetchAllUsersByArea } from './academic-area.js';
 import { fetchUsersByID, fetchUsersByEmail } from './db/db-front.js';
-//import { generateReportByClickId } from './click-id.js';
+import { fetchUsersByClickIDList } from './click-id-front.js';
 
 document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('loginButton').addEventListener('click', Login);
@@ -36,8 +36,8 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('generateReportByIdButton').addEventListener('click', generateReportByIdDB);
     //document.getElementById('generateReportBySuffixButton').addEventListener('click', generateReportBySuffix);
     document.getElementById('generateReportBySuffixButton').addEventListener('click', generateReportBySuffixDB);
-    document.getElementById('generateReportByAreaButton').addEventListener('click', fetchAllPlayersByArea);
-    //document.getElementById('generateReportByClickIDButton').addEventListener('click', generateReportByClickId);
+    document.getElementById('generateReportByAreaButton').addEventListener('click', fetchAllUsersByArea);
+    document.getElementById('generateReportByClickIDButton').addEventListener('click', ()=>fetchUsersByClickIDList(1));
     
     document.getElementById('exportReportButton').addEventListener('click', exportToExcel);
     document.getElementById('closePlayerDataModal').addEventListener('click', closePlayerDataModal);    
@@ -745,6 +745,9 @@ export function resetButtonTexts() {
 
     const generateReportByAreaButton = document.getElementById('generateReportByAreaButton');
     generateReportByAreaButton ? generateReportByAreaButton.value = "Generate Report By Academic Area" : null;
+
+    const generateReportByClickIDButton = document.getElementById('generateReportByClickIDButton');
+    generateReportByClickIDButton ? generateReportByClickIDButton.value = "Generate Report By Click ID" : null;
 }
 
 // TOGGLE PLAYER ID TEXT
