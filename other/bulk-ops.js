@@ -35,9 +35,9 @@ async function updateDatabase(){
     // extract out the PlayFabId field and make that a separate column PlayFabId, also store the playfab data in UsageDataJSON
     await extractAndSetJsonValue('UsageData', 'UsageDataJSON', 'PlayFabId', 'PlayFabId').catch(err => console.error(err));
     // set the last updated date (json file)
-    markProcessCompletion(new Date());
+    OnUpdateCompletion(new Date());
 }
-async function markProcessCompletion(date) {
+async function OnUpdateCompletion(date) {
     const data = JSON.stringify({ LastUpdatedDate: date.toISOString() }, null, 2);
     await fs.writeFile('DatabaseLastUpdated.json', data);
     console.log("Completion date recorded.");
