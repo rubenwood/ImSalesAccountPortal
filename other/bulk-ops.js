@@ -2,6 +2,7 @@ const express = require('express');
 const axios = require('axios');
 const { Pool } = require('pg');
 const bulkRouter = express.Router();
+const fs = require('fs').promises;
 
 const pool = new Pool({
     user: process.env.PGUSER,
@@ -20,7 +21,7 @@ const pool = new Pool({
 // and then constructs the AccountData table
 // Then it gets the usage data 
 // and then constructs the UsageData table
-async function updateDatabase(){    
+async function updateDatabase(){
     console.log("getting all player segment and writing to db...");
     // get account data from playfab and write to DB
     await getAllPlayerAccDataAndWriteToDB(); 
@@ -33,6 +34,13 @@ async function updateDatabase(){
     console.log("updating usage data fields");
     // extract out the PlayFabId field and make that a separate column PlayFabId, also store the playfab data in UsageDataJSON
     await extractAndSetJsonValue('UsageData', 'UsageDataJSON', 'PlayFabId', 'PlayFabId').catch(err => console.error(err));
+    // set the last updated date (json file)
+    markProcessCompletion(new Date());
+}
+async function markProcessCompletion(date) {
+    const data = JSON.stringify({ LastUpdatedDate: date.toISOString() }, null, 2);
+    await fs.writeFile('DatabaseLastUpdated.json', data);
+    console.log("Completion date recorded.");
 }
 
 let getPlayerAccDataJobInProgress = false;
