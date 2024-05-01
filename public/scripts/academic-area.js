@@ -32,7 +32,7 @@ export async function fetchAllUsersByArea() {
             fetchPromises.push(fetchUsersByAreaList(areaList.toString(), page));
         }
         const results = await Promise.all(fetchPromises);
-        console.log(results);
+
         // update the player ID field
         results.forEach(element => {
             element.accountData.forEach(acc => {
