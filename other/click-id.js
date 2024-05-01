@@ -48,8 +48,7 @@ clickIDRouter.get('/click-id-count', async (req, res) => {
 clickIDRouter.get('/gen-click-id-rep', async (req, res) => {
     console.log("called click id report");
     try {
-        let clickIDs = req.query.clickids.split(',');
-        clickIDs = clickIDs.map(clickid => clickid.toLowerCase());
+        let clickIDs = req.query.clickids.split(',').map(clickid => clickid.toLowerCase());
 
         //console.log(clickIDs);
 

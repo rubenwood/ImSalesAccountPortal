@@ -15,7 +15,7 @@ const pool = new Pool({
     },
 });
 
-const pageSizeValue = 10;
+const pageSizeValue = 100;
 
 // Returns the total number of rows (and pages) for a given academic area
 acaAreaRouter.get('/area-rep-count', async (req, res) => {
@@ -50,9 +50,7 @@ acaAreaRouter.get('/area-rep-count', async (req, res) => {
 acaAreaRouter.get('/gen-area-rep', async (req, res) => {
     console.log("called aca area search ", req.query.page);
     try {
-        let areas = req.query.areas.split(',');
-        areas = areas.map(area => area.toLowerCase());
-        //console.log(areas);
+        let areas = req.query.areas.split(',').map(area => area.toLowerCase());
 
         const page = parseInt(req.query.page || '1', 10);
         const pageSize = pageSizeValue; // Fixed page size
@@ -67,11 +65,8 @@ acaAreaRouter.get('/gen-area-rep', async (req, res) => {
         `;      
         const usageDataResult = await pool.query(usageDataQuery);
 
-        //console.log("row 0 count", usageDataResult.rows[0].count);
-        //console.log("rows length", usageDataResult.rows.length);
-
         const totalRows = parseInt(usageDataResult.rows.length, 10);
-        const totalPages = Math.ceil(totalRows / pageSize);        
+        const totalPages = Math.ceil(totalRows / pageSize); 
 
         // Extract PlayFabIds to use in the next query
         const playFabIds = usageDataResult.rows.map(row => row.PlayFabId);
@@ -83,7 +78,7 @@ acaAreaRouter.get('/gen-area-rep', async (req, res) => {
         `;
         const accountDataResult = await pool.query(accountDataQuery, [playFabIds]);
         console.log("aca area search done ", req.query.page);
-        
+
         res.json({
             totalRows: totalRows,
             totalPages: totalPages,

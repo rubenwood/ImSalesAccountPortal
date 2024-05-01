@@ -34,6 +34,7 @@ async function updateDatabase(){
     console.log("updating usage data fields");
     // extract out the PlayFabId field and make that a separate column PlayFabId, also store the playfab data in UsageDataJSON
     await extractAndSetJsonValue('UsageData', 'UsageDataJSON', 'PlayFabId', 'PlayFabId').catch(err => console.error(err));
+    await extractAndSetJsonValue('UsageData', 'UsageDataJSON', 'AcademicArea', 'AcademicArea').catch(err => console.error(err));
     // set the last updated date (json file)
     OnUpdateCompletion(new Date());
 }
