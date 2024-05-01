@@ -15,7 +15,7 @@ const pool = new Pool({
     },
 });
 
-const pageSizeValue = 50;
+const pageSizeValue = 100;
 
 // Returns the total number of rows (and pages) for a given academic area
 acaAreaRouter.get('/area-rep-count', async (req, res) => {
@@ -64,7 +64,7 @@ acaAreaRouter.get('/gen-area-rep', async (req, res) => {
             LIMIT ${pageSize} OFFSET ${offset}
         `;
         // Create an array string for PostgreSQL
-        const areaPatterns = `{${areas.map(area => `%${area}%`).join(",")}}`;
+        const areaPatterns = areas.map(area => `${area}`);
         const usageDataResult = await pool.query(usageDataQuery, [areaPatterns]);
 
         const totalRows = parseInt(usageDataResult.rows.length, 10);
