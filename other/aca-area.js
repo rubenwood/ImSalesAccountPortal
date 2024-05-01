@@ -60,7 +60,7 @@ acaAreaRouter.get('/gen-area-rep', async (req, res) => {
         const usageDataQuery = `
             SELECT *
             FROM public."UsageData"
-            WHERE "UsageDataJSON"->'Data'->'AcademicArea'->>'Value' ILIKE ANY ($1)
+            WHERE "UsageDataJSON"->'Data'->'AcademicArea'->>'Value' = ANY ($1)
             LIMIT ${pageSize} OFFSET ${offset}
         `;
         // Create an array string for PostgreSQL
