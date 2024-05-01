@@ -64,7 +64,7 @@ acaAreaRouter.get('/gen-area-rep', async (req, res) => {
             LIMIT ${pageSize} OFFSET ${offset}
         `;
         // Create an array string for PostgreSQL
-        const areaPatterns = `{${areas.map(area => `${area}`).join(",")}}`;
+        const areaPatterns = `{${areas.map(area => `%${area}%`).join(",")}}`;
         const usageDataResult = await pool.query(usageDataQuery, [areaPatterns]);
 
         const totalRows = parseInt(usageDataResult.rows.length, 10);
