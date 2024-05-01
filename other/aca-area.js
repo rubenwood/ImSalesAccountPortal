@@ -58,28 +58,15 @@ acaAreaRouter.get('/gen-area-rep', async (req, res) => {
         const pageSize = pageSizeValue; // Fixed page size
         const offset = (page - 1) * pageSize;
 
-        // Query to count total matching rows for pagination
-        /*const countQuery = `
-            SELECT COUNT(*)
-            FROM public."UsageData"
-            WHERE "UsageDataJSON"->'Data'->'AcademicArea'->>'Value' ILIKE ANY (ARRAY[${areas.map(area => `'${area}'`).join(',')}])
-        `;*/
         // Query to fetch usage data with pagination
         const usageDataQuery = `
             SELECT *
             FROM public."UsageData"
             WHERE "UsageDataJSON"->'Data'->'AcademicArea'->>'Value' ILIKE ANY (ARRAY[${areas.map(area => `'${area}'`).join(',')}])
             LIMIT ${pageSize} OFFSET ${offset}
-        `;
-
-        /*const [countResult, usageDataResult] = await Promise.all([
-            pool.query(countQuery),
-            pool.query(usageDataQuery)
-        ]);*/
-        //const countResult = await pool.query(countQuery);        
+        `;      
         const usageDataResult = await pool.query(usageDataQuery);
 
-        //const totalRows = parseInt(countResult.rows[0].count, 10);
         const totalRows = parseInt(usageDataResult.rows[0].count, 10);
         const totalPages = Math.ceil(totalRows / pageSize);        
 
@@ -92,8 +79,7 @@ acaAreaRouter.get('/gen-area-rep', async (req, res) => {
             WHERE "PlayFabId" = ANY ($1)
         `;
         const accountDataResult = await pool.query(accountDataQuery, [playFabIds]);
-        //console.log(accountDataResult.rows);
-        console.log("aca area search done");
+        console.log("aca area search done ", req.query.page);
         
         res.json({
             totalRows: totalRows,
