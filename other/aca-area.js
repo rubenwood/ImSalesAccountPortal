@@ -15,7 +15,7 @@ const pool = new Pool({
     },
 });
 
-const pageSizeValue = 2;
+const pageSizeValue = 10;
 
 // Returns the total number of rows (and pages) for a given academic area
 acaAreaRouter.get('/area-rep-count', async (req, res) => {
@@ -67,7 +67,10 @@ acaAreaRouter.get('/gen-area-rep', async (req, res) => {
         `;      
         const usageDataResult = await pool.query(usageDataQuery);
 
-        const totalRows = parseInt(usageDataResult.rows[0].count, 10);
+        //console.log("row 0 count", usageDataResult.rows[0].count);
+        //console.log("rows length", usageDataResult.rows.length);
+
+        const totalRows = parseInt(usageDataResult.rows.length, 10);
         const totalPages = Math.ceil(totalRows / pageSize);        
 
         // Extract PlayFabIds to use in the next query
