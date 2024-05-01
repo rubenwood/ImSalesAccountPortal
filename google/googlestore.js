@@ -365,7 +365,7 @@ async function getNewUsersPerWeek(analyticsApiUrl, accessToken){
 }
 async function getActiveUsersPerMonth(analyticsApiUrl, accessToken){
   let results = [];
-  let startDate = new Date("2023-01-01");
+  let startDate = new Date("2021-02-01"); // starts 1st Feb 2021
   let currentDate = new Date(); // Current date
   currentDate.setDate(1); // Set to the first of the current month
 

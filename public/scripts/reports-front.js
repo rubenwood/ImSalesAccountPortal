@@ -45,18 +45,14 @@ async function fetchDevKPIReport() {
         // Get 30 day retention report
         const playFab30DayReportPromise = getPlayFab30DayReport();
 
-        // Get Monthly totals for the past 12 Months
-        const monthsToGoBack = 12;
+        // Get Monthly totals for the past 2 years (24 Months)
+        const monthsToGoBack = 24;
         const playFabMonthlyTotalsPromises = Array.from({ length: monthsToGoBack }, (_, monthIndex) => {
             const targetDate = new Date();
             targetDate.setDate(1); // Set the date to the first to avoid issues with months having different numbers of days
             targetDate.setMonth(targetDate.getMonth() - monthIndex - 1);
             const month = targetDate.getMonth() + 1; // months are zero-indexed
-            const year = targetDate.getFullYear();
-
-            console.log(`month index: ${monthIndex}`);
-            console.log(`target date: ${month} ${year} -- ${targetDate}`);
-            
+            const year = targetDate.getFullYear();            
             return getPlayFabMonthlyTotalsReport(month, year);
         });
 
@@ -91,16 +87,31 @@ async function fetchDevKPIReport() {
 
         // Process Monthly Total Report
         let MAUs = monthlyTotalsReports.map((report, index) => {
-            return `<b>${report[0].Ts.replace("T00:00:00.0000000", "")}</b>: ${report[0].Unique_Logins}`;
+            try{
+                return `<b>${report[0].Ts.replace("T00:00:00.0000000", "")}</b>: ${report[0].Unique_Logins}`;
+            }catch(error){
+                console.error("couldnt find report for MAU");
+                return `<i>no report for month at index: ${index}</i>`;
+            }            
         });
         let newUsers = monthlyTotalsReports.map((report, index) => {
-            return `<b>${report[0].Ts.replace("T00:00:00.0000000", "")}</b>: ${report[0].New_Users}`;
+            try{
+                return `<b>${report[0].Ts.replace("T00:00:00.0000000", "")}</b>: ${report[0].New_Users}`;
+            }catch(error){
+                console.error("couldnt find report for new users");
+                return `<i>no report for month at index: ${index}</i>`;
+            }
         });
         // Process Daily Totals Report
         let totalDAUPer7Days = 0
         let DAUPast7Days = playFabDailyTotalsReport.map((report, index) =>{
-            totalDAUPer7Days += parseInt(report[0].Unique_Logins, 10);
-            return `<b>${report[0].Ts.replace("T00:00:00.0000000", "")}</b>: ${report[0].Unique_Logins}`;
+            try{
+                totalDAUPer7Days += parseInt(report[0].Unique_Logins, 10);
+                return `<b>${report[0].Ts.replace("T00:00:00.0000000", "")}</b>: ${report[0].Unique_Logins}`;
+            }catch(error){
+                console.error("couldnt find report for DAU (Past 7 Days)");
+                return `<i>no report for month at index: ${index}</i>`;
+            }
         });
 
         // Update MAU cell
@@ -167,9 +178,15 @@ function setupReportTable(jsonInput){
     if (jsonInput.activeUsersPerMonth) { // (MAU)
         let dataCell = table.querySelector("#MAU");
         // last months MAU
-        let thisMonthMAU = jsonInput.activeUsersPerMonth[jsonInput.activeUsersPerMonth.length-1];
-        let lastMonthMAU = jsonInput.activeUsersPerMonth[jsonInput.activeUsersPerMonth.length-2];
-        if (dataCell){ dataCell.innerText = JSON.stringify(lastMonthMAU) + "\n" + JSON.stringify(thisMonthMAU); }
+        console.log(jsonInput.activeUsersPerMonth);
+        let outputString = '';
+        jsonInput.activeUsersPerMonth.forEach(element =>{
+            outputString += JSON.stringify(element) + "\n";
+        });
+        if (dataCell){ dataCell.innerText = outputString; }
+        //let thisMonthMAU = jsonInput.activeUsersPerMonth[jsonInput.activeUsersPerMonth.length-1];
+        //let lastMonthMAU = jsonInput.activeUsersPerMonth[jsonInput.activeUsersPerMonth.length-2];
+        //if (dataCell){ dataCell.innerText = JSON.stringify(lastMonthMAU) + "\n" + JSON.stringify(thisMonthMAU); }
     }
 
     if (jsonInput.averageActiveUsageTime) { // (Active User Useage Time)
