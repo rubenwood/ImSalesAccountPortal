@@ -178,7 +178,7 @@ function setupReportTable(jsonInput){
     if (jsonInput.activeUsersPerMonth) { // (MAU)
         let dataCell = table.querySelector("#MAU");
         // last months MAU
-        console.log(jsonInput.activeUsersPerMonth);
+        //console.log(jsonInput.activeUsersPerMonth);
         let outputString = '';
         jsonInput.activeUsersPerMonth.forEach(element =>{
             outputString += JSON.stringify(element) + "\n";

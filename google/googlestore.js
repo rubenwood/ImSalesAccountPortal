@@ -236,7 +236,7 @@ router.get('/get-kpi-report', async (req, res) => {
     const results = [];
     for (const func of functions) {
       results.push(await func());
-      await delay(700);
+      await delay(700); // TODO: why do I need this?
     }
 
     let output = {
@@ -317,7 +317,16 @@ async function getActivitiesLaunchedPerWeek(analyticsApiUrl, accessToken){
       dimensions: [{ name: "eventName" }],
       metrics: [
         { name: "eventCount" }
-      ] 
+      ],
+      dimensionFilter:{
+        filter: {
+          stringFilter: {
+            matchType:"EXACT",
+            value:"launch_activity"
+          },
+          fieldName:"eventName"
+        }
+      }
     },
     {
       headers: {
@@ -325,6 +334,9 @@ async function getActivitiesLaunchedPerWeek(analyticsApiUrl, accessToken){
       }
     });
 
+    // response.data.rows.forEach(element =>{
+    //   console.log(JSON.stringify(element.dimensionValues) + ' ' + JSON.stringify(element.metricValues));
+    // })
   const launchActivityData = response.data.rows[0].metricValues[0].value;
   return launchActivityData;
 }
@@ -434,6 +446,7 @@ async function getUserRetention(analyticsApiUrl, accessToken){
   console.log("Yesterday's date: ", formattedYesterday);
   console.log("42 days ago from today: ", formattedDaysAgo42);
 
+  // GA User Retention Request
   const response = await axios.post(analyticsApiUrl,
     {
       dimensions: [{ name: "cohort" },{ name: "cohortNthDay" }],

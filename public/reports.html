@@ -171,36 +171,111 @@
                 </tr>
                 <tr><td style="height: 20px;" colspan="2"></td></tr>
                 <tr>
-                    <th>Retention (GA)</th>
+                    <th>
+                        <span class="info-tooltip">
+                        Retention (GA)
+                        <span class="info-tooltiptext">
+                            User Retention over a 42 day snapshot, see user retention on GA
+                            <br/><br/>
+                            Data source: GA API
+                        </span>
+                        </span>
+                    </th>
                     <td id="userRetention">data goes here</td>
                 </tr>
                 <tr>
-                    <th>30 Day Retention (GA)</th>
+                    <th>
+                        <span class="info-tooltip">
+                        30 Day Retention (GA)
+                        <span class="info-tooltiptext">
+                            Active users in the past 30 days
+                            <br/><br/>
+                            Data source: GA API
+                        </span>
+                        </span>
+                    </th>
                     <td id="userRetention30Days">data goes here</td>
                 </tr>
                 <tr>
-                    <th>New Users (Past 7 days) (GA)</th>
+                    <th>
+                        <span class="info-tooltip">
+                        New Users (Past 7 days) (GA)
+                        <span class="info-tooltiptext">
+                            New Users in the past 7 days
+                            <br/><br/>
+                            Data source: GA API
+                        </span>
+                        </span>
+                    </th>
                     <td id="newUsersPerWeek">data goes here</td>
                 </tr>
                 <tr>
-                    <th>Returning Users Per Week (DAU) (GA)</th>
+                    <th>
+                        <span class="info-tooltip">
+                        Returning Users Per Week (DAU) (GA)
+                        <span class="info-tooltiptext">
+                            Uses the totalUsers metric with newVsReturning dimension, 
+                            to produce returning users for this week
+                            <br/><br/>
+                            Data source: GA API
+                        </span>
+                        </span>
+                    </th>
                     <td id="returningUsersPerWeek">data goes here</td>
                 </tr>
                 <tr>
-                    <th>MAU (GA)</th>
+                    <th>
+                        <span class="info-tooltip">
+                        MAU (GA)
+                        <span class="info-tooltiptext">
+                            Gets the activeUsers metric per month going as far back as possible
+                            (2021-02-01)
+                            <br/><br/>
+                            Data source: GA API
+                        </span>
+                        </span>
+                    </th>
                     <td id="MAU">data goes here</td>
                 </tr>
                 <tr>
-                    <th>Active User Usage Time (GA)</th>
+                    <th>
+                        <span class="info-tooltip">
+                        Active User Usage Time (GA)
+                        <span class="info-tooltiptext">
+                            Gets the userEngagementDuration metric for all activeUsers for the past 7 days
+                            <br/><br/>
+                            Data source: GA API
+                        </span>
+                        </span>
+                    </th>
                     <td id="averageActiveUsageTime">data goes here</td>
                 </tr>
                 <tr>
-                    <th>Total Sessions Per Active User (GA)</th>
+                    <th>
+                        <span class="info-tooltip">
+                        Total Sessions Per Active User (GA)
+                        <span class="info-tooltiptext">
+                            Gets the sessionsPerUser metric for the past 7 days
+                            <br/><br/>
+                            Data source: GA API
+                        </span>
+                        </span>
+                    </th>
                     <td id="sessionsPerUserPerWeek">data goes here</td>
                 </tr>
                 <tr><td style="height: 20px;" colspan="2"></td></tr>
                 <tr>
-                    <th>Total Activities Played Per Week (GA)</th>
+                    <th>
+                        <span class="info-tooltip">
+                        Total Activities Played Per Week (GA)
+                        <span class="info-tooltiptext">
+                            Gets the eventCount metric with the eventName dimension 
+                            and filters for launch_activity event
+                            <br/><br/>
+                            Data source: GA API
+                        </span>
+                        </span>
+                    </th>
                     <td id="activitiesLaunchedPerWeek">data goes here</td>
                 </tr>
             </thead>

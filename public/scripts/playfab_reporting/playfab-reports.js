@@ -47,7 +47,7 @@ function getCohortDate() {
 }
 
 export async function getPlayFabDailyTotalsReport(day, month, year){
-    console.log(`Getting daily totals report from Playfab ${day} ${month} ${year}`);
+    //console.log(`Getting daily totals report from Playfab ${day} ${month} ${year}`);
 
     const reportName = "Daily Totals Report";
 
@@ -112,7 +112,7 @@ export async function getPlayFabMonthlyTotalsReport(month, year) {
     const reportName = "Monthly Totals Report";
     const day = 1; // always first of month for monthly reports
 
-    console.log(`Getting Monthly report from Playfab ${day} ${month} ${year}`);
+    //console.log(`Getting Monthly report from Playfab ${day} ${month} ${year}`);
 
     const playFabResponse = await fetch('/get-playfab-report', {
         method: 'POST',
