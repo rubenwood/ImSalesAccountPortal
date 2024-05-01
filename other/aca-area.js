@@ -63,7 +63,8 @@ acaAreaRouter.get('/gen-area-rep', async (req, res) => {
             WHERE "UsageDataJSON"->'Data'->'AcademicArea'->>'Value' ILIKE ANY ($1)
             LIMIT ${pageSize} OFFSET ${offset}
         `;
-        const areaPatterns = `{${areas.map(area => `%${area}%`).join(",")}}`; // Create an array string
+        // Create an array string for PostgreSQL
+        const areaPatterns = `{${areas.map(area => `${area}`).join(",")}}`;
         const usageDataResult = await pool.query(usageDataQuery, [areaPatterns]);
 
         const totalRows = parseInt(usageDataResult.rows.length, 10);
