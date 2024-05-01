@@ -60,10 +60,11 @@ acaAreaRouter.get('/gen-area-rep', async (req, res) => {
         const usageDataQuery = `
             SELECT *
             FROM public."UsageData"
-            WHERE "UsageDataJSON"->'Data'->'AcademicArea'->>'Value' ILIKE ANY (ARRAY[${areas.map(area => `'${area}'`).join(',')}])
+            WHERE "UsageDataJSON"->'Data'->'AcademicArea'->>'Value' ILIKE ANY ($1)
             LIMIT ${pageSize} OFFSET ${offset}
-        `;      
-        const usageDataResult = await pool.query(usageDataQuery);
+        `;
+        const areaPatterns = `{${areas.map(area => `%${area}%`).join(",")}}`; // Create an array string
+        const usageDataResult = await pool.query(usageDataQuery, [areaPatterns]);
 
         const totalRows = parseInt(usageDataResult.rows.length, 10);
         const totalPages = Math.ceil(totalRows / pageSize); 
