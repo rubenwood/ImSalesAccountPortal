@@ -15,7 +15,7 @@ const pool = new Pool({
     },
 });
 
-const pageSizeValue = 50;
+const pageSizeValue = 10;
 
 // Returns the total number of rows (and pages) for a given academic area
 acaAreaRouter.get('/area-rep-count', async (req, res) => {
