@@ -56,7 +56,7 @@ acaAreaRouter.get('/gen-area-rep', async (req, res) => {
         const pageSize = pageSizeValue; // Fixed page size
         const offset = (page - 1) * pageSize;
 
-        // Query to fetch usage data with pagination
+        // this wont match users who have an area with upper case chars
         const usageDataQuery = `
             SELECT *
             FROM public."UsageData"

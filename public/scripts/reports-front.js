@@ -33,13 +33,16 @@ async function fetchDevKPIReport() {
 
         // Get Daily totals for the past 7 days
         const daysToGoBack = 7;
-        const playFabDailyTotalsPromises = Array.from({ length: daysToGoBack }, (_, monthIndex) => {
-            const today = new Date();
-            const yesterday = new Date(today.setDate(today.getDate() - 1));
-            const day = yesterday.getDate() - monthIndex;
-            const month = yesterday.getMonth() + 1;
-            const year = yesterday.getFullYear();
-        
+        const today = new Date();  // Define 'today' outside the loop to avoid resetting it in each iteration
+        // Create an array of promises for fetching daily totals for the last 7 days
+        const playFabDailyTotalsPromises = Array.from({ length: daysToGoBack }, (_, dayOffset) => {
+            const targetDate = new Date(today); // Create a new Date instance to avoid mutating 'today'
+            // Subtract 'dayOffset + 1' to get the correct past day
+            targetDate.setDate(today.getDate() - dayOffset - 1);
+            const day = targetDate.getDate();
+            // month is zero-indexed, so add 1 to get the correct month
+            const month = targetDate.getMonth() + 1;
+            const year = targetDate.getFullYear();
             return getPlayFabDailyTotalsReport(day, month, year);
         });
         // Get 30 day retention report

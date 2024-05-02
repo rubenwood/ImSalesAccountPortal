@@ -50,8 +50,6 @@ clickIDRouter.get('/gen-click-id-rep', async (req, res) => {
     try {
         let clickIDs = req.query.clickids.split(',').map(clickid => clickid.toLowerCase());
 
-        //console.log(clickIDs);
-
         const page = parseInt(req.query.page || '1', 10);
         const pageSize = pageSizeValue; // Fixed page size
         const offset = (page - 1) * pageSize;
@@ -59,11 +57,11 @@ clickIDRouter.get('/gen-click-id-rep', async (req, res) => {
         const usageDataQuery = `
             SELECT *
             FROM public."UsageData"
-            WHERE "UsageDataJSON"->'Data'->'ClickID'->>'Value' ILIKE ANY (ARRAY[${clickIDs.map(clickid => `'${clickid}'`).join(',')}])
+            WHERE "UsageDataJSON"->'Data'->'ClickID'->>'Value' ILIKE ANY ($1)
             LIMIT ${pageSize} OFFSET ${offset}
         `;
-        const usageDataResult = await pool.query(usageDataQuery);
-        //console.log(usageDataResult);
+        const clickIDPatterns = clickIDs.map(clickid => `${clickid}`);
+        const usageDataResult = await pool.query(usageDataQuery, [clickIDPatterns]);
         const totalRows = parseInt(usageDataResult.rows.length, 10);
         const totalPages = Math.ceil(totalRows / pageSize);
 

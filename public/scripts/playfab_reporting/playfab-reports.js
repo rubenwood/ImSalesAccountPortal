@@ -47,7 +47,7 @@ function getCohortDate() {
 }
 
 export async function getPlayFabDailyTotalsReport(day, month, year){
-    //console.log(`Getting daily totals report from Playfab ${day} ${month} ${year}`);
+    // /console.log(`Getting daily totals report from Playfab ${day} ${month} ${year}`);
 
     const reportName = "Daily Totals Report";
 
