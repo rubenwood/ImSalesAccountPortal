@@ -130,10 +130,8 @@ async function fetchDevKPIReport() {
             DAUDataCell.innerHTML += `<br><b>Total</b>: ${totalDAUPer7Days}
             <br><b>Average</b>:${parseInt(totalDAUPer7Days/7, 10)}`; 
         }
-
         // Setup the Google KPI report table
         setupReportTable(googleKPIReport);
-
     } catch (error) {
         console.error('There has been a problem with your fetch operation:', error);
         document.getElementById('output-area').textContent = 'Error fetching data: ' + error.message;
@@ -183,10 +181,14 @@ function setupReportTable(jsonInput){
         // last months MAU
         //console.log(jsonInput.activeUsersPerMonth);
         let outputString = '';
-        jsonInput.activeUsersPerMonth.forEach(element =>{
-            outputString += JSON.stringify(element) + "\n";
+        // reverse the array, because GA returns the results, oldest to newest
+        // but we want newest to oldest
+        jsonInput.activeUsersPerMonth.reverse();
+        jsonInput.activeUsersPerMonth.forEach(element => {
+            //outputString += JSON.stringify(element) + "\n";
+            outputString += `<b>${element.month}</b>: ${element.totalActiveUsers}<br/>`;
         });
-        if (dataCell){ dataCell.innerText = outputString; }
+        if (dataCell){ dataCell.innerHTML = outputString; }
         //let thisMonthMAU = jsonInput.activeUsersPerMonth[jsonInput.activeUsersPerMonth.length-1];
         //let lastMonthMAU = jsonInput.activeUsersPerMonth[jsonInput.activeUsersPerMonth.length-2];
         //if (dataCell){ dataCell.innerText = JSON.stringify(lastMonthMAU) + "\n" + JSON.stringify(thisMonthMAU); }
