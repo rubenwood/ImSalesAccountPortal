@@ -49,16 +49,18 @@ async function fetchDevKPIReport() {
         const playFab30DayReportPromise = getPlayFab30DayReport();
 
         // Get Monthly totals for the past 2 years (24 Months)
-        const monthsToGoBack = 24;
+        const monthsToGoBack = 25;
         const playFabMonthlyTotalsPromises = Array.from({ length: monthsToGoBack }, (_, monthIndex) => {
             const targetDate = new Date();
-            targetDate.setDate(1); // Set the date to the first to avoid issues with months having different numbers of days
-            targetDate.setMonth(targetDate.getMonth() - monthIndex - 1);
+            targetDate.setDate(1); // set this temp date to the 1st, since the reports are always on the 1st
+            targetDate.setMonth(targetDate.getMonth() - monthIndex); 
             const month = targetDate.getMonth() + 1; // months are zero-indexed
-            const year = targetDate.getFullYear();            
+            console.log("getting month: ", month);
+            const year = targetDate.getFullYear();
             return getPlayFabMonthlyTotalsReport(month, year);
         });
 
+        // Get GA KPI Report
         const googleKPIPromise = fetch('/google/get-kpi-report').then(async response => {
             if (!response.ok) {
                 if (response.status === 401) {
@@ -88,7 +90,8 @@ async function fetchDevKPIReport() {
             Day 30: ${playFab30DayReport[30]?.Percent_Retained ?? 'N/A'}%`;
         }
 
-        // Process Monthly Total Report
+        // Process Monthly Totals Report
+        console.log(monthlyTotalsReports);
         let MAUs = monthlyTotalsReports.map((report, index) => {
             try{
                 return `<b>${report[0].Ts.replace("T00:00:00.0000000", "")}</b>: ${report[0].Unique_Logins}`;

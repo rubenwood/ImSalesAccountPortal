@@ -56,65 +56,6 @@ const playDeveloper = google.androidpublisher({
   auth: oauth2Client
 });
 
-/*async function listSubscriptions() {
-  const response = await playDeveloper.monetization.subscriptions.list({
-    packageName: process.env.GOOGLE_APP_PACKAGE_ID
-    //startTime: // 'startTime', // Optional parameters
-    //endTime: // 'endTime' // Optional parameters
-  });
-  return response;
-}*/
-
-/*router.get('/get-google-prods', async (req, res) => {
-    let subListResp = await listSubscriptions();
-    let subList = subListResp.data;
-    let subscriptionProds = subList.subscriptions;
-    console.log(subList);
-    console.log(subscriptionProds);
-    let prodIDs = [];
-    subscriptionProds.forEach((prod) =>{
-      prodIDs.push(prod.productId);
-    })
-    res.send(JSON.stringify(prodIDs));
-});*/
-
-/*async function listSubPurchases() {
-  const response = await playDeveloper.purchases.subscriptions.get({
-    packageName: process.env.GOOGLE_APP_PACKAGE_ID,
-    subscriptionId: 'com.immersifyeducation.immersifydental.monthly'
-  });
-  return response;
-}*/
-/*router.get('/get-google-purchases', async (req, res) => {
-  const url = 'https://play.google.com/console/u/0/developers/6876057134054731100/app/4973007238115949118/reporting/subscriptions/overview?from=2024-02-26&to=2024-03-03&product_id=ALL';
-
-  try {
-    const response = await axios.get(url, {
-      headers: {
-        'Authorization': `Bearer ${req.session.cachedAccessToken}`
-      }
-    });
-
-    const htmlData = response.data;
-    console.log(htmlData);
-    // Attempt to extract the content using a regular expression
-    const regex = /<span class="value _ngcontent-jvh-86" aria-describedby="console-scorecard-label-21">(\d+)<\/span>/;
-    const match = regex.exec(htmlData);
-    let extractedValue = "";
-    if (match && match[1]) {
-      extractedValue = match[1];
-    }
-
-    console.log(`Extracted Value: ${extractedValue}`);
-    res.setHeader('Content-Type', 'text/plain');
-    res.send(htmlData);
-    //res.send(`Extracted Value: ${extractedValue}`);
-  } catch (error) {
-    console.error('Error fetching data:', error);
-    res.status(500).send('Failed to fetch data');
-  }
-});*/
-
 // GET GOOGLE SUB REPORT
 // returns a full subscription report
 router.get('/get-google-report', async (req, res) => {
@@ -375,49 +316,36 @@ async function getNewUsersPerWeek(analyticsApiUrl, accessToken){
 
   return launchActivityData;
 }
-async function getActiveUsersPerMonth(analyticsApiUrl, accessToken){
-  let results = [];
-  let startDate = new Date("2021-02-01"); // starts 1st Feb 2021
-  let currentDate = new Date(); // Current date
-  currentDate.setDate(1); // Set to the first of the current month
+async function getActiveUsersPerMonth(analyticsApiUrl, accessToken) {
+  const results = [];
+  const currentDate = new Date();
+  currentDate.setDate(1); // set to the first of the current month
+
+  let startDate = new Date(2021, 1, 1); // Starting from February 2021, month index is 0-based so February is 1
 
   while (startDate < currentDate) {
-    let endDate = new Date(startDate.getFullYear(), startDate.getMonth() + 1, 1);
-    let formattedStartDate = startDate.toISOString().split('T')[0];
-    let formattedEndDate = endDate.toISOString().split('T')[0];
+    const endDate = new Date(startDate.getFullYear(), startDate.getMonth() + 1, 0); // last day of the current month
+    const formattedStartDate = `${startDate.getFullYear()}-${(startDate.getMonth() + 1).toString().padStart(2, '0')}-01`; // always the first of the month
+    const formattedEndDate = endDate.toISOString().split('T')[0];
+    console.log(`Fetching data from ${formattedStartDate} to ${formattedEndDate}`);
 
     try {
-      const response = await axios.post(analyticsApiUrl,
-        {
-          dateRanges: [{ startDate: formattedStartDate, endDate: formattedEndDate }],
-          metrics: [{ name: "activeUsers" }]
-        },
-        {
-          headers: {
-            Authorization: `Bearer ${accessToken}`,
-          }
-        });
+      const response = await axios.post(analyticsApiUrl, {
+        dateRanges: [{ startDate: formattedStartDate, endDate: formattedEndDate }],
+        metrics: [{ name: "activeUsers" }]
+      }, {
+        headers: { Authorization: `Bearer ${accessToken}` }
+      });
 
-      // Check if the response has data
-      if (response.data.rows && response.data.rows.length > 0) {
-        let totalActiveUsers = response.data.rows[0].metricValues[0].value;
-        results.push({
-          month: formattedStartDate,
-          totalActiveUsers
-        });
-      } else {
-        // Handle case where no data is returned for the month
-        results.push({
-          month: formattedStartDate,
-          totalActiveUsers: 0
-        });
-      }
+      const totalActiveUsers = response.data.rows?.[0]?.metricValues[0].value ?? 0;
+      results.push({ month: formattedStartDate, totalActiveUsers });
 
-      // Move to the next month
-      startDate = endDate;
+      // Properly increment the month
+      startDate = new Date(startDate.getFullYear(), startDate.getMonth() + 1, 1); // move to the first day of the next month
     } catch (error) {
-      console.error(`Error fetching data for ${formattedStartDate} - ${formattedEndDate}: ${error}`);
-      // Handle errors as required for your application
+      console.error(`Error fetching data for ${formattedStartDate} to ${formattedEndDate}:`, error);
+      // Continue to next month in case of an error
+      startDate = new Date(startDate.getFullYear(), startDate.getMonth() + 1, 1);
     }
   }
 
