@@ -324,10 +324,12 @@ async function getActiveUsersPerMonth(analyticsApiUrl, accessToken) {
   let startDate = new Date(2021, 1, 1); // Starting from February 2021, month index is 0-based so February is 1
 
   while (startDate < currentDate) {
-    const endDate = new Date(startDate.getFullYear(), startDate.getMonth() + 1, 0); // last day of the current month
-    const formattedStartDate = `${startDate.getFullYear()}-${(startDate.getMonth() + 1).toString().padStart(2, '0')}-01`; // always the first of the month
+    // last day of the current month
+    const endDate = new Date(startDate.getFullYear(), startDate.getMonth() + 1, 0);
+    // always the first of the month
+    const formattedStartDate = `${startDate.getFullYear()}-${(startDate.getMonth() + 1).toString().padStart(2, '0')}-01`; 
     const formattedEndDate = endDate.toISOString().split('T')[0];
-    console.log(`Fetching data from ${formattedStartDate} to ${formattedEndDate}`);
+    //console.log(`Fetching data from ${formattedStartDate} to ${formattedEndDate}`);
 
     try {
       const response = await axios.post(analyticsApiUrl, {
