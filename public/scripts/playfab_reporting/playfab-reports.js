@@ -132,3 +132,7 @@ export async function getPlayFabMonthlyTotalsReport(month, year) {
     const data = parseCSV(respText);
     return data;
 }
+
+// TODO: get average session time across all users
+// TODO: get active user usage time
+// TODO: get total sessions per active user

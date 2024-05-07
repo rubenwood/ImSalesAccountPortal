@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>QR Code Generator</title>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" type="text/css" href="styles.css">
+  <style>
+    body {
+      font-family: 'Montserrat', sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: #f5f5f5;
+    }
+    .container {
+      width: 80%;
+      margin: 0 auto;
+      padding-top: 2em;
+    }
+    h1 {
+      text-align: center;
+      color: #333;
+    }
+    form {
+      background-color: #fff;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+      padding: 2em;
+      margin-bottom: 2em;
+    }
+    label {
+      display: block;
+      margin-bottom: .5em;
+    }
+    textarea, input[type="url"] {
+      width: 100%;
+      padding: .5em;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+      margin-bottom: 1em;
+    }
+    .link-type {
+      margin-bottom: 1em;
+    }
+    button {
+      padding: .5em 1em;
+      background-color: #2196f3;
+      color: #fff;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #1976d2;
+    }
+    #qr-code {
+      max-width: 100%;
+    }
+    #url-output {
+      word-wrap: break-word;
+      padding: 1em;
+      background-color: #e3f2fd;
+      border-radius: 5px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>QR Code Generator</h1>
+    <form id="json-form">
+      <label for="json-input">Enter your JSON:</label>
+      <textarea id="json-input" rows="10" required></textarea>
+
+      <div class="link-type">
+        <label for="practical">Practical</label>
+        <input type="radio" id="practical" name="linkType" value="practical" checked>
+        <label for="topic">Topic</label>
+        <input type="radio" id="topic" name="linkType" value="topic">
+        <label for="lesson">Lesson</label>
+        <input type="radio" id="lesson" name="linkType" value="lesson">
+      </div>
+
+      <button type="submit">Convert JSON to URL</button>
+    </form>
+    <p id="url-output"></p>
+    
+    <form id="qr-form">
+      <label for="url-input">Enter your link:</label>
+      <input type="url" id="url-input" required>
+      <input type="url" id="short-url">
+      <button type="submit">Generate QR Code</button>
+      <input type="button" id="shorten-btn" value="Shorten URL">
+    </form>
+
+    <div id="qr-container">
+      <img id="qr-code" src="" alt="Generated QR Code" style="display:none;"/>
+    </div>
+  </div>
+
+  <script>
+    const jsonForm = document.getElementById('json-form');
+    const qrForm = document.getElementById('qr-form');
+    const shortenURLForm = document.getElementById('shorten-url-form');
+    const jsonInput = document.getElementById('json-input');
+    const urlInput = document.getElementById('url-input');
+    const urlOutput = document.getElementById('url-output');
+    const shortURLOutput = document.getElementById('short-url');
+
+    const shortenURLBtn = document.getElementById('shorten-btn');
+
+    const qrCode = document.getElementById('qr-code');
+
+    jsonForm.addEventListener('submit', (event) => {
+      event.preventDefault();
+      const jsonData = JSON.parse(jsonInput.value);
+      const linkType = document.querySelector('input[name="linkType"]:checked').value;
+      let link;
+
+      switch (linkType) {
+        case 'practical':
+          link = constructPracticalLink(jsonData);
+          break;
+        case 'topic':
+          // Code for 'topic' goes here
+          link = constructTopicLink(jsonData);
+          break;
+        case 'lesson':
+          link = constructLessonLink(jsonData);
+          break;
+      }
+      urlOutput.textContent = link;
+      urlInput.value = link;
+    });
+
+    qrForm.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      const url = urlInput.value;
+      await generateQRCode(url);
+    });
+
+    shortenURLBtn.addEventListener('click', () => shortenUrl(urlInput.value));
+
+
+    function constructPracticalLink(jsonData) {
+      const { sceneName, sceneParams, id } = jsonData;
+      const params = sceneParams.join(',');
+      const baseLink = `immersifyeducation://immersifydental?loadScene=${sceneName}&sceneParams=[${params}]&activityID=${id}`;
+      const encodedBaseLink = encodeURIComponent(baseLink);
+      const fullLink = `https://immersifyeducation.com/deeplink?dl=%5B${encodedBaseLink}%5D`;
+      return fullLink;
+    }
+
+    function constructTopicLink(jsonData) {
+      const { id } = jsonData;
+      const baseLink = `immersifyeducation://immersifydental?topic=${id}`;
+      const encodedBaseLink = encodeURIComponent(baseLink);
+      const fullLink = `https://immersifyeducation.com/deeplink?dl=%5B${encodedBaseLink}%5D`;
+      return fullLink;
+    }
+
+    function constructLessonLink(jsonData) {
+      const { sceneName, sceneParams, id } = jsonData;
+      const params = sceneParams.join(',');
+      const baseLink = `immersifyeducation://immersifydental?loadScene=${sceneName}&sceneParams=[${params}]&activityID=${id}`;
+      const encodedBaseLink = encodeURIComponent(baseLink);
+      const fullLink = `https://immersifyeducation.com/deeplink?dl=%5B${encodedBaseLink}%5D`;
+      return fullLink;
+    }
+
+    async function shortenUrl(urlToShorten) {
+      try {
+          const requestBody = JSON.stringify({ url: urlToShorten });
+
+          const response = await fetch('/bitly/shorten-url', {
+              method: 'POST',
+              headers: {
+                  'Content-Type': 'application/json'
+              },
+              body: requestBody
+          });
+
+          if (!response.ok) {
+            throw new Error('Failed to shorten URL. Status: ' + response.status);
+          }
+
+          const result = await response.json();
+          console.log('Shortened URL:', result.shortenedUrl);
+          shortURLOutput.value = result.shortenedUrl;
+          return result.shortenedUrl;
+      } catch (error) {
+          console.error('Error shortening URL:', error);
+          return null; // Return null or handle the error as needed
+      }
+    }
+
+    async function generateQRCode(url) {
+      const apiUrl = 'https://api.qrserver.com/v1/create-qr-code/';
+      const qrSize = '1000x1000';
+      const encodedUrl = encodeURIComponent(url);
+
+      const response = await fetch(`${apiUrl}?size=${qrSize}&data=${encodedUrl}`);
+
+      if (response.ok) {
+        const qrCodeUrl = response.url;
+        qrCode.src = qrCodeUrl;
+        qrCode.style.display = 'block';
+      } else {
+        alert('Error generating QR code');
+      }
+    }
+
+  </script>
+</body>
+</html>
