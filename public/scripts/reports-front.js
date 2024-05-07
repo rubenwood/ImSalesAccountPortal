@@ -55,7 +55,6 @@ async function fetchDevKPIReport() {
             targetDate.setDate(1); // set this temp date to the 1st, since the reports are always on the 1st
             targetDate.setMonth(targetDate.getMonth() - monthIndex); 
             const month = targetDate.getMonth() + 1; // months are zero-indexed
-            console.log("getting month: ", month);
             const year = targetDate.getFullYear();
             return getPlayFabMonthlyTotalsReport(month, year);
         });
@@ -372,8 +371,19 @@ async function fetchB2BReport(){
         
         let table = document.getElementById('reportTable');
 
+        console.log(b2bUsers);
+        let totalB2BUsers = 0;
+        // construct the output string
+        let outputText = '';
+        b2bUsers.forEach(element =>{
+            outputText += `<b>${element.suffix[0]}</b>: ${element.users.matchedUsers.length}<br/>`;
+            totalB2BUsers += element.users.matchedUsers.length;
+        });
+        outputText += "<b>Total</b>: " + totalB2BUsers;
+
         let totalB2BUsersCell = table.querySelector("#totalB2BUsers");
-        if(totalB2BUsersCell) totalB2BUsersCell.innerText = b2bUsers;
+        //if(totalB2BUsersCell) totalB2BUsersCell.innerText = b2bUsers;
+        if(totalB2BUsersCell) totalB2BUsersCell.innerHTML = outputText;
     } catch(error) {
         let errorMessage = error.message;
         if(error.response && error.response.data && error.response.data.error){
@@ -424,8 +434,9 @@ async function fetchB2BUsersReport() {
     const response = await fetch('/b2b/get-total-users');
     if (!response.ok) { responseNotOk(response); }
 
-    const outputText = await response.text();
-    return outputText;
+    //const outputText = await response.text();
+    const output = await response.json();
+    return output;
 }
 function responseNotOk(response) {
     console.log(response);

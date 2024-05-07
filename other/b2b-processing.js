@@ -15,21 +15,21 @@ router.get('/get-total-users', async (req, res) => {
 
     try {
         // Splits the suffixes into an array (could pull from suffix_list?)
-        let suffixes = ["qmul.ac.uk", "cardiff.ac.uk", "jcu.edu.au", "phoenixdentalacademy.co.uk", "uos.ac.uk", "highpoint.edu"]
+        //let suffixes = ["qmul.ac.uk", "cardiff.ac.uk", "jcu.edu.au", "phoenixdentalacademy.co.uk", "uos.ac.uk", "highpoint.edu"]
         // Pass array of suffixes
-        const result = await generateReportByEmailSuffixDB(suffixes);
-        console.log("Total B2B users: " + result.matchedUsers.length);
+        //const result = await generateReportByEmailSuffixDB(suffixes);
+        //console.log("Total B2B users: " + result.matchedUsers.length);
+        //res.send(result.matchedUsers.length.toString());
 
         // Alternative method to break down matchedUsers into groups per suffix
         // this is a bit silly but should work
-        //let suffixes = [["qmul.ac.uk"], ["cardiff.ac.uk"], ["jcu.edu.au"], ["phoenixdentalacademy.co.uk"], ["uos.ac.uk"], ["highpoint.edu"]]
-        // let matchedUsersKVP = [];
-        // for(const suffixArr of suffixes){
-        //     let matchedUsers = await generateReportByEmailSuffixDB(suffixArr);
-        //     matchedUsersKVP.push({suffix: suffixArr, users: matchedUsers});
-        // }        
-
-        res.send(result.matchedUsers.length.toString());
+        let suffixes = [["qmul.ac.uk"], ["cardiff.ac.uk"], ["jcu.edu.au"], ["phoenixdentalacademy.co.uk"], ["uos.ac.uk"], ["highpoint.edu"]]
+        let matchedUsersKVP = [];
+        for(const suffixArr of suffixes){
+            let matchedUsers = await generateReportByEmailSuffixDB(suffixArr);
+            matchedUsersKVP.push({suffix: suffixArr, users: matchedUsers});
+        }
+        res.send(matchedUsersKVP);
     } catch (error) {
         console.error('Error:', error);
         res.status(500).json({ message: 'Failed to generate report', error: error.message });
