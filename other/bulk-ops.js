@@ -40,7 +40,7 @@ async function updateDatabase(){
 }
 async function OnUpdateCompletion(date) {
     const data = JSON.stringify({ LastUpdatedDate: date.toISOString() }, null, 2);
-    await fs.writeFile('DatabaseLastUpdated.json', data);
+    await fs.writeFile('./public/DatabaseLastUpdated.json', data);
     console.log("Completion date recorded.");
 }
 
