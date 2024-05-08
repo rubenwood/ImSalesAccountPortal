@@ -9,12 +9,12 @@ AWS.config.update({
 const s3 = new AWS.S3();
 
 function formatSize(size) {
-  if (size >= 1024 * 1024) { // size is 1MB or more
+  if (size >= 1024 * 1024) {
       return (size / (1024 * 1024)).toFixed(2) + ' MB';
-  } else if (size >= 1024) { // size is 1KB or more
+  } else if (size >= 1024) {
       return (size / 1024).toFixed(2) + ' KB';
   } else {
-      return size + ' Bytes'; // size is less than 1KB
+      return size + ' Bytes';
   }
 }
 
@@ -42,7 +42,8 @@ function listS3Files(bucketName, folderNames) {
                   reject(err);
               } else {
                   const filesDetails = data.Contents
-                      .filter(file => !file.Key.endsWith('/')) // Filter out folders
+                      // Filter out folders
+                      .filter(file => !file.Key.endsWith('/'))
                       .map(file => ({
                           FilePath: file.Key,
                           Size: formatSize(file.Size),
@@ -55,7 +56,8 @@ function listS3Files(bucketName, folderNames) {
   });
 
   Promise.all(promises).then(results => {
-      const allFilesDetails = results.flat(); // Flatten the array of arrays into a single array of file details
+    // Flatten the array of arrays into a single array of file details
+      const allFilesDetails = results.flat();
       const filePath = './s3_files_details.csv';
       const csvHeader = 'FilePath,Size,Size In Bytes\n';
       const csvContent = allFilesDetails.map(file => `"${file.FilePath}","${file.Size}",${file.SizeInBytes}`).join('\n');
@@ -65,9 +67,7 @@ function listS3Files(bucketName, folderNames) {
       console.error('Failed to fetch files:', error);
   });
 }
-
-// Example usage
-listS3Files("com.immersifyeducation.cms", ["ImageData/", "ModelData/"]);
+//listS3Files("com.immersifyeducation.cms", ["ImageData/", "ModelData/"]);
 
 function anyFileModifiedSince(fileTimestamps, date) {
     // must compare 2 Date objects
