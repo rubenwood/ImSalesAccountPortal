@@ -3,3 +3,5 @@ node_modules/
 other_keys/
 data/
 .env
+
+public/DatabaseLastUpdated.json
