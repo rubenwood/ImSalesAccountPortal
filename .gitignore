@@ -4,4 +4,4 @@ other_keys/
 data/
 .env
 
-public/DatabaseLastUpdated.json
+DatabaseLastUpdated.json
