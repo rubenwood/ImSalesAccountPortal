@@ -1,4 +1,5 @@
 const AWS = require('aws-sdk');
+const fs = require('fs');
 
 AWS.config.update({
     region: process.env.AWS_REGION,
@@ -6,6 +7,67 @@ AWS.config.update({
     secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY
 });
 const s3 = new AWS.S3();
+
+function formatSize(size) {
+  if (size >= 1024 * 1024) { // size is 1MB or more
+      return (size / (1024 * 1024)).toFixed(2) + ' MB';
+  } else if (size >= 1024) { // size is 1KB or more
+      return (size / 1024).toFixed(2) + ' KB';
+  } else {
+      return size + ' Bytes'; // size is less than 1KB
+  }
+}
+
+function listS3Files(bucketName, folderNames) {
+  if (!bucketName) {
+      console.error('Bucket name is required.');
+      return;
+  }
+
+  if (!folderNames || folderNames.length === 0) {
+      console.error('At least one folder name is required.');
+      return;
+  }
+
+  let promises = folderNames.map(prefix => {
+      return new Promise((resolve, reject) => {
+          const params = {
+              Bucket: bucketName,
+              Prefix: prefix
+          };
+
+          s3.listObjectsV2(params, (err, data) => {
+              if (err) {
+                  console.error("Error fetching from", prefix, ":", err);
+                  reject(err);
+              } else {
+                  const filesDetails = data.Contents
+                      .filter(file => !file.Key.endsWith('/')) // Filter out folders
+                      .map(file => ({
+                          FilePath: file.Key,
+                          Size: formatSize(file.Size),
+                          SizeInBytes: file.Size
+                      }));
+                  resolve(filesDetails);
+              }
+          });
+      });
+  });
+
+  Promise.all(promises).then(results => {
+      const allFilesDetails = results.flat(); // Flatten the array of arrays into a single array of file details
+      const filePath = './s3_files_details.csv';
+      const csvHeader = 'FilePath,Size,Size In Bytes\n';
+      const csvContent = allFilesDetails.map(file => `"${file.FilePath}","${file.Size}",${file.SizeInBytes}`).join('\n');
+      fs.writeFileSync(filePath, csvHeader + csvContent, 'utf8');
+      console.log(`All file details were written to ${filePath}`);
+  }).catch(error => {
+      console.error('Failed to fetch files:', error);
+  });
+}
+
+// Example usage
+listS3Files("com.immersifyeducation.cms", ["ImageData/", "ModelData/"]);
 
 function anyFileModifiedSince(fileTimestamps, date) {
     // must compare 2 Date objects
