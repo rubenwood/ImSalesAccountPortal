@@ -89,8 +89,9 @@
       <label for="url-input">Enter your link:</label>
       <input type="url" id="url-input" required>
       <input type="url" id="short-url">
-      <button type="submit">Generate QR Code</button>
+      <button type="submit">Generate QR Code</button>      
       <input type="button" id="shorten-btn" value="Shorten URL">
+      <input type="button" id="gen-short-qr-btn" value="Generate QR from short URL">
     </form>
 
     <div id="qr-container">
@@ -106,6 +107,7 @@
     const urlInput = document.getElementById('url-input');
     const urlOutput = document.getElementById('url-output');
     const shortURLOutput = document.getElementById('short-url');
+    const genshortURLQRCode = document.getElementById('gen-short-qr-btn');
 
     const shortenURLBtn = document.getElementById('shorten-btn');
 
@@ -140,6 +142,7 @@
     });
 
     shortenURLBtn.addEventListener('click', () => shortenUrl(urlInput.value));
+    genshortURLQRCode.addEventListener('click', () => generateQRCode(shortURLOutput.value));
 
 
     function constructPracticalLink(jsonData) {
@@ -185,7 +188,7 @@
           }
 
           const result = await response.json();
-          console.log('Shortened URL:', result.shortenedUrl);
+          //console.log('Shortened URL:', result.shortenedUrl);
           shortURLOutput.value = result.shortenedUrl;
           return result.shortenedUrl;
       } catch (error) {
