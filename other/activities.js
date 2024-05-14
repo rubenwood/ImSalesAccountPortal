@@ -28,7 +28,8 @@ activitiesRouter.get('/get-activity-report-id', async (req, res) => {
 
                 for (const row of respDataRows) {
                     try {
-                        let playerData = row.PlayerDataJSON?.Data?.PlayerData ?? undefined;
+                        console.log(row);
+                        let playerData = row.UsageDataJSON?.Data?.PlayerData ?? undefined;
                         if (playerData) {
                             let playerDataToJson = JSON.parse(playerData.Value);
                             let playerActivities = playerDataToJson.activities;
@@ -93,17 +94,22 @@ activitiesRouter.get('/get-activity-report-id', async (req, res) => {
 function calcTotalPlaysPerActivity(allPlayersWithActivity, activityId){
     let totalPlays = 0;
     allPlayersWithActivity.forEach(player => {
-        let playerDataJSON = player.PlayerDataJSON;
-        let playerData = JSON.parse(playerDataJSON.Data.PlayerData.Value);
-        //console.log("----");
-        let activities = playerData.activities;
-        activities.forEach(activity => {
-            if(activityId == activity.activityID){
-                totalPlays += activity.plays.length;
-            }             
-        });
-        //console.log(activities);
+        console.log("----\n", player.UsageDataJSON?.Data?.PlayerData, "\n----");
+        let playerDataRAW =  player.UsageDataJSON?.Data?.PlayerData?.Value ?? undefined;
+        let playerData = JSON.parse(playerDataRAW);
+        let activities = playerData.activities ?? undefined;
+        if(activities == undefined){ 
+            console.log("~~~\n", player, "\n~~~"); 
+            return totalPlays;
+        }else{
+            activities.forEach(activity => {
+                if(activityId == activity.activityID){
+                    totalPlays += activity.plays.length;
+                }             
+            });
+        }
     });
+    console.log(totalPlays);
     return totalPlays;
 }
 

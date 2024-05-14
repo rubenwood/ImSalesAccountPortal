@@ -50,7 +50,9 @@ async function fetchActivityReport(){
         let cellPlays = row.insertCell(4);
         cellPlays.appendChild(document.createTextNode(element.plays || 'N/A'));
         let cellUsers = row.insertCell(5);
-        let usersButton = document.createElement('button');
+        let usersButton = document.createElement('input');
+        usersButton.type = 'button';
+        usersButton.value = 'Users';
         usersButton.textContent = 'Show Users';
         usersButton.onclick = () => showModal(element.users);
         cellUsers.appendChild(usersButton);
@@ -65,7 +67,8 @@ function calcTotalPlayTime(element, activityID){
     let totalPlayTime = 0;
 
     users.forEach(user =>{
-        let playerData = JSON.parse(user.PlayerDataJSON.Data.PlayerData.Value);
+        let playerDataRAW =  user.UsageDataJSON?.Data?.PlayerData?.Value ?? undefined;
+        let playerData = JSON.parse(playerDataRAW);
         let playerActivities = playerData.activities;
         playerActivities.forEach(activity =>{
             if(activity.activityID == activityID){
@@ -98,10 +101,10 @@ function showModal(users) {
         button.style.height = '30px'; 
         button.style.marginRight = '5px';
         button.style.padding = '5px';
-        button.addEventListener('click', () => inspectClicked(user.PlayerDataJSON));
+        button.addEventListener('click', () => inspectUserClicked(user.UsageDataJSON));
 
         li.appendChild(button);
-        li.append(` ${user.PlayerDataJSON.PlayFabId}`);
+        li.append(` ${user.UsageDataJSON.PlayFabId}`);
         
         userList.appendChild(li);
     });
@@ -118,8 +121,8 @@ function showModal(users) {
     }
 }
 
-export function inspectClicked(PlayerDataJSON){
-    console.log(PlayerDataJSON.PlayFabId + " Inspect clicked");
-    console.log(PlayerDataJSON);
-    let playerData = PlayerDataJSON.Data.PlayerData;
+export function inspectUserClicked(UsageDataJSON){
+    console.log(UsageDataJSON.PlayFabId + " Inspect clicked");
+    console.log(UsageDataJSON);
+    let playerData = UsageDataJSON.Data.PlayerData;
 }
