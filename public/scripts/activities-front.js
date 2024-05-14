@@ -24,14 +24,14 @@ async function fetchActivityReport(){
 
     let activityIdsText = document.getElementById("activityIDList").value;
     let activityIdsList = activityIdsText.split('\n').filter(Boolean);
-    console.log(activityIdsList);
-    const resp = await fetch(`/activities/get-activity-report-id?activities=${activityIdsList}`);
+    const resp = await fetch(`/activities/get-users-by-activity?activities=${activityIdsList}`);
     let output = await resp.json();
     console.log(output);
 
     let reportBody = document.getElementById("reportTableBody");
     reportBody.innerHTML = '';
 
+    
     output.forEach(element => {
         let totalPlayTimerPerActivity = formatTimeToHHMMSS(calcTotalPlayTime(element, element.activityID));
 
@@ -59,7 +59,7 @@ async function fetchActivityReport(){
     });
     
     clearInterval(tickInterval); // Stop the ticking animation
-    button.value = "Search by Activity ID";    
+    button.value = "Search by Activity ID"; 
 }
 
 function calcTotalPlayTime(element, activityID){
