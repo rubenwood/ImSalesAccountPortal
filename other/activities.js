@@ -94,12 +94,12 @@ activitiesRouter.get('/get-activity-report-id', async (req, res) => {
 function calcTotalPlaysPerActivity(allPlayersWithActivity, activityId){
     let totalPlays = 0;
     allPlayersWithActivity.forEach(player => {
-        console.log("----\n", player.UsageDataJSON?.Data?.PlayerData, "\n----");
+        //console.log("----\n", player.UsageDataJSON?.Data?.PlayerData, "\n----");
         let playerDataRAW =  player.UsageDataJSON?.Data?.PlayerData?.Value ?? undefined;
         let playerData = JSON.parse(playerDataRAW);
         let activities = playerData.activities ?? undefined;
         if(activities == undefined){ 
-            console.log("~~~\n", player, "\n~~~"); 
+            //console.log("~~~\n", player, "\n~~~"); 
             return totalPlays;
         }else{
             activities.forEach(activity => {
@@ -109,7 +109,7 @@ function calcTotalPlaysPerActivity(allPlayersWithActivity, activityId){
             });
         }
     });
-    console.log(totalPlays);
+    //console.log(totalPlays);
     return totalPlays;
 }
 
