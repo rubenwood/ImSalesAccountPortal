@@ -1,6 +1,6 @@
 import {getPlayerCountInSegment} from './segments.js';
 import {updateButtonText} from './utils.js';
-import {getPlayFabDailyTotalsReport, getPlayFab30DayReport, getPlayFabMonthlyTotalsReport} from './playfab_reporting/playfab-reports.js';
+import {getPlayFabDailyTotalsReport, getPlayFab30DayReport, getPlayFabMonthlyTotalsReport, getPlayFabAverageSessionTime} from './playfab_reporting/playfab-reports.js';
 
 document.addEventListener('DOMContentLoaded', async () => {
     document.getElementById('google-login-btn').addEventListener('click', GoogleLoginClicked);
@@ -70,12 +70,15 @@ async function fetchDevKPIReport() {
             return response.json();
         });
 
+        // Execture promises (PlayFab & Google)
         const [playFabDailyTotalsReport, playFab30DayReport, monthlyTotalsReports, googleKPIReport] = await Promise.all([
             Promise.all(playFabDailyTotalsPromises),
             playFab30DayReportPromise,
             Promise.all(playFabMonthlyTotalsPromises),
             googleKPIPromise
         ]);
+        //
+        getPlayFabAverageSessionTime(allPlayersSeg.ProfilesInSegment, playFabDailyTotalsReport, monthlyTotalsReports);
 
         // Update retention data
         let retentionDataCell = table.querySelector("#userRetentionPlayfab");

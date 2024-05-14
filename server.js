@@ -1,16 +1,10 @@
 const express = require('express');
-// const session = require('express-session');
-// const redis = require('redis');
-// const RedisStore = require("connect-redis").default;
 const axios = require('axios');
 const cors = require('cors');
 const AWS = require('aws-sdk');
 require('dotenv').config();
 const app = express();
 const session = require('express-session');
-// file ops
-const fs = require('fs');
-const path = require('path');
 // routes
 const googleRoutes = require('./google/googlestore.js');
 const appleRoutes = require('./apple/applestore.js');

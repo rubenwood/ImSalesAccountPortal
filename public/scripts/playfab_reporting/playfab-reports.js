@@ -45,7 +45,7 @@ function getCohortDate() {
     let output = `${year}-${month}-${day}T00:00:00.0000000`;
     return output;
 }
-
+let dailyTotalsData;
 export async function getPlayFabDailyTotalsReport(day, month, year){
     // /console.log(`Getting daily totals report from Playfab ${day} ${month} ${year}`);
 
@@ -67,6 +67,7 @@ export async function getPlayFabDailyTotalsReport(day, month, year){
 
     const csvText = await playFabResponse.text();
     const data = parseCSV(csvText);
+    dailyTotalsData = data;
     return data;
 }
 
@@ -134,5 +135,16 @@ export async function getPlayFabMonthlyTotalsReport(month, year) {
 }
 
 // TODO: get average session time across all users
+export async function getPlayFabAverageSessionTime(totalPlayers, dailyTotalsReport, monthlyTotalsReports)
+{
+    console.log("Getting Average Session time");
+    // console.log(totalPlayers);
+    // console.log(dailyTotalsReport);
+    // console.log(monthlyTotalsReports);
+
+    // let averageSessionTimePast7Days = 0;
+    // return averageSessionTimePast7Days;
+}
+
 // TODO: get active user usage time
 // TODO: get total sessions per active user
