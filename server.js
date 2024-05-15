@@ -299,6 +299,33 @@ app.post('/update-user-data', async (req, res) => {
   }
 });
 
+// DELETE USER
+app.post('/delete-user', async (req, res) => {
+  //console.log(req.body);
+  try {
+      const response = await axios.post(
+          `https://${process.env.PLAYFAB_TITLE_ID}.playfabapi.com/Admin/DeletePlayer`,
+          { 
+            PlayFabId: req.body.PlayFabId
+          },
+          {
+              headers: {
+                  'Content-Type': 'application/json',
+                  'X-SecretKey': process.env.PLAYFAB_SECRET_KEY
+              }
+          }
+      );
+      res.json(response.data); // send back to client
+  } catch (error) {
+    //console.error('Error:', error);
+    res.status(500).json({
+      message: 'An error occurred',
+      error: error.message,
+      details: error.response ? error.response.data : null
+    });
+  }
+});
+
 // CHECK USER ACCESS
 app.post('/check-access', async (req, res) => {
   const userAccess = req.body.userAccess;
