@@ -5,6 +5,7 @@ const AWS = require('aws-sdk');
 require('dotenv').config();
 const app = express();
 const session = require('express-session');
+const fetchExchangeData = require('./getExchangeData.js');
 // routes
 const googleRoutes = require('./google/googlestore.js');
 const appleRoutes = require('./apple/applestore.js');
@@ -20,6 +21,8 @@ const { getAllPlayerAccDataAndWriteToDB } = require('./other/bulk-ops');
 
 app.use(express.json());
 app.use(cors());
+
+//fetchExchangeData.fetchExchangeRate();
 
 // AWS METHODS
 AWS.config.update({

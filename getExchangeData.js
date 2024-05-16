@@ -26,18 +26,16 @@ function uploadToS3(bucketName, fileName, data) {
   });
 }
 
-
 async function fetchExchangeRate() {
+  console.log("getting exchange rate data");
   const URL = `https://v6.exchangerate-api.com/v6/${process.env.EXCHANGE_API_KEY}/latest/USD`;
 
   try {
     const response = await axios.get(URL);
-    // Process your response here
-    //console.log(response.data);
     uploadToS3(process.env.AWS_BUCKET, 'exchangeRateData.json', response.data);
   } catch (error) {
     console.error('Error fetching exchange rate data:', error);
   }
 }
 
-fetchExchangeRate();
+module.exports = { fetchExchangeRate };
