@@ -73,12 +73,15 @@
       <textarea id="json-input" rows="10" required></textarea>
 
       <div class="link-type">
-        <label for="practical">Practical</label>
+        <label for="practical">Practical / Simulation</label>
         <input type="radio" id="practical" name="linkType" value="practical" checked>
+        <br/><br/>
         <label for="topic">Topic</label>
         <input type="radio" id="topic" name="linkType" value="topic">
+        <br/><br/>
         <label for="lesson">Lesson</label>
         <input type="radio" id="lesson" name="linkType" value="lesson">
+        <br/><br/>
       </div>
 
       <button type="submit">Convert JSON to URL</button>
@@ -124,7 +127,6 @@
           link = constructPracticalLink(jsonData);
           break;
         case 'topic':
-          // Code for 'topic' goes here
           link = constructTopicLink(jsonData);
           break;
         case 'lesson':
@@ -143,7 +145,6 @@
 
     shortenURLBtn.addEventListener('click', () => shortenUrl(urlInput.value));
     genshortURLQRCode.addEventListener('click', () => generateQRCode(shortURLOutput.value));
-
 
     function constructPracticalLink(jsonData) {
       const { sceneName, sceneParams, id } = jsonData;
