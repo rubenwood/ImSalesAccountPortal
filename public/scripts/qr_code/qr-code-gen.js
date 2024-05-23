@@ -1,45 +1,57 @@
-const jsonForm = document.getElementById('json-form');
-const qrForm = document.getElementById('qr-form');
-const shortenURLForm = document.getElementById('shorten-url-form');
-const jsonInput = document.getElementById('json-input');
-const urlInput = document.getElementById('url-input');
-const urlOutput = document.getElementById('url-output');
-const shortURLOutput = document.getElementById('short-url');
-const genshortURLQRCode = document.getElementById('gen-short-qr-btn');
-const shortenURLBtn = document.getElementById('shorten-btn');
-const qrCode = document.getElementById('qr-code');
+let JSONtoURLBtn;
+let qrBtn;
+let shortenURLForm;
+let jsonInput;
+let urlInput;
+let shortURLOutput;
+let genshortURLQRCode;
+let shortenURLBtn;
+let qrCode;
 
-jsonForm.addEventListener('submit', (event) => {
-    event.preventDefault();
-    const jsonData = JSON.parse(jsonInput.value);
-    const linkType = document.querySelector('input[name="linkType"]:checked').value;
-    let link;
+document.addEventListener('DOMContentLoaded', () => {
+    JSONtoURLBtn = document.getElementById('convert-json-url-btn');
+    qrBtn = document.getElementById('generate-qr-btn');
+    shortenURLForm = document.getElementById('shorten-url-form');
+    jsonInput = document.getElementById('json-input');
+    urlInput = document.getElementById('url-input');
+    shortURLOutput = document.getElementById('short-url');
+    genshortURLQRCode = document.getElementById('gen-short-qr-btn');
+    shortenURLBtn = document.getElementById('shorten-btn');
+    qrCode = document.getElementById('qr-code');
 
-    switch (linkType) {
-    case 'practical':
-        link = constructPracticalLink(jsonData);
-        break;
-    case 'topic':
-        link = constructTopicLink(jsonData);
-        break;
-    case 'lesson':
-        link = constructLessonLink(jsonData);
-        break;
-    }
-    urlOutput.textContent = link;
-    urlInput.value = link;
+    JSONtoURLBtn.addEventListener('click', (event) => {
+        event.preventDefault();
+        const jsonData = JSON.parse(jsonInput.value);
+        const linkType = document.querySelector('input[name="linkType"]:checked').value;
+        let link;
+    
+        switch (linkType) {
+            case 'practical':
+                link = constructPracticalOrLessonLink(jsonData);
+                break;
+            case 'topic':
+                link = constructTopicLink(jsonData);
+                break;
+            case 'lesson':
+                link = constructPracticalOrLessonLink(jsonData);
+                break;
+        }
+        urlInput.value = link;
+        console.log("called");
+    });
+    
+    qrBtn.addEventListener('click', async (event) => {
+        event.preventDefault();
+        const url = urlInput.value;
+        await generateQRCode(url);
+    });
+
+    shortenURLBtn.addEventListener('click', () => shortenUrl(urlInput.value));
+    genshortURLQRCode.addEventListener('click', () => generateQRCode(shortURLOutput.value));
+
 });
 
-qrForm.addEventListener('submit', async (event) => {
-    event.preventDefault();
-    const url = urlInput.value;
-    await generateQRCode(url);
-});
-
-shortenURLBtn.addEventListener('click', () => shortenUrl(urlInput.value));
-genshortURLQRCode.addEventListener('click', () => generateQRCode(shortURLOutput.value));
-
-function constructPracticalLink(jsonData) {
+function constructPracticalOrLessonLink(jsonData) {
     const { sceneName, sceneParams, id } = jsonData;
     const params = sceneParams.join(',');
     const baseLink = `immersifyeducation://immersifydental?loadScene=${sceneName}&sceneParams=[${params}]&activityID=${id}`;
@@ -51,15 +63,6 @@ function constructPracticalLink(jsonData) {
 function constructTopicLink(jsonData) {
     const { id } = jsonData;
     const baseLink = `immersifyeducation://immersifydental?topic=${id}`;
-    const encodedBaseLink = encodeURIComponent(baseLink);
-    const fullLink = `https://immersifyeducation.com/deeplink?dl=%5B${encodedBaseLink}%5D`;
-    return fullLink;
-}
-
-function constructLessonLink(jsonData) {
-    const { sceneName, sceneParams, id } = jsonData;
-    const params = sceneParams.join(',');
-    const baseLink = `immersifyeducation://immersifydental?loadScene=${sceneName}&sceneParams=[${params}]&activityID=${id}`;
     const encodedBaseLink = encodeURIComponent(baseLink);
     const fullLink = `https://immersifyeducation.com/deeplink?dl=%5B${encodedBaseLink}%5D`;
     return fullLink;
@@ -99,10 +102,10 @@ async function generateQRCode(url) {
     const response = await fetch(`${apiUrl}?size=${qrSize}&data=${encodedUrl}`);
 
     if (response.ok) {
-    const qrCodeUrl = response.url;
-    qrCode.src = qrCodeUrl;
-    qrCode.style.display = 'block';
+        const qrCodeUrl = response.url;
+        qrCode.src = qrCodeUrl;
+        qrCode.style.display = 'block';
     } else {
-    alert('Error generating QR code');
+        alert('Error generating QR code');
     }
 }

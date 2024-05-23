@@ -6,96 +6,34 @@
   <title>QR Code Generator</title>
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600&display=swap" rel="stylesheet">
   <link rel="stylesheet" type="text/css" href="styles.css">
-  <style>
-    body {
-      font-family: 'Montserrat', sans-serif;
-      margin: 0;
-      padding: 0;
-      background-color: #f5f5f5;
-    }
-    .container {
-      width: 80%;
-      margin: 0 auto;
-      padding-top: 2em;
-    }
-    h1 {
-      text-align: center;
-      color: #333;
-    }
-    form {
-      background-color: #fff;
-      border: 1px solid #ddd;
-      border-radius: 5px;
-      padding: 2em;
-      margin-bottom: 2em;
-    }
-    label {
-      display: block;
-      margin-bottom: .5em;
-    }
-    textarea, input[type="url"] {
-      width: 100%;
-      padding: .5em;
-      border: 1px solid #ddd;
-      border-radius: 5px;
-      margin-bottom: 1em;
-    }
-    .link-type {
-      margin-bottom: 1em;
-    }
-    button {
-      padding: .5em 1em;
-      background-color: #2196f3;
-      color: #fff;
-      border: none;
-      border-radius: 5px;
-      cursor: pointer;
-    }
-    button:hover {
-      background-color: #1976d2;
-    }
-    #qr-code {
-      max-width: 100%;
-    }
-    #url-output {
-      word-wrap: break-word;
-      padding: 1em;
-      background-color: #e3f2fd;
-      border-radius: 5px;
-    }
-  </style>
 </head>
-<body>
-  <div class="container">
-    <h1>QR Code Generator</h1>
-    <form id="json-form">
-      <label for="json-input">Enter your JSON:</label>
-      <textarea id="json-input" rows="10" required></textarea>
+<body>  
+  <div id="qr-content" class="form-container">
+    <h1>QR Code & Deeplink Generator</h1>
+    <label for="json-input">Enter your JSON:</label><br/><br/>
+    <textarea id="json-input" rows="10" required></textarea>
+    <br/><br/>
 
-      <div class="link-type">
-        <label for="practical">Practical / Simulation</label>
-        <input type="radio" id="practical" name="linkType" value="practical" checked>
-        <br/><br/>
-        <label for="topic">Topic</label>
-        <input type="radio" id="topic" name="linkType" value="topic">
-        <br/><br/>
-        <label for="lesson">Lesson</label>
-        <input type="radio" id="lesson" name="linkType" value="lesson">
-        <br/><br/>
-      </div>
+    <div class="link-type">
+      <label for="practical">Practical / Simulation</label>
+      <input type="radio" id="practical" name="linkType" value="practical" checked>
+      <br/><br/>
+      <label for="topic">Topic</label>
+      <input type="radio" id="topic" name="linkType" value="topic">
+      <br/><br/>
+      <label for="lesson">Lesson</label>
+      <input type="radio" id="lesson" name="linkType" value="lesson">
+      <br/><br/>
+    </div>
 
-      <button type="submit">Convert JSON to URL</button>
-    </form>
-    <p id="url-output"></p>
-    
-    <form id="qr-form">
-      <label for="url-input">Enter your link:</label>
-      <input type="url" id="url-input" required>
-      <input type="url" id="short-url">
-      <button type="submit">Generate QR Code</button>      
-      <input type="button" id="shorten-btn" value="Shorten URL">
-      <input type="button" id="gen-short-qr-btn" value="Generate QR from short URL">
-    </form>
+    <input type="button" id="convert-json-url-btn" value="Convert JSON to URL">
+    <br/><br/>
+    <label for="url-input">Enter your link:</label><br/>
+    <input type="text" id="url-input" required>
+    <input type="button" id="shorten-btn" value="Shorten URL (optional)">
+    <input type="text" id="short-url">
+    <input type="button" id="generate-qr-btn" value="Generate QR Code">    
+    <input type="button" id="gen-short-qr-btn" value="Generate QR from short URL">
 
     <div id="qr-container">
       <img id="qr-code" src="" alt="Generated QR Code" style="display:none;"/>
