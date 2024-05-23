@@ -28,30 +28,30 @@ confRouter.put('/update-confluence-page/:pageId', async (req, res) => {
     try {
         const currentVersion = await getCurrentPageVersion(pageId)
         const bodyData = {
-        "version": {
-            "number": currentVersion+1, 
-            "message": "update"
-        },
-        "title": "Test Accounts (Automated)",
-        "type": "page",
-        "status": "current",
-        "body": {
-            "storage": {
-            "value": newPageContent,
-            "representation": "storage"
+            "version": {
+                "number": currentVersion + 1,
+                "message": "update"
+            },
+            "title": "Test Accounts (Automated)",
+            "type": "page",
+            "status": "current",
+            "body": {
+                "storage": {
+                    "value": newPageContent,
+                    "representation": "storage"
+                }
             }
-        }
-        };      
+        };
 
-        const response = await axios.put(`https://immersify.atlassian.net/wiki/rest/api/content/${pageId}`, 
-        JSON.stringify(bodyData), {
-        headers: {
-            'Authorization': `Basic ${Buffer.from(`${process.env.CONFLUENCE_USERNAME}:${process.env.CONFLUENCE_API_TOKEN}`)
-            .toString('base64')}`,
-            'Accept': 'application/json',
-            'Content-Type': 'application/json'
-        },
-        body: bodyData
+        const response = await axios.put(`https://immersify.atlassian.net/wiki/rest/api/content/${pageId}`,
+            JSON.stringify(bodyData), {
+            headers: {
+                'Authorization': `Basic ${Buffer.from(`${process.env.CONFLUENCE_USERNAME}:${process.env.CONFLUENCE_API_TOKEN}`)
+                    .toString('base64')}`,
+                'Accept': 'application/json',
+                'Content-Type': 'application/json'
+            },
+            body: bodyData
         });
 
         res.json(response.data);
@@ -60,7 +60,64 @@ confRouter.put('/update-confluence-page/:pageId', async (req, res) => {
         res.status(500).send('Error updating Confluence page');
     }
 });
-// CONFLUENCE METHODS
+
+// UPDATE QR PAGE
+confRouter.put('/update-qr-page/:pageId', async (req, res) => {
+    let deeplink = req.body.deeplink;
+    let qrImage = req.body.qrImage;
+
+    const pageId = req.params.pageId;
+    let newPageContent = `
+        <table>
+            <tbody>
+                <tr>
+                    <td><b>Link</b></td>
+                    <td><b>QR Code</b></td>
+                </tr>
+                <tr>
+                    <td>${deeplink}</td>
+                    <td><img src="data:image/png;base64,${qrImage}" /></td>
+                </tr>
+            </tbody>
+        </table>
+    `;
+
+    try {
+        const currentVersion = await getCurrentPageVersion(pageId);
+        const bodyData = {
+            "version": {
+                "number": currentVersion + 1,
+                "message": "update with QR Code"
+            },
+            "title": "QR Code Page",
+            "type": "page",
+            "status": "current",
+            "body": {
+                "storage": {
+                    "value": newPageContent,
+                    "representation": "storage"
+                }
+            }
+        };
+
+        const response = await axios.put(`https://immersify.atlassian.net/wiki/rest/api/content/${pageId}`,
+            JSON.stringify(bodyData), {
+            headers: {
+                'Authorization': `Basic ${Buffer.from(`${process.env.CONFLUENCE_USERNAME}:${process.env.CONFLUENCE_API_TOKEN}`).toString('base64')}`,
+                'Accept': 'application/json',
+                'Content-Type': 'application/json'
+            },
+            body: bodyData
+        });
+
+        res.json(response.data);
+    } catch (error) {
+        console.error(error);
+        res.status(500).send('Error updating Confluence page');
+    }
+});
+
+// HELPER METHODS
 async function getCurrentPageVersion(pageId) {
     try {
         const response = await axios.get(`https://immersify.atlassian.net/wiki/rest/api/content/${pageId}?expand=version`, {
@@ -75,6 +132,7 @@ async function getCurrentPageVersion(pageId) {
         throw error;
     }
 }
+
 async function getPageDetails(pageId) {
     try {
         const response = await axios.get(`https://immersify.atlassian.net/wiki/rest/api/content/${pageId}?expand=body.storage`, {
@@ -83,12 +141,12 @@ async function getPageDetails(pageId) {
                 'Accept': 'application/json'
             }
         });
-        return response.data.body.storage.value // This is the current page content in storage format
-        
+        return response.data.body.storage.value; // This is the current page content in storage format
+
     } catch (error) {
         console.error("Error fetching page details:", error);
         throw error;
     }
 }
 
-module.exports = { confRouter } ;
+module.exports = { confRouter };
