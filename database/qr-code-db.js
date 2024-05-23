@@ -32,7 +32,7 @@ qrCodeDBRouter.post('/add-dl-qr', async (req, res) => {
 });
 
 // READ - Get all deeplink and QR code entries
-qrCodeDBRouter.get('/get-dl-qr', async (req, res) => {
+qrCodeDBRouter.get('/get-all-dl-qr', async (req, res) => {
     try {
         const result = await pool.query('SELECT * FROM public."DeepLinkQRCodes"');
         res.status(200).json(result.rows);
