@@ -16,7 +16,7 @@ const pool = new Pool({
     },
 });
 
-// Update the database
+// Update the database (usage and account data)
 dbRouter.get('/update', async (req, res) => {
     const secret = req.headers['x-secret-key'];
     if (secret !== process.env.SERVER_SEC) {
