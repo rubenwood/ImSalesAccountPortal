@@ -22,8 +22,6 @@ const { getAllPlayerAccDataAndWriteToDB } = require('./other/bulk-ops');
 app.use(express.json());
 app.use(cors());
 
-//fetchExchangeData.fetchExchangeRate();
-
 // AWS METHODS
 AWS.config.update({
   accessKeyId: process.env.AWS_ACCESS_KEY_ID,
@@ -31,6 +29,14 @@ AWS.config.update({
   region: process.env.AWS_REGION
 });
 const s3 = new AWS.S3();
+
+// FETCH EXCHANGE RATE DATA
+app.get('/getExchangeRates', async (req, res) => {
+  console.log("fetching exchange data");
+  await fetchExchangeData.fetchExchangeRate();
+  console.log("got exchange data");
+  res.send("-- Got exchange rate data --");
+});
 
 // GET ACADEMIC AREA JSON
 app.get('/getAcademicAreas', async (req, res) => {
