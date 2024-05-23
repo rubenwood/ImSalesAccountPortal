@@ -12,7 +12,7 @@ const pool = new Pool({
 });
 
 // CREATE - Insert a new deeplink and QR code URL
-qrCodeDBRouter.post('/add-deeplink-qr', async (req, res) => {
+qrCodeDBRouter.post('/add-dl-qr', async (req, res) => {
     const { deeplink, qrCodeUrl } = req.body;
 
     if (!deeplink || !qrCodeUrl) {
@@ -32,7 +32,7 @@ qrCodeDBRouter.post('/add-deeplink-qr', async (req, res) => {
 });
 
 // READ - Get all deeplink and QR code entries
-qrCodeDBRouter.get('/get-deeplink-qr', async (req, res) => {
+qrCodeDBRouter.get('/get-dl-qr', async (req, res) => {
     try {
         const result = await pool.query('SELECT * FROM public."DeepLinkQRCodes"');
         res.status(200).json(result.rows);
@@ -43,7 +43,7 @@ qrCodeDBRouter.get('/get-deeplink-qr', async (req, res) => {
 });
 
 // READ - Get a specific deeplink and QR code entry by ID
-qrCodeDBRouter.get('/get-deeplink-qr/:id', async (req, res) => {
+qrCodeDBRouter.get('/get-dl-qr/:id', async (req, res) => {
     const { id } = req.params;
 
     try {
@@ -59,7 +59,7 @@ qrCodeDBRouter.get('/get-deeplink-qr/:id', async (req, res) => {
 });
 
 // UPDATE - Update a specific deeplink and QR code entry by ID
-qrCodeDBRouter.put('/update-deeplink-qr/:id', async (req, res) => {
+qrCodeDBRouter.put('/update-dl-qr/:id', async (req, res) => {
     const { id } = req.params;
     const { deeplink, qrCodeUrl } = req.body;
 
@@ -83,7 +83,7 @@ qrCodeDBRouter.put('/update-deeplink-qr/:id', async (req, res) => {
 });
 
 // DELETE - Delete a specific deeplink and QR code entry by ID
-qrCodeDBRouter.delete('/delete-deeplink-qr/:id', async (req, res) => {
+qrCodeDBRouter.delete('/delete-dl-qr/:id', async (req, res) => {
     const { id } = req.params;
 
     try {
