@@ -1,7 +1,7 @@
 // public button event, when clicked, updates confluence page
 export function callUpdateConfluencePage(email, pass, area, expiry, createdBy, reason){
     const pageId = '929333296';
-    const url = `/update-confluence-page/${pageId}`;
+    const url = `/confluence/update-confluence-page/${pageId}`;
 
     fetch(url, {
         method: 'PUT',
