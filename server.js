@@ -10,12 +10,12 @@ const fetchExchangeData = require('./getExchangeData.js');
 const googleRoutes = require('./google/googlestore.js');
 const appleRoutes = require('./apple/applestore.js');
 const stripeRoutes = require('./stripe/stripestore.js');
-const { suffixRouter }  = require('./other/suffix.js');
-const { acaAreaRouter }  = require('./other/aca-area.js');
-const { clickIDRouter }  = require('./other/click-id.js');
+const { suffixRouter } = require('./other/suffix.js');
+const { acaAreaRouter } = require('./other/aca-area.js');
+const { clickIDRouter } = require('./other/click-id.js');
 const b2bRoutes = require('./other/b2b-processing.js');
 const activityRoutes = require('./other/activities.js');
-const { dbRouter }  = require('./database/database.js');
+const { dbRouter } = require('./database/database.js');
 const { bitlyRouter} = require('./other/bitly.js');
 const { getAllPlayerAccDataAndWriteToDB } = require('./other/bulk-ops');
 
@@ -32,6 +32,11 @@ const s3 = new AWS.S3();
 
 // FETCH EXCHANGE RATE DATA
 app.get('/getExchangeRates', async (req, res) => {
+  const secret = req.headers['x-secret-key'];
+  if (secret !== process.env.SERVER_SEC) {
+    return res.status(401).json({ message: 'Invalid or missing secret.' });
+  }
+
   console.log("fetching exchange data");
   await fetchExchangeData.fetchExchangeRate();
   console.log("got exchange data");
