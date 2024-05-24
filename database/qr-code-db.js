@@ -2,7 +2,6 @@ const express = require('express');
 const { Pool } = require('pg');
 const qrCodeDBRouter = express.Router();
 
-// PostgreSQL client setup
 const pool = new Pool({
     user: process.env.PG_USER,
     host: process.env.PG_HOST,
