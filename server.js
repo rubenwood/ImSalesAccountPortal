@@ -18,6 +18,7 @@ const b2bRoutes = require('./other/b2b-processing.js');
 const activityRoutes = require('./other/activities.js');
 const { dbRouter } = require('./database/database.js');
 const { bitlyRouter} = require('./other/bitly.js');
+const { qrCodeRouter } = require('./other/qr-code.js');
 const { getAllPlayerAccDataAndWriteToDB } = require('./other/bulk-ops');
 
 app.use(express.json());
@@ -396,6 +397,7 @@ app.use('/b2b', b2bRoutes);
 app.use('/activities', activityRoutes);
 app.use('/db', dbRouter);
 app.use('/bitly', bitlyRouter);
+app.use('/qr', qrCodeRouter);
 const PORT = process.env.PORT;
 
 app.listen(PORT, () => {

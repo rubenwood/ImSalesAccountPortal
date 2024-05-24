@@ -98,3 +98,11 @@ qrCodeDBRouter.delete('/delete-dl-qr/:id', async (req, res) => {
 });
 
 module.exports = { qrCodeDBRouter };
+
+/*
+INSERT INTO public."DeepLinkQRCodes" (deeplink, qr_code_url) VALUES ('https://example.com/deeplink2', 'https://example.com/qr-code-image-url2');
+
+SELECT * FROM public."DeepLinkQRCodes"
+ORDER BY id ASC LIMIT 100
+
+*/

@@ -49,6 +49,14 @@ document.addEventListener('DOMContentLoaded', () => {
     shortenURLBtn.addEventListener('click', () => shortenUrl(urlInput.value));
     genshortURLQRCode.addEventListener('click', () => generateQRCode(shortURLOutput.value));
 
+
+    // DECODE QR CODE
+    document.getElementById('file-input').addEventListener('change', (event) => {
+        const file = event.target.files[0];
+        if (file) {
+            decodeQRCode(file);
+        }
+    });
 });
 
 function constructPracticalOrLessonLink(jsonData) {

@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>QR Code & Deeplink Catalogue</title>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" type="text/css" href="styles.css">
+</head>
+<body>
+  <div id="qr-content" class="form-container">
+    <h1>QR Code & Deeplink Catalogue</h1>
+    <br/><br/>
+    <table id="reportTable">
+        <tbody id="reportTableBody">
+            <!-- Rows will be added here by the generateReport() function -->
+        </tbody>
+    </table>
+
+    <div id="qr-container">
+      <img id="qr-code" src="" alt="Generated QR Code" style="display:none;"/>
+    </div>
+  </div>
+  <script type="text/javascript">
+    function generateReport(data) {
+      const tableBody = document.getElementById('reportTableBody');
+      tableBody.innerHTML = ''; // Clear existing rows
+
+      data.forEach(item => {
+        // Add Deeplink, QR Code, Decode row
+        const mainHeaderRow = document.createElement('tr');
+        mainHeaderRow.innerHTML = `
+          <td><b>Deeplink</b></td>
+          <td><b>QR Code</b></td>
+          <td><b>Decode</b></td>
+        `;
+        tableBody.appendChild(mainHeaderRow);
+
+        // Add main row
+        const mainRow = document.createElement('tr');
+        mainRow.innerHTML = `
+          <td>${item.deeplink}</td>
+          <td><img src="${item.qrCodeImage}" alt="QR Code" width="256" height="256"></td>
+          <td><button onclick="decodeQRCodeFromTable('${item.qrCodeImage}')">Decode</button></td>
+        `;
+        tableBody.appendChild(mainRow);
+
+        // Add Area row
+        const areaRow = document.createElement('tr');
+        areaRow.innerHTML = `
+          <td><b>Area</b></td>
+          <td colspan="2">${item.area}</td>
+        `;
+        tableBody.appendChild(areaRow);
+
+        // Add Module row
+        const moduleRow = document.createElement('tr');
+        moduleRow.innerHTML = `
+          <td><b>Module</b></td>
+          <td colspan="2">${item.module}</td>
+        `;
+        tableBody.appendChild(moduleRow);
+
+        // Add Topic row
+        const topicRow = document.createElement('tr');
+        topicRow.innerHTML = `
+          <td><b>Topic</b></td>
+          <td colspan="2">${item.topic}</td>
+        `;
+        tableBody.appendChild(topicRow);
+
+        // Add Activity row
+        const activityRow = document.createElement('tr');
+        activityRow.innerHTML = `
+          <td><b>Activity</b></td>
+          <td colspan="2">${item.activity}</td>
+        `;
+        tableBody.appendChild(activityRow);
+
+        // Add empty row for spacing
+        const emptyRow = document.createElement('tr');
+        emptyRow.innerHTML = `<td colspan="3">&nbsp;</td>`;
+        tableBody.appendChild(emptyRow);
+      });
+    }
+
+    // Example data
+    const reportData = [
+      {
+        deeplink: 'https://example.com/link1',
+        qrCodeImage: 'https://s3.eu-west-2.amazonaws.com/com.rubenwood.unityaatesting/QRCodes/TMJ-lesson-Set-US-Area-qr-code.png',
+        area: 'Area 1',
+        module: 'Module 1',
+        topic: 'Topic 1',
+        activity: 'Activity 1'
+      },
+      {
+        deeplink: 'https://example.com/link2',
+        qrCodeImage: 'https://s3.eu-west-2.amazonaws.com/com.rubenwood.unityaatesting/QRCodes/TMJ-lesson-qr-code.png',
+        area: 'Area 2',
+        module: 'Module 2',
+        topic: 'Topic 2',
+        activity: 'Activity 2'
+      }
+    ];
+
+    // Generate the report on page load for demonstration
+    document.addEventListener('DOMContentLoaded', () => {
+      generateReport(reportData);
+    });
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/jsqr/dist/jsQR.js"></script>
+  <script type="text/javascript" src="scripts/qr_code/qr-code-cata-front.js"></script>  
+</body>
+</html>
