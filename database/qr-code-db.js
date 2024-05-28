@@ -3,11 +3,15 @@ const { Pool } = require('pg');
 const qrCodeDBRouter = express.Router();
 
 const pool = new Pool({
-    user: process.env.PG_USER,
-    host: process.env.PG_HOST,
-    database: process.env.PG_DATABASE,
-    password: process.env.PG_PASSWORD,
-    port: process.env.PG_PORT,
+    user: process.env.PGUSER,
+    host: process.env.PGHOST,
+    database: process.env.PGDATABASE,
+    password: process.env.PGPASSWORD,
+    port: process.env.PGPORT,
+    connectionString: process.env.PGURL,
+    ssl: {
+        rejectUnauthorized: false,
+    },
 });
 
 // CREATE - Insert a new deeplink and QR code URL
@@ -32,6 +36,7 @@ qrCodeDBRouter.post('/add-dl-qr', async (req, res) => {
 
 // READ - Get all deeplink and QR code entries
 qrCodeDBRouter.get('/get-all-dl-qr', async (req, res) => {
+    
     try {
         const result = await pool.query('SELECT * FROM public."DeepLinkQRCodes"');
         res.status(200).json(result.rows);

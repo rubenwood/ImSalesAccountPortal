@@ -26,8 +26,6 @@ function getSignedUrl(bucketName, key) {
 }
 
 async function decodeQRCode(input) {
-    console.log("called ", input);
-
     async function processImage(img) {
         const canvas = createCanvas(img.width, img.height);
         const context = canvas.getContext('2d');
