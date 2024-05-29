@@ -12,7 +12,14 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
+    // Search listeners
     document.getElementById('search-btn').addEventListener('click', () => searchClicked());
+    document.getElementById('search-input').addEventListener('keypress', (event) => {
+        if (event.key === 'Enter') {
+            event.preventDefault();
+            searchClicked();
+        }
+    });
 });
 
 async function uploadQRCodeFiles(files) {
@@ -42,15 +49,15 @@ async function uploadQRCodeFiles(files) {
 
 // SEARCHING
 async function searchClicked(){
-    console.log("clicked");
     // database call to find qr codes matching by:
     // area, module, topic, activity or type
     const searchQuery = document.getElementById('search-input').value.trim();
-    if (searchQuery) {
+    if (searchQuery.length > 0) {
         const searchResults = await searchQRCode(searchQuery);
-        console.log(searchResults);
         generateReport(searchResults);
-    }    
+    } else {
+        setupPage();
+    }  
 }
 async function searchQRCode(query) {
     try {
