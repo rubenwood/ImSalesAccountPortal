@@ -72,6 +72,9 @@ async function setupPage(){
 
 // Generate the report / html
 function generateReport(data) {
+    const totalHTML = document.getElementById('total-report');
+    totalHTML.innerHTML = `<b>Total:</b> ${data.length}`;
+    
     const tableBody = document.getElementById('reportTableBody');
     tableBody.innerHTML = ''; // Clear existing rows
 
