@@ -1,6 +1,40 @@
 document.addEventListener('DOMContentLoaded', () => {
     setupPage();
+
+    // add event listener for uploading qr codes
+    document.getElementById('upload-form').addEventListener('submit', async (event) => {
+        event.preventDefault();
+        const files = document.getElementById('file-input').files;
+        if (files.length > 0) {
+            await uploadQRCodeFiles(files);
+        }
+    });
 });
+
+async function uploadQRCodeFiles(files) {
+    const formData = new FormData();
+    for (const file of files) {
+        formData.append('files', file);
+    }
+
+    try {
+        const response = await fetch('/qr/upload-files', {
+            method: 'POST',
+            body: formData
+        });
+
+        if (response.ok) {
+            const result = await response.json();
+            alert('Files uploaded successfully');
+            fetchQRDLData(); // Refresh the data after upload
+        } else {
+            alert('Error uploading files');
+        }
+    } catch (error) {
+        console.error('Error uploading files:', error);
+        alert('Error uploading files');
+    }
+}
 
 async function setupPage(){
     let dbData = await fetchQRDLData();
@@ -23,11 +57,21 @@ function generateReport(data) {
 
         // Add main row
         const mainRow = document.createElement('tr');
+        const resultSpan = document.createElement('span');
+        resultSpan.classList.add('decode-result');
+        
+        const decodeButton = document.createElement('button');
+        decodeButton.textContent = 'Decode';
+        decodeButton.onclick = () => decodeQRCodeFromTable(item.qr_code_url, item.deeplink, resultSpan);
+
         mainRow.innerHTML = `
             <td><a href="${item.deeplink}" target="_blank">${item.deeplink}</a></td>
-            <td><img src="${item.qr_code_url}" alt="QR Code"></td>
-            <td><button onclick="decodeQRCodeFromTable('${item.qr_code_url}')">Decode</button></td>
+            <td><img src="${item.qr_code_url}" alt="QR Code" width="256" height="256"></td>
+            <td></td>
         `;
+        
+        mainRow.children[2].appendChild(decodeButton);
+        mainRow.children[2].appendChild(resultSpan);
         tableBody.appendChild(mainRow);
 
         // Add Area row
@@ -61,6 +105,13 @@ function generateReport(data) {
             <td colspan="2">${item.activity}</td>
         `;
         tableBody.appendChild(activityRow);
+        // Add Activity row
+        const typeRow = document.createElement('tr');
+        typeRow.innerHTML = `
+            <td><b>Type</b></td>
+            <td colspan="2">${item.type}</td>
+        `;
+        tableBody.appendChild(typeRow);
 
         // Add empty row for spacing
         const emptyRow = document.createElement('tr');
@@ -102,7 +153,8 @@ async function decodeQRCode(input) {
         
         const result = await response.json();
         if (response.ok) {
-            console.log(result.text);
+            
+            return result.text;
         } else {
             console.error('Error decoding QR code: ' + result.error);
         }
@@ -111,6 +163,20 @@ async function decodeQRCode(input) {
     }
 }
 
-function decodeQRCodeFromTable(imageSrc) {
-    decodeQRCode(imageSrc);
+async function decodeQRCodeFromTable(imageSrc, deeplink, resultSpan) {
+    const decodedText = await decodeQRCode(imageSrc);
+    console.log(decodedText);
+    if (decodedText !== null) {
+        compareDecodeToDL(decodedText, deeplink, resultSpan);
+    }
+}
+
+function compareDecodeToDL(decodeText, dlText, resultSpan) {
+    if (decodeText === dlText) {
+        resultSpan.textContent = 'correct';
+        resultSpan.style.color = 'green';
+    } else {
+        resultSpan.textContent = 'incorrect';
+        resultSpan.style.color = 'red';
+    }
 }

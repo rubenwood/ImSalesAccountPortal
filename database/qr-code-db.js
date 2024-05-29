@@ -14,6 +14,19 @@ const pool = new Pool({
     },
 });
 
+async function addDeepLinkQRCode(deeplink, qrCodeUrl) {
+    const queryText = 'INSERT INTO public."DeepLinkQRCodes" (deeplink, qr_code_url) VALUES ($1, $2) RETURNING *';
+    const values = [deeplink, qrCodeUrl];
+
+    try {
+        const result = await pool.query(queryText, values);
+        return result.rows[0];
+    } catch (error) {
+        console.error('Error inserting data:', error);
+        throw error;
+    }
+}
+
 // CREATE - Insert a new deeplink and QR code URL
 qrCodeDBRouter.post('/add-dl-qr', async (req, res) => {
     const { deeplink, qrCodeUrl } = req.body;
@@ -23,13 +36,9 @@ qrCodeDBRouter.post('/add-dl-qr', async (req, res) => {
     }
 
     try {
-        const queryText = 'INSERT INTO public."DeepLinkQRCodes" (deeplink, qr_code_url) VALUES ($1, $2) RETURNING *';
-        const values = [deeplink, qrCodeUrl];
-
-        const result = await pool.query(queryText, values);
-        res.status(201).json(result.rows[0]);
+        const result = await addDeepLinkQRCode(deeplink, qrCodeUrl);
+        res.status(201).json(result);
     } catch (error) {
-        console.error('Error inserting data:', error);
         res.status(500).send('Error inserting data into the database');
     }
 });
@@ -102,7 +111,7 @@ qrCodeDBRouter.delete('/delete-dl-qr/:id', async (req, res) => {
     }
 });
 
-module.exports = { qrCodeDBRouter };
+module.exports = { qrCodeDBRouter, addDeepLinkQRCode };
 
 /*
 INSERT INTO public."DeepLinkQRCodes" (deeplink, qr_code_url) VALUES ('https://example.com/deeplink2', 'https://example.com/qr-code-image-url2');

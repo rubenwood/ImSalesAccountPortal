@@ -1,11 +1,15 @@
 const express = require('express');
 const multer = require('multer');
-const { createCanvas, loadImage } = require('canvas');
-const jsQR = require('jsqr');
 const AWS = require('aws-sdk');
+const { v4: uuidv4 } = require('uuid');
+const path = require('path');
+const jsQR = require('jsqr');
+const bodyParser = require('body-parser');
+const { createCanvas, loadImage } = require('canvas');
 require('dotenv').config();
 
 const qrCodeRouter = express.Router();
+const { qrCodeDBRouter, addDeepLinkQRCode } = require('../database/qr-code-db');
 
 AWS.config.update({
     accessKeyId: process.env.AWS_ACCESS_KEY_ID,
@@ -14,7 +18,7 @@ AWS.config.update({
 });
 
 const s3 = new AWS.S3();
-const upload = multer();
+const upload = multer({ storage: multer.memoryStorage() });
 
 function getSignedUrl(bucketName, key) {
     const params = {
@@ -48,10 +52,7 @@ async function decodeQRCode(input) {
         const url = new URL(input.url);
         const bucketName = url.pathname.split('/')[1];
         const key = url.pathname.split('/').slice(2).join('/');
-        //console.log('Bucket Name:', bucketName);
-        //console.log('Key:', key);
         const signedUrl = getSignedUrl(bucketName, key);
-        //console.log('Signed URL:', signedUrl);
 
         try {
             const img = await loadImage(signedUrl);
@@ -79,6 +80,39 @@ qrCodeRouter.post('/decode-qr', upload.single('file'), async (req, res) => {
     } catch (error) {
         console.log(error);
         res.status(400).json({ error: error.message });
+    }
+});
+
+qrCodeRouter.post('/upload-files', upload.array('files'), async (req, res) => {
+    try {
+        const fileUploadPromises = req.files.map(file => {
+            const params = {
+                Bucket: process.env.AWS_BUCKET,
+                Key: `QRCodes/${file.originalname}`,
+                Body: file.buffer,
+                ContentType: file.mimetype,
+                ACL: 'public-read'
+            };
+
+            return s3.upload(params).promise();
+        });
+
+        const uploadResults = await Promise.all(fileUploadPromises);
+
+        // Use addDeepLinkQRCode to update the database with the file URLs
+        const dbUpdatePromises = uploadResults.map(async (result) => {
+            const qrCodeUrl = result.Location;
+            console.log(qrCodeUrl);
+            const deeplink = await decodeQRCode({ url: qrCodeUrl });; //"https://example.com/deeplink"; // Replace with your actual logic
+            return await addDeepLinkQRCode(deeplink, qrCodeUrl); // Call the function directly
+        });
+
+        await Promise.all(dbUpdatePromises);
+
+        res.status(200).json({ message: 'Files uploaded successfully' });
+    } catch (error) {
+        console.error('Error uploading files:', error);
+        res.status(500).json({ error: 'Error uploading files' });
     }
 });
 
