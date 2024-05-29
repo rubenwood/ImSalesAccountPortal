@@ -1,3 +1,5 @@
+import { decodeQRCode } from './qr-code-utils.js';
+
 let JSONtoURLBtn;
 let qrBtn;
 let shortenURLForm;

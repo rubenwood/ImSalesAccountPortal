@@ -39,6 +39,8 @@
 <body>
   <div class="form-container">
     <h1>QR Code & Deeplink Catalogue</h1>
+    <a href="QRCodeGenerator.html">Generator</a>
+    <br/><br/>
     <form id="upload-form" class="upload-form">
       <label for="file-input">Upload QR Code Images:</label>
       <input type="file" id="file-input" name="files" multiple>
@@ -60,7 +62,9 @@
       <img id="qr-code" src="" alt="Generated QR Code" style="display:none;"/>
     </div>
   </div>
+  <script type="module" src="scripts/qr_code/qr-code-utils.js"></script>  
+  <script type="module" src="scripts/qr_code/qr-code-data-front.js"></script>  
   <script src="https://cdn.jsdelivr.net/npm/jsqr/dist/jsQR.js"></script>
-  <script type="text/javascript" src="scripts/qr_code/qr-code-data-front.js"></script>  
+  
 </body>
 </html>

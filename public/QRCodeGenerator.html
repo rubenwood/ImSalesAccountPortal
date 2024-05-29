@@ -10,10 +10,11 @@
 <body>
   <div id="qr-content" class="form-container">
     <h1>QR Code & Deeplink Generator</h1>
+    <a href="QRCodeCatalogue.html">Catalogue</a>
+    <br/><br/>
     <label for="json-input">Enter your JSON:</label><br/><br/>
     <textarea id="json-input" rows="10" required></textarea>
     <br/><br/>
-
     <div class="link-type">
       <label for="practical">Practical / Simulation</label>
       <input type="radio" id="practical" name="linkType" value="practical" checked>
@@ -25,7 +26,6 @@
       <input type="radio" id="lesson" name="linkType" value="lesson">
       <br/><br/>
     </div>
-
     <input type="button" id="convert-json-url-btn" value="Convert JSON to URL">
     <br/><br/>
     <label for="url-input">Enter your link:</label><br/>
@@ -46,7 +46,7 @@
     <p id="result"></p>
   </div>
   <script src="https://cdn.jsdelivr.net/npm/jsqr/dist/jsQR.js"></script>
-  <script type="text/javascript" src="scripts/qr_code/qr-code-gen.js"></script>
-  <script type="text/javascript" src="scripts/qr_code/qr-code-decode.js"></script>  
+  <script type="module" src="scripts/qr_code/qr-code-gen.js"></script>
+  <script type="module" src="scripts/qr_code/qr-code-utils.js"></script>  
 </body>
 </html>
