@@ -1,24 +1,17 @@
 import { decodeQRCode } from './qr-code-utils.js';
 
-let JSONtoURLBtn;
-let qrBtn;
-let shortenURLForm;
-let jsonInput;
-let urlInput;
 let shortURLOutput;
-let genshortURLQRCode;
-let shortenURLBtn;
 let qrCode;
 
 document.addEventListener('DOMContentLoaded', () => {
-    JSONtoURLBtn = document.getElementById('convert-json-url-btn');
-    qrBtn = document.getElementById('generate-qr-btn');
-    shortenURLForm = document.getElementById('shorten-url-form');
-    jsonInput = document.getElementById('json-input');
-    urlInput = document.getElementById('url-input');
+    let JSONtoURLBtn = document.getElementById('convert-json-url-btn');
+    let qrBtn = document.getElementById('generate-qr-btn');
+    //let shortenURLForm = document.getElementById('shorten-url-form');
+    let jsonInput = document.getElementById('json-input');
+    let urlInput = document.getElementById('url-input');    
+    let genshortURLQRCode = document.getElementById('gen-short-qr-btn');
+    let shortenURLBtn = document.getElementById('shorten-btn');
     shortURLOutput = document.getElementById('short-url');
-    genshortURLQRCode = document.getElementById('gen-short-qr-btn');
-    shortenURLBtn = document.getElementById('shorten-btn');
     qrCode = document.getElementById('qr-code');
 
     JSONtoURLBtn.addEventListener('click', (event) => {
@@ -50,7 +43,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     shortenURLBtn.addEventListener('click', () => shortenUrl(urlInput.value));
     genshortURLQRCode.addEventListener('click', () => generateQRCode(shortURLOutput.value));
-
 
     // DECODE QR CODE
     document.getElementById('file-input').addEventListener('change', (event) => {
