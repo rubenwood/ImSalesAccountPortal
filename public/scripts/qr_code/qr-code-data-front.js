@@ -135,13 +135,22 @@ function generateReport(data) {
             <td colspan="2">${item.activity}</td>
         `;
         tableBody.appendChild(activityRow);
-        // Add Activity row
+
+        // Add type row
         const typeRow = document.createElement('tr');
         typeRow.innerHTML = `
             <td><b>Type</b></td>
             <td colspan="2">${item.type}</td>
         `;
         tableBody.appendChild(typeRow);
+
+        // Add stakeholder row
+        const stakeHolderRow = document.createElement('tr');
+        stakeHolderRow.innerHTML = `
+            <td><b>Stakeholder</b></td>
+            <td colspan="2">${item.stakeholder}</td>
+        `;
+        tableBody.appendChild(stakeHolderRow);
 
         // Add empty row for spacing
         const emptyRow = document.createElement('tr');

@@ -1,10 +1,10 @@
 const express = require('express');
 const multer = require('multer');
 const AWS = require('aws-sdk');
-const { v4: uuidv4 } = require('uuid');
-const path = require('path');
+//const { v4: uuidv4 } = require('uuid');
+//const path = require('path');
+//const bodyParser = require('body-parser');
 const jsQR = require('jsqr');
-const bodyParser = require('body-parser');
 const { createCanvas, loadImage } = require('canvas');
 require('dotenv').config();
 
@@ -102,7 +102,7 @@ qrCodeRouter.post('/upload-files', upload.array('files'), async (req, res) => {
         // Use addDeepLinkQRCode to update the database with the file URLs
         const dbUpdatePromises = uploadResults.map(async (result) => {
             const qrCodeUrl = result.Location;
-            const deeplink = await decodeQRCode({ url: qrCodeUrl });; //"https://example.com/deeplink"; // Replace with your actual logic
+            const deeplink = await decodeQRCode({ url: qrCodeUrl }); //"https://example.com/deeplink"
             return await addDeepLinkQRCode(deeplink, qrCodeUrl); // Call the function directly
         });
 
