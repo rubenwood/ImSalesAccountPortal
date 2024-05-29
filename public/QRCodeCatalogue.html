@@ -44,6 +44,20 @@
       <input type="file" id="file-input" name="files" multiple>
       <button type="submit">Upload</button>
     </form>
+    <br/><br/>
+    <div>
+      <!--<b>Type:</b>
+      <select id="type-select">
+        <option value="area">area</option>
+        <option value="topic">topic</option>
+        <option value="lesson">lesson</option>
+        <option value="simulation">simulation</option>
+      </select>-->
+      <label for="search-input">Search:</label>
+      <input type="text" id="search-input" />
+      <input type="button" id="search-btn" value="search"/>
+    </div>
+    <br/><br/>
     <table id="reportTable">
         <tbody id="reportTableBody">
             <!-- Rows will be added here by the generateReport() function -->
@@ -54,6 +68,6 @@
     </div>
   </div>
   <script src="https://cdn.jsdelivr.net/npm/jsqr/dist/jsQR.js"></script>
-  <script type="text/javascript" src="scripts/qr_code/qr-code-cata-front.js"></script>  
+  <script type="text/javascript" src="scripts/qr_code/qr-code-data-front.js"></script>  
 </body>
 </html>

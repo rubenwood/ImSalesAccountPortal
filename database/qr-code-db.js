@@ -14,19 +14,6 @@ const pool = new Pool({
     },
 });
 
-async function addDeepLinkQRCode(deeplink, qrCodeUrl) {
-    const queryText = 'INSERT INTO public."DeepLinkQRCodes" (deeplink, qr_code_url) VALUES ($1, $2) RETURNING *';
-    const values = [deeplink, qrCodeUrl];
-
-    try {
-        const result = await pool.query(queryText, values);
-        return result.rows[0];
-    } catch (error) {
-        console.error('Error inserting data:', error);
-        throw error;
-    }
-}
-
 // CREATE - Insert a new deeplink and QR code URL
 qrCodeDBRouter.post('/add-dl-qr', async (req, res) => {
     const { deeplink, qrCodeUrl } = req.body;
@@ -42,10 +29,21 @@ qrCodeDBRouter.post('/add-dl-qr', async (req, res) => {
         res.status(500).send('Error inserting data into the database');
     }
 });
+async function addDeepLinkQRCode(deeplink, qrCodeUrl) {
+    const queryText = 'INSERT INTO public."DeepLinkQRCodes" (deeplink, qr_code_url) VALUES ($1, $2) RETURNING *';
+    const values = [deeplink, qrCodeUrl];
+
+    try {
+        const result = await pool.query(queryText, values);
+        return result.rows[0];
+    } catch (error) {
+        console.error('Error inserting data:', error);
+        throw error;
+    }
+}
 
 // READ - Get all deeplink and QR code entries
-qrCodeDBRouter.get('/get-all-dl-qr', async (req, res) => {
-    
+qrCodeDBRouter.get('/get-all-dl-qr', async (req, res) => {    
     try {
         const result = await pool.query('SELECT * FROM public."DeepLinkQRCodes"');
         res.status(200).json(result.rows);
@@ -111,12 +109,31 @@ qrCodeDBRouter.delete('/delete-dl-qr/:id', async (req, res) => {
     }
 });
 
+//SEARCH
+qrCodeDBRouter.get('/search', async (req, res) => {
+    const query = req.query.q;
+    try {
+        const results = await searchQRCodeDB(query);
+        res.json(results);
+    } catch (error) {
+        console.error('Error searching QR codes:', error);
+        res.status(500).json({ error: 'Error searching QR codes' });
+    }
+});
+
+async function searchQRCodeDB(query) {
+    const searchFields = ['deeplink', 'qr_code_url', 'area', 'module', 'topic', 'activity', 'type'];
+    const searchQueries = searchFields.map(field => `${field} ILIKE $1`);
+    const searchText = `%${query}%`;
+
+    const queryText = `SELECT * FROM public."DeepLinkQRCodes" WHERE ${searchQueries.join(' OR ')}`;
+    try {
+        const result = await pool.query(queryText, [searchText]);
+        return result.rows;
+    } catch (error) {
+        console.error('Error searching data:', error);
+        throw error;
+    }
+}
+
 module.exports = { qrCodeDBRouter, addDeepLinkQRCode };
-
-/*
-INSERT INTO public."DeepLinkQRCodes" (deeplink, qr_code_url) VALUES ('https://example.com/deeplink2', 'https://example.com/qr-code-image-url2');
-
-SELECT * FROM public."DeepLinkQRCodes"
-ORDER BY id ASC LIMIT 100
-
-*/

@@ -9,6 +9,8 @@ document.addEventListener('DOMContentLoaded', () => {
             await uploadQRCodeFiles(files);
         }
     });
+
+    document.getElementById('search-btn').addEventListener('click', () => searchClicked());
 });
 
 async function uploadQRCodeFiles(files) {
@@ -36,6 +38,31 @@ async function uploadQRCodeFiles(files) {
     }
 }
 
+// SEARCHING
+async function searchClicked(){
+    console.log("clicked");
+    // database call to find qr codes matching by:
+    // area, module, topic, activity or type
+    const searchQuery = document.getElementById('search-input').value.trim();
+    if (searchQuery) {
+        const searchResults = await searchQRCode(searchQuery);
+        console.log(searchResults);
+        generateReport(searchResults);
+    }    
+}
+async function searchQRCode(query) {
+    try {
+        const response = await fetch(`/qrdb/search?q=${encodeURIComponent(query)}`);
+        if (!response.ok) {
+            throw new Error('Network response was not ok ' + response.statusText);
+        }
+        return await response.json();
+    } catch (error) {
+        console.error('There has been a problem with your fetch operation:', error);
+    }
+}
+
+// SETUP INITAL PAGE (SHOW ALL RESULTS)
 async function setupPage(){
     let dbData = await fetchQRDLData();
     generateReport(dbData);
@@ -127,7 +154,7 @@ async function fetchQRDLData() {
             throw new Error('Network response was not ok ' + response.statusText);
         }
         const data = await response.json();
-        console.log(data);
+        //console.log(data);
         return data;
     } catch (error) {
         console.error('There has been a problem with your fetch operation:', error);
