@@ -68,6 +68,7 @@ async function setupPage(){
     generateReport(dbData);
 }
 
+// Generate the report / html
 function generateReport(data) {
     const tableBody = document.getElementById('reportTableBody');
     tableBody.innerHTML = ''; // Clear existing rows
@@ -146,7 +147,7 @@ function generateReport(data) {
         tableBody.appendChild(emptyRow);
     });
 }
-
+// Get all deeplinks & qr codes from db
 async function fetchQRDLData() {
     try {
         const response = await fetch('/qrdb/get-all-dl-qr');
