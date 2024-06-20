@@ -201,6 +201,74 @@ async function extractAndSetJsonValue(tableName, jsonColumnName, keyName, newCol
     }
 }
 
+// CONVERT STRIPE SUB
+async function convertStripeSubData() {
+    const stripeDataQuery = `
+    SELECT *
+    FROM public."UsageData"
+    WHERE
+        ("UsageDataJSON"->'Data'->'ProductInterval'->>'Value') IS NOT NULL OR
+        ("UsageDataJSON"->'Data'->'StripeSubscriptionID'->>'Value') IS NOT NULL OR
+        ("UsageDataJSON"->'Data'->'ReceiptStripeActiveUntilDate'->>'Value') IS NOT NULL
+    `;
+
+    const res = await pool.query(stripeDataQuery);
+    const stripeSubUsers = res.rows;
+
+    stripeSubUsers.forEach(user => {
+        let userProdInterval = user.UsageDataJSON.Data.ProductInterval?.Value;
+        let userProdExpiry = user.UsageDataJSON.Data.ReceiptStripeActiveUntilDate?.Value;
+
+        if (!userProdInterval || !userProdExpiry) {
+            console.log(`Skipping user ${user.UsageDataJSON.PlayFabId} due to missing ProductInterval or ReceiptStripeActiveUntilDate`);
+            return;
+        }
+
+        let interval = 30;
+        if (userProdInterval === "yearly") {
+            interval = 365;
+        }
+
+        // Convert expiry date string to Date object
+        let expiryDate = new Date(userProdExpiry);
+
+        // Subtract interval to get purchase date
+        let purchaseDate = new Date(expiryDate);
+        purchaseDate.setDate(expiryDate.getDate() - interval);
+        let now = new Date();
+        let status = "renewing";
+        let isSubbed = true;
+        if (now > expiryDate) {
+            // if now is beyond expiry date
+            isSubbed = false;
+            status = "expired";
+        }
+
+        // Format dates to the desired format
+        const formatDate = (date) => {
+            return date.toISOString().split('T')[0]; // YYYY-MM-DD format
+        };
+
+        let newSubData = {
+            Platform: "stripe",
+            Product: userProdInterval,
+            PurchaseDate: formatDate(purchaseDate),
+            SubStatus: status,
+            SubExpire: formatDate(expiryDate), // when this will expire / renew  
+            SubActive: isSubbed ? "true" : "false",
+            SubscriptionTier: "legacy",
+            SubscriptionPeriod: userProdInterval
+        };
+
+        console.log(user.UsageDataJSON.PlayFabId, " ", newSubData);
+
+        // playfab api call to add the StoreSubData to the users account
+    });
+
+    return stripeSubUsers;
+}
+convertStripeSubData();
+
 module.exports = {
     bulkRouter,
     getJobInProgress,
