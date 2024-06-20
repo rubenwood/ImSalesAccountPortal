@@ -267,7 +267,7 @@ async function convertStripeSubData() {
 
     return stripeSubUsers;
 }
-convertStripeSubData();
+//convertStripeSubData();
 
 module.exports = {
     bulkRouter,
