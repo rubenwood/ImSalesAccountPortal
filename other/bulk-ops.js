@@ -251,6 +251,7 @@ async function convertStripeSubData() {
 
         let newSubData = {
             Platform: "stripe",
+            StripeSubscriptionID: "", // need to get this from stripe
             Product: userProdInterval,
             PurchaseDate: formatDate(purchaseDate),
             SubStatus: status,
