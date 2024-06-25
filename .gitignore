@@ -4,5 +4,4 @@ other_keys/
 data/
 .env
 
-DatabaseLastUpdated.json
 s3_files_details.csv
