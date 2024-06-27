@@ -45,15 +45,23 @@ async function fetchActivityReport(){
         cellUniquePlays.appendChild(document.createTextNode(element.uniquePlays || 'N/A'));
         let cellTotalPlayTime = row.insertCell(3);
         cellTotalPlayTime.appendChild(document.createTextNode(totalPlayTimerPerActivity || 'N/A'));
-
         let cellPlays = row.insertCell(4);
         cellPlays.appendChild(document.createTextNode(element.plays || 'N/A'));
-        let cellUsers = row.insertCell(5);
+
+        let cellLocations = row.insertCell(5);
+        let locsButton = document.createElement('input');
+        locsButton.type = 'button';
+        locsButton.value = 'Locations';
+        locsButton.textContent = 'Show Locations';
+        locsButton.onclick = () => showLocationsModal(element.users);
+        cellLocations.appendChild(locsButton);
+
+        let cellUsers = row.insertCell(6);
         let usersButton = document.createElement('input');
         usersButton.type = 'button';
         usersButton.value = 'Users';
         usersButton.textContent = 'Show Users';
-        usersButton.onclick = () => showModal(element.users);
+        usersButton.onclick = () => showUsersModal(element.users);
         cellUsers.appendChild(usersButton);
     });
     
@@ -83,14 +91,65 @@ function calcTotalPlayTime(element, activityID){
     return totalPlayTime;
 }
 
-function showModal(users) {
+function showLocationsModal(users) {
+    const modal = document.getElementById('locModal');
+    const locList = document.getElementById('modalLocList');
+    const span = document.getElementsByClassName("close")[0];
+
+    locList.innerHTML = '';
+    let countries = {};
+
+    users.forEach(user => {
+        let lastLoginLoc = user.AccountDataJSON.Locations?.LastLogin;
+        if (lastLoginLoc && lastLoginLoc.CountryCode) {
+            let country = lastLoginLoc.CountryCode;
+            if (!countries[country]) {
+                countries[country] = { country, count: 1 };
+            } else {
+                countries[country].count++;
+            }
+        }
+    });
+
+    // Convert countries object to an array for easier rendering
+    const countryArray = Object.values(countries);
+
+    // Calculate total count
+    let totalUsers = 0;
+    countryArray.forEach(({ country, count }) => {
+        totalUsers += count;
+        let listItem = document.createElement('li');
+        listItem.textContent = `${country}: ${count}`;
+        locList.appendChild(listItem);
+    });
+
+    // Add total count to the modal
+    let totalItem = document.createElement('li');
+    totalItem.textContent = `Total Users: ${totalUsers}`;
+    totalItem.style.fontWeight = 'bold';
+    locList.appendChild(totalItem);
+
+    console.log(countries);
+    console.log(`Total Users: ${totalUsers}`);
+
+    // Modal
+    modal.style.display = "block";
+    span.onclick = function() {
+        modal.style.display = "none";
+    }
+    window.onclick = function(event) {
+        if (event.target == modal) {
+            modal.style.display = "none";
+        }
+    }
+}
+
+function showUsersModal(users){
     const modal = document.getElementById('userModal');
     const userList = document.getElementById('modalUserList');
     const span = document.getElementsByClassName("close")[0];
 
-    // Clear previous list
     userList.innerHTML = '';
-    // Populate list with users
     users.forEach(user => {
         let li = document.createElement('li');        
         let button = document.createElement('input');
@@ -120,12 +179,11 @@ function showModal(users) {
     }
 }
 
-export function inspectUserClicked(user){
+export function inspectUserClicked(user) {
     console.log(user);
     let playerData = user.UsageDataJSON?.Data?.PlayerData?.Value;
     console.log(user.UsageDataJSON.PlayFabId + " Inspect clicked");
-    console.log(playerData);
-    
+    console.log(playerData);    
 }
 
 //
