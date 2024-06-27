@@ -2,9 +2,27 @@ import {canAccess} from './access-check.js';
 import {Login} from './PlayFabManager.js';
 import {formatTimeToHHMMSS,updateButtonText} from './utils.js';
 
-document.addEventListener('DOMContentLoaded', async () => {
-    document.getElementById('loginButton').addEventListener('click', Login);
-    document.getElementById('generateByActivityIdButton').addEventListener('click', fetchActivityReport);
+let countryNameMap = {};
+
+// Fetch the country codes JSON
+function loadCountryNames() {
+    return fetch('../scripts/other/countries.json')
+        .then(response => response.json())
+        .then(data => {
+            data.forEach(country => {
+                countryNameMap[country.alpha2.toUpperCase()] = country.en;
+            });
+        })
+        .catch(error => {
+            console.error('Error loading country codes:', error);
+        });
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    loadCountryNames().then(() => {
+        document.getElementById('loginButton').addEventListener('click', Login);
+        document.getElementById('generateByActivityIdButton').addEventListener('click', fetchActivityReport);
+    });
 });
 window.onload = function() {
     document.getElementById('loginModal').style.display = 'block';
@@ -111,15 +129,13 @@ function showLocationsModal(users) {
         }
     });
 
-    // Convert countries object to an array for easier rendering
-    const countryArray = Object.values(countries);
-
     // Calculate total count
     let totalUsers = 0;
-    countryArray.forEach(({ country, count }) => {
+    Object.entries(countries).forEach(([country, { count }]) => {
         totalUsers += count;
+        let countryName = countryNameMap[country.toUpperCase()] || country;
         let listItem = document.createElement('li');
-        listItem.textContent = `${country}: ${count}`;
+        listItem.textContent = `${countryName}: ${count}`;
         locList.appendChild(listItem);
     });
 
@@ -134,10 +150,10 @@ function showLocationsModal(users) {
 
     // Modal
     modal.style.display = "block";
-    span.onclick = function() {
+    span.onclick = function () {
         modal.style.display = "none";
     }
-    window.onclick = function(event) {
+    window.onclick = function (event) {
         if (event.target == modal) {
             modal.style.display = "none";
         }
