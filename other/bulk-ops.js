@@ -27,14 +27,14 @@ async function updateDatabase(){
     await getAllPlayerAccDataAndWriteToDB(); 
     console.log("updating account data fields...");
     // extract out the PlayerId field and make that a separate column PlayFabId, also store the playfab data in AccountDataJSON
-    await extractAndSetJsonValue('AccountData', 'AccountDataJSON', 'PlayerId', 'PlayFabId').catch(err => console.error(err));
+    await extractAndSetJsonValue('AccountData', 'AccountDataJSON', 'PlayerId', undefined, 'PlayFabId').catch(err => console.error(err));
     console.log("getting all usage data and writing to db...");
     // get usage data (Player Title Data) from playfab and write to DB
     await updateUsageDataInDB();
     console.log("updating usage data fields");
     // extract out the PlayFabId field and make that a separate column PlayFabId, also store the playfab data in UsageDataJSON
-    await extractAndSetJsonValue('UsageData', 'UsageDataJSON', 'PlayFabId', 'PlayFabId').catch(err => console.error(err));
-    await extractAndSetJsonValue('UsageData', 'UsageDataJSON', 'AcademicArea', 'AcademicArea').catch(err => console.error(err));
+    await extractAndSetJsonValue('UsageData', 'UsageDataJSON', 'PlayFabId', undefined, 'PlayFabId').catch(err => console.error(err));
+    await extractAndSetJsonValue('UsageData', 'UsageDataJSON', 'Data', 'AcademicArea', 'AcademicArea').catch(err => console.error('Unhandled error:', err));
     // set the last updated date (json file)
     OnUpdateCompletion(new Date());
 }
@@ -173,26 +173,39 @@ async function fetchPlayerData(playerId) {
 }
 
 // USED TO UPDATE THE DATABASE
-async function extractAndSetJsonValue(tableName, jsonColumnName, keyName, newColumnName) {
+async function extractAndSetJsonValue(tableName, jsonColumnName, keyName, subKeyName, newColumnName) {
     const client = await pool.connect();
 
     try {
         await client.query('BEGIN');
 
         // Add the new column if it doesn't exist
+        console.log(`Adding column ${newColumnName} to table ${tableName} if it does not exist.`);
         await client.query(`
             ALTER TABLE "${tableName}"
             ADD COLUMN IF NOT EXISTS "${newColumnName}" TEXT;
         `);
 
-        // Extract value from the JSON column and set it in the new column
-        await client.query(`
-            UPDATE "${tableName}"
-            SET "${newColumnName}" = ("${jsonColumnName}"->>'${keyName}')::TEXT;
-        `);
+        // Construct the query for updating the new column
+        let updateQuery;
+        if (subKeyName) {
+            updateQuery = `
+                UPDATE "${tableName}"
+                SET "${newColumnName}" = ("${jsonColumnName}"->'${keyName}'->'${subKeyName}'->>'Value');
+            `;
+        } else {
+            updateQuery = `
+                UPDATE "${tableName}"
+                SET "${newColumnName}" = ("${jsonColumnName}"->>'${keyName}');
+            `;
+        }
+
+        console.log(`Constructed query: ${updateQuery}`);
+        const result = await client.query(updateQuery);
+        console.log(`${result.rowCount} rows updated.`);
 
         await client.query('COMMIT');
-        console.log(`${newColumnName} column has been successfully updated with ${keyName} values from ${jsonColumnName}.`);
+        console.log(`${newColumnName} column has been successfully updated with values from ${jsonColumnName}.`);
     } catch (error) {
         await client.query('ROLLBACK');
         console.error('Error occurred:', error);

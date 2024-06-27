@@ -106,29 +106,29 @@ activitiesRouter.get('/get-activity-report-id', async (req, res) => {
 
 // GET USER BY ACTIVITY ID
 activitiesRouter.get('/get-users-by-activity', async (req, res) => {
-    //let start = parseInt(req.query.start, 10);
-    //let end = parseInt(req.query.end, 10);
-    //let start = 0;
-    //let end = 10000;
     const activityIds = req.query.activities ? req.query.activities.split(',') : [];
 
     if (activityIds.length === 0) {
         return res.status(400).json({ message: 'Missing activities parameter or it is empty.' });
     }
 
-    //const limit = !isNaN(start) && !isNaN(end) && start >= 0 && end >= start ? end - start + 1 : 10000;
-    //const offset = !isNaN(start) && start >= 0 ? start : 0;
-
-    let query = `
+    const query = `
         WITH valid_usage_data AS (
             SELECT *
             FROM public."UsageData"
             WHERE ("UsageDataJSON"->'Data'->'PlayerData'->>'Value') IS NOT NULL
               AND ("UsageDataJSON"->'Data'->'PlayerData'->>'Value')::jsonb IS NOT NULL
               AND ("UsageDataJSON"->'Data'->'PlayerData'->>'Value') NOT LIKE '%NaN%'
+        ),
+        user_activity_data AS (
+            SELECT 
+                vud.*, 
+                ad."AccountDataJSON"
+            FROM valid_usage_data vud
+            JOIN public."AccountData" ad ON vud."PlayFabId" = ad."PlayFabId"
         )
         SELECT *
-        FROM valid_usage_data
+        FROM user_activity_data
         WHERE EXISTS (
             SELECT 1
             FROM jsonb_array_elements(
@@ -137,23 +137,24 @@ activitiesRouter.get('/get-users-by-activity', async (req, res) => {
             WHERE activity->>'activityID' = ANY($1::text[])
         )
     `;
-    
-    //const queryParams = [activityIds, limit, offset];
+
     const queryParams = [activityIds];
 
     try {
         const { rows } = await pool.query(query, queryParams);
-        let allPlayersWithActivity = new Map(activityIds.map(id => [id, new Set()]));
+        const allPlayersWithActivity = new Map(activityIds.map(id => [id, new Set()]));
 
         rows.forEach(row => {
-            let playerDataRAW = row.UsageDataJSON?.Data?.PlayerData?.Value ?? undefined;
+            const playerDataRAW = row.UsageDataJSON?.Data?.PlayerData?.Value ?? undefined;
             if (playerDataRAW) {
                 try {
-                    let playerDataJSON = JSON.parse(playerDataRAW);
+                    const playerDataJSON = JSON.parse(playerDataRAW);
                     if (Array.isArray(playerDataJSON.activities)) {
                         playerDataJSON.activities.forEach(activity => {
                             if (allPlayersWithActivity.has(activity.activityID)) {
-                                allPlayersWithActivity.get(activity.activityID).add(row);
+                                allPlayersWithActivity.get(activity.activityID).add({
+                                    user: row
+                                });
                             }
                         });
                     }
@@ -162,20 +163,23 @@ activitiesRouter.get('/get-users-by-activity', async (req, res) => {
                 }
             }
         });
-        //console.log(allPlayersWithActivity);
 
-        let outputList = [];
+        const outputList = [];
         allPlayersWithActivity.forEach((players, activityId) => {
-            let totalPlays = calcTotalPlaysPerActivity(Array.from(players), activityId);
-            let output = {
+            const totalPlays = calcTotalPlaysPerActivity(Array.from(players), activityId);
+            const output = {
                 activityID: activityId,
-                activityName: activityId,// TODO: get activity title
+                activityName: activityId, // TODO: get activity title
                 uniquePlays: players.size,
                 plays: totalPlays,
-                users: Array.from(players)
-            }
+                users: Array.from(players).map(player => ({
+                    ...player.user,
+                    accountData: player.accountData
+                }))
+            };
             outputList.push(output);
         });
+
         res.json(outputList);
     } catch (err) {
         console.error('Error fetching usage data from db:', err);
@@ -183,25 +187,26 @@ activitiesRouter.get('/get-users-by-activity', async (req, res) => {
     }
 });
 
-function calcTotalPlaysPerActivity(allPlayersWithActivity, activityId){
+function calcTotalPlaysPerActivity(allPlayersWithActivity, activityId) {
     let totalPlays = 0;
+
     allPlayersWithActivity.forEach(player => {
-        //console.log("----\n", player.UsageDataJSON?.Data?.PlayerData, "\n----");
-        let playerDataRAW =  player.UsageDataJSON?.Data?.PlayerData?.Value ?? undefined;
-        let playerData = JSON.parse(playerDataRAW);
-        let activities = playerData.activities ?? undefined;
-        if(activities == undefined){ 
-            //console.log("~~~\n", player, "\n~~~"); 
-            return totalPlays;
-        }else{
-            activities.forEach(activity => {
-                if(activityId == activity.activityID){
-                    totalPlays += activity.plays.length;
-                }             
-            });
+        try {
+            let playerDataRAW = player.user.UsageDataJSON?.Data?.PlayerData?.Value ?? undefined;
+            if (playerDataRAW) {
+                let playerData = JSON.parse(playerDataRAW);
+                let activities = playerData.activities ?? [];
+                activities.forEach(activity => {
+                    if (activityId == activity.activityID) {
+                        totalPlays += activity.plays.length;
+                    }
+                });
+            }
+        } catch (err) {
+            console.error('Error processing player data:', err, player);
         }
     });
-    //console.log(totalPlays);
+
     return totalPlays;
 }
 

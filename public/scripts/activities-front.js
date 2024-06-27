@@ -30,7 +30,6 @@ async function fetchActivityReport(){
 
     let reportBody = document.getElementById("reportTableBody");
     reportBody.innerHTML = '';
-
     
     output.forEach(element => {
         let totalPlayTimerPerActivity = formatTimeToHHMMSS(calcTotalPlayTime(element, element.activityID));
@@ -101,7 +100,7 @@ function showModal(users) {
         button.style.height = '30px'; 
         button.style.marginRight = '5px';
         button.style.padding = '5px';
-        button.addEventListener('click', () => inspectUserClicked(user.UsageDataJSON));
+        button.addEventListener('click', () => inspectUserClicked(user));
 
         li.appendChild(button);
         li.append(` ${user.UsageDataJSON.PlayFabId}`);
@@ -121,8 +120,12 @@ function showModal(users) {
     }
 }
 
-export function inspectUserClicked(UsageDataJSON){
-    console.log(UsageDataJSON.PlayFabId + " Inspect clicked");
-    console.log(UsageDataJSON);
-    let playerData = UsageDataJSON.Data.PlayerData;
+export function inspectUserClicked(user){
+    console.log(user);
+    let playerData = user.UsageDataJSON?.Data?.PlayerData?.Value;
+    console.log(user.UsageDataJSON.PlayFabId + " Inspect clicked");
+    console.log(playerData);
+    
 }
+
+//
