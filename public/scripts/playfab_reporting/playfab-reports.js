@@ -114,15 +114,19 @@ export async function getPlayFabMonthlyTotalsReport(month, year) {
     const day = 1; // always first of month for monthly reports
 
     //console.log(`Getting Monthly report from Playfab ${day} ${month} ${year}`);
+    let bodyJson = {
+        day,
+        month,
+        year,
+        reportName
+    }
 
     const playFabResponse = await fetch('/get-playfab-report', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json'
         },
-        body: JSON.stringify({
-            day, month, year, reportName
-        })
+        body: JSON.stringify(bodyJson)
     });
 
     if (!playFabResponse.ok) {
@@ -130,6 +134,7 @@ export async function getPlayFabMonthlyTotalsReport(month, year) {
     }
 
     const respText = await playFabResponse.text();
+    //console.log(`Getting Monthly report from Playfab ${day} ${month} ${year} \nresp:\n${respText}`);
     const data = parseCSV(respText);
     return data;
 }

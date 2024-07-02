@@ -1,6 +1,7 @@
 import {canAccess} from './access-check.js';
 import {Login} from './PlayFabManager.js';
 import {formatTimeToHHMMSS,updateButtonText} from './utils.js';
+import {showActivitiesInsightsModal} from './activities-insights.js';
 
 let countryNameMap = {};
 
@@ -22,12 +23,15 @@ document.addEventListener('DOMContentLoaded', () => {
     loadCountryNames().then(() => {
         document.getElementById('loginButton').addEventListener('click', Login);
         document.getElementById('generateByActivityIdButton').addEventListener('click', fetchActivityReport);
+        document.getElementById('genActivityInsightsButton').addEventListener('click', ()=>showActivitiesInsightsModal('test'));
+        document.getElementById('genReportByActivityIdButton').addEventListener('click', ()=>exportActivityReport(dataToExport));
     });
 });
 window.onload = function() {
     document.getElementById('loginModal').style.display = 'block';
 };
 
+let dataToExport;
 async function fetchActivityReport(){
     let hasAccess = await canAccess();
     if(!hasAccess){ return; }
@@ -38,8 +42,6 @@ async function fetchActivityReport(){
     tickUpdater();
     const tickInterval = setInterval(tickUpdater, 500);
 
-    console.log("working");
-
     let activityIdsText = document.getElementById("activityIDList").value;
     let activityIdsList = activityIdsText.split('\n').filter(Boolean);
     const resp = await fetch(`/activities/get-users-by-activity?activities=${activityIdsList}`);
@@ -48,7 +50,7 @@ async function fetchActivityReport(){
 
     let reportBody = document.getElementById("reportTableBody");
     reportBody.innerHTML = '';
-    
+
     output.forEach(element => {
         let totalPlayTimerPerActivity = formatTimeToHHMMSS(calcTotalPlayTime(element, element.activityID));
 
@@ -73,6 +75,7 @@ async function fetchActivityReport(){
         locsButton.textContent = 'Show Locations';
         locsButton.onclick = () => showLocationsModal(element.users);
         cellLocations.appendChild(locsButton);
+        element.locations = 'Locations will go here';
 
         let cellUsers = row.insertCell(6);
         let usersButton = document.createElement('input');
@@ -81,7 +84,11 @@ async function fetchActivityReport(){
         usersButton.textContent = 'Show Users';
         usersButton.onclick = () => showUsersModal(element.users);
         cellUsers.appendChild(usersButton);
+        element.users = 'Users will go here';
     });
+
+    dataToExport = output;
+    console.log(dataToExport);
     
     clearInterval(tickInterval); // Stop the ticking animation
     button.value = "Search by Activity ID"; 
@@ -202,4 +209,16 @@ export function inspectUserClicked(user) {
     console.log(playerData);    
 }
 
-//
+// EXPORT REPORT
+export function exportActivityReport(exportData){
+    console.log("called");
+    let workbook = XLSX.utils.book_new();
+    //let insightsWorksheet = XLSX.utils.json_to_sheet(insightsExportData);
+    //XLSX.utils.book_append_sheet(workbook, insightsWorksheet, "Insights");
+
+    let activityDataWorksheet = XLSX.utils.json_to_sheet(exportData);    
+    XLSX.utils.book_append_sheet(workbook, activityDataWorksheet, "Report");
+
+    let today = new Date().toISOString().split('T')[0];
+    XLSX.writeFile(workbook, `ActivityReport-${today}.xlsx`);
+}
