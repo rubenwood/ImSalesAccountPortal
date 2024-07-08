@@ -26,3 +26,19 @@ export async function decodeQRCode(input) {
         console.error('Error decoding QR code:', error);
     }
 }
+
+export async function generateQRCode(url) {
+    const apiUrl = 'https://api.qrserver.com/v1/create-qr-code/';
+    const qrSize = '1000x1000';
+    const encodedUrl = encodeURIComponent(url);
+
+    const response = await fetch(`${apiUrl}?size=${qrSize}&data=${encodedUrl}`);
+
+    if (response.ok) {
+        const qrCodeUrl = response.url;
+        qrCode.src = qrCodeUrl;
+        qrCode.style.display = 'block';
+    } else {
+        alert('Error generating QR code');
+    }
+}

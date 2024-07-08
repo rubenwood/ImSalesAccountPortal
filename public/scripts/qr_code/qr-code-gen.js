@@ -1,4 +1,5 @@
-import { decodeQRCode } from './qr-code-utils.js';
+import { decodeQRCode, generateQRCode } from './qr-code-utils.js';
+import { shortenUrl } from './deeplink-utils.js';
 
 let shortURLOutput;
 let qrCode;
@@ -70,44 +71,3 @@ function constructTopicLink(jsonData) {
     return fullLink;
 }
 
-async function shortenUrl(urlToShorten) {
-    try {
-        const requestBody = JSON.stringify({ url: urlToShorten });
-
-        const response = await fetch('/bitly/shorten-url', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: requestBody
-        });
-
-        if (!response.ok) {
-        throw new Error('Failed to shorten URL. Status: ' + response.status);
-        }
-
-        const result = await response.json();
-        //console.log('Shortened URL:', result.shortenedUrl);
-        shortURLOutput.value = result.shortenedUrl;
-        return result.shortenedUrl;
-    } catch (error) {
-        console.error('Error shortening URL:', error);
-        return null;
-    }
-}
-
-async function generateQRCode(url) {
-    const apiUrl = 'https://api.qrserver.com/v1/create-qr-code/';
-    const qrSize = '1000x1000';
-    const encodedUrl = encodeURIComponent(url);
-
-    const response = await fetch(`${apiUrl}?size=${qrSize}&data=${encodedUrl}`);
-
-    if (response.ok) {
-        const qrCodeUrl = response.url;
-        qrCode.src = qrCodeUrl;
-        qrCode.style.display = 'block';
-    } else {
-        alert('Error generating QR code');
-    }
-}

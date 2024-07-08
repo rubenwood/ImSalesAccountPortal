@@ -1,6 +1,7 @@
 import { callUpdateConfluencePage } from "./confluence.js";
 import {fetchUserAccInfoById, fetchUserAccInfoByEmail, fetchUserProfileById} from "./utils.js"
 import {setAccessLevel, canAccess} from "./access-check.js"
+import {auth} from "./immersifyapi/immersify-api.js";
 
 const titleId = "29001";
 
@@ -32,10 +33,17 @@ export async function Login(){
         if (error) {
             console.error("Error logging in:", error);
         } else {
+            console.log(response);
+            localStorage.setItem("PlayFabId", response.data.PlayFabId);
+            localStorage.setItem("PlayFabSessionTicket", response.data.SessionTicket);
+            
             setAccessLevel(await getUserData(["AccessLevel"])); 
             if (canAccess()) {                
                 document.getElementById('loginModal').style.display = 'none';
             }
+
+            await auth(response.data.PlayFabId, response.data.SessionTicket);
+            //await getAreas();
         }
     });
 }

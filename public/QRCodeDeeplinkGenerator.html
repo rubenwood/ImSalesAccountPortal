@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>QR Code & Deeplink Generator</title>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" type="text/css" href="styles.css">
+</head>
+<body>
+  <div id="qr-content" class="form-container">
+    <h1>QR Code & Deeplink Generator</h1>
+    <a href="QRCodeCatalogue.html">Catalogue</a>
+    <br/><br/>
+    <label for="json-input">Enter your JSON:</label><br/><br/>
+    <textarea id="json-input" rows="10" required></textarea>
+    <br/><br/>
+    <div class="link-type">
+      <label for="practical">Practical / Simulation</label>
+      <input type="radio" id="practical" name="linkType" value="practical" checked>
+      <br/><br/>
+      <label for="topic">Topic</label>
+      <input type="radio" id="topic" name="linkType" value="topic">
+      <br/><br/>
+      <label for="lesson">Lesson</label>
+      <input type="radio" id="lesson" name="linkType" value="lesson">
+      <br/><br/>
+    </div>
+    <input type="button" id="convert-json-url-btn" value="Convert JSON to URL">
+    <br/><br/>
+    <label for="url-input">Enter your link:</label><br/>
+    <input type="text" id="url-input" required>
+    <input type="button" id="shorten-btn" value="Shorten URL (optional)">
+    <input type="text" id="short-url">
+    <input type="button" id="generate-qr-btn" value="Generate QR Code">    
+    <input type="button" id="gen-short-qr-btn" value="Generate QR from short URL">
+
+    <div id="qr-container">
+      <img id="qr-code" src="" alt="Generated QR Code" style="display:none;"/>
+    </div>
+  </div>
+  <br/><br/>
+  <div id="qr-decode-content" class="form-container">
+    <h1>Decoder</h1>
+    <input type="file" id="file-input" accept="image/*">
+    <p id="result"></p>
+  </div>
+  <script src="https://cdn.jsdelivr.net/npm/jsqr/dist/jsQR.js"></script>
+  <script type="module" src="scripts/qr_code/qr-code-gen.js"></script>
+  <script type="module" src="scripts/qr_code/qr-code-utils.js"></script>  
+</body>
+</html>

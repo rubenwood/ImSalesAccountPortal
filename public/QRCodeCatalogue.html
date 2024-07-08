@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>QR Code & Deeplink Cataloge</title>
+  <script type="text/javascript" src="https://download.playfab.com/PlayFabClientApi.js"></script>
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600&display=swap" rel="stylesheet">
   <link rel="stylesheet" type="text/css" href="styles.css">
   <style>
@@ -37,6 +38,15 @@
   </style>
 </head>
 <body>
+  <div id="loginModal" class="modal">
+    <div class="modal-content">
+        <img src="/immersify_logo.e141b23db21f4b78051561bc464eace7.svg" alt="Immersify Logo" class="login-logo">
+        <h2>Login</h2>
+        <input type="text" id="username" placeholder="Username"><br>
+        <input type="password" id="password" placeholder="Password"><br>
+        <input type="button" id="loginButton" value="Login">
+    </div>
+</div>
   <div class="form-container">
     <h1>QR Code & Deeplink Catalogue</h1>
     <a href="QRCodeGenerator.html">Generator</a>
@@ -64,8 +74,11 @@
     </div>
   </div>
   <script type="module" src="scripts/qr_code/qr-code-utils.js"></script>  
-  <script type="module" src="scripts/qr_code/qr-code-data-front.js"></script>  
+  <script type="module" src="scripts/qr_code/qr-code-data-front.js"></script> 
+  <script type="module" src="scripts/PlayFabManager.js"></script>
+  <script type="module" src="scripts/asyncTools.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/jsqr/dist/jsQR.js"></script>
+  
   
 </body>
 </html>

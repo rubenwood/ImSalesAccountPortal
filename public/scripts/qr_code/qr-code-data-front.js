@@ -1,7 +1,13 @@
 import { decodeQRCode } from './qr-code-utils.js';
+import { Login } from '../PlayFabManager.js';
+import { getAreas, getTopics, getActivities, jwtoken} from '../immersifyapi/immersify-api.js';
+import {waitUntil } from '../asyncTools.js';
 
 document.addEventListener('DOMContentLoaded', () => {
     setupPage();
+
+    // event listener for login modal
+    document.getElementById('loginButton').addEventListener('click', Login);
 
     // add event listener for uploading qr codes
     document.getElementById('upload-form').addEventListener('submit', async (event) => {
@@ -13,7 +19,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // Search listeners
-    document.getElementById('search-btn').addEventListener('click', () => searchClicked());
+    document.getElementById('search-btn').addEventListener('click', () => searchClicked);
     document.getElementById('search-input').addEventListener('keypress', (event) => {
         if (event.key === 'Enter') {
             event.preventDefault();
@@ -21,6 +27,9 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 });
+window.onload = function() {
+    document.getElementById('loginModal').style.display = 'block';
+};
 
 async function uploadQRCodeFiles(files) {
     const formData = new FormData();
@@ -48,7 +57,7 @@ async function uploadQRCodeFiles(files) {
 }
 
 // SEARCHING
-async function searchClicked(){
+async function searchClicked() {
     // database call to find qr codes matching by:
     // area, module, topic, activity or type
     const searchQuery = document.getElementById('search-input').value.trim();
@@ -72,7 +81,15 @@ async function searchQRCode(query) {
 }
 
 // SETUP INITAL PAGE (SHOW ALL RESULTS)
+// get all relevant info from DB
+let areas, topics, activities;
 async function setupPage(){
+    await waitUntil(()=> jwtoken != undefined);
+
+    areas = await getAreas();
+    topics = await getTopics(); 
+    activities = await getActivities(); 
+
     let dbData = await fetchQRDLData();
     generateReport(dbData);
 }
