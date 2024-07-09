@@ -4,37 +4,50 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>QR Code & Deeplink Generator</title>
+  <script type="text/javascript" src="https://download.playfab.com/PlayFabClientApi.js"></script>
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600&display=swap" rel="stylesheet">
   <link rel="stylesheet" type="text/css" href="styles.css">
 </head>
 <body>
+  <div id="loginModal" class="modal">
+    <div class="modal-content">
+        <img src="/immersify_logo.e141b23db21f4b78051561bc464eace7.svg" alt="Immersify Logo" class="login-logo">
+        <h2>Login</h2>
+        <input type="text" id="username" placeholder="Username"><br>
+        <input type="password" id="password" placeholder="Password"><br>
+        <input type="button" id="loginButton" value="Login">
+    </div>
+  </div>
   <div id="qr-content" class="form-container">
     <h1>QR Code & Deeplink Generator</h1>
     <a href="QRCodeCatalogue.html">Catalogue</a>
     <br/><br/>
-    <label for="json-input">Enter your JSON:</label><br/><br/>
-    <textarea id="json-input" rows="10" required></textarea>
-    <br/><br/>
     <div class="link-type">
-      <label for="practical">Practical / Simulation</label>
-      <input type="radio" id="practical" name="linkType" value="practical" checked>
+      <label for="launcherSection">Launcher Sections</label>
+      <input type="radio" id="launcherSectionLinksRadio" name="linkType" value="area">
+      <br/><br/>
+      <label for="area">Area</label>
+      <input type="radio" id="areaLinksRadio" name="linkType" value="area">
       <br/><br/>
       <label for="topic">Topic</label>
-      <input type="radio" id="topic" name="linkType" value="topic">
+      <input type="radio" id="topicLinksRadio" name="linkType" value="topic">
       <br/><br/>
-      <label for="lesson">Lesson</label>
-      <input type="radio" id="lesson" name="linkType" value="lesson">
+      <label for="activity">Activity</label>
+      <input type="radio" id="activityLinksRadio" name="linkType" value="activity" checked>
       <br/><br/>
     </div>
-    <input type="button" id="convert-json-url-btn" value="Convert JSON to URL">
+    <input type="button" id="generate-urls" value="Generate Deeplinks">
     <br/><br/>
-    <label for="url-input">Enter your link:</label><br/>
-    <input type="text" id="url-input" required>
-    <input type="button" id="shorten-btn" value="Shorten URL (optional)">
-    <input type="text" id="short-url">
-    <input type="button" id="generate-qr-btn" value="Generate QR Code">    
-    <input type="button" id="gen-short-qr-btn" value="Generate QR from short URL">
-
+    <input type="button" id="generate-qr-codes" value="Generate QR Codes">
+    <br/><br/>
+    <label>Launcher Section Links</label><br/>
+    <textarea id="launcherSectionLinks"></textarea><br/>
+    <label>Set Area Links</label><br/>
+    <textarea id="setAreaLinks"></textarea><br/>
+    <label>Add Topic Links</label><br/>
+    <textarea id="addTopicLinks"></textarea><br/>
+    <label>Launch Activity Links</label><br/>
+    <textarea id="launchActivityLinks"></textarea><br/>
     <div id="qr-container">
       <img id="qr-code" src="" alt="Generated QR Code" style="display:none;"/>
     </div>
@@ -45,8 +58,11 @@
     <input type="file" id="file-input" accept="image/*">
     <p id="result"></p>
   </div>
-  <script src="https://cdn.jsdelivr.net/npm/jsqr/dist/jsQR.js"></script>
-  <script type="module" src="scripts/qr_code/qr-code-gen.js"></script>
+  <div id="downloads">
+
+  </div>
+  <script type="module" src="scripts/qr_code/qr-code-dl-gen-front.js"></script>
   <script type="module" src="scripts/qr_code/qr-code-utils.js"></script>  
+  <script src="https://cdn.jsdelivr.net/npm/jsqr/dist/jsQR.js"></script> 
 </body>
 </html>

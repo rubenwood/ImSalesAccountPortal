@@ -2,6 +2,9 @@ const express = require('express');
 const axios = require('axios');
 const cors = require('cors');
 const AWS = require('aws-sdk');
+const multer = require('multer');
+const fs = require('fs');
+const path = require('path');
 require('dotenv').config();
 const app = express();
 const session = require('express-session');
@@ -376,6 +379,47 @@ app.get('/begin-get-all-players', async (req, res) => {
       res.status(500).json({ message: 'Failed to initiate getting all players.' });
   }
 });
+
+// UPLOAD TO S3
+const upload = multer({ dest: 'uploads/' }); // Temporary storage for uploaded files
+async function uploadToS3(filePath, bucketName, key) {
+  const fileContent = fs.readFileSync(filePath);
+
+  const params = {
+    Bucket: bucketName,
+    Key: key,
+    Body: fileContent,
+    ContentType: 'image/jpeg' // Adjust according to the image type
+  };
+
+  return s3.upload(params).promise();
+}
+app.post('/s3upload', upload.single('image'), async (req, res) => {
+  const file = req.file;
+
+  if (!file) {
+    return res.status(400).send('No file uploaded.');
+  }
+
+  const bucketName = process.env.AWS_BUCKET;
+  const key = `QRCodes/new/${file.originalname}`;
+
+  try {
+    const result = await uploadToS3(file.path, bucketName, key);
+
+    // Clean up the uploaded file
+    fs.unlinkSync(file.path);
+
+    res.json({
+      message: 'Image uploaded successfully',
+      data: result
+    });
+  } catch (error) {
+    console.error('Error uploading image:', error);
+    res.status(500).send('Error uploading image.');
+  }
+});
+
 
 // server session
 app.use(session({

@@ -18,7 +18,7 @@ AWS.config.update({
 });
 
 const s3 = new AWS.S3();
-const upload = multer({ storage: multer.memoryStorage() });
+const uploadQRCode = multer({ storage: multer.memoryStorage() });
 
 function getSignedUrl(bucketName, key) {
     const params = {
@@ -66,7 +66,7 @@ async function decodeQRCode(input) {
     }
 }
 
-qrCodeRouter.post('/decode-qr', upload.single('file'), async (req, res) => {
+qrCodeRouter.post('/decode-qr', uploadQRCode.single('file'), async (req, res) => {
     try {
         let result;
         if (req.file) {
@@ -83,7 +83,7 @@ qrCodeRouter.post('/decode-qr', upload.single('file'), async (req, res) => {
     }
 });
 
-qrCodeRouter.post('/upload-files', upload.array('files'), async (req, res) => {
+qrCodeRouter.post('/upload-files', uploadQRCode.array('files'), async (req, res) => {
     try {
         const fileUploadPromises = req.files.map(file => {
             const params = {
@@ -103,7 +103,7 @@ qrCodeRouter.post('/upload-files', upload.array('files'), async (req, res) => {
         const dbUpdatePromises = uploadResults.map(async (result) => {
             const qrCodeUrl = result.Location;
             const deeplink = await decodeQRCode({ url: qrCodeUrl }); //"https://example.com/deeplink"
-            return await addDeepLinkQRCode(deeplink, qrCodeUrl); // Call the function directly
+            return await addDeepLinkQRCode(deeplink, qrCodeUrl);
         });
 
         await Promise.all(dbUpdatePromises);
