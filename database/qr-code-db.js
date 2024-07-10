@@ -16,22 +16,33 @@ const pool = new Pool({
 
 // CREATE - Insert a new deeplink and QR code URL
 qrCodeDBRouter.post('/add-dl-qr', async (req, res) => {
-    const { deeplink, qrCodeUrl } = req.body;
+    const deeplink = req.body.deeplink;
+    const qrCodeUrl = req.body.qrCodeUrl;
+    const areaId = req.body.areaId;    
+    const areaName = req.body.areaName;
+    const topicId = req.body.topicId;
+    const topicName = req.body.topicName;    
+    const activityId = req.body.activityId;
+    const activityName = req.body.activityName;
+    const type = req.body.type;
 
     if (!deeplink || !qrCodeUrl) {
         return res.status(400).send('Deeplink and QR code URL are required');
     }
 
     try {
-        const result = await addDeepLinkQRCode(deeplink, qrCodeUrl);
+        const result = await addDeepLinkQRCode(deeplink,qrCodeUrl,areaId,areaName,topicId,topicName,activityId,activityName,type);
         res.status(201).json(result);
     } catch (error) {
         res.status(500).send('Error inserting data into the database');
     }
 });
-async function addDeepLinkQRCode(deeplink, qrCodeUrl) {
-    const queryText = 'INSERT INTO public."DeepLinkQRCodes" (deeplink, qr_code_url) VALUES ($1, $2) RETURNING *';
-    const values = [deeplink, qrCodeUrl];
+async function addDeepLinkQRCode(deeplink, qrCodeUrl, areaId, areaName, topicId, topicName, activityId, activityName, type) {
+    const queryText = `
+        INSERT INTO public."DeepLinkQRCodes" (deeplink, qr_code_url, area_id, area_name, topic_id, topic_name, activity_id, activity_name, type)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+        RETURNING *`;
+    const values = [deeplink, qrCodeUrl, areaId, areaName, topicId, topicName, activityId, activityName, type];
 
     try {
         const result = await pool.query(queryText, values);
@@ -109,7 +120,7 @@ qrCodeDBRouter.delete('/delete-dl-qr/:id', async (req, res) => {
     }
 });
 
-//SEARCH
+// SEARCH
 qrCodeDBRouter.get('/search', async (req, res) => {
     const query = req.query.q;
     try {
@@ -135,74 +146,5 @@ async function searchQRCodeDB(query) {
         throw error;
     }
 }
-
-// Update Metadata
-// for each entry, check deeplink, get params (topic, activity), and enter
-// https://immersifyeducation.com/deeplink?dl=%5Bimmersifyeducation%3A%2F%2Fimmersifydental%3Ftopic%3Dbridges_topic%5D
-// https://immersifyeducation.com/deeplink?dl=%5Bimmersifyeducation%3A%2F%2Fimmersifydental%3FloadScene%3DCMSLesson%26sceneParams%3D%5BLessonData%3AReproductiveSystemLessonData%5D%26activityID%3DreproductiveSystem_lesson%5D
-async function updateDBFields() {
-    const selectQuery = `SELECT id, deeplink FROM public."DeepLinkQRCodes"`;
-    try {
-        const result = await pool.query(selectQuery);
-        const entries = result.rows;
-
-        for (const entry of entries) {
-            const { id, deeplink } = entry;
-            let topic = null;
-            let activity = null;
-
-            // Extract the part within brackets and decode it
-            const match = deeplink.match(/dl=\[([^\]]+)\]/);
-            if (match) {
-                const decodedLink = decodeURIComponent(match[1]);
-                const innerLink = decodedLink.split('?')[1];
-                const dlParams = new URLSearchParams(innerLink);
-
-                // Extract topic and activityID directly
-                if (dlParams.has('topic')) {
-                    topic = dlParams.get('topic');
-                }
-                if (dlParams.has('activityID')) {
-                    activity = dlParams.get('activityID');
-                }
-
-                // Check within sceneParams for nested activityID
-                if (dlParams.has('sceneParams')) {
-                    const sceneParams = dlParams.get('sceneParams');
-                    const nestedParams = new URLSearchParams(sceneParams.replace(/^\[|\]$/g, '').replace(/,/g, '&'));
-                    if (nestedParams.has('activityID')) {
-                        activity = nestedParams.get('activityID');
-                    }
-                }
-            }
-
-            // Update the database fields if they are found
-            const updateFields = {};
-            const updateValues = [];
-            let updateQuery = 'UPDATE public."DeepLinkQRCodes" SET';
-            if (topic) {
-                updateFields.topic = topic;
-                updateValues.push(topic);
-                updateQuery += ` "topic" = $${updateValues.length},`;
-            }
-            if (activity) {
-                updateFields.activity = activity;
-                updateValues.push(activity);
-                updateQuery += ` "activity" = $${updateValues.length},`;
-            }
-
-            if (updateValues.length > 0) {
-                updateQuery = updateQuery.slice(0, -1); // Remove trailing comma
-                updateValues.push(id);
-                updateQuery += ` WHERE "id" = $${updateValues.length}`;
-                await pool.query(updateQuery, updateValues);
-            }
-        }
-    } catch (error) {
-        console.error('Error updating database fields:', error);
-        throw error;
-    }
-}
-//updateDBFields();
 
 module.exports = { qrCodeDBRouter, addDeepLinkQRCode };

@@ -64,3 +64,18 @@ export async function getActivities(){
     console.log(data);
     return data;
 }
+
+export async function imAPIGet(endpointURL){
+    const apiURL = `${baseURL}/${endpointURL}`;
+    const apiResponse = await fetch(apiURL, {
+        method: 'GET',
+        headers: { 
+            'Authorization': `Bearer ${jwtoken}`,
+            'Content-Type': 'application/json' 
+        }
+    });
+    const data = await apiResponse.json();
+    console.log("got data:");
+    console.log(data);
+    return data;
+}

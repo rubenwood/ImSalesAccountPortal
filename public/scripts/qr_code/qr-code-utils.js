@@ -52,19 +52,16 @@ async function genQRCode(url) {
 
 export async function generateQRCodesAndUpload(URLList) {
     console.log(URLList);
+    let qrCodeUrls = [];
     try {
-        //let qrCodeUrls = [];
-        let i = 0; // temp, change this eventually
         for(let url of URLList){
-            console.log(url);
-            let qrCodeUrl = await genQRCode(url);
-            //qrCodeUrls.push(qrCodeUrl);
-
+            //console.log(url);
+            let qrCodeUrl = await genQRCode(url.link);
             const response = await fetch(qrCodeUrl);
             const blob = await response.blob();
 
             const formData = new FormData();
-            formData.append('image', blob, `image_${i}.jpg`);
+            formData.append('image', blob, `${url.imgName}.jpg`);
 
             const uploadResponse = await fetch('/s3upload', {
                 method: 'POST',
@@ -74,15 +71,15 @@ export async function generateQRCodesAndUpload(URLList) {
             if (uploadResponse.ok) {
                 const result = await uploadResponse.json();
                 console.log('Image uploaded successfully', result);
+                let qrCodeS3Url = result.data.Location;
+                qrCodeUrls.push({imgName:url.imgName, qrCodeS3Url});
             } else {
                 console.error('Error uploading image:', uploadResponse.statusText);
             }
-            
-            i++;
-        }
-
-        
+        }        
     } catch (error) {
         console.error('Error:', error);
     }
+
+    return qrCodeUrls;
 }
