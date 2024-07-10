@@ -1,6 +1,4 @@
-/*headers: {
-    'Authorization': `Bearer ${jwtoken}`,
-}*/
+
 const baseURL = "https://immersify-api.herokuapp.com";
 export let jwtoken;
 
@@ -14,8 +12,8 @@ export async function auth(playfabId, playfabSessionTicket){
         body: JSON.stringify({ playfabId, playfabSessionTicket })
     });
     const data = await authResponse.json();
-    console.log("auth resp:");
-    console.log(data);
+    //console.log("auth resp:");
+    //console.log(data);
     jwtoken = data.accessToken;
     return data;
 }
@@ -30,8 +28,8 @@ export async function getAreas(){
         }
     });
     const data = await areasResponse.json();
-    console.log("areas:");
-    console.log(data);
+    //console.log("areas:");
+    //console.log(data);
     return data;
 }
 
@@ -45,8 +43,8 @@ export async function getTopics(){
         }
     });
     const data = await topicsResponse.json();
-    console.log("topics:");
-    console.log(data);
+    //console.log("topics:");
+    //console.log(data);
     return data;
 }
 
@@ -60,8 +58,8 @@ export async function getActivities(){
         }
     });
     const data = await activitiesResponse.json();
-    console.log("activities:");
-    console.log(data);
+    //console.log("activities:");
+    //console.log(data);
     return data;
 }
 

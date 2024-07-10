@@ -17,6 +17,16 @@ document.addEventListener('DOMContentLoaded', () => {
         await bulkAddToDatabase(allURLs, allQRCodeURLs); 
     });
 
+    // DECODE QR CODE
+    document.getElementById('file-input').addEventListener('change', async(event) => {
+        const file = event.target.files[0];
+        if (file) {
+            let decodedUrl = await decodeQRCode(file);
+            document.getElementById('decoded-result').innerHTML = decodedUrl;
+
+        }
+    });
+
     setupPage();
 });
 window.onload = function(){
@@ -37,28 +47,28 @@ async function setupPage(){
         const launcherSectionLinksElement = document.getElementById('launcherSectionLinks');
         const launcherSectionLinks = await genLauncherSectionLinks(["Explore","Library","Progress","Feed","Shop"]);
         let launcherSectionURLs = [];
-        launcherSectionLinks.forEach(element =>{ launcherSectionURLs.push(element.link); })
+        launcherSectionLinks.forEach(element => { launcherSectionURLs.push(element.link); });
         const launcherSectionLinksStr = launcherSectionURLs.join('\n');
         launcherSectionLinksElement.value = launcherSectionLinksStr;
 
         const areaLinksElement = document.getElementById('setAreaLinks');
         const setAreaLinks = await genSetAreaLinks(areas);
         let setAreaURLs = [];
-        setAreaLinks.forEach(element =>{ setAreaURLs.push(element.link); })
+        setAreaLinks.forEach(element => { setAreaURLs.push(element.link); });
         const setAreaLinksStr = setAreaURLs.join('\n');
         areaLinksElement.value = setAreaLinksStr;
 
         const addTopicLinksElement = document.getElementById('addTopicLinks');
         const addTopicLinks = await genAddTopicLinks(topics);
         let addTopicURLs = [];
-        addTopicLinks.forEach(element =>{ addTopicURLs.push(element.link); })
+        addTopicLinks.forEach(element => { addTopicURLs.push(element.link); });
         const addTopicLinksStr = addTopicURLs.join('\n');
         addTopicLinksElement.value = addTopicLinksStr;
 
         const launchActivityLinksElement = document.getElementById('launchActivityLinks');
         const launchActivityLinks = await genLaunchActivityLinks(activities);
         let launchActivityURLs = [];
-        launchActivityLinks.forEach(element =>{ launchActivityURLs.push(element.link); })
+        launchActivityLinks.forEach(element => { launchActivityURLs.push(element.link); });
         const launchActivityLinksStr = launchActivityURLs.join('\n');
         launchActivityLinksElement.value = launchActivityLinksStr;
 
@@ -67,6 +77,34 @@ async function setupPage(){
         allURLs.push(...setAreaLinks);
         allURLs.push(...addTopicLinks);
         allURLs.push(...launchActivityLinks);
+
+        // Check for duplicates in allURLs by imgName and modify them to be unique
+        let imgNameCount = {};
+
+        allURLs.forEach(element => {
+            if (imgNameCount[element.imgName]) {
+                imgNameCount[element.imgName]++;
+                element.imgName = `${element.imgName}_${imgNameCount[element.imgName]}`;
+            } else {
+                imgNameCount[element.imgName] = 1;
+            }
+        });
+
+        // Verify no duplicates exist after modification
+        let duplicates = allURLs.reduce((acc, current) => {
+            acc[current.imgName] = (acc[current.imgName] || 0) + 1;
+            return acc;
+        }, {});
+
+        let duplicateElements = allURLs.filter(element => duplicates[element.imgName] > 1);
+
+        if (duplicateElements.length > 0) {
+            console.log("Duplicates found after modification:");
+            console.log(duplicateElements);
+        } else {
+            console.log("No duplicates found after modification.");
+        }
+        
     } catch (error) {
         console.error("Error setting up page:", error);
     }
