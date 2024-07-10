@@ -43,7 +43,6 @@ export async function generateQRCodesAndUpload(URLList) {
     let qrCodeUrls = [];
     try {
         for(let url of URLList){
-            //console.log(url);
             let qrCodeUrl = await genQRCode(url.link);
             const response = await fetch(qrCodeUrl);
             const blob = await response.blob();

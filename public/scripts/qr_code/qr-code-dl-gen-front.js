@@ -10,6 +10,7 @@ let allQRCodeURLs;
 document.addEventListener('DOMContentLoaded', () => {
     // event listener for login modal
     document.getElementById('loginButton').addEventListener('click', Login);
+    document.getElementById('generate-deeplinks').addEventListener('click',generateDeeplinks);
     document.getElementById('generate-qr-codes').addEventListener('click', async () => { 
         allQRCodeURLs = await generateQRCodesAndUpload(allURLs) 
     } );
@@ -31,13 +32,13 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    setupPage();
+    ;
 });
 window.onload = function(){
     document.getElementById('loginModal').style.display = 'block';
 };
 
-async function setupPage(){
+async function generateDeeplinks(){
     console.log("Setting up the page...");
     await waitUntil(() => jwtoken !== undefined);
     console.log("JWToken is defined");
@@ -106,8 +107,7 @@ async function setupPage(){
             console.log(duplicateElements);
         } else {
             console.log("No duplicates found after modification.");
-        }
-        
+        }        
     } catch (error) {
         console.error("Error setting up page:", error);
     }
