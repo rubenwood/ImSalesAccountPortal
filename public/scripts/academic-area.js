@@ -57,6 +57,8 @@ export async function fetchAllUsersByArea() {
         console.error("Error during data fetch: ", error);
     }
 }
+
+// Combines the usage and account data
 export function sortAndCombineData(results) {
     //console.log(results);
     return results.reduce((acc, curr) => {
@@ -94,7 +96,7 @@ export function populateForm(data){
 
     const tableBody = document.getElementById("reportTableBody");
     tableBody.innerHTML = '';
-
+    // TODO: update this to account for new cms-style data
     data.forEach(element =>{
         let playFabId = element.accountData.PlayFabId;
         let email = getUserEmailFromAccData(element.accountData.AccountDataJSON);

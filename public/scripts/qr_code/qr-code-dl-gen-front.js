@@ -1,5 +1,5 @@
 // QR Code & Deeplink generator code
-import { decodeQRCode, generateQRCodesAndUpload } from './qr-code-utils.js';
+import { decodeQRCode, generateQRCodesAndUpload, genQRCode } from './qr-code-utils.js';
 import { Login } from '../PlayFabManager.js';
 import { imAPIGet, getAreas, getTopics, getActivities, jwtoken } from '../immersifyapi/immersify-api.js';
 import { waitUntil } from '../asyncTools.js';
@@ -10,11 +10,16 @@ let allQRCodeURLs;
 document.addEventListener('DOMContentLoaded', () => {
     // event listener for login modal
     document.getElementById('loginButton').addEventListener('click', Login);
-    document.getElementById('generate-qr-codes').addEventListener('click', async ()=> { 
+    document.getElementById('generate-qr-codes').addEventListener('click', async () => { 
         allQRCodeURLs = await generateQRCodesAndUpload(allURLs) 
     } );
-    document.getElementById('update-db').addEventListener('click', async ()=> { 
+    document.getElementById('update-db').addEventListener('click', async () => { 
         await bulkAddToDatabase(allURLs, allQRCodeURLs); 
+    });
+    document.getElementById('manual-gen-qr-code-btn').addEventListener('click', async () => { 
+        let generateQRCodeURL = await genQRCode(document.getElementById('deeplink-qr-code-input').value);
+        console.log(`code url: ${generateQRCodeURL}`);
+        document.getElementById('generated-qr-img').src = generateQRCodeURL;
     });
 
     // DECODE QR CODE
@@ -23,7 +28,6 @@ document.addEventListener('DOMContentLoaded', () => {
         if (file) {
             let decodedUrl = await decodeQRCode(file);
             document.getElementById('decoded-result').innerHTML = decodedUrl;
-
         }
     });
 
@@ -80,7 +84,6 @@ async function setupPage(){
 
         // Check for duplicates in allURLs by imgName and modify them to be unique
         let imgNameCount = {};
-
         allURLs.forEach(element => {
             if (imgNameCount[element.imgName]) {
                 imgNameCount[element.imgName]++;
@@ -205,7 +208,8 @@ async function bulkAddToDatabase(allURLs, allQRCodeURLs) {
 
     //TODO: change database structure to reflect new data being written
     /*for(dbData of databaseUpdateData){
-        let dbResp = await addToDatabase(element.deeplink, 
+        let dbResp = await addToDatabase(
+            element.deeplink, 
             element.qrCodeUrl,
             element.areaId,
             element.areaName,

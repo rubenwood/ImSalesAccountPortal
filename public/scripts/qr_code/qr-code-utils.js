@@ -27,27 +27,15 @@ export async function decodeQRCode(input){
     }
 }
 
-export async function generateQRCode(url){
-    const response = await genQRCode(url);
-
-    if (response.ok) {
-        const qrCodeUrl = response.url;
-        qrCode.src = qrCodeUrl;
-        qrCode.style.display = 'block';
-    } else {
-        alert('Error generating QR code');
-    }
-}
-
-async function genQRCode(url) {
+export async function genQRCode(url) {
     const apiUrl = 'https://api.qrserver.com/v1/create-qr-code/';
     const qrSize = '1000x1000';
-    const encodedUrl = encodeURIComponent(url);
+    const decodedUrl = decodeURI(url); // decode it, then re-encode it to be sure
+    const encodedUrl = encodeURIComponent(decodedUrl);
 
     const response = await fetch(`${apiUrl}?size=${qrSize}&data=${encodedUrl}`);
-    console.log(response);
-    const qrCodeUrl = response.url;
-    return qrCodeUrl;
+    
+    return response.url;
 }
 
 export async function generateQRCodesAndUpload(URLList) {

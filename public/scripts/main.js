@@ -30,11 +30,8 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('toggleIdsButton').addEventListener('click', togglePlayerIdsTextArea);
 
     // reports
-    //document.getElementById('generateReportButton').addEventListener('click', generateReportByEmail);
     document.getElementById('generateReportButton').addEventListener('click', generateReportByEmailDB);
-    //document.getElementById('generateReportByIdButton').addEventListener('click', generateReportById);
     document.getElementById('generateReportByIdButton').addEventListener('click', generateReportByIdDB);
-    //document.getElementById('generateReportBySuffixButton').addEventListener('click', generateReportBySuffix);
     document.getElementById('generateReportBySuffixButton').addEventListener('click', generateReportBySuffixDB);
     document.getElementById('generateReportByAreaButton').addEventListener('click', fetchAllUsersByArea);
     document.getElementById('generateReportByClickIDButton').addEventListener('click', fetchUsersByClickIDList);
@@ -279,7 +276,7 @@ export async function generateReportBySuffixDB(){
         })            
     })
     updateIDList(playerIDList);
-
+    
     let sortedData = sortAndCombineData(results); 
     document.getElementById('totalPlayersReport').innerHTML = 'Total users in report: ' + sortedData.length;
     await populateForm(sortedData);

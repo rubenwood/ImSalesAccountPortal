@@ -56,12 +56,14 @@
   </div>
   <br/><br/>
   <div id="qr-decode-content" class="form-container">
-    <h1>Decoder</h1>
+    <h2>Decoder</h2>
     <input type="file" id="file-input" accept="image/*">
     <p id="decoded-result"></p>
-  </div>
-  <div id="downloads">
-
+    <br/><br/>
+    <h2>Generate QR Code (testing)</h2><br/>
+    <input type="text" id="deeplink-qr-code-input" /><br/>
+    <input type="button" id="manual-gen-qr-code-btn" value="Generate QR Code"/><br/>
+    <img id="generated-qr-img" src="" />
   </div>
   <script type="module" src="scripts/qr_code/qr-code-dl-gen-front.js"></script>
   <script type="module" src="scripts/qr_code/qr-code-utils.js"></script>  
