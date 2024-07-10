@@ -8,22 +8,25 @@ let allURLs = [];
 let allQRCodeURLs;
 
 document.addEventListener('DOMContentLoaded', () => {
-    // event listener for login modal
+    // login button on modal
     document.getElementById('loginButton').addEventListener('click', Login);
-    document.getElementById('generate-deeplinks').addEventListener('click',generateDeeplinks);
+    // generate deeplinks button
+    document.getElementById('generate-deeplinks').addEventListener('click', generateDeeplinks);
+    // generate (and upload) QR codes
     document.getElementById('generate-qr-codes').addEventListener('click', async () => { 
         allQRCodeURLs = await generateQRCodesAndUpload(allURLs) 
-    } );
+    });
+    // Update database with new links and generated qr codes (must generate qr codes first)
     document.getElementById('update-db').addEventListener('click', async () => { 
         await bulkAddToDatabase(allURLs, allQRCodeURLs); 
     });
+    // Manually generate QR code from URL
     document.getElementById('manual-gen-qr-code-btn').addEventListener('click', async () => { 
         let generateQRCodeURL = await genQRCode(document.getElementById('deeplink-qr-code-input').value);
         console.log(`code url: ${generateQRCodeURL}`);
         document.getElementById('generated-qr-img').src = generateQRCodeURL;
     });
-
-    // DECODE QR CODE
+    // Decodes QR code
     document.getElementById('file-input').addEventListener('change', async(event) => {
         const file = event.target.files[0];
         if (file) {
@@ -31,8 +34,6 @@ document.addEventListener('DOMContentLoaded', () => {
             document.getElementById('decoded-result').innerHTML = decodedUrl;
         }
     });
-
-    ;
 });
 window.onload = function(){
     document.getElementById('loginModal').style.display = 'block';
