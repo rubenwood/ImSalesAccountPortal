@@ -7,29 +7,41 @@ import { waitUntil } from '../asyncTools.js';
 let allURLs = [];
 let allQRCodeURLs;
 
+const doConfetti = () => { confetti({particleCount: 100, spread: 70, origin:{ y: 0.6 }}); }
+
 document.addEventListener('DOMContentLoaded', () => {
     // login button on modal
     document.getElementById('loginButton').addEventListener('click', Login);
     // generate deeplinks button
-    document.getElementById('generate-deeplinks').addEventListener('click', generateDeeplinks);
+    let genDLBtn = document.getElementById('generate-deeplinks');
+    genDLBtn.addEventListener('click', async() => { 
+        genDLBtn.value = "Generating Deeplinks...";
+        await generateDeeplinks();
+        doConfetti();
+        genDLBtn.value = "Generate Deeplinks";
+    });
     // generate (and upload) QR codes
-    document.getElementById('generate-qr-codes').addEventListener('click', async () => { 
+    let genQRBtn = document.getElementById('generate-qr-codes');
+    genQRBtn.addEventListener('click', async() => { 
+        genQRBtn.value = "Generating QR Codes...";
         allQRCodeURLs = await generateQRCodesAndUpload(allURLs);
-        confetti({
-            particleCount: 100,
-            spread: 70,
-            origin: { y: 0.6 }
-        });
+        doConfetti();
+        genQRBtn.value = "Generate QR Codes";
     });
     // Update database with new links and generated qr codes (must generate qr codes first)
-    document.getElementById('update-db').addEventListener('click', async () => { 
-        await bulkAddToDatabase(allURLs, allQRCodeURLs); 
+    let updateDBBtn = document.getElementById('update-db');
+    updateDBBtn.addEventListener('click', async() => { 
+        updateDBBtn.value = "Updating Database...";
+        await bulkAddToDatabase(allURLs, allQRCodeURLs);
+        doConfetti();
+        updateDBBtn.value = "Update Database (NYI)";
     });
     // Manually generate QR code from URL
-    document.getElementById('manual-gen-qr-code-btn').addEventListener('click', async () => { 
+    document.getElementById('manual-gen-qr-code-btn').addEventListener('click', async() => { 
         let generateQRCodeURL = await genQRCode(document.getElementById('deeplink-qr-code-input').value);
         console.log(`code url: ${generateQRCodeURL}`);
         document.getElementById('generated-qr-img').src = generateQRCodeURL;
+        doConfetti();
     });
     // Decodes QR code
     document.getElementById('file-input').addEventListener('change', async(event) => {
@@ -50,9 +62,7 @@ async function generateDeeplinks(){
     console.log("JWToken is defined");
 
     try {
-        const areas = await getAreas();
-        const topics = await getTopics();
-        const activities = await getActivities();
+        const [areas, topics, activities] = await Promise.all([ getAreas(), getTopics(), getActivities()]);
 
         // clear cache deeplink
         //https://immersifyeducation.com/deeplink?dl=%5Bimmersifyeducation%3A%2F%2Fimmersifydental%3FClearCache%5D
@@ -64,29 +74,33 @@ async function generateDeeplinks(){
         const ssoLinksStr = ssoURLs.join('\n');
         ssoLinksElement.value = ssoLinksStr;*/
 
+        const [launcherSectionLinks, setAreaLinks, addTopicLinks, launchActivityLinks] = await Promise.all([
+            genLauncherSectionLinks(["Explore","Library","Progress","Feed","Shop"]),
+            genSetAreaLinks(areas),
+            genAddTopicLinks(topics),
+            genLaunchActivityLinks(activities)
+        ]);
+
         const launcherSectionLinksElement = document.getElementById('launcherSectionLinks');
-        const launcherSectionLinks = await genLauncherSectionLinks(["Explore","Library","Progress","Feed","Shop"]);
+        const areaLinksElement = document.getElementById('setAreaLinks');
+        const addTopicLinksElement = document.getElementById('addTopicLinks');
+        const launchActivityLinksElement = document.getElementById('launchActivityLinks');
+
         let launcherSectionURLs = [];
         launcherSectionLinks.forEach(element => { launcherSectionURLs.push(element.link); });
         const launcherSectionLinksStr = launcherSectionURLs.join('\n');
         launcherSectionLinksElement.value = launcherSectionLinksStr;
 
-        const areaLinksElement = document.getElementById('setAreaLinks');
-        const setAreaLinks = await genSetAreaLinks(areas);
         let setAreaURLs = [];
         setAreaLinks.forEach(element => { setAreaURLs.push(element.link); });
         const setAreaLinksStr = setAreaURLs.join('\n');
         areaLinksElement.value = setAreaLinksStr;
 
-        const addTopicLinksElement = document.getElementById('addTopicLinks');
-        const addTopicLinks = await genAddTopicLinks(topics);
         let addTopicURLs = [];
         addTopicLinks.forEach(element => { addTopicURLs.push(element.link); });
         const addTopicLinksStr = addTopicURLs.join('\n');
         addTopicLinksElement.value = addTopicLinksStr;
 
-        const launchActivityLinksElement = document.getElementById('launchActivityLinks');
-        const launchActivityLinks = await genLaunchActivityLinks(activities);
         let launchActivityURLs = [];
         launchActivityLinks.forEach(element => { launchActivityURLs.push(element.link); });
         const launchActivityLinksStr = launchActivityURLs.join('\n');
@@ -123,11 +137,6 @@ async function generateDeeplinks(){
         } else {
             console.log("No duplicates found after modification.");
         }
-        confetti({
-            particleCount: 100,
-            spread: 70,
-            origin: { y: 0.6 }
-        });
     } catch (error) {
         console.error("Error setting up page:", error);
     }
