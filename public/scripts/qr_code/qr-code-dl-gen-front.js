@@ -14,7 +14,12 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('generate-deeplinks').addEventListener('click', generateDeeplinks);
     // generate (and upload) QR codes
     document.getElementById('generate-qr-codes').addEventListener('click', async () => { 
-        allQRCodeURLs = await generateQRCodesAndUpload(allURLs) 
+        allQRCodeURLs = await generateQRCodesAndUpload(allURLs);
+        confetti({
+            particleCount: 100,
+            spread: 70,
+            origin: { y: 0.6 }
+        });
     });
     // Update database with new links and generated qr codes (must generate qr codes first)
     document.getElementById('update-db').addEventListener('click', async () => { 
@@ -48,7 +53,16 @@ async function generateDeeplinks(){
         const areas = await getAreas();
         const topics = await getTopics();
         const activities = await getActivities();
-        //console.log("Data fetched:", { areas, topics, activities });
+
+        // clear cache deeplink
+        //https://immersifyeducation.com/deeplink?dl=%5Bimmersifyeducation%3A%2F%2Fimmersifydental%3FClearCache%5D
+
+        /*const ssoLinksElement = document.getElementById('ssoLinks');
+        const ssoLinks = await genSSOLinks();
+        let ssoURLs = [];
+        ssoLinks.forEach(element => { ssoURLs.push(element.link); });
+        const ssoLinksStr = ssoURLs.join('\n');
+        ssoLinksElement.value = ssoLinksStr;*/
 
         const launcherSectionLinksElement = document.getElementById('launcherSectionLinks');
         const launcherSectionLinks = await genLauncherSectionLinks(["Explore","Library","Progress","Feed","Shop"]);
@@ -108,10 +122,21 @@ async function generateDeeplinks(){
             console.log(duplicateElements);
         } else {
             console.log("No duplicates found after modification.");
-        }        
+        }
+        confetti({
+            particleCount: 100,
+            spread: 70,
+            origin: { y: 0.6 }
+        });
     } catch (error) {
         console.error("Error setting up page:", error);
     }
+}
+
+// generate sso login links
+async function genSSOLinks(){
+    // get the connection id's from the json
+    // there will be some additional id's (for apple, google, eventually facebook (meta))
 }
 
 // generate launcher section links
