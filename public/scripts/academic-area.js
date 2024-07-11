@@ -129,7 +129,7 @@ export function populateForm(data){
                 activityDataForReport: []
             };
             // TODO: test this!
-            console.log(`${email} : ${playerDataNew} ${playerData}`);
+            //console.log(`${email} : ${playerDataNew} ${playerData}`);
             let newDataState = populateUsageData([playerDataNew, playerData], loginData, playerDataState, row);
             let activityDataForReport = newDataState.activityDataForReport;
             let averageTimePerPlay = newDataState.averageTimePerPlay;
