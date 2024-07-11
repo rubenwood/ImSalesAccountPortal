@@ -207,14 +207,18 @@ export async function generateReportBySuffix() {
             // Login Data per platform
             let loginData = populateLoginData(userData.data.Data);
             // Player / Activity Data
+            // TODO: add playerDataNewLauncher here
+            let playerDataNew = userData.data.Data.PlayerDataNewLauncher !== undefined ? JSON.parse(userData.data.Data.PlayerDataNewLauncher.Value) : undefined;
             let playerData = userData.data.Data.PlayerData !== undefined ? JSON.parse(userData.data.Data.PlayerData.Value) : undefined;
             let playerDataState = {
+                totalActivitiesPlayed:0,
                 averageTimePerPlay: 0,
                 totalPlays: 0,
                 totalPlayTime: 0,
                 activityDataForReport: []
             };
-            let newDataState = populateUsageData(playerData, loginData, playerDataState, row);
+            // TODO: test this!
+            let newDataState = populateUsageData([playerDataNew, playerData], loginData, playerDataState, row);
             let averageTimePerPlay = newDataState.averageTimePerPlay;
             let totalPlays = newDataState.totalPlays;
             let totalPlayTime = newDataState.totalPlayTime;
@@ -527,16 +531,20 @@ async function handleData(respData, userAccInfo, tableBody){
     let loginData = populateLoginData(userData.data.Data);
 
     // process PlayerData
+    // TODO: add playerDataNewLauncher here
+    let playerDataNew = userData.PlayerDataNewLauncher !== undefined ? JSON.parse(userData.PlayerDataNewLauncher.Value) : undefined;
     let playerData = userData.data.Data.PlayerData !== undefined ? JSON.parse(userData.data.Data.PlayerData.Value) : undefined;
     // need this to preserve the data state, so it can be mutated by populatePlayerData, 
     // and then written to export data further down
     let playerDataState = {
+        totalActivitiesPlayed:0,
         averageTimePerPlay: 0,
         totalPlays: 0,
         totalPlayTime: 0,
         activityDataForReport: []
     };
-    let newDataState = populateUsageData(playerData, loginData, playerDataState, row);
+    // TODO: test this!
+    let newDataState = populateUsageData([playerDataNew, playerData], loginData, playerDataState, row);
     let averageTimePerPlay = newDataState.averageTimePerPlay;
     let totalPlays = newDataState.totalPlays;
     let totalPlayTime = newDataState.totalPlayTime;

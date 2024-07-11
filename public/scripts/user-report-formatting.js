@@ -146,49 +146,60 @@ export function checkForContactEmailAddrSuffix(input, suffixes){
 }
 
 // populates the expanded usage data modal
-export function populateUsageData(playerData, loginData, state, row){
-    if(playerData == undefined){ addCellToRow(row, 'No Usage Data', false); return state; }
+// TODO: change this to take in more than one PlayerData
+export function populateUsageData(playerDataList, loginData, state, row){
+    // if every playerDataList element is undefined, there is no playerdata
+    if(playerDataList.every((element) => { return element === undefined})){ 
+        addCellToRow(row, 'No Usage Data', false); 
+        return state; 
+    }
 
     let playerDataContent = '';
     playerDataContent += `<b>Last Login Android:</b> ${loginData.lastLoginAndr} <br/>
                         <b>Last Login iOS:</b> ${loginData.lastLoginIOS} <br/> 
                         <b>Last Login Web:</b> ${loginData.lastLoginWeb} <br/>`;
     
-    playerData.activities.forEach(activity => {
-        let activityContent =`<table><tr><td><b>Activity ID</b></td><td>${activity.activityID}</td></tr>`;
-        activityContent +=`<tr><td><b>Activity Name</b></td><td>${activity.activityTitle}</td></tr>`;
-        activityContent += `<tr><td><b>Plays</b></td><td>${activity.plays.length}</td></tr>`;
-        let totalSessionTime = 0;
-        let bestScore = 0;
-        state.totalPlays += activity.plays.length;
+    // TODO: Test this!
+    playerDataList.forEach(playerData =>{
+        if(playerData != undefined){
+            state.totalActivitiesPlayed += playerData.activities.length;
+            playerData.activities.forEach(activity => {
+                let activityContent =`<table><tr><td><b>Activity ID</b></td><td>${activity.activityID}</td></tr>`;
+                activityContent +=`<tr><td><b>Activity Name</b></td><td>${activity.activityTitle}</td></tr>`;
+                activityContent += `<tr><td><b>Plays</b></td><td>${activity.plays.length}</td></tr>`;
+                let totalSessionTime = 0;
+                let bestScore = 0;
+                state.totalPlays += activity.plays.length;
+                
+                activity.plays.forEach(play => {
+                    totalSessionTime += Math.round(Math.abs(play.sessionTime));
+                    if(play.normalisedScore > bestScore){
+                        bestScore = Math.round(play.normalisedScore * 100);
+                    }
+                });
+                state.totalPlayTime += totalSessionTime;
         
-        activity.plays.forEach(play => {
-            totalSessionTime += Math.round(Math.abs(play.sessionTime));
-            if(play.normalisedScore > bestScore){
-                bestScore = Math.round(play.normalisedScore * 100);
-            }
-        });
-        state.totalPlayTime += totalSessionTime;
-
-        activityContent += `<tr><td><b>Total Session Length</b></td><td>${formatTime(totalSessionTime)}</td></tr><br />`;
-        activityContent += `<tr><td><b>Best Score</b></td><td>${bestScore} %</td></tr><br />`;
-        activityContent += "</table>";
-        playerDataContent += activityContent;
-
-        // add the unformatted data for the report
-        let userActivityData = {
-            activityID:activity.activityID,
-            activityTitle: activity.activityTitle,
-            plays:activity.plays,
-            playCount:activity.plays.length,
-            totalSessionTime:totalSessionTime,
-            bestScore:bestScore
-        };
-        state.activityDataForReport.push(userActivityData);
+                activityContent += `<tr><td><b>Total Session Length</b></td><td>${formatTime(totalSessionTime)}</td></tr><br />`;
+                activityContent += `<tr><td><b>Best Score</b></td><td>${bestScore} %</td></tr><br />`;
+                activityContent += "</table>";
+                playerDataContent += activityContent;
+        
+                // add the unformatted data for the report
+                let userActivityData = {
+                    activityID:activity.activityID,
+                    activityTitle: activity.activityTitle,
+                    plays:activity.plays,
+                    playCount:activity.plays.length,
+                    totalSessionTime:totalSessionTime,
+                    bestScore:bestScore
+                };
+                state.activityDataForReport.push(userActivityData);
+            });
+        }
     });
 
     playerDataContent += `<h1>Total Plays: ${state.totalPlays}</h1>`;
-    playerDataContent += `<h1>Total Activities Played: ${playerData.activities.length}</h1>`;
+    playerDataContent += `<h1>Total Activities Played: ${state.totalActivitiesPlayed}</h1>`;
     playerDataContent += `<h1>Total Play Time: ${formatTime(state.totalPlayTime)}</h1>`;
     state.averageTimePerPlay = Math.round(state.totalPlayTime / state.totalPlays); 
     playerDataContent += `<h1>Avg. Time per activity: ${formatTime(state.averageTimePerPlay)}</h1>`;

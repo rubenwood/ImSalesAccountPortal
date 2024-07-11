@@ -118,14 +118,19 @@ export function populateForm(data){
             populateAccDataRow(row, email, createdDate, lastLoginDate, daysSinceLastLogin, daysSinceCreation, 
                 accountExpiryDateString, "", "", "", linkedAccounts);
             let loginData = populateLoginData(userData);
+            // TODO: add playerDataNewLauncher here
+            let playerDataNew = userData.PlayerDataNewLauncher !== undefined ? JSON.parse(userData.PlayerDataNewLauncher.Value) : undefined;
             let playerData = userData.PlayerData !== undefined ? JSON.parse(userData.PlayerData.Value) : undefined;
             let playerDataState = {
+                totalActivitiesPlayed:0,
                 averageTimePerPlay: 0,
                 totalPlays: 0,
                 totalPlayTime: 0,
                 activityDataForReport: []
             };
-            let newDataState = populateUsageData(playerData, loginData, playerDataState, row);
+            // TODO: test this!
+            console.log(`${email} : ${playerDataNew} ${playerData}`);
+            let newDataState = populateUsageData([playerDataNew, playerData], loginData, playerDataState, row);
             let activityDataForReport = newDataState.activityDataForReport;
             let averageTimePerPlay = newDataState.averageTimePerPlay;
             let totalPlays = newDataState.totalPlays;
