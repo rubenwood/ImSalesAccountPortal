@@ -9,6 +9,8 @@ import { populateForm, sortAndCombineData, fetchAllUsersByArea } from './academi
 import { fetchUsersByID, fetchUsersByEmail } from './db/db-front.js';
 import { fetchUsersByClickIDList } from './click-id-front.js';
 
+const doConfetti = () => { confetti({particleCount: 100, spread: 70, origin: { y: 0.6 }}); }
+
 document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('loginButton').addEventListener('click', Login);
     // Sign Up / Modify Form
@@ -244,11 +246,7 @@ export async function generateReportBySuffix() {
     };
     
     // confetti & confirmation of completion
-    confetti({
-        particleCount: 100,
-        spread: 70,
-        origin: { y: 0.6 }
-    });
+    doConfetti();
 }
 export async function generateReportBySuffixDB(){
     let hasAccess = await canAccess();
@@ -287,11 +285,7 @@ export async function generateReportBySuffixDB(){
 
     Promise.allSettled(fetchPromises).then(results => {
         resetButtonTexts();
-        confetti({
-            particleCount: 100,
-            spread: 70,
-            origin: { y: 0.6 }
-        });
+        doConfetti();
     });
 }
 
@@ -333,12 +327,8 @@ export async function generateReportById() {
 
     // Wait for all the fetch calls to settle
     Promise.allSettled(fetchPromises).then(results => {
-        confetti({
-            particleCount: 100,
-            spread: 70,
-            origin: { y: 0.6 }
-        });
-    });
+        doConfetti();
+});
 }
 // Generate report by ID (Database)
 export async function generateReportByIdDB() {
@@ -381,11 +371,7 @@ export async function generateReportByIdDB() {
 
     Promise.allSettled(fetchPromises).then(results => {
         resetButtonTexts();
-        confetti({
-            particleCount: 100,
-            spread: 70,
-            origin: { y: 0.6 }
-        });
+        doConfetti();
     });
 }
 
@@ -436,11 +422,7 @@ export async function generateReportByEmail() {
     
     // Wait for all the fetch calls to settle
     Promise.allSettled(fetchPromises).then(results => {
-        confetti({
-            particleCount: 100,
-            spread: 70,
-            origin: { y: 0.6 }
-        });
+        doConfetti();
     });
 }
 // Generate report by email list (Database)
@@ -496,11 +478,7 @@ export async function generateReportByEmailDB() {
 
     Promise.allSettled(fetchPromises).then(results => {
         resetButtonTexts();
-        confetti({
-            particleCount: 100,
-            spread: 70,
-            origin: { y: 0.6 }
-        });
+        doConfetti();
     });
 }
 

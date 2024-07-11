@@ -2,6 +2,8 @@ import {getPlayerCountInSegment} from './segments.js';
 import {updateButtonText} from './utils.js';
 import {getPlayFabDailyTotalsReport, getPlayFab30DayReport, getPlayFabMonthlyTotalsReport, getPlayFabAverageSessionTime} from './playfab_reporting/playfab-reports.js';
 
+const doConfetti = () => { confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 }}); }
+
 document.addEventListener('DOMContentLoaded', async () => {
     document.getElementById('google-login-btn').addEventListener('click', GoogleLoginClicked);
     document.getElementById('get-google-report-btn').addEventListener('click', fetchDevKPIReport);
@@ -351,7 +353,6 @@ async function fetchSubReport() {
         clearInterval(tickInterval); // Stop the ticking animation
         button.value = "Get Sub report";
         fetchingSubReport = false;
-
         doConfetti();
     }
 }
@@ -451,12 +452,4 @@ function formatDecompressedData(decompressed) {
     let output = decompressed.split('\n');
     let formattedOutput = output.map(line => line.replace(/\t/g, ','));
     return formattedOutput;
-}
-
-function doConfetti(){
-    confetti({
-        particleCount: 100,
-        spread: 70,
-        origin: { y: 0.6 }
-    });
 }
