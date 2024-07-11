@@ -1,7 +1,7 @@
 // QR Code & Deeplink generator code
+import { imAPIGet, getAreas, getTopics, getActivities, jwtoken } from '../immersifyapi/immersify-api.js';
 import { decodeQRCode, generateQRCodesAndUpload, genQRCode } from './qr-code-utils.js';
 import { Login } from '../PlayFabManager.js';
-import { imAPIGet, getAreas, getTopics, getActivities, jwtoken } from '../immersifyapi/immersify-api.js';
 import { waitUntil } from '../asyncTools.js';
 
 let allURLs = [];
