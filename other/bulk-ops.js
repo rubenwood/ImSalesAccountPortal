@@ -117,15 +117,15 @@ async function updateUsageDataInDB() {
         await client.query('BEGIN');
         const { rows } = await client.query('SELECT "PlayFabId" FROM public."AccountData"');
         const playerIds = rows.map(row => row.PlayFabId);
-        let maxConcurrentRequests = 20;
+        let maxConcurrentRequests = 20; // TODO: might be able to increase this?
         for (let i = 0; i < playerIds.length; i += maxConcurrentRequests) {
             const currentBatch = playerIds.slice(i, i + maxConcurrentRequests);
             console.log(`Processing batch ${(i / maxConcurrentRequests) + 1} of ${Math.ceil(playerIds.length / maxConcurrentRequests)}: Processing ${currentBatch.length} player IDs.`);
-            const results = await processBatch(currentBatch); // make this faster?
+            const results = await processBatch(currentBatch);
 
             for (const { playerId, data } of results) {
                 if (data) {
-                    await client.query(
+                    await client.query( // TODO: use promises here?
                         'INSERT INTO public."UsageData"("PlayFabId", "UsageDataJSON") VALUES($1, $2)',
                         [playerId, JSON.stringify(data)]
                     );
