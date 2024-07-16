@@ -43,7 +43,6 @@ export async function Login(){
             }
 
             await auth(response.data.PlayFabId, response.data.SessionTicket);
-            //await getAreas();
         }
     });
 }

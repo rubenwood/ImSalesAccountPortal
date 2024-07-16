@@ -18,24 +18,27 @@
         <input type="button" id="loginButton" value="Login">
     </div>
   </div>
+  <!--Create collection links & QR Codes-->
+  <div id="topic-collection-content" class="form-container">
+    <h2>Create Collection Link & QR Code</h2>
+    <br/><br/>
+    <input type="text" id="searchInput" placeholder="Search..." autoComplete="on">
+    <div id="listContainer">
+      <!-- List items will be dynamically generated here -->
+    </div>
+    <div id="selectedItemsContainer">
+        <h3>Selected Items</h3>
+        <!-- Selected items will be displayed here -->
+    </div>
+    <input type="button" id="gen-selected-topics-dl" value="Generate selected topics deeplink">
+    <p id="selected-topics-dl-output">link goes here </p>    
+    <img id="qr-code-topics" src=""/>    
+  </div>
   <div id="qr-content" class="form-container">
     <h1>QR Code & Deeplink Generator</h1>
     <a href="QRCodeCatalogue.html">Catalogue</a>
     <br/><br/>
-    <!--<div class="link-type">
-      <label for="launcherSection">Launcher Sections</label>
-      <input type="radio" id="launcherSectionLinksRadio" name="linkType" value="area">
-      <br/><br/>
-      <label for="area">Area</label>
-      <input type="radio" id="areaLinksRadio" name="linkType" value="area">
-      <br/><br/>
-      <label for="topic">Topic</label>
-      <input type="radio" id="topicLinksRadio" name="linkType" value="topic">
-      <br/><br/>
-      <label for="activity">Activity</label>
-      <input type="radio" id="activityLinksRadio" name="linkType" value="activity" checked>
-      <br/><br/>
-    </div>-->
+    <br/><br/>
     <input type="button" id="generate-deeplinks" value="Generate Deeplinks">
     <br/><br/>
     <input type="button" id="generate-qr-codes" value="Generate QR Codes">
@@ -52,17 +55,13 @@
     <textarea id="addTopicLinks"></textarea><br/>
     <label>Launch Activity Links</label><br/>
     <textarea id="launchActivityLinks"></textarea><br/>
-    <div id="qr-container">
-      <img id="qr-code" src="" alt="Generated QR Code" style="display:none;"/>
-    </div>
-  </div>
-  <br/><br/>
+  </div>  
   <div id="qr-decode-content" class="form-container">
     <h2>Decoder</h2>
     <input type="file" id="file-input" accept="image/*">
     <p id="decoded-result"></p>
     <br/><br/>
-    <h2>Generate QR Code (testing)</h2><br/>
+    <h2>Generate QR Code</h2><br/>
     <input type="text" id="deeplink-qr-code-input" /><br/>
     <input type="button" id="manual-gen-qr-code-btn" value="Generate QR Code"/><br/>
     <img id="generated-qr-img" src="" />

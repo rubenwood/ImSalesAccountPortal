@@ -1,17 +1,92 @@
 // QR Code & Deeplink generator code
-import { imAPIGet, getAreas, getTopics, getActivities, jwtoken } from '../immersifyapi/immersify-api.js';
+import { imAPIGet, getAreas, getTopics, getTopicBrondons, getActivities, getActivityBrondons, waitForJWT } from '../immersifyapi/immersify-api.js';
 import { decodeQRCode, generateQRCodesAndUpload, genQRCode } from './qr-code-utils.js';
 import { Login } from '../PlayFabManager.js';
-import { waitUntil } from '../asyncTools.js';
+//import { waitUntil } from '../asyncTools.js';
 
 let allURLs = [];
 let allQRCodeURLs;
+let areas, topics, activities;
+let allTopicBrondons, allActivityBrondons;
 
 const doConfetti = () => { confetti({particleCount: 100, spread: 70, origin:{ y: 0.6 }}); }
 
-document.addEventListener('DOMContentLoaded', () => {
+class SearchableList {
+    constructor(jsonList, listContainer, searchInput, selectedItemsContainer, key, onListUpdated) {
+        this.jsonList = jsonList;
+        this.listContainer = listContainer;
+        this.searchInput = searchInput;
+        this.selectedItemsContainer = selectedItemsContainer;
+        this.selectedItems = [];
+        this.key = key;
+        this.onListUpdated = onListUpdated;
+        this.renderList(jsonList);
+
+        this.searchInput.addEventListener('input', () => {
+            this.filterList(this.searchInput.value);
+        });
+    }
+
+    // Helper function to get nested property
+    getNestedProperty(obj, key) {
+        return key.split('.').reduce((o, x) => (o == undefined || o == null ? o : o[x]), obj);
+    }
+
+    renderList(items) {
+        this.listContainer.innerHTML = '';
+        items.forEach(item => {
+            const div = document.createElement('div');
+            div.className = 'list-item';
+            div.textContent = this.getNestedProperty(item, this.key);
+            div.addEventListener('click', () => this.addItemToSelectedList(item));
+            this.listContainer.appendChild(div);
+        });
+    }
+
+    filterList(query) {
+        const filteredItems = this.jsonList.filter(item => {
+            const value = this.getNestedProperty(item, this.key);
+            return value && value.toLowerCase().includes(query.toLowerCase());
+        });
+        this.renderList(filteredItems);
+    }
+
+    addItemToSelectedList(item) {
+        if (!this.selectedItems.some(selectedItem => selectedItem.topicId === item.topicId)) {
+            this.selectedItems.push(item);
+            this.renderSelectedItems();
+            this.onListUpdated(this.selectedItems);
+        }
+    }
+
+    removeItemFromSelectedList(item) {
+        this.selectedItems = this.selectedItems.filter(selectedItem => selectedItem.topicId !== item.topicId);
+        this.renderSelectedItems();
+        this.onListUpdated(this.selectedItems);
+    }
+
+    renderSelectedItems() {
+        this.selectedItemsContainer.innerHTML = '<h3>Selected Items</h3>';
+        this.selectedItems.forEach(item => {
+            const div = document.createElement('div');
+            div.className = 'selected-item';
+            div.textContent = this.getNestedProperty(item, this.key);
+            div.addEventListener('click', () => this.removeItemFromSelectedList(item));
+            this.selectedItemsContainer.appendChild(div);
+        });
+    }
+}
+
+document.addEventListener('DOMContentLoaded', async() => {
     // login button on modal
     document.getElementById('loginButton').addEventListener('click', Login);
+    //wait until jwt for api is defined
+    await waitForJWT();
+    [areas, topics, activities] = await Promise.all([ getAreas(), getTopics(), getActivities()]);
+    console.log("got all areas:\n", areas, "\ntopics:\n" , topics, "\nactivities:\n", activities);
+    [allTopicBrondons, allActivityBrondons] = await Promise.all([getTopicBrondons(topics), getActivityBrondons(activities)]);
+    console.log("got topic brondons:\n", allTopicBrondons, "\ngot activity brondons\n", allActivityBrondons);
+
     // generate deeplinks button
     let genDLBtn = document.getElementById('generate-deeplinks');
     genDLBtn.addEventListener('click', async() => { 
@@ -51,6 +126,27 @@ document.addEventListener('DOMContentLoaded', () => {
             document.getElementById('decoded-result').innerHTML = decodedUrl;
         }
     });
+
+
+    // Searchable list
+    const listContainer = document.getElementById('listContainer');
+    const searchInput = document.getElementById('searchInput');
+    const selectedItemsContainer = document.getElementById('selectedItemsContainer');
+    let topicsSelected = [];
+    const onListUpdated = (selectedItems) => {
+        topicsSelected = selectedItems;
+        console.log('selected topics: ', topicsSelected);
+    };
+    new SearchableList(allTopicBrondons, listContainer, searchInput, selectedItemsContainer, 'brondon.externalTitle', onListUpdated);
+    // topic collection to deeplink
+    document.getElementById('gen-selected-topics-dl').addEventListener('click', async()=>{ 
+        let topicCollectionLink = genTopicCollectionLink(topicsSelected);
+        document.getElementById('selected-topics-dl-output').innerText = topicCollectionLink; 
+        let topicCollectionQRCodeURL = await genQRCode(topicCollectionLink);
+        console.log(topicCollectionQRCodeURL);
+        document.getElementById('qr-code-topics').src = topicCollectionQRCodeURL;
+     });
+    
 });
 window.onload = function(){
     document.getElementById('loginModal').style.display = 'block';
@@ -58,12 +154,8 @@ window.onload = function(){
 
 async function generateDeeplinks(){
     console.log("Setting up the page...");
-    await waitUntil(() => jwtoken !== undefined);
-    console.log("JWToken is defined");
-
+    allURLs = [];
     try {
-        const [areas, topics, activities] = await Promise.all([ getAreas(), getTopics(), getActivities()]);
-
         // clear cache deeplink
         //https://immersifyeducation.com/deeplink?dl=%5Bimmersifyeducation%3A%2F%2Fimmersifydental%3FClearCache%5D
 
@@ -73,12 +165,11 @@ async function generateDeeplinks(){
         ssoLinks.forEach(element => { ssoURLs.push(element.link); });
         const ssoLinksStr = ssoURLs.join('\n');
         ssoLinksElement.value = ssoLinksStr;*/
-
-        const [launcherSectionLinks, setAreaLinks, addTopicLinks, launchActivityLinks] = await Promise.all([
+        const addTopicLinks = genAddTopicLinks(allTopicBrondons);
+        const launchActivityLinks = genLaunchActivityLinks(allActivityBrondons);
+        const [launcherSectionLinks, setAreaLinks] = await Promise.all([
             genLauncherSectionLinks(["Explore","Library","Progress","Feed","Shop"]),
-            genSetAreaLinks(areas),
-            genAddTopicLinks(topics),
-            genLaunchActivityLinks(activities)
+            genSetAreaLinks(areas)
         ]);
 
         const launcherSectionLinksElement = document.getElementById('launcherSectionLinks');
@@ -102,6 +193,7 @@ async function generateDeeplinks(){
         addTopicLinksElement.value = addTopicLinksStr;
 
         let launchActivityURLs = [];
+        console.log(launchActivityLinks);
         launchActivityLinks.forEach(element => { launchActivityURLs.push(element.link); });
         const launchActivityLinksStr = launchActivityURLs.join('\n');
         launchActivityLinksElement.value = launchActivityLinksStr;
@@ -172,47 +264,59 @@ async function genSetAreaLinks(areas){
 }
 
 // generate add topic links
-async function genAddTopicLinks(topics){
+function genAddTopicLinks(topics){
     let links = [];
-    //console.log(topics);
 
     for(const topic of topics){
-        let imResp = await imAPIGet(`topics/${topic.id}`);
-        console.log(imResp);
-        let topicId = topic.id;
-        let topicName = imResp.brondons[0].externalTitle;
+        //console.log(topic);
+        let topicId = topic.topicId;
+        let topicName = topic.brondon.externalTitle;
 
-        let imgName = imResp.brondons[0].externalTitle;
+        let imgName = topic.brondon.externalTitle;
         imgName = "Topic_"+imgName.replace(/[^a-zA-Z0-9]/g, "");
-        console.log("topic: " + imgName);
+        //console.log("topic: " + imgName);
 
-        let link = `https://immersifyeducation.com/deeplink?dl=%5Bimmersifyeducation%3A%2F%2Fimmersifydental%3FAddTopic%3D${topic.id}%5D`
+        let link = `https://immersifyeducation.com/deeplink?dl=%5Bimmersifyeducation%3A%2F%2Fimmersifydental%3FAddTopic%3D${topicId}%5D`
         links.push({ topicId, topicName, type:'topic', imgName, link });
     }
     return links;
 }
 // generate launch activity links
-async function genLaunchActivityLinks(activities){
+function genLaunchActivityLinks(activities){
+    console.log("CALLED");
     let links = [];
-    //console.log(activities);
+    console.log(activities);
 
     for(const activity of activities){
-        let imResp = await imAPIGet(`activities/${activity.id}`);
-        //console.log(imResp);
-        let activityId = activity.id;
-        let activityName = imResp.data.brondons[0].externalTitle;
+        let activityId = activity.activityId;
+        let activityName = activity.brondon.externalTitle;
 
-        let imgName = imResp.data.brondons[0].externalTitle;
+        let imgName = activity.brondon.externalTitle;
         imgName = "Activity_"+imgName.replace(/[^a-zA-Z0-9]/g, "");
-        console.log("activity: " + imgName);
+        console.log("activity img name: " + imgName);
 
-        let link = `https://immersifyeducation.com/deeplink?dl=%5Bimmersifyeducation%3A%2F%2Fimmersifydental%3FLaunchActivity%3D${activity.id}%5D`
+        let link = `https://immersifyeducation.com/deeplink?dl=%5Bimmersifyeducation%3A%2F%2Fimmersifydental%3FLaunchActivity%3D${activityId}%5D`
         links.push({ activityId, activityName, type:'activity', imgName, link });
     }
     return links;
 }
 
 // generate discount code links
+
+// generate topic collection link
+function genTopicCollectionLink(topicCollection){
+    // for each topic in collection, get the topic ID, put into string (comma seperated), put that into link
+    let topicIdList = [];
+    for(const topic of topicCollection){
+        topicIdList.push(topic.topicId);
+    }
+    //console.log("topic id list: ", topicIdList);
+    let topicListStr = topicIdList.join();
+    //console.log("topic id list string: ", topicListStr);
+    let link = `https://immersifyeducation.com/deeplink?dl=%5Bimmersifyeducation%3A%2F%2Fimmersifydental%3FAddTopic%3D${topicListStr}%5D`
+    //console.log("topic collection link: ", link);
+    return link;
+}
 
 // Update the database
 async function bulkAddToDatabase(allURLs, allQRCodeURLs) {
