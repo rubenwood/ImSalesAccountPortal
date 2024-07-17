@@ -16,6 +16,9 @@ document.addEventListener('DOMContentLoaded', async() => {
     document.getElementById('loginButton').addEventListener('click', Login);
     //wait until jwt for api is defined
     await waitForJWT();
+    // hide login modal
+    document.getElementById('loginModal').style.display = 'none';
+
     [areas, topics, activities] = await Promise.all([ getAreas(), getTopics(), getActivities()]);
     console.log("got all areas:\n", areas, "\ntopics:\n" , topics, "\nactivities:\n", activities);
     [allTopicBrondons, allActivityBrondons] = await Promise.all([getTopicBrondons(topics), getActivityBrondons(activities)]);
@@ -276,12 +279,12 @@ async function bulkAddToDatabase(allURLs, allQRCodeURLs) {
             databaseUpdateData.push({
                 deeplink: urlElement.link,
                 qrCodeUrl: qrCodeElement.qrCodeS3Url,
-                areaId:urlElement.areaId,
-                areaName:urlElement.areaName,
-                topicId:urlElement.topicId,
-                topicName:urlElement.topicName,
-                activityId:urlElement.activityId,
-                activityName:urlElement.activityName,
+                areaId:urlElement?.areaId,
+                areaName:urlElement?.areaName,
+                topicId:urlElement?.topicId,
+                topicName:urlElement?.topicName,
+                activityId:urlElement?.activityId,
+                activityName:urlElement?.activityName,
                 type: urlElement.type
             });
         }

@@ -59,11 +59,12 @@ export async function getTopics() {
     return data;
 }
 export async function getTopicBrondons(topics){
-    let brondons = [];
-    for(const topic of topics){
+    const brondonPromises = topics.map(async (topic) => {
         const imResp = await imAPIGet(`topics/${topic.id}`);
-        brondons.push({topicId:topic.id, brondon:imResp.brondons[0]});
-    }
+        return { topicId: topic.id, brondon: imResp.brondons[0] };
+    });
+
+    const brondons = await Promise.all(brondonPromises);
     return brondons;
 }
 
@@ -80,14 +81,23 @@ export async function getActivities() {
     const data = await activitiesResponse.json();
     return data;
 }
-export async function getActivityBrondons(activities){
-    let brondons = [];
-    for(const activity of activities){
-        const imResp = await imAPIGet(`activities/${activity.id}`);
-        //console.log(imResp);
-        // type is: imResp.data.type
-        brondons.push({activityId:activity.id, brondon:imResp.data.brondons[0]});
+export async function getActivityBrondons(activities, limit = 10) {
+    const brondons = [];
+    
+    const processBatch = async (batch) => {
+        const brondonPromises = batch.map(async (activity) => {
+            const imResp = await imAPIGet(`activities/${activity.id}`);
+            return { activityId: activity.id, brondon: imResp.data.brondons[0] };
+        });
+        return await Promise.all(brondonPromises);
+    };
+
+    for (let i = 0; i < activities.length; i += limit) {
+        const batch = activities.slice(i, i + limit);
+        const batchResults = await processBatch(batch);
+        brondons.push(...batchResults);
     }
+
     return brondons;
 }
 
