@@ -49,19 +49,6 @@ async function getSuffixMappings() {
     }
 }
 
-// Route that takes in an array of query param gen-suffix-rep?suffixes=suffix1,suffix2
-suffixRouter.get('/gen-suffix-rep', async (req, res) => {
-    try {
-        // Splits the suffixes into an array
-        let suffixes = req.query.suffixes.split(',');
-        const matchedUsers = await generateReportByEmailSuffixDB(suffixes);
-        res.json(matchedUsers);
-    } catch (error) {
-        console.error('Error:', error);
-        res.status(500).json({ message: 'Failed to generate report', error: error.message });
-    }
-});
-
 const pool = new Pool({
     user: process.env.PGUSER,
     host: process.env.PGHOST,
@@ -170,7 +157,37 @@ async function generateReportByEmailSuffixDB(suffixes) {
     }
     
     return output;
-    return Array.from(matchedUsersMap.values());
+    //return Array.from(matchedUsersMap.values());
 }
+
+// Route that takes in an array of query param gen-suffix-rep?suffixes=suffix1,suffix2
+suffixRouter.get('/gen-suffix-rep', async (req, res) => {
+    try {
+        // Splits the suffixes into an array
+        let suffixes = req.query.suffixes.split(',');
+        const matchedUsers = await generateReportByEmailSuffixDB(suffixes);
+        res.json(matchedUsers);
+    } catch (error) {
+        console.error('Error:', error);
+        res.status(500).json({ message: 'Failed to generate report', error: error.message });
+    }
+});
+
+suffixRouter.get('/get-connection-ids', async (req, res) => {
+    try {        
+        const params = {
+            Bucket: process.env.AWS_BUCKET,
+            Key: process.env.CONNECTION_LIST_PATH
+        };    
+        const data = await s3.getObject(params).promise();
+        const jsonData = JSON.parse(data.Body.toString('utf-8'));
+        let connectionIds = [];
+        jsonData.OpenIDConnections.forEach(element => { connectionIds.push(element.connectionID)})
+        res.json(connectionIds);
+    } catch (error) {
+        console.error('Error:', error);
+        res.status(500).json({ message: 'Failed to get connection ids', error: error.message });
+    }
+});
 
 module.exports = { suffixRouter, generateReportByEmailSuffixDB };

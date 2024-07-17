@@ -62,15 +62,14 @@ document.addEventListener('DOMContentLoaded', async() => {
         }
     });
 
-
-    // Searchable list
+    // Searchable list (for adding multiple topics)
     const listContainer = document.getElementById('listContainer');
     const searchInput = document.getElementById('searchInput');
     const selectedItemsContainer = document.getElementById('selectedItemsContainer');
     let topicsSelected = [];
     const onListUpdated = (selectedItems) => {
         topicsSelected = selectedItems;
-        console.log('selected topics: ', topicsSelected);
+        //console.log('selected topics: ', topicsSelected);
     };
     new SearchableList(allTopicBrondons, listContainer, searchInput, selectedItemsContainer, 'brondon.externalTitle', onListUpdated);
     // topic collection to deeplink
@@ -80,8 +79,7 @@ document.addEventListener('DOMContentLoaded', async() => {
         let topicCollectionQRCodeURL = await genQRCode(topicCollectionLink);
         document.getElementById('qr-code-topics').src = topicCollectionQRCodeURL;
         doConfetti();
-     });
-    
+     });    
 });
 window.onload = function(){
     document.getElementById('loginModal').style.display = 'block';
@@ -91,15 +89,6 @@ async function generateDeeplinks(){
     console.log("Setting up the page...");
     allURLs = [];
     try {
-        // clear cache deeplink
-        //https://immersifyeducation.com/deeplink?dl=%5Bimmersifyeducation%3A%2F%2Fimmersifydental%3FClearCache%5D
-
-        /*const ssoLinksElement = document.getElementById('ssoLinks');
-        const ssoLinks = await genSSOLinks();
-        let ssoURLs = [];
-        ssoLinks.forEach(element => { ssoURLs.push(element.link); });
-        const ssoLinksStr = ssoURLs.join('\n');
-        ssoLinksElement.value = ssoLinksStr;*/
         const addTopicLinks = genAddTopicLinks(allTopicBrondons);
         const launchActivityLinks = genLaunchActivityLinks(allActivityBrondons);
         const [launcherSectionLinks, setAreaLinks] = await Promise.all([
@@ -128,16 +117,27 @@ async function generateDeeplinks(){
         addTopicLinksElement.value = addTopicLinksStr;
 
         let launchActivityURLs = [];
-        console.log(launchActivityLinks);
+        //console.log(launchActivityLinks);
         launchActivityLinks.forEach(element => { launchActivityURLs.push(element.link); });
         const launchActivityLinksStr = launchActivityURLs.join('\n');
         launchActivityLinksElement.value = launchActivityLinksStr;
+
+        const ssoLinksElement = document.getElementById('ssoLinks');
+        const ssoLinks = await genSSOLinks();
+        let ssoURLs = [];
+        ssoLinks.forEach(element => { ssoURLs.push(element.link); });
+        const ssoLinksStr = ssoURLs.join('\n');
+        ssoLinksElement.value = ssoLinksStr;
+
+        // clear cache deeplink
+        //https://immersifyeducation.com/deeplink?dl=%5Bimmersifyeducation%3A%2F%2Fimmersifydental%3FClearCache%5D
 
         // add to all URLs, so that we can generate the QR codes
         allURLs.push(...launcherSectionLinks);
         allURLs.push(...setAreaLinks);
         allURLs.push(...addTopicLinks);
         allURLs.push(...launchActivityLinks);
+        allURLs.push(...ssoLinks);
 
         // Check for duplicates in allURLs by imgName and modify them to be unique
         let imgNameCount = {};
@@ -173,6 +173,15 @@ async function generateDeeplinks(){
 async function genSSOLinks(){
     // get the connection id's from the json
     // there will be some additional id's (for apple, google, eventually facebook (meta))
+    const response = await fetch('/reporting/get-connection-ids');
+    const connectionIds = await response.json();
+    console.log(connectionIds);
+    let links = [];
+    connectionIds.forEach(connectionId =>{
+        let link = `https://immersifyeducation.com/deeplink?dl=%5Bimmersifyeducation%3A%2F%2Fimmersifydental%3FSSOLogin%3D${connectionId}%5D`;
+        links.push({type:'sso', imgName:"SSO_"+connectionId, link});
+    });
+    return links;
 }
 
 // generate launcher section links
@@ -218,9 +227,9 @@ function genAddTopicLinks(topics){
 }
 // generate launch activity links
 function genLaunchActivityLinks(activities){
-    console.log("CALLED");
+    //console.log("CALLED");
     let links = [];
-    console.log(activities);
+    //console.log(activities);
 
     for(const activity of activities){
         let activityId = activity.activityId;
@@ -228,7 +237,7 @@ function genLaunchActivityLinks(activities){
 
         let imgName = activity.brondon.externalTitle;
         imgName = "Activity_"+imgName.replace(/[^a-zA-Z0-9]/g, "");
-        console.log("activity img name: " + imgName);
+        //console.log("activity img name: " + imgName);
 
         let link = `https://immersifyeducation.com/deeplink?dl=%5Bimmersifyeducation%3A%2F%2Fimmersifydental%3FLaunchActivity%3D${activityId}%5D`
         links.push({ activityId, activityName, type:'activity', imgName, link });
