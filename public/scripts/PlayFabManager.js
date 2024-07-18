@@ -1,7 +1,8 @@
 import { callUpdateConfluencePage } from "./confluence.js";
-import {fetchUserAccInfoById, fetchUserAccInfoByEmail, fetchUserProfileById} from "./utils.js"
+import {fetchUserAccInfoById, fetchUserAccInfoByEmail, fetchUserProfileById, formatDate} from "./utils.js"
 import {setAccessLevel, canAccess} from "./access-check.js"
 import {auth} from "./immersifyapi/immersify-api.js";
+import { waitUntil } from "./asyncTools.js";
 
 const titleId = "29001";
 
@@ -33,7 +34,7 @@ export async function Login(){
         if (error) {
             console.error("Error logging in:", error);
         } else {
-            console.log(response);
+            //console.log(response);
             localStorage.setItem("PlayFabId", response.data.PlayFabId);
             localStorage.setItem("PlayFabSessionTicket", response.data.SessionTicket);
             
@@ -82,52 +83,64 @@ export async function RegisterUserEmailAddress(){
     PlayFabClientSDK.RegisterPlayFabUser(registerRequest, RegisterCallback);
 }
 var RegisterCallback = async function (result, error){
-    if (result !== null) {
-        document.getElementById("resultOutput").innerHTML = "Account created!";
-
-        // once the account is created, update the user data
-        var SubOverride = true;
-        var VerifyEmailOverride = true;
-        var AcademicArea = document.getElementById("academicArea").value;
-        var Avatar = '["Head:Blank_User","Clothes:empty","Addon:empty","Mouth:empty","Hair:empty","Eyewear:empty","Other:empty","Covering:empty"]';
-        var CanEmail = true;
-        var Enterprise = false;
-        var Guest = false;
-        var TestAccountExpiryDate = document.getElementById("expiry").value;
-        var CreatedBy = document.getElementById("createdBy").value;
-        var CreatedUpdatedReason = document.getElementById("createdReason").value;
-
-        var data = {
-            SubOverride,
-            VerifyEmailOverride,
-            AcademicArea,
-            Avatar,
-            CanEmail,
-            Enterprise,
-            Guest,
-            TestAccountExpiryDate,
-            CreatedBy,
-            CreatedUpdatedReason
-        };
-        UpdateUserData(data);
-        // wait for UpdateUserData to complete
-        await waitUntil(()=> updatingUserData == true);
-        // set the LastWriteDevice
-        var LastWriteDevice = "";
-        UpdateUserData({ LastWriteDevice });
-        // update confluence page
-        let email = document.getElementById("emailSignUpAddress").value;
-        let pass = document.getElementById("emailSignUpPassword").value;
-
-        callUpdateConfluencePage(email,pass,AcademicArea,TestAccountExpiryDate,CreatedBy,CreatedUpdatedReason);
-    } else if (error !== null) {
+    // once the account is created, update the user data
+    if (error !== null){
+        document.getElementById("registerButton").value  = "Register";
         document.getElementById("resultOutput").innerHTML =
-            "Something went wrong\n" +
-            "Here's some debug information:\n" +
-            PlayFab.GenerateErrorReport(error);
+            `Something went wrong\nHere's some debug information:\n${PlayFab.GenerateErrorReport(error)}`;
+        return;
     }
-}
 
+    document.getElementById("resultOutput").innerHTML = "Account created!";
+
+    const SubOverride = true;
+    const VerifyEmailOverride = true;
+    const AcademicArea = document.getElementById("academicArea").value;
+    const CanEmail = true;
+    const TestAccountExpiryDate = document.getElementById("expiry").value;
+    const TestAccountExpiryDateFormatted = formatDate(new Date(TestAccountExpiryDate));
+    const today = formatDate(new Date());
+    //console.log(TestAccountExpiryDate);
+    console.log(TestAccountExpiryDateFormatted.toString());
+    console.log(today.toString());
+    const CreatedBy = document.getElementById("createdBy").value;
+    const CreatedUpdatedReason = document.getElementById("createdReason").value;
+
+    // TODO: new data field
+    let OtherSubDataJSON = {
+        Platform:"Other",
+        Product:"immersify.gold_yearly",
+        PurchaseDate:today.toString(),
+        SubStatus:"",
+        SubExpire:TestAccountExpiryDateFormatted.toString(),
+        SubscriptionTier:"gold",
+        SubscriptionPeriod:"yearly"
+    }
+    console.log(OtherSubDataJSON);
+    let otherSubDataStr = JSON.stringify(OtherSubDataJSON);
+
+    let data = {
+        //SubOverride,
+        VerifyEmailOverride,
+        AcademicArea,
+        CanEmail,
+        TestAccountExpiryDate,
+        CreatedBy,
+        CreatedUpdatedReason,
+        OtherSubData:otherSubDataStr
+    };
+    UpdateUserData(data);
+    // wait for UpdateUserData to complete
+    await waitUntil(()=> updatingUserData == true);
+    // set the LastWriteDevice
+    let LastWriteDevice = "";
+    UpdateUserData({ LastWriteDevice });
+    // update confluence page
+    let email = document.getElementById("emailSignUpAddress").value;
+    let pass = document.getElementById("emailSignUpPassword").value;
+
+    callUpdateConfluencePage(email,pass,AcademicArea,TestAccountExpiryDate,CreatedBy,CreatedUpdatedReason);   
+}
 // UPDATE USER DATA
 var updatingUserData = false;
 function UpdateUserData(updateData){
@@ -143,7 +156,7 @@ function UpdateUserData(updateData){
 }
 var UpdateUserDataCallback = function (result, error){
     if (result !== null) {
-        document.getElementById("resultOutput").innerHTML = "Account created & user data updated... Updating confluence...";
+        document.getElementById("resultOutput").innerHTML = "Account created & user data updated...\nUpdating confluence...";
     } else if (error !== null) {
         document.getElementById("registerButton").value  = "Register";
         document.getElementById("resultOutput").innerHTML =
@@ -243,7 +256,6 @@ export async function getPlayerEmailAddr(playFabId){
         return null;
     }    
 }
-
 async function getPlayerContactEmailAddr(playFabId){
     let playerProfileResp = await fetchUserProfileById(playFabId);
     let playerProfile = playerProfileResp.data.PlayerProfile;

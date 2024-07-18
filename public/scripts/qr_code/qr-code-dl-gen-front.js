@@ -1,5 +1,5 @@
 // QR Code & Deeplink generator code
-import { imAPIGet, getAreas, getTopics, getTopicBrondons, getActivities, getActivityBrondons, waitForJWT } from '../immersifyapi/immersify-api.js';
+import { getAreas, getTopics, getTopicBrondons, getActivities, getActivityBrondons, waitForJWT } from '../immersifyapi/immersify-api.js';
 import { decodeQRCode, generateQRCodesAndUpload, genQRCode } from './qr-code-utils.js';
 import { Login } from '../PlayFabManager.js';
 import { SearchableList } from '../classes/searchable-list.js';
@@ -158,9 +158,7 @@ async function generateDeeplinks(){
             acc[current.imgName] = (acc[current.imgName] || 0) + 1;
             return acc;
         }, {});
-
         let duplicateElements = allURLs.filter(element => duplicates[element.imgName] > 1);
-
         if (duplicateElements.length > 0) {
             console.log("Duplicates found after modification:");
             console.log(duplicateElements);
@@ -178,7 +176,7 @@ async function genSSOLinks(){
     // there will be some additional id's (for apple, google, eventually facebook (meta))
     const response = await fetch('/reporting/get-connection-ids');
     const connectionIds = await response.json();
-    console.log(connectionIds);
+    //console.log(connectionIds);
     let links = [];
     connectionIds.forEach(connectionId =>{
         let link = `https://immersifyeducation.com/deeplink?dl=%5Bimmersifyeducation%3A%2F%2Fimmersifydental%3FSSOLogin%3D${connectionId}%5D`;
@@ -201,8 +199,6 @@ async function genLauncherSectionLinks(sections){
 // generate setArea links
 async function genSetAreaLinks(areas){
     let links = [];
-    console.log("AREAS");
-    console.log(areas);
     areas.forEach(element => {
         let link = `https://immersifyeducation.com/deeplink?dl=%5Bimmersifyeducation%3A%2F%2Fimmersifydental%3FsetArea%3D${element.id}%5D`
         links.push({ areaId:element.id, areaName:element.slug, type:'area', imgName:"SetArea_"+element.slug, link });

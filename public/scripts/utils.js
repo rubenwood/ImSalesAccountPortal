@@ -1,3 +1,4 @@
+
 export function formatTime(secondsTotal) {
     // Handle case where input is 0
     if (secondsTotal == undefined || secondsTotal <= 0) {
@@ -36,7 +37,18 @@ export function formatTimeToHHMMSS(seconds) {
 
     return `${paddedHours}:${paddedMinutes}:${paddedSeconds}`;
 }
+export function formatDate(date) {
+    const pad = num => num.toString().padStart(2, '0');
 
+    const day = pad(date.getDate());
+    const month = pad(date.getMonth() + 1); // Months are zero-based
+    const year = date.getFullYear();
+    const hours = pad(date.getHours());
+    const minutes = pad(date.getMinutes());
+    const seconds = pad(date.getSeconds());
+
+    return `${day}/${month}/${year} ${hours}:${minutes}:${seconds}`;
+}
 export function formatActivityData(activityData) {
     let formattedData = [];
 

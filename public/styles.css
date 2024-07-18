@@ -8,6 +8,8 @@ body {
     padding: 20px;
     color: #333;
     align-items: flex-start;
+    box-sizing: border-box;
+    margin: 0;
 }
 
 input[type=text], input[type=password], select {
@@ -102,7 +104,7 @@ label {
 }
 
 .report-row:hover {
-    background-color: #f2f2f2; /* Light grey color, adjust as needed */
+    background-color: #f2f2f2;
 }
 #report-container {
     flex: 1;
@@ -143,19 +145,14 @@ label {
     z-index: 1000;
     white-space: nowrap;
 }
-
-/* Tooltip visible state */
 .tooltip.visible {
     display: block;
 }
-
-/* */
 .info-tooltip {
     position: relative;
     display: inline-block;
     border-bottom: 1px dotted black; /* Optional styling for the tooltip */
 }
-
 .info-tooltip .info-tooltiptext {
     visibility: hidden;
     width: 280px;
@@ -179,7 +176,6 @@ label {
     opacity: 1;
 }
 
-/* styles.css */
 .collapsible-content {
     padding: 10px;
     background-color: #f9f9f9;
@@ -230,9 +226,9 @@ label {
 
 #modalTabs {
     display: flex;
-    justify-content: space-around; /* This will distribute space around the buttons */
-    align-items: center; /* This aligns buttons vertically center */
-    width: 100%; /* Ensure this div fills the modal width */
+    justify-content: space-around;
+    align-items: center; 
+    width: 100%;
 }
 
 .close {

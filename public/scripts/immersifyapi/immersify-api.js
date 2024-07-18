@@ -19,7 +19,6 @@ export async function auth(playfabId, playfabSessionTicket) {
 export function waitForJWT() {
     return new Promise((resolve) => {
         const interval = setInterval(() => {
-            //const jwt = getCookie('jwtoken');
             if (jwtoken) {
                 clearInterval(interval);
                 resolve(jwtoken);
@@ -27,15 +26,8 @@ export function waitForJWT() {
         }, 100); // every 100ms
     });
 }
-function getCookie(name) {
-    const value = `; ${document.cookie}`;
-    const parts = value.split(`; ${name}=`);
-    console.log(`${parts}`);
-    if (parts.length === 2) return parts.pop().split(';').shift();
-}
 
 export async function getAreas() {
-    //const jwtoken = getCookie('jwtoken');
     const areasUrl = `${baseURL}/areas`;
     const areasResponse = await fetch(areasUrl, {
         method: 'GET',
@@ -49,7 +41,6 @@ export async function getAreas() {
 }
 
 export async function getTopics() {
-    //const jwtoken = getCookie('jwtoken');
     const topicsUrl = `${baseURL}/topics`;
     const topicsResponse = await fetch(topicsUrl, {
         method: 'GET',
@@ -72,7 +63,6 @@ export async function getTopicBrondons(topics){
 }
 
 export async function getActivities() {
-    //const jwtoken = getCookie('jwtoken');
     const activitiesUrl = `${baseURL}/activities`;
     const activitiesResponse = await fetch(activitiesUrl, {
         method: 'GET',
@@ -105,7 +95,6 @@ export async function getActivityBrondons(activities, limit = 10) {
 }
 
 export async function imAPIGet(endpointURL) {
-    //const jwtoken = getCookie('jwtoken');
     const apiURL = `${baseURL}/${endpointURL}`;
     const apiResponse = await fetch(apiURL, {
         method: 'GET',
@@ -115,7 +104,5 @@ export async function imAPIGet(endpointURL) {
         }
     });
     const data = await apiResponse.json();
-    //console.log("got data:");
-    //console.log(data);
     return data;
 }
