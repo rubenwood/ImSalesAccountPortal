@@ -160,7 +160,7 @@ export async function generateReportBySuffixDB(){
     results.forEach(element => {
         element.accountData.forEach(acc => {
             playerIDList.push(acc.PlayFabId);
-        })            
+        })
     })
     updateIDList(playerIDList);
     
@@ -173,7 +173,6 @@ export async function generateReportBySuffixDB(){
         doConfetti();
     });
 }
-
 
 // Generate report by ID (Database)
 export async function generateReportByIdDB() {
@@ -381,34 +380,34 @@ function createUserRow(dataToExport, activity, isFirstActivity) {
 }
 function exportToExcel() {
     // add any relevant insights data
-    let totalPlayTimeAcrossAllUsersSeconds = getTotalPlayTime(exportData);
-    let playersWithMostPlayTime = findPlayersWithMostPlayTime(exportData, 1, 3);
-    let playersWithMostPlays = findPlayersWithMostPlays(exportData, 1, 3);
-    let playersWithMostUniqueActivities = findPlayersWithMostUniqueActivitiesPlayed(reportData, 1, 3);
-    let mostPlayedActivities = findMostPlayedActivities(exportData, 1, 10);
-    let userAccessPerPlatform = getUserAccessPerPlatform(exportData);
+    const totalPlayTimeAcrossAllUsersSeconds = getTotalPlayTime(exportData);
+    const playersWithMostPlayTime = findPlayersWithMostPlayTime(exportData, 1, 3);
+    const playersWithMostPlays = findPlayersWithMostPlays(exportData, 1, 3);
+    const playersWithMostUniqueActivities = findPlayersWithMostUniqueActivitiesPlayed(reportData, 1, 3);
+    const mostPlayedActivities = findMostPlayedActivities(exportData, 1, 10);
+    const userAccessPerPlatform = getUserAccessPerPlatform(exportData);
 
     let insightsExportData = [
         { insight: 'Total Play Time Across All Users', value: formatTimeToHHMMSS(totalPlayTimeAcrossAllUsersSeconds) }
     ];
     playersWithMostPlayTime.forEach(player => {
-        insightsExportData.push({ insight: 'Player With Most Play Time', value: player.email + ' - ' + formatTimeToHHMMSS(player.totalPlayTime) });
+        insightsExportData.push({ insight: 'Player With Most Play Time', value:`${player.email} - ${formatTimeToHHMMSS(player.totalPlayTime)}` });
     });
     playersWithMostPlays.forEach(player => {
-        insightsExportData.push({ insight: 'Player With Most Plays', value: player.email + ' - ' + player.totalPlays });
+        insightsExportData.push({ insight: 'Player With Most Plays', value:`${player.email} - ${player.totalPlays}` });
     });
     playersWithMostUniqueActivities.forEach(player => {
-        insightsExportData.push({ insight: 'Player With Most Unique Activities', value: player.email + ' - ' + player.uniqueActivitiesCount });
+        insightsExportData.push({ insight: 'Player With Most Unique Activities', value:`${player.email} - ${player.uniqueActivitiesCount}` });
     });
     mostPlayedActivities.forEach(activity => {
-        insightsExportData.push({ insight: 'Most Played Activities', value: activity.activityTitle + ' - ' + activity.totalPlays });
+        insightsExportData.push({ insight: 'Most Played Activities', value:`${activity.activityTitle} - ${activity.totalPlays}` });
     });
     insightsExportData.push({insight: 'User Access Android', value: userAccessPerPlatform.totalAndroid});
     insightsExportData.push({insight: 'User Access iOS', value: userAccessPerPlatform.totalIOS});
     insightsExportData.push({insight: 'User Access Web', value: userAccessPerPlatform.totalWeb});
 
     // Lesson insights
-    let lessonStats = getLessonStats(reportData);
+    const lessonStats = getLessonStats(reportData);
     console.log(lessonStats);
     let lessonInsightsData = [
         { insight: 'Total Lesson Play Time', value: formatTimeToHHMMSS(lessonStats.totalLessonPlayTime) },
@@ -422,7 +421,7 @@ function exportToExcel() {
         lessonInsightsData.push({ insight: 'Most Played Lessons (Play Time)', value: `${lesson.title} - ${formatTimeToHHMMSS(lesson.totalTime)}` });
     });
     // Sim insights
-    let simStats = getSimStats(reportData);
+    const simStats = getSimStats(reportData);
     let simInsightsData = [
         { insight: 'Total Simulation Play Time', value: formatTimeToHHMMSS(simStats.totalSimPlayTime) },
         { insight: 'Total Simulations Attempted', value: simStats.totalSimsAttempted },
@@ -457,11 +456,11 @@ function exportToExcel() {
         userData.push({}); // Add an empty row to divide user data chunks
     });
 
-    let workbook = XLSX.utils.book_new();
-    let insightsWorksheet = XLSX.utils.json_to_sheet(insightsExportData);
-    let lessonInsightsWorksheet = XLSX.utils.json_to_sheet(lessonInsightsData);
-    let simInsightsWorksheet = XLSX.utils.json_to_sheet(simInsightsData);
-    let userDataWorksheet = XLSX.utils.json_to_sheet(userData);
+    const workbook = XLSX.utils.book_new();
+    const insightsWorksheet = XLSX.utils.json_to_sheet(insightsExportData);
+    const lessonInsightsWorksheet = XLSX.utils.json_to_sheet(lessonInsightsData);
+    const simInsightsWorksheet = XLSX.utils.json_to_sheet(simInsightsData);
+    const userDataWorksheet = XLSX.utils.json_to_sheet(userData);
     XLSX.utils.book_append_sheet(workbook, insightsWorksheet, "Insights");
     XLSX.utils.book_append_sheet(workbook, lessonInsightsWorksheet, "Lesson Insights");
     XLSX.utils.book_append_sheet(workbook, simInsightsWorksheet, "Sim Insights");

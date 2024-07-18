@@ -13,6 +13,7 @@
     "@google-cloud/storage": "^7.7.0",
     "aws-sdk": "^2.1656.0",
     "axios": "^1.6.2",
+    "body-parser": "^1.20.2",
     "canvas": "^2.11.2",
     "confluence.js": "^1.7.1",
     "connect-redis": "^7.1.0",
@@ -30,6 +31,7 @@
     "pg": "^8.11.3",
     "redis": "^4.6.12",
     "stripe": "^14.18.0",
+    "xlsx": "^0.18.5",
     "zlib": "^1.0.5"
   }
 }

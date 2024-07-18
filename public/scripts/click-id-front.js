@@ -1,5 +1,5 @@
 import { canAccess } from './access-check.js';
-import { writeDataForReport, resetExportData, resetButtonTexts, updateIDList } from './main.js';
+import { resetButtonTexts, updateIDList } from './main.js';
 import { populateForm, sortAndCombineData } from './academic-area.js';
 
 export async function fetchUsersByClickIDList() {

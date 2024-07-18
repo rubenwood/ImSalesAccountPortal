@@ -1,8 +1,7 @@
 import { canAccess } from './access-check.js';
 import { writeDataForReport, resetExportData, resetButtonTexts, updateIDList } from './main.js';
 
-import { populateAccDataRow, populateLoginData, populateUsageData, getUserEmailFromAccData, calcDaysSinceLastLogin, 
-    calcDaysSinceCreation } from './user-report-formatting.js';
+import { populateAccDataRow, populateLoginData, populateUsageData, getUserEmailFromAccData, calcDaysSince } from './user-report-formatting.js';
 
 export async function fetchAllUsersByArea() {
     let hasAccess = await canAccess();
@@ -102,8 +101,8 @@ export function populateForm(data){
         let email = getUserEmailFromAccData(element.accountData.AccountDataJSON);
         let createdDate = new Date(element.accountData.AccountDataJSON.Created);
         let lastLoginDate = new Date(element.accountData.AccountDataJSON.LastLogin);
-        let daysSinceLastLogin = calcDaysSinceLastLogin(lastLoginDate);    
-        let daysSinceCreation = calcDaysSinceCreation(createdDate);
+        let daysSinceLastLogin = calcDaysSince(lastLoginDate);    
+        let daysSinceCreation = calcDaysSince(createdDate);
         let userData = element.usageData.UsageDataJSON.Data;
         let accountExpiryDate = userData.TestAccountExpiryDate !== undefined ? new Date(userData.TestAccountExpiryDate.Value) : undefined;
         let accountExpiryDateString = accountExpiryDate !== undefined ? accountExpiryDate.toDateString() : "N/A";
@@ -129,7 +128,6 @@ export function populateForm(data){
                 activityDataForReport: []
             };
             // TODO: test this!
-            //console.log(`${email} : ${playerDataNew} ${playerData}`);
             let newDataState = populateUsageData([playerDataNew, playerData], loginData, playerDataState, row);
             let activityDataForReport = newDataState.activityDataForReport;
             let averageTimePerPlay = newDataState.averageTimePerPlay;

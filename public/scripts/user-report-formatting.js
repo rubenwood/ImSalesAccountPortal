@@ -48,17 +48,11 @@ function showPlayerDataModal(content) {
 export function closePlayerDataModal() {
     document.getElementById('playerDataModal').style.display = 'none';
 }
-export function calcDaysSinceLastLogin(lastLoginDate){
+export function calcDaysSince(inputDate){
     let today = new Date();
-    let diffTimeLastLogin = Math.abs(today - lastLoginDate);
-    let daysSinceLastLogin = Math.ceil(diffTimeLastLogin / (1000 * 60 * 60 * 24));
-    return daysSinceLastLogin;
-}
-export function calcDaysSinceCreation(createdDate){
-    let today = new Date();
-    let diffTime = Math.abs(today - createdDate);
-    let daysSinceCreation = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-    return daysSinceCreation;
+    let diffTime = Math.abs(today - inputDate);
+    let daysSince = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    return daysSince;
 }
 export function calcDaysToExpiry(accountExpiryDate){
     let today = new Date();
