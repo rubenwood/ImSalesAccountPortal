@@ -29,7 +29,7 @@ export function showSimInsights(reportData){
     setupInsightTabs(reportData);
 }
 
-function getSimStats(reportData){
+export function getSimStats(reportData){
     let output = {
         totalSimPlayTime:0,
         totalSimsAttempted:0,

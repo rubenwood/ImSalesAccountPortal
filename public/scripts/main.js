@@ -1,5 +1,5 @@
 import { canAccess } from './access-check.js';
-import { populateAccDataRow, populateUsageData, populateLoginData, calcDaysSinceLastLogin, calcDaysSinceCreation, calcDaysToExpiry, checkForContactEmailAddrSuffix, closePlayerDataModal } from './user-report-formatting.js';
+import { closePlayerDataModal } from './user-report-formatting.js';
 import { Login, RegisterUserEmailAddress, UpdateUserDataServer, getPlayerEmailAddr } from './PlayFabManager.js';
 import { showInsightsModal, closeInsightsModal, getTotalPlayTime, findPlayersWithMostPlayTime, findPlayersWithMostPlays, findPlayersWithMostUniqueActivitiesPlayed, findMostPlayedActivities, getUserAccessPerPlatform } from './insights.js';
 import { formatTimeToHHMMSS, formatActivityData, getAcademicAreas } from './utils.js';
@@ -8,6 +8,8 @@ import { fetchPlayersBySuffixList } from './suffix-front.js';
 import { populateForm, sortAndCombineData, fetchAllUsersByArea } from './academic-area.js';
 import { fetchUsersByID, fetchUsersByEmail } from './db/db-front.js';
 import { fetchUsersByClickIDList } from './click-id-front.js';
+import { getLessonStats } from './lesson-insights.js';
+import { getSimStats } from './sim-insights.js';
 
 const doConfetti = () => { confetti({particleCount: 100, spread: 70, origin: { y: 0.6 }}); }
 
@@ -25,7 +27,7 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('getSegmentPlayersButton').addEventListener('click', async ()=>
     { 
         await getSegmentPlayersButtonClicked();
-        document.getElementById('totalPlayersSegment').innerHTML = 'Total players in segment: ' + playerProfiles.length;
+        document.getElementById('totalPlayersSegment').innerHTML = `Total players in segment: ${playerProfiles.length}`;
     });
 
     // player id text area
@@ -127,7 +129,7 @@ getDatabaseLastUpdated();
 
 // GENERATE REPORT
 // Helper function to delay execution
-const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
+//const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
 export let reportData = [];
 
 // Generate report by email suffix (Database)
@@ -256,7 +258,6 @@ export async function generateReportByEmailDB() {
         let sortedData = sortAndCombineData(results);
         document.getElementById('totalPlayersReport').innerHTML = 'Total users in report: ' + sortedData.length;        
         await populateForm(sortedData);
-        //await populateForm(output);
     } catch (error) {
         console.error('Error:', error);
         const row = tableBody.insertRow();
@@ -273,73 +274,6 @@ export async function generateReportByEmailDB() {
         resetButtonTexts();
         doConfetti();
     });
-}
-
-// HANDLE DATA (populate report)
-async function handleData(respData, userAccInfo, tableBody){
-    let userData = respData;
-
-    let email = await getPlayerEmailAddr(userAccInfo.data.UserInfo.PlayFabId);
-    let createdDate = new Date(userAccInfo.data.UserInfo.TitleInfo.Created);
-    let lastLoginDate =  new Date(userAccInfo.data.UserInfo.TitleInfo.LastLogin);
-    let daysSinceCreation = calcDaysSinceCreation(createdDate);
-    let daysSinceLastLogin = calcDaysSinceLastLogin(lastLoginDate);
-
-    let accountExpiryDate = userData.data.Data.TestAccountExpiryDate !== undefined ? new Date(userData.data.Data.TestAccountExpiryDate.Value) : undefined;
-    let accountExpiryDateString = accountExpiryDate !== undefined ? accountExpiryDate.toDateString() : "N/A";
-    let daysToExpire = calcDaysToExpiry(accountExpiryDate);
-
-    let createdBy = userData.data.Data.CreatedBy !== undefined ? userData.data.Data.CreatedBy.Value : "";
-    let createdFor = userData.data.Data.CreatedFor !== undefined ? userData.data.Data.CreatedFor.Value : "";
-
-    // Append account data to the table
-    const row = tableBody.insertRow();
-    row.className = 'report-row';
-    populateAccDataRow(row, email, createdDate, lastLoginDate, daysSinceLastLogin, daysSinceCreation, 
-        accountExpiryDateString, daysToExpire, createdBy, createdFor, "");
-    
-    // get last login dates per platform
-    let loginData = populateLoginData(userData.data.Data);
-
-    // process PlayerData
-    // TODO: add playerDataNewLauncher here
-    let playerDataNew = userData.PlayerDataNewLauncher !== undefined ? JSON.parse(userData.PlayerDataNewLauncher.Value) : undefined;
-    let playerData = userData.data.Data.PlayerData !== undefined ? JSON.parse(userData.data.Data.PlayerData.Value) : undefined;
-    // need this to preserve the data state, so it can be mutated by populatePlayerData, 
-    // and then written to export data further down
-    let playerDataState = {
-        totalActivitiesPlayed:0,
-        averageTimePerPlay: 0,
-        totalPlays: 0,
-        totalPlayTime: 0,
-        activityDataForReport: []
-    };
-    // TODO: test this!
-    let newDataState = populateUsageData([playerDataNew, playerData], loginData, playerDataState, row);
-    let averageTimePerPlay = newDataState.averageTimePerPlay;
-    let totalPlays = newDataState.totalPlays;
-    let totalPlayTime = newDataState.totalPlayTime;
-    let activityDataForReport = newDataState.activityDataForReport;
-
-    // add to stored data
-    writeDataForReport(userAccInfo.data.UserInfo.PlayFabId, email, createdDate, lastLoginDate,
-        daysSinceLastLogin,daysSinceCreation,accountExpiryDateString,daysToExpire,createdBy,
-        createdFor, "", activityDataForReport,totalPlays,totalPlayTime,averageTimePerPlay, loginData);
-    
-    // highlight rules
-    if(!isNaN(daysToExpire) && daysToExpire < 7)
-    {
-        row.style.backgroundColor = '#ffa500'; // Orange color
-        row.addEventListener('mouseenter', e => showTooltip(e, 'Account is expiring soon.'));
-        row.addEventListener('mouseleave', hideTooltip);
-    }
-
-    if (daysSinceCreation >= 2 && createdDate.toDateString() === lastLoginDate.toDateString())
-    {
-        row.style.backgroundColor = '#fa8c8cab'; // Highlight the cell in red
-        row.addEventListener('mouseenter', e => showTooltip(e, 'Its been a while since this account was created and the user hasnt logged in.'));
-        row.addEventListener('mouseleave', hideTooltip);
-    }
 }
 
 // Clears exportData, required when producing a new report
@@ -424,31 +358,6 @@ export function updateIDList(playerIdList){
     if(document.getElementById("playerIDList")){ document.getElementById("playerIDList").value = playerIdList.join('\n') }
 }
 
-// REPORT TOOLTIPS
-function showTooltip(event, message) {
-    // Create tooltip element if it doesn't exist
-    let tooltip = document.getElementById('tooltip');
-    if (!tooltip) {
-        tooltip = document.createElement('div');
-        tooltip.id = 'tooltip';
-        tooltip.className = 'tooltip';
-        document.body.appendChild(tooltip);
-    }
-
-    // Set message and position of tooltip
-    tooltip.textContent = message;
-    tooltip.style.left = event.pageX + 'px';
-    tooltip.style.top = event.pageY + 'px';
-    tooltip.classList.add('visible');
-}
-
-function hideTooltip() {
-    const tooltip = document.getElementById('tooltip');
-    if (tooltip) {
-        tooltip.classList.remove('visible');
-    }
-}
-
 // EXPORT REPORT
 let exportData;
 function createUserRow(dataToExport, activity, isFirstActivity) {
@@ -482,7 +391,6 @@ function exportToExcel() {
     let insightsExportData = [
         { insight: 'Total Play Time Across All Users', value: formatTimeToHHMMSS(totalPlayTimeAcrossAllUsersSeconds) }
     ];
-
     playersWithMostPlayTime.forEach(player => {
         insightsExportData.push({ insight: 'Player With Most Play Time', value: player.email + ' - ' + formatTimeToHHMMSS(player.totalPlayTime) });
     });
@@ -499,6 +407,34 @@ function exportToExcel() {
     insightsExportData.push({insight: 'User Access iOS', value: userAccessPerPlatform.totalIOS});
     insightsExportData.push({insight: 'User Access Web', value: userAccessPerPlatform.totalWeb});
 
+    // Lesson insights
+    let lessonStats = getLessonStats(reportData);
+    console.log(lessonStats);
+    let lessonInsightsData = [
+        { insight: 'Total Lesson Play Time', value: formatTimeToHHMMSS(lessonStats.totalLessonPlayTime) },
+        { insight: 'Total Lessons Attempted', value: lessonStats.totalLessonsAttempted },
+        { insight: 'Total Lesson Plays', value: lessonStats.totalLessonPlays }
+    ];
+    lessonStats.mostPlayedLessons.forEach(lesson => {
+        lessonInsightsData.push({ insight: 'Most Played Lessons', value: `${lesson.title} - ${lesson.count}` });
+    });
+    lessonStats.highestPlayTimeLessons.forEach(lesson => {
+        lessonInsightsData.push({ insight: 'Most Played Lessons (Play Time)', value: `${lesson.title} - ${formatTimeToHHMMSS(lesson.totalTime)}` });
+    });
+    // Sim insights
+    let simStats = getSimStats(reportData);
+    let simInsightsData = [
+        { insight: 'Total Simulation Play Time', value: formatTimeToHHMMSS(simStats.totalSimPlayTime) },
+        { insight: 'Total Simulations Attempted', value: simStats.totalSimsAttempted },
+        { insight: 'Total Simulations Plays', value: simStats.totalSimsAttempted }        
+    ];
+    simStats.mostPlayedSims.forEach(sim => {
+       simInsightsData.push({ insight: 'Most Played Simulations', value: `${sim.title} - ${sim.count}` });
+    });
+    simStats.highestPlayTimeSims.forEach(sim => {
+        simInsightsData.push({ insight: 'Most Played Simulations (Play Time)', value: `${sim.title} - ${formatTimeToHHMMSS(sim.totalTime)}` });
+    });
+    
     // add user data
     let userData = [];
     exportData.forEach(dataToExport => {
@@ -523,8 +459,12 @@ function exportToExcel() {
 
     let workbook = XLSX.utils.book_new();
     let insightsWorksheet = XLSX.utils.json_to_sheet(insightsExportData);
+    let lessonInsightsWorksheet = XLSX.utils.json_to_sheet(lessonInsightsData);
+    let simInsightsWorksheet = XLSX.utils.json_to_sheet(simInsightsData);
     let userDataWorksheet = XLSX.utils.json_to_sheet(userData);
     XLSX.utils.book_append_sheet(workbook, insightsWorksheet, "Insights");
+    XLSX.utils.book_append_sheet(workbook, lessonInsightsWorksheet, "Lesson Insights");
+    XLSX.utils.book_append_sheet(workbook, simInsightsWorksheet, "Sim Insights");
     XLSX.utils.book_append_sheet(workbook, userDataWorksheet, "Report");
     XLSX.writeFile(workbook, "Report.xlsx");
 }

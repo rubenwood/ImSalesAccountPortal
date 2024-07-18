@@ -28,7 +28,7 @@ export function showLessonInsights(reportData){
     setupInsightTabs(reportData);
 }
 
-function getLessonStats(reportData){
+export function getLessonStats(reportData){
     let output = {
         totalLessonPlayTime:0,
         totalLessonsAttempted:0,

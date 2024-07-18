@@ -29,7 +29,7 @@ export async function fetchAllUsersByArea() {
 
         // TODO: change this so that each response/page is written to the page when its required 
         for (let page = 1; page <= totalPages; page++) {
-            fetchPromises.push(fetchUsersByAreaList(areaList.toString(), page));
+            fetchPromises.push(fetchUsersByAreaList(areaList.toString(), page)); // TODO: improve efficiency
         }
         const results = await Promise.all(fetchPromises);
 
