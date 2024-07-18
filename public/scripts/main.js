@@ -2,7 +2,7 @@ import { canAccess } from './access-check.js';
 import { populateAccDataRow, populateUsageData, populateLoginData, calcDaysSinceLastLogin, calcDaysSinceCreation, calcDaysToExpiry, checkForContactEmailAddrSuffix, closePlayerDataModal } from './user-report-formatting.js';
 import { Login, RegisterUserEmailAddress, UpdateUserDataServer, getPlayerEmailAddr } from './PlayFabManager.js';
 import { showInsightsModal, closeInsightsModal, getTotalPlayTime, findPlayersWithMostPlayTime, findPlayersWithMostPlays, findPlayersWithMostUniqueActivitiesPlayed, findMostPlayedActivities, getUserAccessPerPlatform } from './insights.js';
-import { fetchUserData, fetchUserAccInfoById, fetchUserAccInfoByEmail, formatTimeToHHMMSS, formatActivityData, getAcademicAreas } from './utils.js';
+import { formatTimeToHHMMSS, formatActivityData, getAcademicAreas } from './utils.js';
 import { playerProfiles, getSegmentsClicked, getPlayersInSegmentClicked } from './segments.js';
 import { fetchPlayersBySuffixList } from './suffix-front.js';
 import { populateForm, sortAndCombineData, fetchAllUsersByArea } from './academic-area.js';
