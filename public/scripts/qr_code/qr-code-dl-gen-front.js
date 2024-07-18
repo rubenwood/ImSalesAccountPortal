@@ -225,10 +225,8 @@ function genAddTopicLinks(topics){
     return links;
 }
 // generate launch activity links
-function genLaunchActivityLinks(activities){
-    //console.log("CALLED");
-    let links = [];
-    //console.log(activities);
+function genLaunchActivityLinks(activities){    
+    let links = [];    
 
     for(const activity of activities){
         let activityId = activity.activityId;

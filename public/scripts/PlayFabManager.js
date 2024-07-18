@@ -1,8 +1,8 @@
-import { callUpdateConfluencePage } from "./confluence.js";
+import {callUpdateConfluencePage} from "./confluence.js";
 import {fetchUserAccInfoById, fetchUserAccInfoByEmail, fetchUserProfileById, formatDate} from "./utils.js"
 import {setAccessLevel, canAccess} from "./access-check.js"
 import {auth} from "./immersifyapi/immersify-api.js";
-import { waitUntil } from "./asyncTools.js";
+import {waitUntil} from "./asyncTools.js";
 
 const titleId = "29001";
 
@@ -100,14 +100,11 @@ var RegisterCallback = async function (result, error){
     const TestAccountExpiryDate = document.getElementById("expiry").value;
     const TestAccountExpiryDateFormatted = formatDate(new Date(TestAccountExpiryDate));
     const today = formatDate(new Date());
-    //console.log(TestAccountExpiryDate);
-    console.log(TestAccountExpiryDateFormatted.toString());
-    console.log(today.toString());
     const CreatedBy = document.getElementById("createdBy").value;
     const CreatedUpdatedReason = document.getElementById("createdReason").value;
 
     // TODO: new data field
-    let OtherSubDataJSON = {
+    const OtherSubDataJSON = {
         Platform:"Other",
         Product:"immersify.gold_yearly",
         PurchaseDate:today.toString(),
@@ -117,35 +114,33 @@ var RegisterCallback = async function (result, error){
         SubscriptionPeriod:"yearly"
     }
     console.log(OtherSubDataJSON);
-    let otherSubDataStr = JSON.stringify(OtherSubDataJSON);
+    const otherSubDataStr = JSON.stringify(OtherSubDataJSON);
+    const LastWriteDevice = "";
 
-    let data = {
+    const data = {
         //SubOverride,
         VerifyEmailOverride,
         AcademicArea,
         CanEmail,
-        TestAccountExpiryDate,
+        TestAccountExpiryDate:TestAccountExpiryDateFormatted.toString(),
         CreatedBy,
         CreatedUpdatedReason,
-        OtherSubData:otherSubDataStr
+        OtherSubData:otherSubDataStr,
+        LastWriteDevice
     };
     UpdateUserData(data);
     // wait for UpdateUserData to complete
-    await waitUntil(()=> updatingUserData == true);
-    // set the LastWriteDevice
-    let LastWriteDevice = "";
-    UpdateUserData({ LastWriteDevice });
+    await waitUntil(()=> doneUpdatingUserData == true);
     // update confluence page
-    let email = document.getElementById("emailSignUpAddress").value;
-    let pass = document.getElementById("emailSignUpPassword").value;
+    const email = document.getElementById("emailSignUpAddress").value;
+    const pass = document.getElementById("emailSignUpPassword").value;
 
     callUpdateConfluencePage(email,pass,AcademicArea,TestAccountExpiryDate,CreatedBy,CreatedUpdatedReason);   
 }
 // UPDATE USER DATA
-var updatingUserData = false;
+let doneUpdatingUserData = false;
 function UpdateUserData(updateData){
-    updatingUserData = true;
-    // updateData must be a json object
+    doneUpdatingUserData = false;
     PlayFab.settings.titleId = titleId;
 
     var updateUserDataRequest = {
@@ -165,37 +160,53 @@ var UpdateUserDataCallback = function (result, error){
             PlayFab.GenerateErrorReport(error);
     }
 
-    updatingUserData = false;
+    doneUpdatingUserData = true;
 }
 
 // UPDATE USER DATA (SERVER SIDE)
 export async function UpdateUserDataServer(){
-    let resultOutput = document.getElementById("updateResultOutput").value;
+    const resultOutput = document.getElementById("updateResultOutput").value;
     resultOutput = '';
-    let email =  document.getElementById("emailAddressUpdate").value;
-    let userAccInfoResp = await fetchUserAccInfoByEmail(email); // input email address, get playfabID
+    const email =  document.getElementById("emailAddressUpdate").value;
+    const userAccInfoResp = await fetchUserAccInfoByEmail(email); // input email address, get playfabID
     if (userAccInfoResp.error) {
         resultOutput = `Error occurred: ${userAccInfoResp.message}`;
         return;
     }
 
-    const url = `/update-user-data`;
-    let playFabID = userAccInfoResp.data.UserInfo.PlayFabId;
+    const SubOverride = true;
+    const VerifyEmailOverride = true;
+    const AcademicArea = document.getElementById("academicAreaUpdate").value;
+    const TestAccountExpiryDate = document.getElementById("expiry").value;
+    const TestAccountExpiryDateFormatted = formatDate(new Date(TestAccountExpiryDate));
+    const today = formatDate(new Date());
+    const UpdatedBy = document.getElementById("updatedBy").value;
+    const CreatedUpdatedReason = document.getElementById("updatedReason").value;
+    // TODO: new data field
+    const OtherSubDataJSON = {
+        Platform:"Other",
+        Product:"immersify.gold_yearly",
+        PurchaseDate:today.toString(),
+        SubStatus:"",
+        SubExpire:TestAccountExpiryDateFormatted.toString(),
+        SubscriptionTier:"gold",
+        SubscriptionPeriod:"yearly"
+    }
+    console.log(OtherSubDataJSON);
+    const otherSubDataStr = JSON.stringify(OtherSubDataJSON);
 
-    let SubOverride = true;
-    let VerifyEmailOverride = true;
-    let AcademicArea = document.getElementById("academicAreaUpdate").value;
-    let TestAccountExpiryDate = document.getElementById("expiryUpdate").value;
-    let UpdatedBy = document.getElementById("updatedBy").value;
-    let CreatedUpdatedReason = document.getElementById("updatedReason").value;
-    let data = {
-        SubOverride,
+    const data = {
+        //SubOverride,
         VerifyEmailOverride,
         AcademicArea,
-        TestAccountExpiryDate,
+        TestAccountExpiryDate:TestAccountExpiryDateFormatted.toString(),
         UpdatedBy,
-        CreatedUpdatedReason
+        CreatedUpdatedReason,
+        OtherSubData:otherSubDataStr
     };
+
+    const url = `/update-user-data`;
+    const playFabID = userAccInfoResp.data.UserInfo.PlayFabId;
 
     const response = await fetch(url, {
         method: 'POST',
