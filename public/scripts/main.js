@@ -10,10 +10,14 @@ import { fetchUsersByID, fetchUsersByEmail } from './db/db-front.js';
 import { fetchUsersByClickIDList } from './click-id-front.js';
 import { getLessonStats } from './lesson-insights.js';
 import { getSimStats } from './sim-insights.js';
+import { initializeDarkMode } from './themes/dark-mode.js';
 
 const doConfetti = () => { confetti({particleCount: 100, spread: 70, origin: { y: 0.6 }}); }
 
 document.addEventListener('DOMContentLoaded', () => {
+    // setup dark mode toggle
+    initializeDarkMode('darkModeSwitch');
+
     document.getElementById('loginButton').addEventListener('click', Login);
     // Sign Up / Modify Form
     document.getElementById('signUpFormRadio').addEventListener('change', toggleForms);

@@ -125,6 +125,7 @@ function getPracInfo(){
 //getPracInfo();
 
 // NOT CMS RELATED
+// TODO: change this to get academic areas from CMS
 export let academicAreas;
 export async function getAcademicAreas() {
     const url = `/getAcademicAreas`;

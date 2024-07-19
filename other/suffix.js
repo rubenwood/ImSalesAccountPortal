@@ -3,7 +3,6 @@ const express = require('express');
 const suffixRouter = express.Router();
 const { Pool } = require('pg');
 const XLSX = require('xlsx');
-//const bodyParser = require('body-parser');
 
 const { anyFileModifiedSince, checkFileLastModified } = require('./s3-utils');
 
@@ -162,7 +161,6 @@ async function generateReportByEmailSuffixDB(suffixes, exportReport) {
     }
 
     return output;
-    //return Array.from(matchedUsersMap.values());
 }
 
 // function to generate out a report (excel sheet)
@@ -170,11 +168,7 @@ async function generateReportByEmailSuffixDB(suffixes, exportReport) {
 function genExcelReport(data){
     console.log("exporting report");
     let sortedData = sortAndCombineDataForReport(data);
-    //console.log(sortedData);
-    setupDataForExport(sortedData);
-    console.log('~~~~ EXPORT DATA ~~~~');
-    console.log(exportData);
-    console.log('~~~~ END EXPORT DATA ~~~~');
+    let exportData = setupDataForExport(sortedData);
     exportToExcel(exportData);
 }
 function sortAndCombineDataForReport(data) {
@@ -196,8 +190,9 @@ function sortAndCombineDataForReport(data) {
     }, []);
 }
 
-let exportData = [];
+
 function setupDataForExport(sortedData){
+    let exportData = [];
     sortedData.forEach(element =>{
         //let playFabId = element.accountData.PlayFabId;
         let email = getUserEmailFromAccData(element.accountData.AccountDataJSON);
@@ -263,6 +258,7 @@ function setupDataForExport(sortedData){
         }
         exportData.push(userExportData);
     });
+    return exportData;
 }
 // EXCEL REPORT HELPER FUNCTIONS
 function getUserEmailFromAccData(element){
@@ -356,8 +352,9 @@ function formatActivityData(activityData) {
     return formattedData;
 }
 
-function exportToExcel(){
+function exportToExcel(exportData){
     console.log("beginning export...");
+    console.log(exportData);
 
     /* const workbook = XLSX.utils.book_new();
     const insightsWorksheet = XLSX.utils.json_to_sheet(insightsExportData);
@@ -386,6 +383,7 @@ suffixRouter.get('/gen-suffix-rep', async (req, res) => {
     }
 });
 
+// Gets all the connections ids from connetion list file
 suffixRouter.get('/get-connection-ids', async (req, res) => {
     try {        
         const params = {
