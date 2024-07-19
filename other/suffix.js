@@ -416,7 +416,7 @@ function exportToExcel(suffixes, exportData){
     //XLSX.writeFile(workbook, `Report-${suffixes.join('-')}-${formatDate(new Date())}.xlsx`);
 
     const workbookOut = XLSX.write(workbook, { bookType: 'xlsx', type: 'buffer' });
-    const filename = `Report-${suffixes.join('-')}-${formatDate(new Date())}.xlsx`;
+    const filename = `Analytics/Report-${suffixes.join('-')}-${formatDate(new Date())}.xlsx`;
     uploadToS3(workbookOut, filename, 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', process.env.AWS_BUCKET)
         .then((data) => {
             console.log(`File uploaded successfully at ${data.Location}`);
