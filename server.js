@@ -8,7 +8,7 @@ const path = require('path');
 require('dotenv').config();
 const app = express();
 const session = require('express-session');
-const fetchExchangeData = require('./getExchangeData.js');
+const fetchExchangeData = require('./other/getExchangeData.js');
 // routes
 const googleRoutes = require('./google/googlestore.js');
 const appleRoutes = require('./apple/applestore.js');
@@ -35,28 +35,7 @@ AWS.config.update({
   region: process.env.AWS_REGION
 });
 const s3 = new AWS.S3();
-// GET PRESIGNED URL
-app.get('/presigned-url', async (req, res) => {
-  const filePath = req.query.filePath;
-  
-  if (!filePath) {
-      return res.status(400).send('File path is required');
-  }
-
-  const params = {
-      Bucket: process.env.AWS_BUCKET,
-      Key: filePath,
-      Expires: 60 // seconds
-  };
-
-  try {
-      const url = s3.getSignedUrl('getObject', params);
-      res.json({ url });
-  } catch (err) {
-      console.error('Error generating presigned URL:', err);
-      res.status(500).send('Error generating presigned URL');
-  }
-});
+// GET DATABASE LAST UPDATED
 app.get('/database-last-updated', async (req, res) => {
   const params = {
       Bucket: process.env.AWS_BUCKET,
@@ -419,6 +398,7 @@ app.get('/begin-get-all-players', async (req, res) => {
 
 // UPLOAD TO S3
 const upload = multer({ dest: 'uploads/' }); // Temporary storage for uploaded files
+// TODO: Change this to use the generic call in s3-utils
 async function uploadToS3(filePath, bucketName, key) {
   const fileContent = fs.readFileSync(filePath);
 

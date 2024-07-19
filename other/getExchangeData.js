@@ -10,6 +10,7 @@ AWS.config.update({
 
 const s3 = new AWS.S3();
 
+// TODO: Change this to use the generic call in s3-utils
 function uploadToS3(bucketName, fileName, data) {
   const params = {
     Bucket: bucketName,

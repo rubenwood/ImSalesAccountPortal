@@ -8,6 +8,17 @@ AWS.config.update({
 });
 const s3 = new AWS.S3();
 
+async function uploadToS3(buffer, filename, contentType, bucketName) {
+  const params = {
+      Bucket: bucketName,
+      Key: filename,
+      Body: buffer,
+      ContentType: contentType
+  };
+
+  return s3.upload(params).promise();
+}
+
 function formatSize(size) {
   if (size >= 1024 * 1024) {
       return (size / (1024 * 1024)).toFixed(2) + ' MB';
@@ -112,4 +123,4 @@ async function checkFileLastModified(bucket, fileKey) {
     }
 }
 
-module.exports = { anyFileModifiedSince, checkFileLastModified, checkFilesLastModifiedList  };
+module.exports = { uploadToS3, anyFileModifiedSince, checkFileLastModified, checkFilesLastModifiedList  };

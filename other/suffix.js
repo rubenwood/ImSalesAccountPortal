@@ -4,7 +4,7 @@ const suffixRouter = express.Router();
 const { Pool } = require('pg');
 const XLSX = require('xlsx');
 
-const { anyFileModifiedSince, checkFileLastModified } = require('./s3-utils');
+const { uploadToS3, anyFileModifiedSince, checkFileLastModified } = require('./s3-utils');
 
 AWS.config.update({
     region: process.env.AWS_REGION,
@@ -157,7 +157,7 @@ async function generateReportByEmailSuffixDB(suffixes, exportReport) {
     }
 
     if(exportReport == true){
-        genExcelReport(output);
+        genExcelReport(suffixes, output);
     }
 
     return output;
@@ -165,11 +165,11 @@ async function generateReportByEmailSuffixDB(suffixes, exportReport) {
 
 // function to generate out a report (excel sheet)
 // add a url param to end point to notify report generation
-function genExcelReport(data){
+function genExcelReport(suffixes, data){
     console.log("exporting report");
     let sortedData = sortAndCombineDataForReport(data);
     let exportData = setupDataForExport(sortedData);
-    exportToExcel(exportData);
+    exportToExcel(suffixes, exportData);
 }
 function sortAndCombineDataForReport(data) {
     const { accountData, usageData } = data;
@@ -189,8 +189,6 @@ function sortAndCombineDataForReport(data) {
         return acc;
     }, []);
 }
-
-
 function setupDataForExport(sortedData){
     let exportData = [];
     sortedData.forEach(element =>{
@@ -260,7 +258,7 @@ function setupDataForExport(sortedData){
     });
     return exportData;
 }
-// EXCEL REPORT HELPER FUNCTIONS
+// SETUP DATA FOR EXPORT HELPER FUNCTIONS
 function getUserEmailFromAccData(element){
     let email = "no email";
     //console.log(element);
@@ -352,20 +350,231 @@ function formatActivityData(activityData) {
     return formattedData;
 }
 
-function exportToExcel(exportData){
+function exportToExcel(suffixes, exportData){
     console.log("beginning export...");
     console.log(exportData);
+    const totalPlayTimeAcrossAllUsersSeconds = getTotalPlayTime(exportData);
+    const playersWithMostPlayTime = findPlayersWithMostPlayTime(exportData, 1, 3);
+    const playersWithMostPlays = findPlayersWithMostPlays(exportData, 1, 3);
+    const playersWithMostUniqueActivities = findPlayersWithMostUniqueActivitiesPlayed(exportData, 1, 3);
+    const mostPlayedActivities = findMostPlayedActivities(exportData, 1, 10);
+    const userAccessPerPlatform = getUserAccessPerPlatform(exportData);
 
-    /* const workbook = XLSX.utils.book_new();
+    let insightsExportData = [
+        { insight: 'Total Play Time Across All Users', value: formatTimeToHHMMSS(totalPlayTimeAcrossAllUsersSeconds) }
+    ];
+    playersWithMostPlayTime.forEach(player => {
+        insightsExportData.push({ insight: 'Player With Most Play Time', value:`${player.email} - ${formatTimeToHHMMSS(player.totalPlayTime)}` });
+    });
+    playersWithMostPlays.forEach(player => {
+        insightsExportData.push({ insight: 'Player With Most Plays', value:`${player.email} - ${player.totalPlays}` });
+    });
+    playersWithMostUniqueActivities.forEach(player => {
+        insightsExportData.push({ insight: 'Player With Most Unique Activities', value:`${player.email} - ${player.uniqueActivitiesCount}` });
+    });
+    mostPlayedActivities.forEach(activity => {
+        insightsExportData.push({ insight: 'Most Played Activities', value:`${activity.activityTitle} - ${activity.totalPlays}` });
+    });
+    insightsExportData.push({insight: 'User Access Android', value: userAccessPerPlatform.totalAndroid});
+    insightsExportData.push({insight: 'User Access iOS', value: userAccessPerPlatform.totalIOS});
+    insightsExportData.push({insight: 'User Access Web', value: userAccessPerPlatform.totalWeb});
+
+    let userData = [];
+    exportData.forEach(dataToExport => {
+        if (dataToExport.activityDataFormatted != undefined && dataToExport.activityDataFormatted.length > 0){
+            let isFirstActivity = true;
+            dataToExport.activityDataFormatted.forEach(activity => {
+                let activityRow = {
+                    activityID: activity.activityID,
+                    activityTitle: activity.activityTitle,
+                    playDate: activity.playDate,
+                    score: Math.round(activity.score * 100) + '%',
+                    sessionTime: formatTimeToHHMMSS(Math.abs(activity.sessionTime))
+                };
+                userData.push(createUserRow(dataToExport, activityRow, isFirstActivity));
+                isFirstActivity = false;
+            });
+        }else{
+            userData.push(createUserRow(dataToExport, {}, true));
+        }
+        userData.push({}); // Add an empty row to divide user data chunks
+    });
+
+    console.log(insightsExportData);
+    console.log(userData);
+
+
+    const workbook = XLSX.utils.book_new();
     const insightsWorksheet = XLSX.utils.json_to_sheet(insightsExportData);
-    const lessonInsightsWorksheet = XLSX.utils.json_to_sheet(lessonInsightsData);
-    const simInsightsWorksheet = XLSX.utils.json_to_sheet(simInsightsData);
+    //const lessonInsightsWorksheet = XLSX.utils.json_to_sheet(lessonInsightsData);
+    //const simInsightsWorksheet = XLSX.utils.json_to_sheet(simInsightsData);
     const userDataWorksheet = XLSX.utils.json_to_sheet(userData);
     XLSX.utils.book_append_sheet(workbook, insightsWorksheet, "Insights");
-    XLSX.utils.book_append_sheet(workbook, lessonInsightsWorksheet, "Lesson Insights");
-    XLSX.utils.book_append_sheet(workbook, simInsightsWorksheet, "Sim Insights");
+    //XLSX.utils.book_append_sheet(workbook, lessonInsightsWorksheet, "Lesson Insights");
+    //XLSX.utils.book_append_sheet(workbook, simInsightsWorksheet, "Sim Insights");
     XLSX.utils.book_append_sheet(workbook, userDataWorksheet, "Report");
-    XLSX.writeFile(workbook, "Report.xlsx"); */
+    //XLSX.writeFile(workbook, `Report-${suffixes.join('-')}-${formatDate(new Date())}.xlsx`);
+
+    const workbookOut = XLSX.write(workbook, { bookType: 'xlsx', type: 'buffer' });
+    const filename = `Report-${suffixes.join('-')}-${formatDate(new Date())}.xlsx`;
+    uploadToS3(workbookOut, filename, 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', process.env.AWS_BUCKET)
+        .then((data) => {
+            console.log(`File uploaded successfully at ${data.Location}`);
+        })
+        .catch((err) => {
+            console.error(`Error uploading file: ${err.message}`);
+        });
+}
+// EXPORT HELPER FUNCTIONS
+function getTotalPlayTime(data){
+    let totalPlayTimeAcrossAllUsers = 0;
+    data.forEach((element) => {
+        totalPlayTimeAcrossAllUsers += element.totalPlayTime;
+    });
+
+    return totalPlayTimeAcrossAllUsers;
+}
+function findPlayersWithMostPlayTime(data, start, end) {
+    // Sort the data by totalPlayTime in descending order
+    const sortedData = data.slice().sort((a, b) => b.totalPlayTime - a.totalPlayTime);
+
+    // Adjusting start and end to be zero-based index
+    start = Math.max(start - 1, 0);
+    end = Math.min(end, data.length);
+
+    // Slice the sorted array to get the range
+    const selectedPlayers = sortedData.slice(start, end);
+    return selectedPlayers;
+}
+function findPlayersWithMostPlays(data, start, end) {
+    const sortedData = data.slice().sort((a, b) => b.totalPlays - a.totalPlays);
+
+    start = Math.max(start - 1, 0);
+    end = Math.min(end, data.length);
+
+    const selectedPlayers = sortedData.slice(start, end);
+    return selectedPlayers;
+}
+function findPlayersWithMostUniqueActivitiesPlayed(data, start, end) {
+    // Map each player to an object with email and count of unique activity IDs
+    const playersWithUniqueActivityCount = data.map(element => {        
+        if (element === undefined || !element.activityData || !Array.isArray(element.activityData)) {
+            console.log(`No activities found for ${element.email}`);
+            return { email: element.email, uniqueActivitiesCount: 0 };
+        }
+        
+        const uniqueActivityIDs = new Set(element.activityData.map(activity => activity.activityID));
+        return { email: element.email, uniqueActivitiesCount: uniqueActivityIDs.size };
+    });
+
+    // Sort by uniqueActivitiesCount in descending order
+    playersWithUniqueActivityCount.sort((a, b) => b.uniqueActivitiesCount - a.uniqueActivitiesCount);
+
+    // Adjusting start and end to be zero-based index
+    start = Math.max(start - 1, 0);
+    end = Math.min(end, data.length);
+
+    // Slice the array to get the specified range
+    const selectedPlayers = playersWithUniqueActivityCount.slice(start, end);
+    //console.log(selectedPlayers);
+    return selectedPlayers;
+}
+function findMostPlayedActivities(data, start, end, activityType = null) {
+    let activityCounts = {};
+
+    data.forEach(element => {
+        // Ensure the player has valid activity data
+        if (element.activityData && Array.isArray(element.activityData)) {
+            element.activityData.forEach(activity => {
+                if (activityType === null || activity.activityID.includes(activityType)) {
+                    const activityKey = activity.activityID + ' - ' + activity.activityTitle;
+                    if (activityCounts[activityKey]) {
+                        activityCounts[activityKey].count += activity.playCount;
+                    } else {
+                        activityCounts[activityKey] = {
+                            id: activity.activityID,
+                            title: activity.activityTitle,
+                            count: activity.playCount
+                        };
+                    }
+                }
+            });
+        }
+    });
+
+    // Convert the object into an array and sort it by count in descending order
+    const sortedActivities = Object.values(activityCounts).sort((a, b) => b.count - a.count);
+    // Adjusting start and end to be zero-based index
+    start = Math.max(start - 1, 0);
+    end = Math.min(end, sortedActivities.length);
+
+    // Slice the array to get the specified range
+    const mostPlayedActivities = sortedActivities.slice(start, end);
+    return mostPlayedActivities;
+}
+function getUserAccessPerPlatform(data){
+    let totalAndroid = 0;
+    let totalIOS = 0;
+    let totalWeb = 0;
+
+    data.forEach((element) => {
+        if(element.loginData !== undefined && element.loginData.lastLoginAndr !== undefined){
+            totalAndroid++;
+        }
+        if(element.loginData !== undefined && element.loginData.lastLoginIOS !== undefined){
+            totalIOS++;
+        }
+        if(element.loginData !== undefined && element.loginData.lastLoginWeb !== undefined){
+            totalWeb++;
+        }
+    });
+    return {totalAndroid, totalIOS, totalWeb};
+    
+}
+function formatTimeToHHMMSS(seconds) {
+    if(isNaN(seconds)){ return '00:00:00'; }
+
+    seconds = Math.round(seconds);
+    const hours = Math.floor(seconds / 3600);
+    const minutes = Math.floor((seconds % 3600) / 60);
+    const secs = seconds % 60;
+
+    const paddedHours = String(hours).padStart(2, '0');
+    const paddedMinutes = String(minutes).padStart(2, '0');
+    const paddedSeconds = String(secs).padStart(2, '0');
+
+    return `${paddedHours}:${paddedMinutes}:${paddedSeconds}`;
+}
+function formatDate(date) {
+    const pad = num => num.toString().padStart(2, '0');
+
+    const day = pad(date.getDate());
+    const month = pad(date.getMonth() + 1); // Months are zero-based
+    const year = date.getFullYear();
+    /* const hours = pad(date.getHours());
+    const minutes = pad(date.getMinutes());
+    const seconds = pad(date.getSeconds()); */
+
+    return `${year}-${month}-${day}`;
+}
+function createUserRow(dataToExport, activity, isFirstActivity) {
+    let userRow = {
+        email: dataToExport.email,
+        createdDate: dataToExport.createdDate,
+        lastLoginDate: dataToExport.lastLoginDate,
+        daysSinceLastLogin: dataToExport.daysSinceLastLogin,
+        daysSinceCreation: dataToExport.daysSinceCreation,
+        accountExpiryDate: dataToExport.accountExpiryDate,
+        daysToExpire: dataToExport.daysToExpire,
+        linkedAccounts: dataToExport.linkedAccounts,
+        lastLoginAndroid: dataToExport.loginData.lastLoginAndr,
+        lastLoginIOS: dataToExport.loginData.lastLoginIOS,
+        lastLoginWeb: dataToExport.loginData.lastLoginWeb,
+        totalPlays: dataToExport.totalPlays,
+        totalPlayTime: formatTimeToHHMMSS(dataToExport.totalPlayTime),
+        averageTimePerPlay: formatTimeToHHMMSS(dataToExport.averageTimePerPlay)
+    };
+    return isFirstActivity ? { ...userRow, ...activity } : activity;
 }
 
 // Route that takes in an array of query param gen-suffix-rep?suffixes=suffix1,suffix2
