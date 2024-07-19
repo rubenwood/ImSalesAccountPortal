@@ -124,6 +124,7 @@ function getPracInfo(){
 //getLessonInfo();
 //getPracInfo();
 
+// NOT CMS RELATED
 export let academicAreas;
 export async function getAcademicAreas() {
     const url = `/getAcademicAreas`;

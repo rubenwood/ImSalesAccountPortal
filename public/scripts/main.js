@@ -108,22 +108,22 @@ initializeDropdown(document.getElementById('academicAreaUpdate'));
 
 
 // GET LAST DATABASE UPDATE DATE
-function getDatabaseLastUpdated() {
-    var xhr = new XMLHttpRequest();    
-    xhr.open('GET', '../DatabaseLastUpdated.json', true);
-    
-    xhr.onreadystatechange = function() {
-        // Check if the request is complete (readyState 4) and was successful (status 200)
-        if (xhr.readyState === 4 && xhr.status === 200) {
-            var jsonResponse = JSON.parse(xhr.responseText);
-            var lastUpdateDate = jsonResponse.LastUpdatedDate;
-            document.getElementById('dbLastUpdated').innerHTML = `Database last updated on: ${lastUpdateDate}`;
-        } else if (xhr.readyState === 4 && xhr.status !== 200) {
-            console.error('Failed to retrieve the update date. Status:', xhr.status);
+async function getDatabaseLastUpdated() {
+    try {
+        // Fetch the file from the backend route
+        const response = await fetch('/database-last-updated');
+        
+        if (!response.ok) {
+            throw new Error(`Failed to retrieve the update date. Status: ${response.status}`);
         }
-    };
-    
-    xhr.send();
+        
+        const jsonResponse = await response.json();
+        const lastUpdateDate = jsonResponse.LastUpdatedDate;
+        
+        document.getElementById('dbLastUpdated').innerHTML = `Database last updated on: ${lastUpdateDate}`;
+    } catch (error) {
+        console.error(error.message);
+    }
 }
 getDatabaseLastUpdated();
 

@@ -4,6 +4,14 @@ const { Pool } = require('pg');
 const bulkRouter = express.Router();
 const fs = require('fs').promises;
 
+require('dotenv').config();
+const AWS = require('aws-sdk');
+AWS.config.update({
+    accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+    region: process.env.AWS_REGION
+});
+
 const pool = new Pool({
     user: process.env.PGUSER,
     host: process.env.PGHOST,
@@ -40,8 +48,20 @@ async function updateDatabase(){
 }
 async function OnUpdateCompletion(date) {
     const data = JSON.stringify({ LastUpdatedDate: date.toISOString() }, null, 2);
-    await fs.writeFile('./public/DatabaseLastUpdated.json', data);
-    console.log("Completion date recorded.");
+    const params = {
+        Bucket: process.env.AWS_BUCKET,
+        Key: 'DatabaseLastUpdated.json', // file path within the bucket
+        Body: data,
+        ContentType: 'application/json',
+        ACL: 'public-read' // Make the file publicly readable
+    };
+
+    try {
+        await s3.putObject(params).promise();
+        console.log("Completion date recorded.");
+    } catch (err) {
+        console.error("Error writing to S3:", err);
+    }
 }
 
 let getPlayerAccDataJobInProgress = false;

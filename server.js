@@ -35,6 +35,43 @@ AWS.config.update({
   region: process.env.AWS_REGION
 });
 const s3 = new AWS.S3();
+// GET PRESIGNED URL
+app.get('/presigned-url', async (req, res) => {
+  const filePath = req.query.filePath;
+  
+  if (!filePath) {
+      return res.status(400).send('File path is required');
+  }
+
+  const params = {
+      Bucket: process.env.AWS_BUCKET,
+      Key: filePath,
+      Expires: 60 // seconds
+  };
+
+  try {
+      const url = s3.getSignedUrl('getObject', params);
+      res.json({ url });
+  } catch (err) {
+      console.error('Error generating presigned URL:', err);
+      res.status(500).send('Error generating presigned URL');
+  }
+});
+app.get('/database-last-updated', async (req, res) => {
+  const params = {
+      Bucket: process.env.AWS_BUCKET,
+      Key: 'DatabaseLastUpdated.json'
+  };
+
+  try {
+      const data = await s3.getObject(params).promise();
+      const jsonData = JSON.parse(data.Body.toString('utf-8'));
+      res.json(jsonData);
+  } catch (err) {
+      console.error('Error fetching file from S3:', err);
+      res.status(500).send('Error fetching file from S3');
+  }
+});
 
 // FETCH EXCHANGE RATE DATA
 app.get('/getExchangeRates', async (req, res) => {
