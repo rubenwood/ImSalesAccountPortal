@@ -551,11 +551,11 @@ function formatDate(date) {
     const day = pad(date.getDate());
     const month = pad(date.getMonth() + 1); // Months are zero-based
     const year = date.getFullYear();
-    /* const hours = pad(date.getHours());
+    const hours = pad(date.getHours());
     const minutes = pad(date.getMinutes());
-    const seconds = pad(date.getSeconds()); */
+    const seconds = pad(date.getSeconds());
 
-    return `${year}-${month}-${day}`;
+    return `${year}-${month}-${day}T${hours}-${minutes}-${seconds}`;
 }
 function createUserRow(dataToExport, activity, isFirstActivity) {
     let userRow = {
