@@ -3,4 +3,5 @@ This project contains various tools used to gather analytics data for the Immers
 
 # Run
 npm install
+
 node ./server.js
