@@ -301,8 +301,8 @@ export function writeDataForReport(pID, pEmail, pCreatedDate,
         daysToExpire: pDaysToExpire, 
         createdBy: pCreatedBy, // hide from exported report
         createdFor: pCreatedFor, // hide from exported report
-        activityData: pActivityDataForReport,
         linkedAccounts: pLinkedAccounts,
+        activityData: pActivityDataForReport,        
         activityDataFormatted: formatActivityData(pActivityDataForReport),
         totalPlays: pTotalPlays,
         totalPlayTime: pTotalPlayTime,
@@ -321,6 +321,7 @@ export function writeDataForReport(pID, pEmail, pCreatedDate,
         accountExpiryDate: pAccountExpiryDate,
         daysToExpire: pDaysToExpire, 
         linkedAccounts: pLinkedAccounts,
+        activityData: pActivityDataForReport,
         activityDataFormatted: formatActivityData(pActivityDataForReport),
         totalPlays: pTotalPlays,
         totalPlayTime: pTotalPlayTime,
@@ -404,7 +405,7 @@ function exportToExcel() {
         insightsExportData.push({ insight: 'Player With Most Unique Activities', value:`${player.email} - ${player.uniqueActivitiesCount}` });
     });
     mostPlayedActivities.forEach(activity => {
-        insightsExportData.push({ insight: 'Most Played Activities', value:`${activity.activityTitle} - ${activity.totalPlays}` });
+        insightsExportData.push({ insight: 'Most Played Activities', value:`${activity.activityTitle} - ${activity.playCount}` });
     });
     insightsExportData.push({insight: 'User Access Android', value: userAccessPerPlatform.totalAndroid});
     insightsExportData.push({insight: 'User Access iOS', value: userAccessPerPlatform.totalIOS});
@@ -412,30 +413,30 @@ function exportToExcel() {
 
     // Lesson insights
     const lessonStats = getLessonStats(reportData);
-    console.log(lessonStats);
+    //console.log(lessonStats);
     let lessonInsightsData = [
         { insight: 'Total Lesson Play Time', value: formatTimeToHHMMSS(lessonStats.totalLessonPlayTime) },
         { insight: 'Total Lessons Attempted', value: lessonStats.totalLessonsAttempted },
         { insight: 'Total Lesson Plays', value: lessonStats.totalLessonPlays }
     ];
     lessonStats.mostPlayedLessons.forEach(lesson => {
-        lessonInsightsData.push({ insight: 'Most Played Lessons', value: `${lesson.title} - ${lesson.count}` });
+        lessonInsightsData.push({ insight: 'Most Played Lessons', value: `${lesson.activityTitle} - ${lesson.playCount}` });
     });
     lessonStats.highestPlayTimeLessons.forEach(lesson => {
-        lessonInsightsData.push({ insight: 'Most Played Lessons (Play Time)', value: `${lesson.title} - ${formatTimeToHHMMSS(lesson.totalTime)}` });
+        lessonInsightsData.push({ insight: 'Most Played Lessons (Play Time)', value: `${lesson.activityTitle} - ${formatTimeToHHMMSS(lesson.totalTime)}` });
     });
     // Sim insights
     const simStats = getSimStats(reportData);
     let simInsightsData = [
         { insight: 'Total Simulation Play Time', value: formatTimeToHHMMSS(simStats.totalSimPlayTime) },
         { insight: 'Total Simulations Attempted', value: simStats.totalSimsAttempted },
-        { insight: 'Total Simulations Plays', value: simStats.totalSimsAttempted }        
+        { insight: 'Total Simulations Plays', value: simStats.totalSimPlays }        
     ];
     simStats.mostPlayedSims.forEach(sim => {
-       simInsightsData.push({ insight: 'Most Played Simulations', value: `${sim.title} - ${sim.count}` });
+       simInsightsData.push({ insight: 'Most Played Simulations', value: `${sim.activityTitle} - ${sim.playCount}` });
     });
     simStats.highestPlayTimeSims.forEach(sim => {
-        simInsightsData.push({ insight: 'Most Played Simulations (Play Time)', value: `${sim.title} - ${formatTimeToHHMMSS(sim.totalTime)}` });
+        simInsightsData.push({ insight: 'Most Played Simulations (Play Time)', value: `${sim.activityTitle} - ${formatTimeToHHMMSS(sim.totalTime)}` });
     });
     
     // add user data

@@ -39,14 +39,12 @@ export function getLessonStats(reportData){
     };
 
     reportData.forEach(data => {
-        // Ensure the player has valid activity data
         if (data.activityData && Array.isArray(data.activityData)) {
             data.activityData.forEach(activity => {
                 if(activity.activityID.includes('_lesson')){ 
                     activity.plays.forEach(play =>{
                         output.totalLessonPlayTime += Math.round(Math.abs(play.sessionTime));
-                    });
-                    
+                    });                    
                     output.totalLessonsAttempted++
                     output.totalLessonPlays += activity.playCount;
                     if(activity.bestScore >= 100){

@@ -248,6 +248,7 @@ function setupDataForExport(sortedData){
             accountExpiryDate,
             daysToExpire: 0, 
             linkedAccounts,
+            activityData: activityDataForReport,
             activityDataFormatted: formatActivityData(activityDataForReport),
             totalPlays,
             totalPlayTime,
@@ -352,7 +353,7 @@ function formatActivityData(activityData) {
 
 function exportToExcel(suffixes, exportData){
     console.log("beginning export...");
-    console.log(exportData);
+    //console.log(exportData);
     const totalPlayTimeAcrossAllUsersSeconds = getTotalPlayTime(exportData);
     const playersWithMostPlayTime = findPlayersWithMostPlayTime(exportData, 1, 3);
     const playersWithMostPlays = findPlayersWithMostPlays(exportData, 1, 3);
@@ -373,37 +374,37 @@ function exportToExcel(suffixes, exportData){
         insightsExportData.push({ insight: 'Player With Most Unique Activities', value:`${player.email} - ${player.uniqueActivitiesCount}` });
     });
     mostPlayedActivities.forEach(activity => {
-        insightsExportData.push({ insight: 'Most Played Activities', value:`${activity.activityTitle} - ${activity.totalPlays}` });
+        insightsExportData.push({ insight: 'Most Played Activities', value:`${activity.activityTitle} - ${activity.playCount}` });
     });
     insightsExportData.push({insight: 'User Access Android', value: userAccessPerPlatform.totalAndroid});
     insightsExportData.push({insight: 'User Access iOS', value: userAccessPerPlatform.totalIOS});
     insightsExportData.push({insight: 'User Access Web', value: userAccessPerPlatform.totalWeb});
 
     // Lesson insights
-    const lessonStats = getLessonStats(reportData);
+    const lessonStats = getLessonStats(exportData);
     let lessonInsightsData = [
         { insight: 'Total Lesson Play Time', value: formatTimeToHHMMSS(lessonStats.totalLessonPlayTime) },
         { insight: 'Total Lessons Attempted', value: lessonStats.totalLessonsAttempted },
         { insight: 'Total Lesson Plays', value: lessonStats.totalLessonPlays }
     ];
     lessonStats.mostPlayedLessons.forEach(lesson => {
-        lessonInsightsData.push({ insight: 'Most Played Lessons', value: `${lesson.title} - ${lesson.count}` });
+        lessonInsightsData.push({ insight: 'Most Played Lessons', value: `${lesson.activityTitle} - ${lesson.playCount}` });
     });
     lessonStats.highestPlayTimeLessons.forEach(lesson => {
-        lessonInsightsData.push({ insight: 'Most Played Lessons (Play Time)', value: `${lesson.title} - ${formatTimeToHHMMSS(lesson.totalTime)}` });
+        lessonInsightsData.push({ insight: 'Most Played Lessons (Play Time)', value: `${lesson.activityTitle} - ${formatTimeToHHMMSS(lesson.totalTime)}` });
     });
     // Sim insights
-    const simStats = getSimStats(reportData);
+    const simStats = getSimStats(exportData);
     let simInsightsData = [
         { insight: 'Total Simulation Play Time', value: formatTimeToHHMMSS(simStats.totalSimPlayTime) },
         { insight: 'Total Simulations Attempted', value: simStats.totalSimsAttempted },
-        { insight: 'Total Simulations Plays', value: simStats.totalSimsAttempted }        
+        { insight: 'Total Simulations Plays', value: simStats.totalSimPlays }
     ];
     simStats.mostPlayedSims.forEach(sim => {
-       simInsightsData.push({ insight: 'Most Played Simulations', value: `${sim.title} - ${sim.count}` });
+       simInsightsData.push({ insight: 'Most Played Simulations', value: `${sim.activityTitle} - ${sim.playCount}` });
     });
     simStats.highestPlayTimeSims.forEach(sim => {
-        simInsightsData.push({ insight: 'Most Played Simulations (Play Time)', value: `${sim.title} - ${formatTimeToHHMMSS(sim.totalTime)}` });
+        simInsightsData.push({ insight: 'Most Played Simulations (Play Time)', value: `${sim.activityTitle} - ${formatTimeToHHMMSS(sim.totalTime)}` });
     });
 
     let userData = [];
@@ -427,9 +428,8 @@ function exportToExcel(suffixes, exportData){
         userData.push({}); // Add an empty row to divide user data chunks
     });
 
-    console.log(insightsExportData);
-    console.log(userData);
-
+    //console.log(insightsExportData);
+    //console.log(userData);
 
     const workbook = XLSX.utils.book_new();
     const insightsWorksheet = XLSX.utils.json_to_sheet(insightsExportData);
@@ -507,31 +507,31 @@ function findPlayersWithMostUniqueActivitiesPlayed(data, start, end) {
     //console.log(selectedPlayers);
     return selectedPlayers;
 }
-function findMostPlayedActivities(data, start, end, activityType = null) {
+function findMostPlayedActivities(reportData, start, end, activityType = null) {
     let activityCounts = {};
 
-    data.forEach(element => {
+    reportData.forEach(data => {
         // Ensure the player has valid activity data
-        if (element.activityData && Array.isArray(element.activityData)) {
-            element.activityData.forEach(activity => {
+        if (data.activityData && Array.isArray(data.activityData)) {
+            data.activityData.forEach(activity => {
                 if (activityType === null || activity.activityID.includes(activityType)) {
                     const activityKey = activity.activityID + ' - ' + activity.activityTitle;
                     if (activityCounts[activityKey]) {
-                        activityCounts[activityKey].count += activity.playCount;
+                        activityCounts[activityKey].playCount += activity.playCount;
                     } else {
                         activityCounts[activityKey] = {
-                            id: activity.activityID,
-                            title: activity.activityTitle,
-                            count: activity.playCount
+                            activityID: activity.activityID,
+                            activityTitle: activity.activityTitle,
+                            playCount: activity.playCount
                         };
                     }
-                }
+               }
             });
         }
     });
 
     // Convert the object into an array and sort it by count in descending order
-    const sortedActivities = Object.values(activityCounts).sort((a, b) => b.count - a.count);
+    const sortedActivities = Object.values(activityCounts).sort((a, b) => b.playCount - a.playCount);
     // Adjusting start and end to be zero-based index
     start = Math.max(start - 1, 0);
     end = Math.min(end, sortedActivities.length);
@@ -553,8 +553,8 @@ function findHighestPlayTimeActivities(reportData, start, end, activityType = nu
                             activityPlayTimeTotals[activityKey].totalTime += play.sessionTime;
                         } else {
                             activityPlayTimeTotals[activityKey] = {
-                                id: activity.activityID,
-                                title: activity.activityTitle,
+                                activityID: activity.activityID,
+                                activityTitle: activity.activityTitle,
                                 totalTime: play.sessionTime
                             };
                         }
@@ -574,12 +574,12 @@ function findHighestPlayTimeActivities(reportData, start, end, activityType = nu
     const highestPlayTimeActivities = sortedActivitiesByTime.slice(start, end);
     return highestPlayTimeActivities;
 }
-function calculateAverageScores(reportData) {
+function calculateAverageScores(data) {
     let scoreSum = {};
     let playCount = {};
     let activityTitles = {};
 
-    reportData.forEach(data => {
+    data.forEach(data => {
         if (data.activityData && Array.isArray(data.activityData)) {
             data.activityData.forEach(activity => {
                 if(activity.activityID.includes('_prac')){ 
@@ -675,7 +675,7 @@ function createUserRow(dataToExport, activity, isFirstActivity) {
     };
     return isFirstActivity ? { ...userRow, ...activity } : activity;
 }
-function getLessonStats(reportData){
+function getLessonStats(data){
     let output = {
         totalLessonPlayTime:0,
         totalLessonsAttempted:0,
@@ -685,10 +685,10 @@ function getLessonStats(reportData){
         highestPlayTimeLessons:[]
     };
 
-    reportData.forEach(data => {
+    data.forEach(element => {
         // Ensure the player has valid activity data
-        if (data.activityData && Array.isArray(data.activityData)) {
-            data.activityData.forEach(activity => {
+        if (element.activityData && Array.isArray(element.activityData)) {
+            element.activityData.forEach(activity => {
                 if(activity.activityID.includes('_lesson')){ 
                     activity.plays.forEach(play =>{
                         output.totalLessonPlayTime += Math.round(Math.abs(play.sessionTime));
@@ -704,12 +704,13 @@ function getLessonStats(reportData){
         }
     });
 
-    output.mostPlayedLessons = findMostPlayedActivities(reportData, 1, 10, '_lesson');
-    output.highestPlayTimeLessons = findHighestPlayTimeActivities(reportData, 1, 10, '_lesson');
+    output.mostPlayedLessons = findMostPlayedActivities(data, 1, 10, '_lesson');
+    output.highestPlayTimeLessons = findHighestPlayTimeActivities(data, 1, 10, '_lesson');
 
     return output;
 }
-function getSimStats(reportData){
+function getSimStats(data){
+    //console.log(data);
     let output = {
         totalSimPlayTime:0,
         totalSimsAttempted:0,
@@ -719,9 +720,9 @@ function getSimStats(reportData){
         highestPlayTimeSims:[],
         averageScores:[]
     };
-    reportData.forEach(data => {
-        if (data.activityData && Array.isArray(data.activityData)) {
-            data.activityData.forEach(activity => {
+    data.forEach(element => {
+        if (element.activityData && Array.isArray(element.activityData)) {
+            element.activityData.forEach(activity => {
                 if(activity.activityID.includes('_prac')){ 
                     activity.plays.forEach(play =>{
                         output.totalSimPlayTime += Math.round(Math.abs(play.sessionTime));
@@ -733,9 +734,9 @@ function getSimStats(reportData){
         }
     });
 
-    output.mostPlayedSims = findMostPlayedActivities(reportData, 1, 10, '_prac');
-    output.highestPlayTimeSims = findHighestPlayTimeActivities(reportData, 1, 10, '_prac');
-    output.averageScores = calculateAverageScores(reportData);
+    output.mostPlayedSims = findMostPlayedActivities(data, 1, 10, '_prac');
+    output.highestPlayTimeSims = findHighestPlayTimeActivities(data, 1, 10, '_prac');
+    output.averageScores = calculateAverageScores(data);
 
     return output;
 }

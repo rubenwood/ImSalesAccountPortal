@@ -239,21 +239,21 @@ export function findMostPlayedActivities(reportData, start, end, activityType = 
                 if (activityType === null || activity.activityID.includes(activityType)) {
                     const activityKey = activity.activityID + ' - ' + activity.activityTitle;
                     if (activityCounts[activityKey]) {
-                        activityCounts[activityKey].count += activity.playCount;
+                        activityCounts[activityKey].playCount += activity.playCount;
                     } else {
                         activityCounts[activityKey] = {
-                            id: activity.activityID,
-                            title: activity.activityTitle,
-                            count: activity.playCount
+                            activityID: activity.activityID,
+                            activityTitle: activity.activityTitle,
+                            playCount: activity.playCount
                         };
                     }
-                }
+               }
             });
         }
     });
 
     // Convert the object into an array and sort it by count in descending order
-    const sortedActivities = Object.values(activityCounts).sort((a, b) => b.count - a.count);
+    const sortedActivities = Object.values(activityCounts).sort((a, b) => b.playCount - a.playCount);
     // Adjusting start and end to be zero-based index
     start = Math.max(start - 1, 0);
     end = Math.min(end, sortedActivities.length);
@@ -290,8 +290,8 @@ export function findHighestPlayTimeActivities(reportData, start, end, activityTy
                             activityPlayTimeTotals[activityKey].totalTime += play.sessionTime;
                         } else {
                             activityPlayTimeTotals[activityKey] = {
-                                id: activity.activityID,
-                                title: activity.activityTitle,
+                                activityID: activity.activityID,
+                                activityTitle: activity.activityTitle,
                                 totalTime: play.sessionTime
                             };
                         }
