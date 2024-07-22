@@ -153,43 +153,47 @@ export function populateUsageData(playerDataList, loginData, state, row){
                         <b>Last Login iOS:</b> ${loginData.lastLoginIOS} <br/> 
                         <b>Last Login Web:</b> ${loginData.lastLoginWeb} <br/>`;
     
-    // TODO: Test this!
+    // TODO: Test this! [ IN PROGRESS ]
     playerDataList.forEach(playerData =>{
-        if(playerData != undefined){
-            state.totalActivitiesPlayed += playerData.activities.length;
-            playerData.activities.forEach(activity => {
-                let activityContent =`<table><tr><td><b>Activity ID</b></td><td>${activity.activityID}</td></tr>`;
-                activityContent +=`<tr><td><b>Activity Name</b></td><td>${activity.activityTitle}</td></tr>`;
-                activityContent += `<tr><td><b>Plays</b></td><td>${activity.plays.length}</td></tr>`;
-                let totalSessionTime = 0;
-                let bestScore = 0;
-                state.totalPlays += activity.plays.length;
-                
-                activity.plays.forEach(play => {
-                    totalSessionTime += Math.round(Math.abs(play.sessionTime));
-                    if(play.normalisedScore > bestScore){
-                        bestScore = Math.round(play.normalisedScore * 100);
-                    }
-                });
-                state.totalPlayTime += totalSessionTime;
+        if(playerData == undefined){ console.log(`no player data`); return; }
+        console.log(playerData);
         
-                activityContent += `<tr><td><b>Total Session Length</b></td><td>${formatTime(totalSessionTime)}</td></tr><br />`;
-                activityContent += `<tr><td><b>Best Score</b></td><td>${bestScore} %</td></tr><br />`;
-                activityContent += "</table>";
-                playerDataContent += activityContent;
-        
-                // add the unformatted data for the report
-                let userActivityData = {
-                    activityID:activity.activityID,
-                    activityTitle: activity.activityTitle,
-                    plays:activity.plays,
-                    playCount:activity.plays.length,
-                    totalSessionTime:totalSessionTime,
-                    bestScore:bestScore
-                };
-                state.activityDataForReport.push(userActivityData);
+        state.totalActivitiesPlayed += playerData.activities.length;
+        playerData.activities.forEach(activity => {
+            let activityContent =`<table><tr><td><b>Activity ID</b></td><td>${activity.activityID}</td></tr>`;
+            activityContent +=`<tr><td><b>Activity Name</b></td><td>${activity.activityTitle}</td></tr>`;
+            activityContent += `<tr><td><b>Plays</b></td><td>${activity.plays.length}</td></tr>`;
+            let totalSessionTime = 0;
+            let bestScore = 0;
+            state.totalPlays += activity.plays.length;
+            
+            activity.plays.forEach(play => {
+                totalSessionTime += Math.round(Math.abs(play.sessionTime));
+                if(play.normalisedScore > bestScore){
+                    bestScore = Math.round(play.normalisedScore * 100);
+                }
             });
-        }
+            state.totalPlayTime += totalSessionTime;
+    
+            activityContent += `<tr><td><b>Total Session Length</b></td><td>${formatTime(totalSessionTime)}</td></tr><br />`;
+            activityContent += `<tr><td><b>Best Score</b></td><td>${bestScore} %</td></tr><br />`;
+            activityContent += "</table>";
+            playerDataContent += activityContent;
+            
+            // TODO: handle questionData
+
+            // add the unformatted data for the report
+            let userActivityData = {
+                activityID:activity.activityID,
+                activityTitle: activity.activityTitle,
+                plays:activity.plays,
+                playCount:activity.plays.length,
+                totalSessionTime:totalSessionTime,
+                bestScore:bestScore
+            };
+            state.activityDataForReport.push(userActivityData);
+        });
+        
     });
 
     playerDataContent += `<h1>Total Plays: ${state.totalPlays}</h1>`;
