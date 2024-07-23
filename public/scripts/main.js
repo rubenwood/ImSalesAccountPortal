@@ -372,7 +372,7 @@ function createUserRow(dataToExport, activity, isFirstActivity) {
         daysSinceLastLogin: dataToExport.daysSinceLastLogin,
         daysSinceCreation: dataToExport.daysSinceCreation,
         accountExpiryDate: dataToExport.accountExpiryDate,
-        daysToExpire: dataToExport.daysToExpire,
+        daysToExpire: dataToExport.daysToExpire, // TODO: hide this
         linkedAccounts: dataToExport.linkedAccounts,
         lastLoginAndroid: dataToExport.loginData.lastLoginAndr,
         lastLoginIOS: dataToExport.loginData.lastLoginIOS,
@@ -446,7 +446,7 @@ function exportToExcel() {
             let isFirstActivity = true;
             dataToExport.activityDataFormatted.forEach(activity => {
                 let activityRow = {
-                    activityID: activity.activityID,
+                    activityID: activity.activityID, // TODO: hide this
                     activityTitle: activity.activityTitle,
                     playDate: activity.playDate,
                     score: Math.round(activity.score * 100) + '%',

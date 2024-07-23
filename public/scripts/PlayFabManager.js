@@ -103,7 +103,8 @@ var RegisterCallback = async function (result, error){
     const CreatedBy = document.getElementById("createdBy").value;
     const CreatedUpdatedReason = document.getElementById("createdReason").value;
 
-    // TODO: new data field
+    // TODO: This field will be unused, for now...
+    // SubOverride used instead
     const OtherSubDataJSON = {
         Platform:"Other",
         Product:"immersify.gold_yearly",
@@ -118,14 +119,14 @@ var RegisterCallback = async function (result, error){
     const LastWriteDevice = "";
 
     const data = {
-        //SubOverride,
+        SubOverride,
         VerifyEmailOverride,
         AcademicArea,
         CanEmail,
         TestAccountExpiryDate:TestAccountExpiryDateFormatted.toString(),
         CreatedBy,
         CreatedUpdatedReason,
-        OtherSubData:otherSubDataStr,
+        //OtherSubData:otherSubDataStr,
         LastWriteDevice
     };
     UpdateUserData(data);
