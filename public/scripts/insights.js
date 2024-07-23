@@ -213,7 +213,6 @@ export function findPlayersWithMostUniqueActivitiesPlayed(reportData, start, end
 
     // Slice the array to get the specified range
     const selectedPlayers = playersWithUniqueActivityCount.slice(start, end);
-    //console.log(selectedPlayers);
     return selectedPlayers;
 }
 function findPlayersWithMostUniqueActivitiesPlayedHTML(reportData, start, end) {
@@ -235,6 +234,7 @@ export function findMostPlayedActivities(reportData, start, end, activityType = 
     reportData.forEach(data => {
         // Ensure the player has valid activity data
         if (data.activityData && Array.isArray(data.activityData)) {
+            
             data.activityData.forEach(activity => {
                 if (activityType === null || activity.activityID.includes(activityType)) {
                     const activityKey = activity.activityID + ' - ' + activity.activityTitle;
@@ -265,7 +265,7 @@ export function findMostPlayedActivities(reportData, start, end, activityType = 
 export function generateMostPlayedHTML(mostPlayedActivities, start){
     let output = "";
     mostPlayedActivities.forEach((activity, index) => {
-        output += `${start + index}. <b>ID:</b> ${activity.id}, <b>Title:</b> ${activity.title}, <b>Total Times Played:</b> ${activity.count}<br/>`;
+        output += `${start + index}. <b>ID:</b> ${activity.activityID}, <b>Title:</b> ${activity.activityTitle}, <b>Total Times Played:</b> ${activity.playCount}<br/>`;
     });
     return output;
 }
@@ -314,7 +314,7 @@ export function findHighestPlayTimeActivities(reportData, start, end, activityTy
 export function generateHighestPlayTimeHTML(mostPlayedActivities, start){
     let output = "";
     mostPlayedActivities.forEach((activity, index) => {
-        output += `${start + index}. <b><b>ID:</b></b> ${activity.id}, <b>Title:</b> ${activity.title}, <b>Total Play Time:</b> ${formatTime(Math.round(activity.totalTime))}<br/>`;
+        output += `${start + index}. <b><b>ID:</b></b> ${activity.activityID}, <b>Title:</b> ${activity.activityTitle}, <b>Total Play Time:</b> ${formatTime(Math.round(activity.totalTime))}<br/>`;
     });
     return output;
 }
