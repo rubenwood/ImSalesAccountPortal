@@ -473,8 +473,6 @@ function exportToExcel() {
         loginData.push(createLoginRow(dataToExport));
 
         if(dataToExport.activityDataFormatted == undefined || dataToExport.activityDataFormatted.length <= 0){
-            console.log(dataToExport);
-            console.log('^Has no data');
             usageData.push(createUsageRow(dataToExport, {}, true));
             usageData.push({});
             return;
