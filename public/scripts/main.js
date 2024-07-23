@@ -55,6 +55,7 @@ window.onload = function() {
     document.getElementById('playerIDList').style.display = 'none';
 };
 
+
 // Function to toggle between sign up and modify existing forms
 function toggleForms() {
     const isSignUpSelected = document.getElementById('signUpFormRadio').checked;

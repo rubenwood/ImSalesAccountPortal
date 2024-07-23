@@ -1,10 +1,13 @@
 import {getPlayerCountInSegment} from './segments.js';
 import {updateButtonText} from './utils.js';
 import {getPlayFabDailyTotalsReport, getPlayFab30DayReport, getPlayFabMonthlyTotalsReport, getPlayFabAverageSessionTime} from './playfab_reporting/playfab-reports.js';
+import {initializeDarkMode} from './themes/dark-mode.js';
 
 const doConfetti = () => { confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 }}); }
 
 document.addEventListener('DOMContentLoaded', async () => {
+    initializeDarkMode('darkModeSwitch');
+
     document.getElementById('google-login-btn').addEventListener('click', GoogleLoginClicked);
     document.getElementById('get-google-report-btn').addEventListener('click', fetchDevKPIReport);
     document.getElementById('get-apple-report-btn').addEventListener('click', fetchSubReport);

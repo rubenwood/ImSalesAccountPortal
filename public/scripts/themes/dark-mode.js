@@ -1,14 +1,10 @@
+const darkThemes = ['dark', 'Dark Mode'];
+
 export function initializeDarkMode(toggleSwitchId) {
+    // set to current theme
+    handleThemeChange();
+    // then set a listener to handle switching themes
     const darkModeSwitch = document.getElementById(toggleSwitchId);
-    const currentTheme = localStorage.getItem('theme');
-    // TODO: api call to get all themes?
-    const darkThemes = ['dark', 'Dark Mode'];
-
-    if (darkThemes.includes(currentTheme)) {
-        document.body.classList.add('dark-mode');
-        darkModeSwitch.checked = true;
-    }
-
     darkModeSwitch.addEventListener('change', function() {
         if (darkModeSwitch.checked) {
             document.body.classList.add('dark-mode');
@@ -17,5 +13,17 @@ export function initializeDarkMode(toggleSwitchId) {
             document.body.classList.remove('dark-mode');
             localStorage.setItem('theme', 'light');
         }
+        handleThemeChange();
     });
+}
+
+export function handleThemeChange() {
+    const currentTheme = localStorage.getItem('theme');
+    if (darkThemes.includes(currentTheme)) {
+        document.body.classList.add('dark-mode');
+        darkModeSwitch.checked = true;
+    } else {
+        document.body.classList.remove('dark-mode');
+        darkModeSwitch.checked = false;
+    }
 }

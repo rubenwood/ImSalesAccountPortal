@@ -302,6 +302,28 @@ body.dark-mode .report-row:hover {
     background-color: #7a7a7a;
 }
 
+/* Dark Mode table styles */
+body.dark-mode table {
+    color: white;
+    background-color: #333333;
+    border-color: #444444;
+}
+
+body.dark-mode th, 
+body.dark-mode td {
+    color: white;
+    border-color: #444444;
+}
+
+body.dark-mode .info-tooltip .info-tooltiptext {
+    background-color: #555555;
+    color: white;
+}
+
+body.dark-mode .wip-row {
+    background-color: #664e30;
+}
+
 /* Toggle switch styles */
 .dark-mode-toggle {
     position: fixed;

@@ -3,6 +3,7 @@ import {fetchUserAccInfoById, fetchUserAccInfoByEmail, fetchUserProfileById, for
 import {setAccessLevel, canAccess} from "./access-check.js"
 import {auth} from "./immersifyapi/immersify-api.js";
 import {waitUntil} from "./asyncTools.js";
+import { handleThemeChange } from './themes/dark-mode.js';
 
 const titleId = "29001";
 
@@ -38,7 +39,11 @@ export async function Login(){
             localStorage.setItem("PlayFabId", response.data.PlayFabId);
             localStorage.setItem("PlayFabSessionTicket", response.data.SessionTicket);
             const [accessLevel, userPrefs] = await Promise.all([getUserData(["AccessLevel"]), getUserData(["UserPreferenceData"])]);
-            localStorage.setItem("theme", userPrefs.theme);
+            const userPrefsJson = JSON.parse(userPrefs.UserPreferenceData);
+            console.log(userPrefsJson.theme);
+            localStorage.setItem("theme", userPrefsJson.theme);
+            handleThemeChange();           
+
             setAccessLevel(accessLevel); 
             if (canAccess()) {                
                 document.getElementById('loginModal').style.display = 'none';
