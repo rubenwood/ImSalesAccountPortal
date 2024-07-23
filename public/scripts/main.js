@@ -365,7 +365,7 @@ export function updateIDList(playerIdList){
 
 // EXPORT REPORT
 let exportData;
-function createUserRow(dataToExport, activity, isFirstActivity) {
+/* function createUserRow(dataToExport, activity, isFirstActivity) {
     let userRow = {
         email: dataToExport.email,
         createdDate: dataToExport.createdDate,
@@ -383,7 +383,7 @@ function createUserRow(dataToExport, activity, isFirstActivity) {
         averageTimePerPlay: formatTimeToHHMMSS(dataToExport.averageTimePerPlay)
     };
     return isFirstActivity ? { ...userRow, ...activity } : activity;
-}
+} */
 function createLoginRow(dataToExport) {
     let userRow = {
         email: dataToExport.email,
