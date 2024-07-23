@@ -156,7 +156,7 @@ export function populateUsageData(playerDataList, loginData, state, row){
     // TODO: Test this! [ IN PROGRESS ]
     playerDataList.forEach(playerData =>{
         if(playerData == undefined){ console.log(`no player data`); return; }
-        console.log(playerData);
+        //console.log(playerData);
         
         state.totalActivitiesPlayed += playerData.activities.length;
         playerData.activities.forEach(activity => {
