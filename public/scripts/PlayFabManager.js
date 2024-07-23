@@ -37,8 +37,9 @@ export async function Login(){
             //console.log(response);
             localStorage.setItem("PlayFabId", response.data.PlayFabId);
             localStorage.setItem("PlayFabSessionTicket", response.data.SessionTicket);
-            
-            setAccessLevel(await getUserData(["AccessLevel"])); 
+            const [accessLevel, userPrefs] = await Promise.all([getUserData(["AccessLevel"]), getUserData(["UserPreferenceData"])]);
+            localStorage.setItem("theme", userPrefs.theme);
+            setAccessLevel(accessLevel); 
             if (canAccess()) {                
                 document.getElementById('loginModal').style.display = 'none';
             }
@@ -93,7 +94,7 @@ var RegisterCallback = async function (result, error){
 
     document.getElementById("resultOutput").innerHTML = "Account created!";
 
-    const SubOverride = true;
+    //const SubOverride = true;
     const VerifyEmailOverride = true;
     const AcademicArea = document.getElementById("academicArea").value;
     const CanEmail = true;
@@ -119,16 +120,17 @@ var RegisterCallback = async function (result, error){
     const LastWriteDevice = "";
 
     const data = {
-        SubOverride,
+        //SubOverride,
         VerifyEmailOverride,
-        AcademicArea,
+        AcademicArea, // TODO: this needs to be a CMS ID
         CanEmail,
         TestAccountExpiryDate:TestAccountExpiryDateFormatted.toString(),
         CreatedBy,
         CreatedUpdatedReason,
-        //OtherSubData:otherSubDataStr,
+        OtherSubData:otherSubDataStr,
         LastWriteDevice
     };
+    console.log(data);
     UpdateUserData(data);
     // wait for UpdateUserData to complete
     await waitUntil(()=> doneUpdatingUserData == true);
