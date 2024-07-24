@@ -3,6 +3,7 @@ import { getAreas, getTopics, getTopicBrondons, getActivities, getActivityBrondo
 import { decodeQRCode, generateQRCodesAndUpload, genQRCode } from './qr-code-utils.js';
 import { Login } from '../PlayFabManager.js';
 import { SearchableList } from '../classes/searchable-list.js';
+import { initializeDarkMode } from '../themes/dark-mode.js';
 
 let allURLs = [];
 let allQRCodeURLs;
@@ -12,6 +13,9 @@ let allTopicBrondons, allActivityBrondons;
 const doConfetti = () => { confetti({particleCount: 100, spread: 70, origin:{ y: 0.6 }}); }
 
 document.addEventListener('DOMContentLoaded', async() => {
+    // setup dark mode toggle
+    initializeDarkMode('darkModeSwitch');
+
     // login button on modal
     document.getElementById('loginButton').addEventListener('click', Login);
     //wait until jwt for api is defined
