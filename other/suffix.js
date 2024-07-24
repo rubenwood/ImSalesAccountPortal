@@ -362,6 +362,7 @@ function exportToExcel(suffixes, exportData){
     const userAccessPerPlatform = getUserAccessPerPlatform(exportData);
 
     let insightsExportData = [
+        { insight: 'Total Users In Report', value: exportData.length },
         { insight: 'Total Play Time Across All Users', value: formatTimeToHHMMSS(totalPlayTimeAcrossAllUsersSeconds) }
     ];
     playersWithMostPlayTime.forEach(player => {
@@ -407,25 +408,34 @@ function exportToExcel(suffixes, exportData){
         simInsightsData.push({ insight: 'Most Played Simulations (Play Time)', value: `${sim.activityTitle} - ${formatTimeToHHMMSS(sim.totalTime)}` });
     });
 
-    let userData = [];
+    // add user data
+    let loginData = [];
+    let usageData = [];
+
     exportData.forEach(dataToExport => {
-        if (dataToExport.activityDataFormatted != undefined && dataToExport.activityDataFormatted.length > 0){
-            let isFirstActivity = true;
-            dataToExport.activityDataFormatted.forEach(activity => {
-                let activityRow = {
-                    activityID: activity.activityID, // TODO: hide this
-                    activityTitle: activity.activityTitle,
-                    playDate: activity.playDate,
-                    score: Math.round(activity.score * 100) + '%',
-                    sessionTime: formatTimeToHHMMSS(Math.abs(activity.sessionTime))
-                };
-                userData.push(createUserRow(dataToExport, activityRow, isFirstActivity));
-                isFirstActivity = false;
-            });
-        }else{
-            userData.push(createUserRow(dataToExport, {}, true));
+        loginData.push(createLoginRow(dataToExport));
+
+        if(dataToExport.activityDataFormatted == undefined || dataToExport.activityDataFormatted.length <= 0){
+            usageData.push(createUsageRow(dataToExport, {}, true));
+            usageData.push({});
+            return;
         }
-        userData.push({}); // Add an empty row to divide user data chunks
+        let isFirstActivity = true;
+        dataToExport.activityDataFormatted.forEach(activity => {
+            let activityRow = {
+                activityID: activity.activityID, // TODO: hide this
+                activityTitle: activity.activityTitle,
+                playDate: activity.playDate,
+                score: Math.round(activity.score * 100) + '%',
+                sessionTime: formatTimeToHHMMSS(Math.abs(activity.sessionTime))
+            };
+            usageData.push(createUsageRow(dataToExport, activityRow, isFirstActivity));
+            isFirstActivity = false;
+        });
+        
+        usageData.push({});
+        //loginData.push({}); // Add an empty row to divide user data chunks
+        
     });
 
     //console.log(insightsExportData);
@@ -435,11 +445,13 @@ function exportToExcel(suffixes, exportData){
     const insightsWorksheet = XLSX.utils.json_to_sheet(insightsExportData);
     const lessonInsightsWorksheet = XLSX.utils.json_to_sheet(lessonInsightsData);
     const simInsightsWorksheet = XLSX.utils.json_to_sheet(simInsightsData);
-    const userDataWorksheet = XLSX.utils.json_to_sheet(userData);
+    const userDataWorksheet = XLSX.utils.json_to_sheet(loginData);
+    const usageWorksheet = XLSX.utils.json_to_sheet(usageData);
     XLSX.utils.book_append_sheet(workbook, insightsWorksheet, "Insights");
     XLSX.utils.book_append_sheet(workbook, lessonInsightsWorksheet, "Lesson Insights");
     XLSX.utils.book_append_sheet(workbook, simInsightsWorksheet, "Sim Insights");
-    XLSX.utils.book_append_sheet(workbook, userDataWorksheet, "Report");
+    XLSX.utils.book_append_sheet(workbook, userDataWorksheet, "Login Report");
+    XLSX.utils.book_append_sheet(workbook, usageWorksheet, "Usage Report");
     // write to server
     //XLSX.writeFile(workbook, `Report-${suffixes.join('-')}-${formatDate(new Date())}.xlsx`);
     // write to s3
@@ -656,7 +668,7 @@ function formatDate(date) {
 
     return `${year}-${month}-${day}T${hours}-${minutes}-${seconds}`;
 }
-function createUserRow(dataToExport, activity, isFirstActivity) {
+function createLoginRow(dataToExport) {
     let userRow = {
         email: dataToExport.email,
         createdDate: dataToExport.createdDate,
@@ -672,6 +684,12 @@ function createUserRow(dataToExport, activity, isFirstActivity) {
         totalPlays: dataToExport.totalPlays,
         totalPlayTime: formatTimeToHHMMSS(dataToExport.totalPlayTime),
         averageTimePerPlay: formatTimeToHHMMSS(dataToExport.averageTimePerPlay)
+    };
+    return userRow;
+}
+function createUsageRow(dataToExport, activity, isFirstActivity){
+    let userRow = {
+        email: dataToExport.email,
     };
     return isFirstActivity ? { ...userRow, ...activity } : activity;
 }

@@ -419,6 +419,7 @@ function exportToExcel() {
     const userAccessPerPlatform = getUserAccessPerPlatform(exportData);
 
     let insightsExportData = [
+        { insight: 'Total Users In Report', value: exportData.length },
         { insight: 'Total Play Time Across All Users', value: formatTimeToHHMMSS(totalPlayTimeAcrossAllUsersSeconds) }
     ];
     playersWithMostPlayTime.forEach(player => {
@@ -439,7 +440,6 @@ function exportToExcel() {
 
     // Lesson insights
     const lessonStats = getLessonStats(reportData);
-    //console.log(lessonStats);
     let lessonInsightsData = [
         { insight: 'Total Lesson Play Time', value: formatTimeToHHMMSS(lessonStats.totalLessonPlayTime) },
         { insight: 'Total Lessons Attempted', value: lessonStats.totalLessonsAttempted },
