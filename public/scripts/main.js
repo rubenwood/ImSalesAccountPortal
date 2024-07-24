@@ -18,6 +18,9 @@ document.addEventListener('DOMContentLoaded', () => {
     // setup dark mode toggle
     initializeDarkMode('darkModeSwitch');
 
+    // setup segment section toggle
+    document.getElementById('segment-toggle-btn').addEventListener('click', toggleSegmentSection)
+
     document.getElementById('loginButton').addEventListener('click', Login);
     // Sign Up / Modify Form
     document.getElementById('signUpFormRadio').addEventListener('change', toggleForms);
@@ -53,9 +56,18 @@ document.addEventListener('DOMContentLoaded', () => {
 window.onload = function() {
     document.getElementById('loginModal').style.display = 'block';
     document.getElementById('playerIDList').style.display = 'none';
+    document.getElementById('segments-section').style.display = 'none';
 };
 
-
+function toggleSegmentSection(){
+    console.log("toggling segment section");
+    const segmentSection = document.getElementById('segments-section');
+    if(segmentSection.style.display == 'block'){
+        segmentSection.style.display = 'none';
+    }else{
+        segmentSection.style.display = 'block';
+    }
+}
 // Function to toggle between sign up and modify existing forms
 function toggleForms() {
     const isSignUpSelected = document.getElementById('signUpFormRadio').checked;

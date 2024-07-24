@@ -324,6 +324,13 @@ body.dark-mode .wip-row {
     background-color: #664e30;
 }
 
+/* Dark Mode collapsibles */
+body.dark-mode .collapsible-content {
+    background-color: #1e1e1e;
+    border-color: #444444;
+    color: white;
+}
+
 /* Toggle switch styles */
 .dark-mode-toggle {
     position: fixed;

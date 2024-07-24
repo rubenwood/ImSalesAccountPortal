@@ -74,11 +74,15 @@
     </div>
 </div>
 <div id="report-container" class="container">
-    <h2>Segment</h2>
-    <select name="segmentSelection" id="segmentSelection"></select>
-    <input type="button" id="getSegmentsButton" value="Get Segments">
-    <input type="button" id="getSegmentPlayersButton" value="Get Users in Segment">
-    <p id="totalPlayersSegment">Total users in segment:</p>
+    <input id="segment-toggle-btn" type="button" class="collapsible-button" value="Segment">
+    <div id="segments-section" class="collapsible-content">
+        <h2>Segment</h2>
+        <select name="segmentSelection" id="segmentSelection"></select>
+        <input type="button" id="getSegmentsButton" value="Get Segments">
+        <input type="button" id="getSegmentPlayersButton" value="Get Users in Segment">
+        <p id="totalPlayersSegment">Total users in segment:</p>
+    </div>
+
     <h2>Report</h2>
     <p id="dbLastUpdated">Database last updated: </p>
     <p id="totalPlayersReport">Total users in report:</p>
