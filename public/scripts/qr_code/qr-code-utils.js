@@ -50,6 +50,7 @@ export async function generateQRCodesAndUpload(URLList) {
 
             const formData = new FormData();
             formData.append('image', blob, `${url.imgName}.jpg`);
+            formData.append('acl', 'public-read'); // make the QR Code images public
 
             const uploadResponse = await fetch('/s3upload', {
                 method: 'POST',

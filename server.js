@@ -399,20 +399,25 @@ app.get('/begin-get-all-players', async (req, res) => {
 // UPLOAD TO S3
 const upload = multer({ dest: 'uploads/' }); // Temporary storage for uploaded files
 // TODO: Change this to use the generic call in s3-utils
-async function uploadToS3(filePath, bucketName, key) {
+async function uploadToS3(filePath, bucketName, key, acl = undefined) {
   const fileContent = fs.readFileSync(filePath);
 
   const params = {
     Bucket: bucketName,
     Key: key,
     Body: fileContent,
-    ContentType: 'image/jpeg' // Adjust according to the image type
+    ContentType: 'image/jpeg'
   };
+
+  if(acl !== undefined){
+    params.ACL = acl;
+  }
 
   return s3.upload(params).promise();
 }
 app.post('/s3upload', upload.single('image'), async (req, res) => {
   const file = req.file;
+  const acl = req.acl;
 
   if (!file) {
     return res.status(400).send('No file uploaded.');
@@ -422,7 +427,7 @@ app.post('/s3upload', upload.single('image'), async (req, res) => {
   const key = `QRCodes/new/${file.originalname}`;
 
   try {
-    const result = await uploadToS3(file.path, bucketName, key);
+    const result = await uploadToS3(file.path, bucketName, key, acl);
 
     // Clean up the uploaded file
     fs.unlinkSync(file.path);

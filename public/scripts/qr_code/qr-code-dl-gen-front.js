@@ -255,11 +255,8 @@ function genTopicCollectionLink(topicCollection){
     for(const topic of topicCollection){
         topicIdList.push(topic.topicId);
     }
-    //console.log("topic id list: ", topicIdList);
     let topicListStr = topicIdList.join();
-    //console.log("topic id list string: ", topicListStr);
     let link = `https://immersifyeducation.com/deeplink?dl=%5Bimmersifyeducation%3A%2F%2Fimmersifydental%3FAddTopic%3D${topicListStr}%5D`
-    //console.log("topic collection link: ", link);
     return link;
 }
 

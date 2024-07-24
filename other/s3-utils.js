@@ -8,13 +8,17 @@ AWS.config.update({
 });
 const s3 = new AWS.S3();
 
-async function uploadToS3(buffer, filename, contentType, bucketName) {
+async function uploadToS3(buffer, filename, contentType, bucketName, acl = undefined) {
   const params = {
       Bucket: bucketName,
       Key: filename,
       Body: buffer,
       ContentType: contentType
   };
+
+  if(acl != undefined){
+    params.ACL = acl;
+  }
 
   return s3.upload(params).promise();
 }
