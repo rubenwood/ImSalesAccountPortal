@@ -417,7 +417,7 @@ async function uploadToS3(filePath, bucketName, key, acl = undefined) {
 }
 app.post('/s3upload', upload.single('image'), async (req, res) => {
   const file = req.file;
-  const acl = req.acl;
+  const acl = req.body.acl;
 
   if (!file) {
     return res.status(400).send('No file uploaded.');
@@ -441,7 +441,6 @@ app.post('/s3upload', upload.single('image'), async (req, res) => {
     res.status(500).send('Error uploading image.');
   }
 });
-
 
 // server session
 app.use(session({
