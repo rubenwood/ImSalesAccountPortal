@@ -433,7 +433,7 @@ function exportToExcel(suffixes, exportData){
         let isFirstActivity = true;
         dataToExport.activityDataFormatted.forEach(activity => {
             let activityRow = {
-                activityID: activity.activityID, // TODO: hide this
+                //activityID: activity.activityID,
                 activityTitle: activity.activityTitle,
                 playDate: activity.playDate,
                 score: Math.round(activity.score * 100) + '%',
