@@ -1,9 +1,14 @@
 import { decodeQRCode } from './qr-code-utils.js';
 import { Login } from '../PlayFabManager.js';
-import { getAreas, getTopics, getActivities, jwtoken} from '../immersifyapi/immersify-api.js';
-import {waitUntil } from '../asyncTools.js';
+import { getAreas, getTopics, getActivities, waitForJWT} from '../immersifyapi/immersify-api.js';
+import { initializeDarkMode } from '../themes/dark-mode.js';
+
+const doConfetti = () => { confetti({particleCount: 100, spread: 70, origin: { y: 0.6 }}); }
 
 document.addEventListener('DOMContentLoaded', () => {
+     // setup dark mode toggle
+     initializeDarkMode('darkModeSwitch');
+
     setupPage();
 
     // event listener for login modal
@@ -19,7 +24,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // Search listeners
-    document.getElementById('search-btn').addEventListener('click', () => searchClicked);
+    document.getElementById('search-btn').addEventListener('click', searchClicked);
     document.getElementById('search-input').addEventListener('keypress', (event) => {
         if (event.key === 'Enter') {
             event.preventDefault();
@@ -60,6 +65,7 @@ async function uploadQRCodeFiles(files) {
 async function searchClicked() {
     // database call to find qr codes matching by:
     // area, module, topic, activity or type
+    console.log("SEARCH 1");
     const searchQuery = document.getElementById('search-input').value.trim();
     if (searchQuery.length > 0) {
         const searchResults = await searchQRCode(searchQuery);
@@ -69,6 +75,7 @@ async function searchClicked() {
     }  
 }
 async function searchQRCode(query) {
+    console.log("SEARCH");
     try {
         const response = await fetch(`/qrdb/search?q=${encodeURIComponent(query)}`);
         if (!response.ok) {
@@ -80,18 +87,21 @@ async function searchQRCode(query) {
     }
 }
 
-// SETUP INITAL PAGE (SHOW ALL RESULTS)
+// SETUP INITIAL PAGE (SHOW ALL RESULTS)
 // get all relevant info from DB
 let areas, topics, activities;
 async function setupPage(){
-    await waitUntil(()=> jwtoken != undefined);
-
+    await waitForJWT();
+    // TODO: Use promise here
     areas = await getAreas();
     topics = await getTopics(); 
-    activities = await getActivities(); 
-
+    activities = await getActivities();
+    
+    // get data from database
     let dbData = await fetchQRDLData();
     generateReport(dbData);
+
+    doConfetti();
 }
 
 // Generate the report / html

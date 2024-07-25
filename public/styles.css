@@ -331,6 +331,16 @@ body.dark-mode .collapsible-content {
     color: white;
 }
 
+/* Dark Mode links */
+body.dark-mode a {
+    color: #0879da; /* Light blue for dark mode */
+}
+
+body.dark-mode a:hover {
+    color: #1E90FF; /* Dodger blue for hover */
+}
+
+
 /* Toggle switch styles */
 .dark-mode-toggle {
     position: fixed;

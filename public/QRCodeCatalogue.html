@@ -38,6 +38,14 @@
   </style>
 </head>
 <body>
+  <!-- Dark Mode Toggle Switch -->
+  <div class="dark-mode-toggle">☀
+    <label class="switch">.
+        <input type="checkbox" id="darkModeSwitch">
+        <span class="slider round"></span>
+    </label>
+  </div>
+  <!-- Login Modal -->
   <div id="loginModal" class="modal">
     <div class="modal-content">
         <img src="/immersify_logo.e141b23db21f4b78051561bc464eace7.svg" alt="Immersify Logo" class="login-logo">
@@ -46,7 +54,7 @@
         <input type="password" id="password" placeholder="Password"><br>
         <input type="button" id="loginButton" value="Login">
     </div>
-</div>
+  </div>
   <div class="form-container">
     <h1>QR Code & Deeplink Catalogue</h1>
     <a href="QRCodeDeeplinkGenerator.html">Generator</a>
@@ -73,6 +81,7 @@
       <img id="qr-code" src="" alt="Generated QR Code" style="display:none;"/>
     </div>
   </div>
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.1/dist/confetti.browser.js"></script>
   <script type="module" src="scripts/qr_code/qr-code-utils.js"></script>  
   <script type="module" src="scripts/qr_code/qr-code-data-front.js"></script> 
   <script type="module" src="scripts/PlayFabManager.js"></script>

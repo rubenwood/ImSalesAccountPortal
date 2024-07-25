@@ -30,7 +30,6 @@ export async function decodeQRCode(input){
 export async function genQRCode(url) {
     const apiUrl = 'https://api.qrserver.com/v1/create-qr-code/';
     const qrSize = '1000x1000';
-    //const decodedUrl = decodeURI(url); // decode it, then re-encode it to be sure
     const encodedUrl = encodeURIComponent(url);
 
     const response = await fetch(`${apiUrl}?size=${qrSize}&data=${encodedUrl}`);
