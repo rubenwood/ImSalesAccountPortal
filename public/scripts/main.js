@@ -428,27 +428,27 @@ function exportToExcel() {
     const playersWithMostPlays = findPlayersWithMostPlays(exportData, 1, 3);
     const playersWithMostUniqueActivities = findPlayersWithMostUniqueActivitiesPlayed(reportData, 1, 3);
     const mostPlayedActivities = findMostPlayedActivities(exportData, 1, 10);
-    const userAccessPerPlatform = getUserAccessPerPlatform(exportData);
+    //const userAccessPerPlatform = getUserAccessPerPlatform(exportData);
 
     let insightsExportData = [
         { insight: 'Total Users In Report', value: exportData.length },
         { insight: 'Total Play Time Across All Users', value: formatTimeToHHMMSS(totalPlayTimeAcrossAllUsersSeconds) }
     ];
     playersWithMostPlayTime.forEach(player => {
-        insightsExportData.push({ insight: 'Player With Most Play Time', value:`${player.email} - ${formatTimeToHHMMSS(player.totalPlayTime)}` });
+        insightsExportData.push({ insight: 'Player With Most Play Time', value: player.email, value2: formatTimeToHHMMSS(player.totalPlayTime) });
     });
     playersWithMostPlays.forEach(player => {
-        insightsExportData.push({ insight: 'Player With Most Plays', value:`${player.email} - ${player.totalPlays}` });
+        insightsExportData.push({ insight: 'Player With Most Total Plays', value: player.email, value2: player.totalPlays });
     });
     playersWithMostUniqueActivities.forEach(player => {
-        insightsExportData.push({ insight: 'Player With Most Unique Activities', value:`${player.email} - ${player.uniqueActivitiesCount}` });
+        insightsExportData.push({ insight: 'Player With Most Unique Activities', value: player.email, value2: player.uniqueActivitiesCount });
     });
     mostPlayedActivities.forEach(activity => {
-        insightsExportData.push({ insight: 'Most Played Activities', value:`${activity.activityTitle} - ${activity.playCount}` });
+        insightsExportData.push({ insight: 'Most Played Activities', value: activity.activityTitle, value2: activity.playCount });
     });
-    insightsExportData.push({insight: 'User Access Android', value: userAccessPerPlatform.totalAndroid});
-    insightsExportData.push({insight: 'User Access iOS', value: userAccessPerPlatform.totalIOS});
-    insightsExportData.push({insight: 'User Access Web', value: userAccessPerPlatform.totalWeb});
+    //insightsExportData.push({insight: 'User Access Android', value: userAccessPerPlatform.totalAndroid});
+    //insightsExportData.push({insight: 'User Access iOS', value: userAccessPerPlatform.totalIOS});
+    //insightsExportData.push({insight: 'User Access Web', value: userAccessPerPlatform.totalWeb});
 
     // Lesson insights
     const lessonStats = getLessonStats(reportData);
@@ -458,10 +458,10 @@ function exportToExcel() {
         { insight: 'Total Lesson Plays', value: lessonStats.totalLessonPlays }
     ];
     lessonStats.mostPlayedLessons.forEach(lesson => {
-        lessonInsightsData.push({ insight: 'Most Played Lessons', value: `${lesson.activityTitle} - ${lesson.playCount}` });
+        lessonInsightsData.push({ insight: 'Most Played Lessons', value: lesson.activityTitle, value2: lesson.playCount });
     });
     lessonStats.highestPlayTimeLessons.forEach(lesson => {
-        lessonInsightsData.push({ insight: 'Most Played Lessons (Play Time)', value: `${lesson.activityTitle} - ${formatTimeToHHMMSS(lesson.totalTime)}` });
+        lessonInsightsData.push({ insight: 'Most Played Lessons (Play Time)', value: lesson.activityTitle, value2: formatTimeToHHMMSS(lesson.totalTime) });
     });
     // Sim insights
     const simStats = getSimStats(reportData);
@@ -471,12 +471,23 @@ function exportToExcel() {
         { insight: 'Total Simulations Plays', value: simStats.totalSimPlays }        
     ];
     simStats.mostPlayedSims.forEach(sim => {
-       simInsightsData.push({ insight: 'Most Played Simulations', value: `${sim.activityTitle} - ${sim.playCount}` });
+       simInsightsData.push({ insight: 'Most Played Simulations', value: sim.activityTitle, value2: sim.playCount });
     });
     simStats.highestPlayTimeSims.forEach(sim => {
-        simInsightsData.push({ insight: 'Most Played Simulations (Play Time)', value: `${sim.activityTitle} - ${formatTimeToHHMMSS(sim.totalTime)}` });
+        simInsightsData.push({ insight: 'Most Played Simulations (Play Time)', value: sim.activityTitle, value2: formatTimeToHHMMSS(sim.totalTime) });
     });
     
+    // Combine insights data with empty rows between sections
+    let combinedInsightsData = [
+        ...insightsExportData,
+        {}, // empty row
+        { insight: 'Lesson Insights', value: '' },
+        ...lessonInsightsData,
+        {}, // empty row
+        { insight: 'Simulation Insights', value: '' },
+        ...simInsightsData
+    ];
+
     // add user data
     let loginData = [];
     let usageData = [];
@@ -500,25 +511,60 @@ function exportToExcel() {
             };
             usageData.push(createUsageRow(dataToExport, activityRow, isFirstActivity));
             isFirstActivity = false;
-        });
-        
-        usageData.push({});
-        //loginData.push({}); // Add an empty row to divide user data chunks
-        
+        });        
+        usageData.push({});        
+    });
+    
+    // Progress report
+    let progressData = [];
+    exportData.forEach(dataToExport => {
+        let emailRow = { email:dataToExport.email };
+        progressData.push(emailRow);
+        dataToExport.activityData.forEach(activity =>{
+            let dataRow = {
+                topic:activity.topicTitle, // TODO: implementing in app
+                activity: activity.activityTitle,
+                activityType:activity.activityType, // TODO: implementing in app
+                bestScore:getBestScore(activity),
+                totalTime:getTotalSessionTime(activity)
+            };
+            // Add attempt columns dynamically
+            activity.plays.forEach((play, index) => {
+                dataRow[`Attempt ${index + 1}`] = Math.round(play.normalisedScore * 100) + '%';
+            });
+            progressData.push(dataRow);
+        });        
+        progressData.push({});
     });
 
+    // Low Prio: Topic progress - user, topic %
+    
     const workbook = XLSX.utils.book_new();
-    const insightsWorksheet = XLSX.utils.json_to_sheet(insightsExportData);
-    const lessonInsightsWorksheet = XLSX.utils.json_to_sheet(lessonInsightsData);
-    const simInsightsWorksheet = XLSX.utils.json_to_sheet(simInsightsData);
+    const insightsWorksheet = XLSX.utils.json_to_sheet(combinedInsightsData);
     const userDataWorksheet = XLSX.utils.json_to_sheet(loginData);
     const usageWorksheet = XLSX.utils.json_to_sheet(usageData);
+    const progressWorksheet = XLSX.utils.json_to_sheet(progressData);
     XLSX.utils.book_append_sheet(workbook, insightsWorksheet, "Insights");
-    XLSX.utils.book_append_sheet(workbook, lessonInsightsWorksheet, "Lesson Insights");
-    XLSX.utils.book_append_sheet(workbook, simInsightsWorksheet, "Sim Insights");
     XLSX.utils.book_append_sheet(workbook, userDataWorksheet, "Login Report");
     XLSX.utils.book_append_sheet(workbook, usageWorksheet, "Usage Report");
+    XLSX.utils.book_append_sheet(workbook, progressWorksheet, "Progress Report");
     XLSX.writeFile(workbook, "Report.xlsx");
+}
+function getBestScore(activity){
+    let highestScore = 0;
+    activity.plays.forEach(play => {
+        if(play.normalisedScore > highestScore){
+            highestScore = play.normalisedScore;
+        }
+    });
+    return Math.round(highestScore * 100) + '%';    
+}
+function getTotalSessionTime(activity){
+    let totalTime = 0;
+    activity.plays.forEach(play => {
+        totalTime += play.sessionTime;
+    });
+    return formatTimeToHHMMSS(totalTime);  
 }
 
 // RESET BUTTONS

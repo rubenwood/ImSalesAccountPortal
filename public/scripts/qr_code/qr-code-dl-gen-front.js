@@ -7,6 +7,7 @@ import { initializeDarkMode } from '../themes/dark-mode.js';
 
 let allURLs = [];
 let allQRCodeURLs;
+// TODO: cache these in local storage
 let areas, topics, activities;
 let allTopicBrondons, allActivityBrondons;
 
@@ -97,7 +98,7 @@ async function generateDeeplinks(){
     allURLs = [];
     try {
         const addTopicLinks = genAddTopicLinks(allTopicBrondons);
-        const launchActivityLinks = genLaunchActivityLinks(allActivityBrondons);
+        const launchActivityLinks = genLaunchActivityLinks(activities, allActivityBrondons);
         const [launcherSectionLinks, setAreaLinks] = await Promise.all([
             genLauncherSectionLinks(["Explore","Library","Progress","Feed","Shop"]),
             genSetAreaLinks(areas)
@@ -229,28 +230,36 @@ function genAddTopicLinks(topics){
     return links;
 }
 // generate launch activity links
-function genLaunchActivityLinks(activities){    
+function genLaunchActivityLinks(activities, activityBrondons){    
     let links = [];    
 
-    for(const activity of activities){
-        let activityId = activity.activityId;
-        let activityName = activity.brondon.externalTitle;
+    console.log(`%${activities.length} brondons len: ${activityBrondons.length}`)
 
-        let imgName = activity.brondon.externalTitle;
+    for(const activityBrondon of activityBrondons){
+        let activityId = activityBrondon.activityId;
+        let activityName = activityBrondon.brondon.externalTitle;
+        let activityType = activityBrondon.type == undefined ? 'activity' : activityBrondon.type;
+        console.log("ACTIVITY");
+        console.log(activityBrondon);
+        console.log(activityType);
+
+        let imgName = activityBrondon.brondon.externalTitle;
         imgName = "Activity_"+imgName.replace(/[^a-zA-Z0-9]/g, "");
-        //console.log("activity img name: " + imgName);
 
         let link = `https://immersifyeducation.com/deeplink?dl=%5Bimmersifyeducation%3A%2F%2Fimmersifydental%3FLaunchActivity%3D${activityId}%5D`
-        links.push({ activityId, activityName, type:'activity', imgName, link });
+        links.push({ activityId, activityName, type:activityType, imgName, link });
     }
     return links;
+}
+function getActivtyType(activities, activityIdFromBrondon){
+
 }
 
 // generate discount code links
 
 // generate topic collection link
 function genTopicCollectionLink(topicCollection){
-    // for each topic in collection, get the topic ID, put into string (comma seperated), put that into link
+    // for each topic in collection, get the topic ID, put into string (comma separated), put that into link
     let topicIdList = [];
     for(const topic of topicCollection){
         topicIdList.push(topic.topicId);
@@ -265,6 +274,9 @@ async function bulkAddToDatabase(allURLs, allQRCodeURLs) {
     console.log("BULK ADDING");
     console.log(allURLs);
     console.log(allQRCodeURLs);
+
+    if(allURLs == undefined){ console.log("No Deeplinks were generated"); return; }
+    if(allQRCodeURLs == undefined){ console.log("No QR Codes were generated"); return; }
 
     let databaseUpdateData = [];
 
@@ -288,22 +300,29 @@ async function bulkAddToDatabase(allURLs, allQRCodeURLs) {
     console.log(databaseUpdateData);
 
     //TODO: change database structure to reflect new data being written
-    /*for(dbData of databaseUpdateData){
-        let dbResp = await addToDatabase(
-            element.deeplink, 
-            element.qrCodeUrl,
-            element.areaId,
-            element.areaName,
-            element.topicId,
-            element.topicName,
-            element.activityId,
-            element.activityName,
-            element.type);
-        console.log(dbResp);
-    }*/
+    const addPromises = databaseUpdateData.map(dbData => {
+        return addToDatabase(
+            dbData.deeplink, 
+            dbData.qrCodeUrl,
+            dbData.areaId,
+            dbData.areaName,
+            dbData.topicId,
+            dbData.topicName,
+            dbData.activityId,
+            dbData.activityName,
+            dbData.type
+        );
+    });
+
+    try {
+        const results = await Promise.all(addPromises);
+        console.log(results);
+    } catch (error) {
+        console.error("Error adding data to the database:", error);
+    }
 }
 async function addToDatabase(deeplink, qrCodeUrl, areaId, areaName, topicId, topicName, activityId, activityName, type){
-    const addDLQRURL = `/add-dl-qr`;
+    const addDLQRURL = `/qrdb/add-dl-qr`;
     const addDLQRResponse = await fetch(addDLQRURL, {
         method: 'POST',
         headers: { 

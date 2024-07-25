@@ -133,7 +133,7 @@ qrCodeDBRouter.get('/search', async (req, res) => {
 });
 
 async function searchQRCodeDB(query) {
-    const searchFields = ['deeplink', 'qr_code_url', 'area', 'module', 'topic', 'activity', 'type', 'stakeholder'];
+    const searchFields = ['deeplink', 'qr_code_url', 'area_name', 'module', 'topic_name', 'activity_name', 'type', 'stakeholder'];
     const searchQueries = searchFields.map(field => `${field} ILIKE $1`);
     const searchText = `%${query}%`;
 

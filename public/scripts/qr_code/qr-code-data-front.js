@@ -74,6 +74,9 @@ async function searchClicked() {
         setupPage();
     }  
 }
+// TODO: make search stricter
+// need to handle cases like; "sso" (should return list of sso QR codes, not le"sso"ns)
+//
 async function searchQRCode(query) {
     console.log("SEARCH");
     try {
@@ -93,9 +96,10 @@ let areas, topics, activities;
 async function setupPage(){
     await waitForJWT();
     // TODO: Use promise here
-    areas = await getAreas();
-    topics = await getTopics(); 
-    activities = await getActivities();
+    const [areasResult, topicsResult, activitiesResult] = await Promise.all([getAreas(), getTopics(), getActivities()]);
+    areas = areasResult;
+    topics = topicsResult;
+    activities = activitiesResult;
     
     // get data from database
     let dbData = await fetchQRDLData();
@@ -144,8 +148,8 @@ function generateReport(data) {
         // Add Area row
         const areaRow = document.createElement('tr');
         areaRow.innerHTML = `
-            <td><b>Area</b></td>
-            <td colspan="2">${item.area}</td>
+            <td><b>Area Name</b></td>
+            <td colspan="2">${item.area_name}</td>
         `;
         tableBody.appendChild(areaRow);
 
@@ -160,16 +164,16 @@ function generateReport(data) {
         // Add Topic row
         const topicRow = document.createElement('tr');
         topicRow.innerHTML = `
-            <td><b>Topic</b></td>
-            <td colspan="2">${item.topic}</td>
+            <td><b>Topic Name</b></td>
+            <td colspan="2">${item.topic_name}</td>
         `;
         tableBody.appendChild(topicRow);
 
         // Add Activity row
         const activityRow = document.createElement('tr');
         activityRow.innerHTML = `
-            <td><b>Activity</b></td>
-            <td colspan="2">${item.activity}</td>
+            <td><b>Activity Name</b></td>
+            <td colspan="2">${item.activity_name}</td>
         `;
         tableBody.appendChild(activityRow);
 
