@@ -538,16 +538,16 @@ function exportToExcel() {
     });
 
     // Low Prio: Topic progress - user, topic %
-    
+
     const workbook = XLSX.utils.book_new();
     const insightsWorksheet = XLSX.utils.json_to_sheet(combinedInsightsData);
-    const userDataWorksheet = XLSX.utils.json_to_sheet(loginData);
-    const usageWorksheet = XLSX.utils.json_to_sheet(usageData);
     const progressWorksheet = XLSX.utils.json_to_sheet(progressData);
+    const usageWorksheet = XLSX.utils.json_to_sheet(usageData);
+    const loginDataWorksheet = XLSX.utils.json_to_sheet(loginData);
     XLSX.utils.book_append_sheet(workbook, insightsWorksheet, "Insights");
-    XLSX.utils.book_append_sheet(workbook, userDataWorksheet, "Login Report");
-    XLSX.utils.book_append_sheet(workbook, usageWorksheet, "Usage Report");
     XLSX.utils.book_append_sheet(workbook, progressWorksheet, "Progress Report");
+    XLSX.utils.book_append_sheet(workbook, usageWorksheet, "Usage Report");
+    XLSX.utils.book_append_sheet(workbook, loginDataWorksheet, "Login Report");
     XLSX.writeFile(workbook, "Report.xlsx");
 }
 function getBestScore(activity){
