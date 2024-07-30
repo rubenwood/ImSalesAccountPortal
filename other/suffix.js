@@ -482,7 +482,8 @@ function exportToExcel(suffixes, exportData){
     //XLSX.writeFile(workbook, `Report-${suffixes.join('-')}-${formatDate(new Date())}.xlsx`);
     // write to s3
     const workbookOut = XLSX.write(workbook, { bookType: 'xlsx', type: 'buffer' });
-    const filename = `Analytics/Report-${suffixes.join('-')}-${formatDate(new Date())}.xlsx`;
+    const suffixesJoined = suffixes.join('-');
+    const filename = `Analytics/${suffixesJoined}/Report-${suffixesJoined}-${formatDate(new Date())}.xlsx`;
     uploadToS3(workbookOut, filename, 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', process.env.AWS_BUCKET)
         .then((data) => {
             console.log(`File uploaded successfully at ${data.Location}`);
@@ -491,6 +492,53 @@ function exportToExcel(suffixes, exportData){
             console.error(`Error uploading file: ${err.message}`);
         });
 }
+
+async function generatePresignedUrlsForFolder(folder) {
+    const params = {
+        Bucket: process.env.AWS_BUCKET,
+        Prefix: `Analytics/${folder}/`
+    };
+
+    const data = await s3.listObjectsV2(params).promise();
+    const urls = data.Contents.map(item => {
+        const urlParams = {
+            Bucket: process.env.AWS_BUCKET,
+            Key: item.Key,
+            Expires: 60 * 60 * 24 // 1 day
+        };
+        const url = s3.getSignedUrl('getObject', urlParams);
+        return { filename: item.Key.split('/').pop(), url };
+    });
+
+    return urls;
+}
+generatePresignedUrlsForFolder('immersifyeducation.com');
+suffixRouter.get('/reports/:folder', async (req, res) => {
+    console.log("getting reports");
+    const folder = req.params.folder;
+    try {
+        const urls = await generatePresignedUrlsForFolder(folder);
+        console.log(urls);
+        res.send(urls);
+    } catch (err) {
+        res.status(500).send(`Error generating pre-signed URLs: ${err.message}`);
+    }
+});
+
+suffixRouter.post('/auth', async (req, res) => {
+    try {
+        if(req.body.pass == process.env.REPORT_PASS)
+        {
+            res.send(true);
+        }
+        else
+        {
+            res.send(false);
+        }        
+    } catch (err) {
+        res.status(500).send(`Error ${err.message}`);
+    }
+});
 
 // EXPORT HELPER FUNCTIONS (SETUP ES MODULES AND RE-USE THESE)
 function getBestScore(activity){

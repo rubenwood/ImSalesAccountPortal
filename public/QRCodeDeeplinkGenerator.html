@@ -26,58 +26,51 @@
         <input type="button" id="loginButton" value="Login">
     </div>
   </div>
-  <!--Create collection links & QR Codes-->
-  <div id="topic-collection-content" class="form-container">
-    <h2>Create Collection Link & QR Code</h2>
-    <br/><br/>
-    <input type="text" id="searchInput" placeholder="Search..." autoComplete="on">
-    <div id="listContainer">
-      <!-- List items will be dynamically generated here -->
-    </div>
-    <div id="selectedItemsContainer">
-        <h3>Selected Items</h3>
-        <!-- Selected items will be displayed here -->
-    </div>
-    <input type="button" id="gen-selected-topics-dl" value="Generate selected topics deeplink">
-    <p id="selected-topics-dl-output">link goes here </p>    
-    <img id="qr-code-topics" src=""/>    
-  </div>
+  <!-- Generator -->
   <div id="qr-content" class="form-container">
-    <h1>QR Code & Deeplink Generator</h1>
+    <h1>QR Topic Code & Deeplink Generator</h1>
     <a href="QRCodeCatalogue.html">Catalogue</a>
     <br/><br/>
-    <br/><br/>
-    <input type="button" id="generate-deeplinks" value="Generate Deeplinks">
-    <br/><br/>
-    <input type="button" id="generate-qr-codes" value="Generate QR Codes">
-    <br/><br/>
-    <input type="button" id="update-db" value="Update Database (NYI)">
-    <br/><br/>
-    <label>SSO Login Links</label><br/>
-    <textarea id="ssoLinks"></textarea><br/>
-    <label>Launcher Section Links</label><br/>
-    <textarea id="launcherSectionLinks"></textarea><br/>
-    <label>Set Area Links</label><br/>
-    <textarea id="setAreaLinks"></textarea><br/>
-    <label>Add Topic Links</label><br/>
-    <textarea id="addTopicLinks"></textarea><br/>
-    <label>Launch Activity Links</label><br/>
-    <textarea id="launchActivityLinks"></textarea><br/>
-  </div>  
-  <div id="qr-decode-content" class="form-container">
-    <h2>Decoder</h2>
-    <input type="file" id="file-input" accept="image/*">
-    <p id="decoded-result"></p>
-    <br/><br/>
-    <h2>Generate QR Code</h2><br/>
-    <input type="text" id="deeplink-qr-code-input" /><br/>
-    <input type="button" id="manual-gen-qr-code-btn" value="Generate QR Code"/><br/>
-    <img id="generated-qr-img" src="" />
+    <!--Create collection links & QR Codes-->
+    <div id="topic-collection-content" class="form-container">
+      <h2>Create Collection Link & QR Code</h2>
+      <br/><br/>
+      <input type="text" id="searchInput" placeholder="Search..." autoComplete="on">
+      <div id="listContainer">
+        <!-- List items will be dynamically generated here -->
+      </div>
+      <div id="selectedItemsContainer">
+          <h3>Selected Items</h3>
+          <!-- Selected items will be displayed here -->
+      </div>
+      <input type="button" id="gen-selected-topics-dl" value="Generate selected topics deeplink">
+      <p id="selected-topics-dl-output">link goes here </p>
+      <div id="qr-container">
+        <img id="qr-code-topics" src="" />
+      </div>  
+    </div>
+  </div> 
+
+  <div>
+    <!-- QR Decoder -->
+    <div id="qr-decode-content" class="form-container">
+      <h2>Decoder</h2>
+      <input type="file" id="file-input" accept="image/*">
+      <p id="result"></p>
+    </div>
+    <!-- URL Shortener -->
+    <div id="qr-decode-content" class="form-container">
+      <h2>Shortener</h2>
+      <input type="text" id="shorten-url-input" placeholder="deeplink goes here" />
+      <input type="button" id="shorten-btn" value="Shorten URL (optional)">
+      <p id="shorten-url-output">link goes here </p>
+      <input type="button" id="gen-short-qr-btn" value="Generate QR from short URL">
+    </div>
   </div>
-  
+
   <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.1/dist/confetti.browser.js"></script>
-  <script type="module" src="scripts/qr_code/qr-code-dl-gen-front.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jsqr/dist/jsQR.js"></script>
+  <script type="module" src="scripts/qr_code/qr-code-gen-front.js"></script>
   <script type="module" src="scripts/qr_code/qr-code-utils.js"></script>  
-  <script src="https://cdn.jsdelivr.net/npm/jsqr/dist/jsQR.js"></script> 
 </body>
 </html>

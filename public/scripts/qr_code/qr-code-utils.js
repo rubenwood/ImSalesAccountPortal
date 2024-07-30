@@ -36,6 +36,16 @@ export async function genQRCode(url) {
     
     return response.url;
 }
+export function genTopicCollectionLink(topicCollection){
+    // for each topic in collection, get the topic ID, put into string (comma separated), put that into link
+    let topicIdList = [];
+    for(const topic of topicCollection){
+        topicIdList.push(topic.topicId);
+    }
+    let topicListStr = topicIdList.join();
+    let link = `https://immersifyeducation.com/deeplink?dl=%5Bimmersifyeducation%3A%2F%2Fimmersifydental%3FAddTopic%3D${topicListStr}%5D`
+    return link;
+}
 
 export async function generateQRCodesAndUpload(URLList) {
     console.log(URLList);

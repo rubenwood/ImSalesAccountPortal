@@ -1,6 +1,6 @@
 // QR Code & Deeplink generator code
 import { getAreas, getTopics, getTopicBrondons, getActivities, getActivityBrondons, waitForJWT } from '../immersifyapi/immersify-api.js';
-import { decodeQRCode, generateQRCodesAndUpload, genQRCode } from './qr-code-utils.js';
+import { decodeQRCode, generateQRCodesAndUpload, genQRCode, genTopicCollectionLink } from './qr-code-utils.js';
 import { Login } from '../PlayFabManager.js';
 import { SearchableList } from '../classes/searchable-list.js';
 import { initializeDarkMode } from '../themes/dark-mode.js';
@@ -54,6 +54,7 @@ document.addEventListener('DOMContentLoaded', async() => {
         doConfetti();
         updateDBBtn.value = "Update Database (NYI)";
     });
+
     // Manually generate QR code from URL
     document.getElementById('manual-gen-qr-code-btn').addEventListener('click', async() => { 
         let generateQRCodeURL = await genQRCode(document.getElementById('deeplink-qr-code-input').value);
@@ -70,6 +71,7 @@ document.addEventListener('DOMContentLoaded', async() => {
         }
     });
 
+    // TODO: refactor duplicate code (qr-code-front)
     // Searchable list (for adding multiple topics)
     const listContainer = document.getElementById('listContainer');
     const searchInput = document.getElementById('searchInput');
@@ -251,14 +253,10 @@ function genLaunchActivityLinks(activities, activityBrondons){
     }
     return links;
 }
-function getActivtyType(activities, activityIdFromBrondon){
-
-}
-
 // generate discount code links
 
 // generate topic collection link
-function genTopicCollectionLink(topicCollection){
+/*function genTopicCollectionLink(topicCollection){
     // for each topic in collection, get the topic ID, put into string (comma separated), put that into link
     let topicIdList = [];
     for(const topic of topicCollection){
@@ -267,7 +265,7 @@ function genTopicCollectionLink(topicCollection){
     let topicListStr = topicIdList.join();
     let link = `https://immersifyeducation.com/deeplink?dl=%5Bimmersifyeducation%3A%2F%2Fimmersifydental%3FAddTopic%3D${topicListStr}%5D`
     return link;
-}
+}*/
 
 // Update the database
 async function bulkAddToDatabase(allURLs, allQRCodeURLs) {
