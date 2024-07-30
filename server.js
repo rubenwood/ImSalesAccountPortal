@@ -8,8 +8,9 @@ const path = require('path');
 require('dotenv').config();
 const app = express();
 const session = require('express-session');
-const fetchExchangeData = require('./other/getExchangeData.js');
+
 // routes
+const fetchExchangeData = require('./other/getExchangeData.js');
 const googleRoutes = require('./google/googlestore.js');
 const appleRoutes = require('./apple/applestore.js');
 const stripeRoutes = require('./stripe/stripestore.js');
