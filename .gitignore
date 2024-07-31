@@ -5,3 +5,4 @@ data/
 .env
 
 s3_files_details.csv
+conversion_results.json

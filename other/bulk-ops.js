@@ -2,7 +2,7 @@ const express = require('express');
 const axios = require('axios');
 const { Pool } = require('pg');
 const bulkRouter = express.Router();
-const fs = require('fs').promises;
+const fs = require('fs');
 
 require('dotenv').config();
 const AWS = require('aws-sdk');
@@ -239,8 +239,31 @@ async function extractAndSetJsonValue(tableName, jsonColumnName, keyName, subKey
     }
 }
 
-// CONVERT STRIPE SUB
-async function convertStripeSubData() {
+// CONVERT LEGACY SUB
+async function updateUserPlayFabData(playFabId, newSubData) {
+    const apiUrl = `https://${process.env.PLAYFAB_TITLE_ID}.playfabapi.com/Admin/UpdateUserData`;
+
+    try {
+        const response = await axios.post(apiUrl, {
+            PlayFabId: playFabId,
+            Data: {
+                OtherSubData: JSON.stringify(newSubData)
+            },
+            Permission: "Public"
+        }, {
+            headers: {
+                'Content-Type': 'application/json',
+                'X-SecretKey': process.env.PLAYFAB_SECRET_KEY
+            }
+        });
+
+        console.log(`Successfully updated data for user ${playFabId}:`, response.data);
+    } catch (error) {
+        console.error(`Error updating data for user ${playFabId}:`, error.response ? error.response.data : error.message);
+    }
+}
+
+async function convertLegacySubData() {
     const stripeDataQuery = `
     SELECT *
     FROM public."UsageData"
@@ -250,63 +273,125 @@ async function convertStripeSubData() {
         ("UsageDataJSON"->'Data'->'ReceiptStripeActiveUntilDate'->>'Value') IS NOT NULL
     `;
 
-    const res = await pool.query(stripeDataQuery);
-    const stripeSubUsers = res.rows;
+    const androidDataQuery = `
+    SELECT *
+    FROM public."UsageData"
+    WHERE
+        ("UsageDataJSON"->'Data'->'ReceiptAndroid'->>'Value') IS NOT NULL
+    `;
 
-    stripeSubUsers.forEach(user => {
-        let userProdInterval = user.UsageDataJSON.Data.ProductInterval?.Value;
-        let userProdExpiry = user.UsageDataJSON.Data.ReceiptStripeActiveUntilDate?.Value;
+    const iOSDataQuery = `
+    SELECT *
+    FROM public."UsageData"
+    WHERE
+        ("UsageDataJSON"->'Data'->'ReceiptIOS'->>'Value') IS NOT NULL
+    `;
 
-        if (!userProdInterval || !userProdExpiry) {
-            console.log(`Skipping user ${user.UsageDataJSON.PlayFabId} due to missing ProductInterval or ReceiptStripeActiveUntilDate`);
-            return;
-        }
+    console.log("Getting existing subs...");
+    const [stripeRes, androidRes, iOSRes] = await Promise.all([
+        pool.query(stripeDataQuery), 
+        pool.query(androidDataQuery), 
+        pool.query(iOSDataQuery)
+    ]);
+    const stripeSubUsers = stripeRes.rows;
+    const androidSubUsers = androidRes.rows;
+    const iOSSubUsers = iOSRes.rows;
+    console.log("Got existing subs!");
 
-        let interval = 30;
-        if (userProdInterval === "yearly") {
-            interval = 365;
-        }
+    const output = [];
 
-        // Convert expiry date string to Date object
-        let expiryDate = new Date(userProdExpiry);
-
-        // Subtract interval to get purchase date
-        let purchaseDate = new Date(expiryDate);
-        purchaseDate.setDate(expiryDate.getDate() - interval);
-        let now = new Date();
-        let status = "renewing";
-        let isSubbed = true;
-        if (now > expiryDate) {
-            // if now is beyond expiry date
-            isSubbed = false;
-            status = "expired";
-        }
-
-        // Format dates to the desired format
-        const formatDate = (date) => {
-            return date.toISOString().split('T')[0]; // YYYY-MM-DD format
-        };
-
+    // update stripe data
+    for (const user of stripeSubUsers) {
         let newSubData = {
-            Platform: "stripe",
-            StripeSubscriptionId: "", // need to get this from stripe
-            Product: userProdInterval,
-            PurchaseDate: formatDate(purchaseDate),
-            SubStatus: status,
-            SubExpire: formatDate(expiryDate), // when this will expire / renew  
-            SubActive: isSubbed ? "true" : "false",
+            Platform: "Stripe",
+            Product: 'immersify.gold_yearly',
+            PurchaseDate: '',
+            SubStatus: 'renewing',
+            SubExpire: '01/08/2124 00:00:00',
+            SubActive: "true",
             SubscriptionTier: "legacy",
-            SubscriptionPeriod: userProdInterval
+            SubscriptionPeriod: "yearly"
         };
 
-        console.log(user.UsageDataJSON.PlayFabId, " ", newSubData);
+        await updateUserPlayFabData(user.UsageDataJSON.PlayFabId, newSubData);
+        output.push({ PlayFabId: user.UsageDataJSON.PlayFabId, Platform: "Stripe" });
+    }
 
-        // playfab api call to add the StoreSubData to the users account
-    });
+    // update android data
+    for (const user of androidSubUsers) {
+        let newSubData = {
+            Platform: "Android",
+            Product: 'immersify.gold_yearly',
+            PurchaseDate: '',
+            SubStatus: 'renewing',
+            SubExpire: '01/08/2124 00:00:00',
+            SubActive: "true",
+            SubscriptionTier: "legacy",
+            SubscriptionPeriod: "yearly"
+        };
 
-    return stripeSubUsers;
+        await updateUserPlayFabData(user.UsageDataJSON.PlayFabId, newSubData);
+        output.push({ PlayFabId: user.UsageDataJSON.PlayFabId, Platform: "Android" });
+    }
+
+    // update ios data
+    for (const user of iOSSubUsers) {
+        let newSubData = {
+            Platform: "iOS",
+            Product: 'immersify.gold_yearly',
+            PurchaseDate: '',
+            SubStatus: 'renewing',
+            SubExpire: '01/08/2124 00:00:00',
+            SubActive: "true",
+            SubscriptionTier: "legacy",
+            SubscriptionPeriod: "yearly"
+        };
+
+        await updateUserPlayFabData(user.UsageDataJSON.PlayFabId, newSubData);
+        output.push({ PlayFabId: user.UsageDataJSON.PlayFabId, Platform: "iOS" });
+    }
+
+    // write the users to a file
+    fs.writeFileSync('conversion_results.json', JSON.stringify(output, null, 2), 'utf8');
+    console.log("Sub Conversion done!");
+    return output;
 }
-//convertStripeSubData();
+//convertLegacySubData();
+
+async function updateUserPlayFabData(playFabId, newSubData) {
+    const apiUrl = `https://${process.env.PLAYFAB_TITLE_ID}.playfabapi.com/Admin/UpdateUserData`;
+
+    try {
+        const response = await axios.post(apiUrl, {
+            PlayFabId: playFabId,
+            Data: {
+                OtherSubData: JSON.stringify(newSubData)
+            },
+            Permission: "Public"
+        }, {
+            headers: {
+                'Content-Type': 'application/json',
+                'X-SecretKey': process.env.PLAYFAB_SECRET_KEY
+            }
+        });
+
+        console.log(`Successfully updated data for user ${playFabId}:`, response.data);
+    } catch (error) {
+        console.error(`Error updating data for user ${playFabId}:`, error.response ? error.response.data : error.message);
+    }
+}
+let newSubData = {
+    Platform: "Android",
+    Product: 'immersify.gold_yearly',
+    PurchaseDate: '',
+    SubStatus: 'renewing',
+    SubExpire: '01/08/2124 00:00:00', 
+    SubActive: "true",
+    SubscriptionTier: "legacy",
+    SubscriptionPeriod: "yearly"
+};
+updateUserPlayFabData('AB9587E5252E5A90', newSubData);
+
 
 module.exports = {
     bulkRouter,
