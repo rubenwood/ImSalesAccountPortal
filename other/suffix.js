@@ -825,7 +825,7 @@ function createLoginRow(dataToExport) {
         lastLoginDate: dataToExport.lastLoginDate,
         daysSinceLastLogin: dataToExport.daysSinceLastLogin,
         daysSinceCreation: dataToExport.daysSinceCreation,
-        accountExpiryDate: dataToExport.accountExpiryDate,
+        //accountExpiryDate: dataToExport.accountExpiryDate,
         daysToExpire: dataToExport.daysToExpire, // TODO: hide this
         linkedAccounts: dataToExport.linkedAccounts,
         lastLoginAndroid: dataToExport.loginData.lastLoginAndr,
