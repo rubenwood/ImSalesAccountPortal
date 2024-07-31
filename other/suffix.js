@@ -494,8 +494,7 @@ function exportToExcel(suffixes, exportData){
         'This page contains some general analytics about each account,',
         'when was the account created, last logged in, and how active they have been.',
         ''
-    ];
-    
+    ];    
     addMessages(insightsWorksheet, insightsMessages);
     addMessages(progressWorksheet, progressMessages);
     addMessages(usageWorksheet, usageMessages);

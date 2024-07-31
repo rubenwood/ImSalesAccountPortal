@@ -544,6 +544,32 @@ function exportToExcel() {
     const progressWorksheet = XLSX.utils.json_to_sheet(progressData);
     const usageWorksheet = XLSX.utils.json_to_sheet(usageData);
     const loginDataWorksheet = XLSX.utils.json_to_sheet(loginData);
+    
+    const insightsMessages = [
+        'Welcome to the Immersify Usage and Progress Report. Each tab contains data, analytics and insights.',
+        'This page shows some general insights, lesson specific insights and simulation specific insights.',
+        ''
+    ];
+    const progressMessages = [
+        'This page shows every user, the activities they have engaged with,',
+        'how long in total they have spent in the activity and the score for each attempt.',
+        ''
+    ];
+    const usageMessages = [
+        'This page is similar to the previous page.',
+        'However, it presents the date each attempt was made and the duration of each attempt.',
+        ''
+    ];
+    const loginMessages = [
+        'This page contains some general analytics about each account,',
+        'when was the account created, last logged in, and how active they have been.',
+        ''
+    ];    
+    addMessages(insightsWorksheet, insightsMessages);
+    addMessages(progressWorksheet, progressMessages);
+    addMessages(usageWorksheet, usageMessages);
+    addMessages(loginDataWorksheet, loginMessages);
+
     XLSX.utils.book_append_sheet(workbook, insightsWorksheet, "Insights");
     XLSX.utils.book_append_sheet(workbook, progressWorksheet, "Progress Report");
     XLSX.utils.book_append_sheet(workbook, usageWorksheet, "Usage Report");
@@ -565,6 +591,36 @@ function getTotalSessionTime(activity){
         totalTime += play.sessionTime;
     });
     return formatTimeToHHMMSS(totalTime);  
+}
+function addMessages(worksheet, messages) {
+    const range = XLSX.utils.decode_range(worksheet['!ref']);
+    const newRange = XLSX.utils.encode_range({ s: { c: range.s.c, r: 0 }, e: { c: range.e.c, r: range.e.r + messages.length } });
+
+    // Shift all rows down by the number of messages
+    for (let R = range.e.r; R >= range.s.r; --R) {
+        for (let C = range.s.c; C <= range.e.c; ++C) {
+            const cellRef = XLSX.utils.encode_cell({ r: R + messages.length, c: C });
+            const prevCellRef = XLSX.utils.encode_cell({ r: R, c: C });
+            if (worksheet[prevCellRef]) {
+                worksheet[cellRef] = worksheet[prevCellRef];
+            } else {
+                delete worksheet[cellRef];
+            }
+        }
+    }
+
+    // Insert the messages
+    messages.forEach((message, index) => {
+        const messageCellRef = XLSX.utils.encode_cell({ r: index, c: 0 });
+        worksheet[messageCellRef] = { t: 's', v: message };
+        // Clear the rest of the cells in the message row
+        for (let C = range.s.c + 1; C <= range.e.c; ++C) {
+            const cellRef = XLSX.utils.encode_cell({ r: index, c: C });
+            delete worksheet[cellRef];
+        }
+    });
+
+    worksheet['!ref'] = newRange;
 }
 
 // RESET BUTTONS
