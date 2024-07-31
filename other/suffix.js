@@ -592,21 +592,6 @@ suffixRouter.get('/reports/:folder', async (req, res) => {
     }
 });
 
-suffixRouter.post('/auth', async (req, res) => {
-    try {
-        if(req.body.pass == process.env.REPORT_PASS)
-        {
-            res.send(true);
-        }
-        else
-        {
-            res.send(false);
-        }        
-    } catch (err) {
-        res.status(500).send(`Error ${err.message}`);
-    }
-});
-
 // EXPORT HELPER FUNCTIONS (SETUP ES MODULES AND RE-USE THESE)
 function getBestScore(activity){
     let highestScore = 0;
