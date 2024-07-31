@@ -573,8 +573,8 @@ async function generatePresignedUrlsForFolder(folder) {
 }
 
 suffixRouter.get('/reports/:folder', async (req, res) => {
-    console.log("getting reports");
     const folder = req.params.folder;
+    console.log(`getting reports for ${folder}`);
     const key = req.headers['x-secret-key'];
     if(key != process.env.REPORT_PASS){ console.log("invalid key"); res.status(403).send('Forbidden: Invalid secret key'); return;}
 
@@ -582,10 +582,8 @@ suffixRouter.get('/reports/:folder', async (req, res) => {
         const urls = await generatePresignedUrlsForFolder(folder);
         let outURLs = [];
         urls.forEach(url =>{
-            console.log(url.filename);
             if(url.filename !== ''){ outURLs.push(url); }
         })
-        console.log(outURLs);
         res.send(outURLs);
     } catch (err) {
         res.status(500).send(`Error generating pre-signed URLs: ${err.message}`);
