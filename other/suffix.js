@@ -483,7 +483,9 @@ function exportToExcel(suffixes, exportData){
     // write to s3
     const workbookOut = XLSX.write(workbook, { bookType: 'xlsx', type: 'buffer' });
     const suffixesJoined = suffixes.join('-');
-    const filename = `Analytics/${suffixesJoined}/Report-${suffixesJoined}-${formatDate(new Date())}.xlsx`;
+    let todayUTC = new Date().toISOString().split('.')[0] + 'Z';
+    console.log(`Today in UTC: ${todayUTC}`);
+    const filename = `Analytics/${suffixesJoined}/Report-${suffixesJoined}-${todayUTC}-UTC.xlsx`;
     uploadToS3(workbookOut, filename, 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', process.env.AWS_BUCKET)
         .then((data) => {
             console.log(`File uploaded successfully at ${data.Location}`);
@@ -859,6 +861,18 @@ suffixRouter.get('/gen-suffix-rep', async (req, res) => {
         let suffixes = req.query.suffixes.split(',');
         const matchedUsers = await generateReportByEmailSuffixDB(suffixes, exportReport);
         res.json(matchedUsers);
+    } catch (error) {
+        console.error('Error:', error);
+        res.status(500).json({ message: 'Failed to generate report', error: error.message });
+    }
+});
+suffixRouter.get('/gen-suffix-rep-exp', async (req, res) => {
+    try {
+        
+        console.log('exporting report');
+        let suffixes = req.query.suffixes.split(',');
+        generateReportByEmailSuffixDB(suffixes, true);
+        res.status(200).json({ message: `Began generating report for ${suffixes}, files will be delivered to S3 shortly...`});
     } catch (error) {
         console.error('Error:', error);
         res.status(500).json({ message: 'Failed to generate report', error: error.message });
