@@ -571,7 +571,7 @@ async function generatePresignedUrlsForFolder(folder) {
 
     return urls;
 }
-generatePresignedUrlsForFolder('immersifyeducation.com');
+
 suffixRouter.get('/reports/:folder', async (req, res) => {
     console.log("getting reports");
     const folder = req.params.folder;
@@ -923,13 +923,16 @@ suffixRouter.get('/gen-suffix-rep', async (req, res) => {
         res.status(500).json({ message: 'Failed to generate report', error: error.message });
     }
 });
+// Used to auto get reports (scheduled call)
 suffixRouter.get('/gen-suffix-rep-exp', async (req, res) => {
     try {
         
         console.log('exporting report');
         let suffixes = req.query.suffixes.split(',');
+        let outMessage = `Began generating report for ${suffixes}, files will be delivered to S3 shortly...`;
+        console.log(outMessage);
         generateReportByEmailSuffixDB(suffixes, true);
-        res.status(200).json({ message: `Began generating report for ${suffixes}, files will be delivered to S3 shortly...`});
+        res.status(200).json({ message: outMessage});
     } catch (error) {
         console.error('Error:', error);
         res.status(500).json({ message: 'Failed to generate report', error: error.message });
