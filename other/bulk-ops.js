@@ -30,6 +30,7 @@ const pool = new Pool({
 // and then constructs the AccountData table
 // Then it gets the usage data 
 // and then constructs the UsageData table
+// TODO: Only update users who have logged in since the last db update
 async function updateDatabase(){
     console.log("getting all player segment and writing to db...");
     // get account data from playfab and write to DB
