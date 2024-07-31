@@ -94,11 +94,11 @@ async function getAllPlayerAccDataAndWriteToDB() {
         console.log(`Processing batch...`);
 
         // TODO: look through "response.data.data.PlayerProfiles" 
-        // and only add users who were created since the last database update
-
+        // and only add users who logged in / created since the last database update
         // Insert the player profiles into the PostgreSQL table
         console.log("updating ", response.data.data.PlayerProfiles.length, " entries");
         for (const profile of response.data.data.PlayerProfiles) {
+            //if(profile.)
             await pool.query('INSERT INTO public."AccountData"("AccountDataJSON") VALUES ($1)', [profile]);
         }
 

@@ -44,10 +44,12 @@ async function submitPass()
 }
 
 async function getReports() {
+    let inPass = document.getElementById('password').value;
     let response = await fetch('/reporting/reports/highpoint.edu', {
         method: 'GET',
         headers: {
-            'Content-Type': 'application/json'
+            'Content-Type': 'application/json',
+            'x-secret-key': inPass
         }
     });
 
