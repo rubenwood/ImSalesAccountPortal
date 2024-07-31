@@ -390,7 +390,8 @@ let newSubData = {
     SubscriptionTier: "legacy",
     SubscriptionPeriod: "yearly"
 };
-updateUserPlayFabData('AB9587E5252E5A90', newSubData);
+//testing
+//updateUserPlayFabData('AB9587E5252E5A90', newSubData);
 
 
 module.exports = {
