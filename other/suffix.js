@@ -514,7 +514,7 @@ function exportToExcel(suffixes, exportData){
     const filename = `Analytics/${suffixesJoined}/Report-${suffixesJoined}-${todayUTC}-UTC.xlsx`;
     uploadToS3(workbookOut, filename, 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', process.env.AWS_BUCKET)
         .then((data) => {
-            console.log(`File uploaded successfully at ${data.Location}`);
+            console.log(`File uploaded successfully at ${filename}`);
         })
         .catch((err) => {
             console.error(`Error uploading file: ${err.message}`);
