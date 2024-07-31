@@ -44,7 +44,7 @@ async function submitPass()
 }
 
 async function getReports() {
-    let response = await fetch('/reporting/reports/immersifyeducation.com', {
+    let response = await fetch('/reporting/reports/highpoint.edu', {
         method: 'GET',
         headers: {
             'Content-Type': 'application/json'
