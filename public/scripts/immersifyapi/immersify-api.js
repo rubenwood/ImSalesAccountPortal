@@ -106,3 +106,46 @@ export async function imAPIGet(endpointURL) {
     const data = await apiResponse.json();
     return data;
 }
+export async function imAPIPost(endpointURL, body) {
+    console.log(JSON.stringify(body));
+    const apiURL = `${baseURL}/${endpointURL}`;
+    const apiResponse = await fetch(apiURL, {
+        method: 'POST',
+        headers: { 
+            'Authorization': `Bearer ${jwtoken}`,
+            'Content-Type': 'application/json' 
+        },
+        body: JSON.stringify(body)
+    });
+    const data = await apiResponse.text();
+    return data;
+}
+export async function imAPIPut(endpointURL, body) {
+    console.log(JSON.stringify(body));
+    const apiURL = `${baseURL}/${endpointURL}`;
+    const apiResponse = await fetch(apiURL, {
+        method: 'PUT',
+        headers: { 
+            'Authorization': `Bearer ${jwtoken}`,
+            'Content-Type': 'application/json' 
+        },
+        body: JSON.stringify(body)
+    });
+    const data = await apiResponse.text();
+    return data;
+}
+
+export async function imAPIClearCache() {
+    console.log("clearing cache");
+    const apiURL = `${baseURL}/clear/cache`;
+    const apiResponse = await fetch(apiURL, {
+        method: 'GET',
+        headers: { 
+            'Authorization': `Bearer ${jwtoken}`,
+            'Content-Type': 'application/json' 
+        }
+    });
+    const data = await apiResponse.json();
+    console.log(data);
+    return data;
+}

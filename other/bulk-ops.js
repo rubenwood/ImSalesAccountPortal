@@ -65,12 +65,35 @@ async function OnUpdateCompletion(date) {
         console.error("Error writing to S3:", err);
     }
 }
+// returns the last updated date (as a Date)
+async function getLastUpdatedDate(){
+    const params = {
+        Bucket: process.env.AWS_BUCKET,
+        Key: 'DatabaseLastUpdated.json'
+    };
+
+    try {
+        const data = await s3.getObject(params).promise();
+        const jsonData = JSON.parse(data.Body.toString('utf-8'));
+        console.log(jsonData);
+        console.log(jsonData.LastUpdatedDate);
+        let jsonValueToDate = new Date(jsonData.LastUpdatedDate);
+        console.log(jsonValueToDate);
+        console.log("Got updated date");
+        return jsonValueToDate;        
+    } catch (err) {
+        console.error("Error getting from S3:", err);
+    }
+}
+getLastUpdatedDate();
+
 
 let getPlayerAccDataJobInProgress = false;
 async function getAllPlayerAccDataAndWriteToDB() {
     let contToken = null;
     let timestamp = new Date();
     console.log(`Getting all players ${timestamp}`);
+    let lastUpdatedDate = await getLastUpdatedDate();
 
     // Clear the AccountData table before inserting new data
     await pool.query('TRUNCATE TABLE public."AccountData" RESTART IDENTITY');
@@ -98,7 +121,20 @@ async function getAllPlayerAccDataAndWriteToDB() {
         // Insert the player profiles into the PostgreSQL table
         console.log("updating ", response.data.data.PlayerProfiles.length, " entries");
         for (const profile of response.data.data.PlayerProfiles) {
-            //if(profile.)
+            let createdDate = profile.Created;
+            let lastLoginDate = profile.LastLogin;
+            console.log(createdDate);
+            console.log(lastLoginDate);
+            // get the DatabaseLastUpdated.json file and compare the createdDate and lastLoginDate
+            if(createdDate > lastUpdatedDate)
+            {
+                // insert this new user
+            }
+            else if(lastLoginDate > createdDate && lastLoginDate > lastUpdatedDate)
+            {
+                // update existing user entry
+            }
+            //console.log(lastUpdatedDate);
             await pool.query('INSERT INTO public."AccountData"("AccountDataJSON") VALUES ($1)', [profile]);
         }
 

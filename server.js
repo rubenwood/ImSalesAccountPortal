@@ -24,6 +24,7 @@ const { dbRouter } = require('./database/database.js');
 const { bitlyRouter} = require('./other/bitly.js');
 const { qrCodeRouter } = require('./other/qr-code.js');
 const { qrCodeDBRouter } = require('./database/qr-code-db.js');
+const { cmsRouter } = require('./database/cms-api-db.js');
 const { getAllPlayerAccDataAndWriteToDB } = require('./other/bulk-ops');
 
 app.use(express.json());
@@ -466,6 +467,7 @@ app.use('/db', dbRouter);
 app.use('/bitly', bitlyRouter);
 app.use('/qr', qrCodeRouter);
 app.use('/qrdb', qrCodeDBRouter);
+app.use('/cms', cmsRouter);
 const PORT = process.env.PORT;
 
 app.listen(PORT, () => {
