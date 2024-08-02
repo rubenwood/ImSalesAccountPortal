@@ -34,13 +34,24 @@
     <input type="text" id="lessonId" value=""><br/>
     <input type="button" id="getLessonDataBtn" value="Get All Lesson Data"><br/>
     <h2>Positions, etc.</h2>
-    <input type="button" id="setPosBtn" value="Set Positions">
+    <input type="file" id="jsonFileInput">
+    <input type="button" id="getMatchingAssetPathsBtn" value="Get Matching Asset Paths">
+    <p id="result"></p>
+    <br/>
+    <label>Lesson Id</label>
+    <input type="input" id="lessonIdInputForScale">
+    <label>Scale</label>
+    <input type="input" id="scaleInput">
+    <input type="button" id="setScaleBtn" value="Set Scales">
+    <br/>
+    <input type="button" id="setPosBtn" value="Set Positions 0,0,0">
     <h2>Changes</h2>
     <input type="button" id="bulkApproveBtn" value="Bulk Approve">
     <label>Group Change Id:</label>
     <input type="text" id="groupChangeId" value=""><br/>
     <input type="button" id="approveBtn" value="approve change"><br />
     <h2>User Management</h2>
+    <input type="text" id="userEmailId">
     <input type="button" id="addUserBtn" value="add user">
   </div>
   

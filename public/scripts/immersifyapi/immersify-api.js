@@ -1,6 +1,6 @@
 const baseURL = "https://immersify-api.herokuapp.com";
 
-let jwtoken;
+export let jwtoken;
 
 export async function auth(playfabId, playfabSessionTicket) {
     const authUrl = `${baseURL}/auth`;

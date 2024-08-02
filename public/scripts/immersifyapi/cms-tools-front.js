@@ -1,4 +1,4 @@
-import { waitForJWT, imAPIClearCache, imAPIGet, imAPIPut, imAPIPost } from '../immersifyapi/immersify-api.js';
+import { waitForJWT, imAPIClearCache, imAPIGet, imAPIPut, imAPIPost, jwtoken } from '../immersifyapi/immersify-api.js';
 import { Login } from '../PlayFabManager.js';
 import { initializeDarkMode } from '../themes/dark-mode.js';
 
@@ -22,17 +22,69 @@ document.addEventListener('DOMContentLoaded', async() => {
     document.getElementById('getLessonDataBtn').addEventListener('click', async ()=>{
         console.log("getting lesson data");
         let lessonId = document.getElementById('lessonId').value;
-        // c143b5d9-c065-4c09-b516-ec14c8d8c858
+        // nerves c143b5d9-c065-4c09-b516-ec14c8d8c858
+        // muscles 9a64cac6-f34d-454e-a17f-3b314a6817eb
+
+        // delete this lesson quiz - 51d54999-05da-4f6d-b620-29915f021521
         let lessonData = await imAPIGet(`lessons/${lessonId}/allData`);
         console.log(lessonData);
     });
 
+    // Get matching asset paths
+    document.getElementById('getMatchingAssetPathsBtn').addEventListener('click', async () => {
+      const fileInput = document.getElementById('jsonFileInput');
+      const file = fileInput.files[0];
+
+      if (!file) {
+          alert('Please select a JSON file.');
+          return;
+      }
+
+      try {
+          const text = await file.text();
+          const jsonData = JSON.parse(text);
+
+          const duplicates = findDuplicateAssetPaths(jsonData.assets);
+          const assetModelUsage = findModelPointUsage(jsonData.points);
+          displayResult(duplicates, assetModelUsage);
+      } catch (error) {
+          console.error('Error reading or parsing JSON file:', error);
+          alert('Error reading or parsing JSON file. Please check the file format.');
+      }
+  });
+    // Set scale
+    document.getElementById('setScaleBtn').addEventListener('click', async () => {
+      const lessonId = document.getElementById('lessonIdInputForScale').value;
+      const scale = document.getElementById('scaleInput').value.split(',').map(Number);
+  
+      try {
+          const response = await fetch('/cms/set-lesson-scale', {
+              method: 'POST',
+              headers: {
+                  'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({ lessonId, scale, jwtoken }),
+          });
+  
+          if (!response.ok) {
+              throw new Error('Network response was not ok ' + response.statusText);
+          }
+  
+          const data = await response.json();
+          console.log('Success:', data);
+  
+          alert('Scale updated successfully. Rows affected: ' + data.rowsAffected);
+      } catch (error) {
+          console.error('Error:', error);
+          alert('An error occurred while updating scale: ' + error.message);
+      }
+  });
+    
     // Set Positions
     document.getElementById('setPosBtn').addEventListener('click', async ()=>{
-        // make API call to update the positions of all the assets
         try {
-            const response = await fetch('/cms/update-model-point-data', {
-              method: 'GET', // Assuming your endpoint accepts GET requests
+            const response = await fetch('/cms/set-model-point-pos-zero', {
+              method: 'GET',
               headers: {
                 'Content-Type': 'application/json',
               },
@@ -45,11 +97,9 @@ document.addEventListener('DOMContentLoaded', async() => {
             const data = await response.json();
             console.log('Success:', data);
     
-            // Display success message or update the UI as needed
             alert('Positions updated successfully. Rows affected: ' + data.rowsAffected);
           } catch (error) {
             console.error('Error:', error);
-            // Display error message or update the UI as needed
             alert('An error occurred while updating positions: ' + error.message);
           }
     });
@@ -418,7 +468,7 @@ document.addEventListener('DOMContentLoaded', async() => {
     document.getElementById('addUserBtn').addEventListener('click', async ()=>{
         console.log("adding user...");
         let userEmail = document.getElementById('userEmailId').value;
-        let resp = await imAPIPost(`users/invite` , {permissionFlags: "15", email:userEmail});
+        let resp = await imAPIPost(`users` , {password: "secretpassword", email:userEmail});
         console.log(resp);
     });
 
@@ -426,3 +476,66 @@ document.addEventListener('DOMContentLoaded', async() => {
 window.onload = function(){
     document.getElementById('loginModal').style.display = 'block';
 };
+
+
+
+function findDuplicateAssetPaths(assets) {
+  const pathCounts = {};
+  const duplicates = {};
+
+  assets.forEach(asset => {
+      const path = asset.path;
+      const id = asset.id;
+
+      if (pathCounts[path]) {
+          pathCounts[path].count++;
+          pathCounts[path].ids.push(id);
+          if (pathCounts[path].count === 2) {
+              duplicates[path] = pathCounts[path].ids;
+          } else if (pathCounts[path].count > 2) {
+              duplicates[path].push(id);
+          }
+      } else {
+          pathCounts[path] = { count: 1, ids: [id] };
+      }
+  });
+
+  return duplicates;
+}
+
+function findModelPointUsage(points) {
+  const modelUsage = {};
+
+  points.forEach(point => {
+      if (point.modelPointData) {
+          point.modelPointData.forEach(model => {
+              model.assetDataIds.forEach(assetId => {
+                  if (!modelUsage[assetId]) {
+                      modelUsage[assetId] = [];
+                  }
+                  modelUsage[assetId].push(model.id);
+              });
+          });
+      }
+  });
+
+  return modelUsage;
+}
+
+function displayResult(duplicates, assetModelUsage) {
+  const resultDiv = document.getElementById('result');
+  if (Object.keys(duplicates).length > 0) {
+      resultDiv.innerHTML = 'Duplicate asset paths found: <br>';
+      for (const [path, ids] of Object.entries(duplicates)) {
+          resultDiv.innerHTML += `<strong>Path:</strong> ${path} <br> <strong>IDs:</strong> ${ids.join(', ')} <br>`;
+          ids.forEach(id => {
+              if (assetModelUsage[id]) {
+                  resultDiv.innerHTML += `<strong>Used in modelPointData:</strong> ${assetModelUsage[id].join(', ')} <br>`;
+              }
+          });
+          resultDiv.innerHTML += `<br>`;
+      }
+  } else {
+      resultDiv.innerHTML = 'No duplicate asset paths found.';
+  }
+}
