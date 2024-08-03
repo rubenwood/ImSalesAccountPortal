@@ -16,6 +16,36 @@ const pool = new Pool({
 });
 
 const imAPIBaseURL = "https://immersify-api.herokuapp.com";
+cmsRouter.post('/fix-duplicate-assets', async (req, res) => {
+  // get all lessons
+});
+
+cmsRouter.post('/set-mpd-rotation', async (req, res) => {
+  const { modelPointId, rotation } = req.body;
+
+  if (!modelPointId || !rotation) {
+      return res.status(400).json({ error: 'MPD and Rotation are required' });
+  }
+
+  try {
+    // Update scale for each modelPointId in PostgreSQL
+    const queryText = `
+        UPDATE public.model_point_data
+        SET rotation = $1::numeric[]
+        WHERE id = $2::uuid
+    `;      
+    const values = [rotation, modelPointId];
+
+    const result = await pool.query(queryText, values);
+    console.log(result);
+
+    res.status(200).json({ message: 'Rotation updated successfully', rowsAffected: result.rowCount });
+  } catch (error) {
+      console.error('Error updating mpd rotation:', error);
+      res.status(500).json({ error: 'An error occurred while updating the mpd rotation' });
+  }
+});
+
 cmsRouter.post('/set-lesson-scale', async (req, res) => {
   const { lessonId, scale, jwtoken } = req.body;
 
@@ -50,7 +80,7 @@ cmsRouter.post('/set-lesson-scale', async (req, res) => {
 
       const result = await pool.query(queryText, values);
       console.log(result);
-      
+
       res.status(200).json({ message: 'Scale updated successfully', rowsAffected: result.rowCount });
   } catch (error) {
       console.error('Error updating lesson scale:', error);

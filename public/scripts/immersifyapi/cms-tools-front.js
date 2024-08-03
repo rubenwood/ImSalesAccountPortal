@@ -12,6 +12,20 @@ document.addEventListener('DOMContentLoaded', async() => {
     document.getElementById('loginButton').addEventListener('click', Login);
     //wait until jwt for api is defined
     await waitForJWT();
+    //const allTopics = await imAPIGet('topics');
+    //console.log(allTopics);
+    /* for(const topic of allTopics){
+      //let topicRes = await imAPIGet(`topics/${topic.id}`);
+      //console.log(topicRes);
+    } */
+    const allLessons = await imAPIGet('lessons');
+    console.log(allLessons);
+    let brondonInfo = await imAPIGet(`brondons/structure/true/statuses/production`)
+    console.log(brondonInfo);
+
+    for(const lesson of allLessons){
+      
+    }
     // hide login modal
     document.getElementById('loginModal').style.display = 'none';
 
@@ -51,7 +65,36 @@ document.addEventListener('DOMContentLoaded', async() => {
           console.error('Error reading or parsing JSON file:', error);
           alert('Error reading or parsing JSON file. Please check the file format.');
       }
-  });
+    });
+
+    // Set Rotation Per Point
+    document.getElementById('setRotationBtn').addEventListener('click', async () => {
+        const modelPointId = document.getElementById('mpdId').value;
+        const rotation = document.getElementById('setRotationInput').value.split(',').map(Number);
+        try {
+            const response = await fetch('/cms/set-mpd-rotation', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ modelPointId, rotation }),
+            });
+    
+            if (!response.ok) {
+                throw new Error('Network response was not ok ' + response.statusText);
+            }
+    
+            const data = await response.json();
+            console.log('Success:', data);
+    
+            alert('Scale updated successfully. Rows affected: ' + data.rowsAffected);
+        } catch (error) {
+            console.error('Error:', error);
+            alert('An error occurred while updating scale: ' + error.message);
+        }
+
+    });
+
     // Set scale
     document.getElementById('setScaleBtn').addEventListener('click', async () => {
       const lessonId = document.getElementById('lessonIdInputForScale').value;
@@ -78,7 +121,7 @@ document.addEventListener('DOMContentLoaded', async() => {
           console.error('Error:', error);
           alert('An error occurred while updating scale: ' + error.message);
       }
-  });
+    });
     
     // Set Positions
     document.getElementById('setPosBtn').addEventListener('click', async ()=>{
