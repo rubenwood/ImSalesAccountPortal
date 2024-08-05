@@ -13,9 +13,16 @@ document.addEventListener('DOMContentLoaded', () => {
         console.log(playerIds);
         document.getElementById('player-list').value = playerIds.join('\n');
     });
-    document.getElementById('update-area-btn').addEventListener('click', () =>
-        UpdatePlayerAcademicArea(document.getElementById('player-list').value, document.getElementById('desired-area-txt').value)
-    );
+
+    
+    document.getElementById('update-area-btn').addEventListener('click', () => {
+        const playerIdList = document.getElementById('player-list').value.split('\n').filter(Boolean);
+        console.log( document.getElementById('player-list').value);
+        console.log( document.getElementById('player-list').value.split('\n'));
+        console.log(playerIdList);
+        console.log("trying to update area");
+        UpdatePlayerAcademicArea(playerIdList, document.getElementById('desired-area-txt').value)
+    });
 });
 window.onload = function() {
     document.getElementById('loginModal').style.display = 'block';

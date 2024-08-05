@@ -22,7 +22,7 @@ export async function UpdateUserAcademicAreaByEmail(emailListText, desiredAcadem
     })
 }
 
-export async function UpdatePlayerAcademicArea(playerID, desiredAcademicArea)
+export async function UpdatePlayerAcademicArea(playerIDList, desiredAcademicArea)
 {
     let hasAccess = await canAccess();
     if(!hasAccess){ return; }
@@ -31,23 +31,21 @@ export async function UpdatePlayerAcademicArea(playerID, desiredAcademicArea)
     let updateData = { AcademicArea };
 
     const url = '/update-user-data';
-    let playFabID = playerID;
-    const response = await fetch(url, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ playFabID, updateData })
-    });
+    for(const playerId of playerIDList){
+        let playFabID = playerId.trim();
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ playFabID, updateData })
+        });
 
-    if (!response.ok) {
-        console.log(response);
-        throw new Error(`Failed to update player ${playFabID}: ${response}`);
+        console.log("updated: " + playFabID);
+
+        if (!response.ok) {
+            console.log(response);
+            throw new Error(`Failed to update player ${playFabID}: ${response}`);
+        }
     }
-
-    // handle the response here if needed
-    //const responseData = await response.json();
-    //console.log(`Updated player ${playerID}:`, responseData);
-    console.log("player updated");
-    return 'player updated successfully';
 }
