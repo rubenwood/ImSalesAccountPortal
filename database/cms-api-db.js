@@ -20,31 +20,38 @@ cmsRouter.post('/fix-duplicate-assets', async (req, res) => {
   // get all lessons
 });
 
-cmsRouter.post('/set-mpd-rotation', async (req, res) => {
-  const { modelPointId, rotation } = req.body;
+cmsRouter.post('/set-mpd-data', async (req, res) => {
+  const { modelPointId, dataToSet, value } = req.body;
 
-  if (!modelPointId || !rotation) {
-      return res.status(400).json({ error: 'MPD and Rotation are required' });
+  if (!modelPointId || !dataToSet || !value) {
+      return res.status(400).json({ error: `MPD id, dataToSet and value are required` });
+  }
+
+  const allowedColumns = ['rotation', 'position', 'scale']; // Add other allowed columns here
+  if (!allowedColumns.includes(dataToSet)) {
+    return res.status(400).json({ error: 'Invalid dataToSet value' });
   }
 
   try {
-    // Update scale for each modelPointId in PostgreSQL
+    // Update data for each modelPointId in PostgreSQL
     const queryText = `
         UPDATE public.model_point_data
-        SET rotation = $1::numeric[]
+        SET ${dataToSet} = $1::numeric[]
         WHERE id = $2::uuid
     `;      
-    const values = [rotation, modelPointId];
+    const values = [value, modelPointId];
 
     const result = await pool.query(queryText, values);
     console.log(result);
 
-    res.status(200).json({ message: 'Rotation updated successfully', rowsAffected: result.rowCount });
+    res.status(200).json({ message: `value (${dataToSet}) updated successfully`, rowsAffected: result.rowCount });
   } catch (error) {
-      console.error('Error updating mpd rotation:', error);
-      res.status(500).json({ error: 'An error occurred while updating the mpd rotation' });
+      console.error(`Error updating mpd ${dataToSet}:`, error);
+      res.status(500).json({ error: `An error occurred while updating the mpd ${dataToSet}` });
   }
 });
+
+
 
 cmsRouter.post('/set-lesson-scale', async (req, res) => {
   const { lessonId, scale, jwtoken } = req.body;

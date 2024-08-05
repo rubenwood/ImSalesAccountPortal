@@ -70,14 +70,15 @@ document.addEventListener('DOMContentLoaded', async() => {
     // Set Rotation Per Point
     document.getElementById('setRotationBtn').addEventListener('click', async () => {
         const modelPointId = document.getElementById('mpdId').value;
-        const rotation = document.getElementById('setRotationInput').value.split(',').map(Number);
+        const rotationValue = document.getElementById('setRotationInput').value.split(',').map(Number);
+        const dataToSet = 'rotation';
         try {
-            const response = await fetch('/cms/set-mpd-rotation', {
+            const response = await fetch('/cms/set-mpd-data', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({ modelPointId, rotation }),
+                body: JSON.stringify({ modelPointId, dataToSet, value: rotationValue }),
             });
     
             if (!response.ok) {
@@ -87,16 +88,46 @@ document.addEventListener('DOMContentLoaded', async() => {
             const data = await response.json();
             console.log('Success:', data);
     
-            alert('Scale updated successfully. Rows affected: ' + data.rowsAffected);
+            alert('rotation updated successfully. Rows affected: ' + data.rowsAffected);
+        } catch (error) {
+            console.error('Error:', error);
+            alert('An error occurred while updating rotation: ' + error.message);
+        }
+    });
+
+    // Set Scale Per Point
+    document.getElementById('setScaleBtn').addEventListener('click', async () => {
+        const modelPointId = document.getElementById('mpdId').value;
+        const scaleValue = document.getElementById('setRotationInput').value.split(',').map(Number);
+        const dataToSet = 'scale';
+
+        try {
+            const response = await fetch('/cms/set-mpd-data', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ modelPointId, dataToSet, value: scaleValue }),
+            });
+    
+            if (!response.ok) {
+                throw new Error('Network response was not ok ' + response.statusText);
+            }
+    
+            const data = await response.json();
+            console.log('Success:', data);
+    
+            alert('scale updated successfully. Rows affected: ' + data.rowsAffected);
         } catch (error) {
             console.error('Error:', error);
             alert('An error occurred while updating scale: ' + error.message);
         }
-
     });
+    
 
-    // Set scale
-    document.getElementById('setScaleBtn').addEventListener('click', async () => {
+    // Set all scales
+    document.getElementById('setAllScaleBtn').addEventListener('click', async () => {
+    console.log("setting scales for lesson");
       const lessonId = document.getElementById('lessonIdInputForScale').value;
       const scale = document.getElementById('scaleInput').value.split(',').map(Number);
   
