@@ -30,13 +30,16 @@
   <div>
     <input type="button" id="clearCacheBtn" value="Clear Server Cache">
     <h2>Lesson</h2>
+    <label>Search (external title)</label>
+    <input type="text" id="lessonName" value=""><br/>
+    <input type="button" id="searchLessonNameBtn" value="Search for lesson"><br/>
+    <br/>
     <label>Lesson Id:</label>
     <input type="text" id="lessonId" value=""><br/>
     <input type="button" id="getLessonDataBtn" value="Get All Lesson Data"><br/>
-    <h2>Positions, etc.</h2>
-    <input type="file" id="jsonFileInput">
-    <input type="button" id="getMatchingAssetPathsBtn" value="Get Matching Asset Paths">
-    <p id="result"></p>
+    <h3>Set Rotations & Scales per Point (batch)</h3>
+    <textarea id="rotScaleTextArea"></textarea>
+    <input type="button" id="setRotScaleBatchBtn" value="Set Rot,Scale Per Point (batch)"><br/>
     <br/>
     <br/>
     <h2>Set data per point</h2>
@@ -52,6 +55,11 @@
     <input type="button" id="setScaleBtn" value="Set Scale">
     <br/>
     <br/>
+    <h2>Matching Asset Paths</h2>
+    <input type="file" id="jsonFileInput">
+    <input type="button" id="getMatchingAssetPathsBtn" value="Get Matching Asset Paths">
+    <p id="result"></p>
+
     <h2>Set all point scales</h2>
     <label>Lesson Id</label>
     <input type="input" id="lessonIdInputForScale">
@@ -59,8 +67,11 @@
     <input type="input" id="scaleInput">
     <input type="button" id="setAllScaleBtn" value="Set All Scales">
     <br/>
-    <h2>Set all point positions</h2>
+    <h2>Set positions 0</h2>
     <input type="button" id="setPosBtn" value="Set All Positions 0,0,0">
+    <br/>
+    <h2>Set scales 1</h2>
+    <input type="button" id="setScales1Btn" value="Set All Scales 1,1,1">
     <br/>
     <h2>Changes</h2>
     <input type="button" id="bulkApproveBtn" value="Bulk Approve">

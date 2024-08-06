@@ -12,25 +12,40 @@ document.addEventListener('DOMContentLoaded', async() => {
     document.getElementById('loginButton').addEventListener('click', Login);
     //wait until jwt for api is defined
     await waitForJWT();
-    //const allTopics = await imAPIGet('topics');
-    //console.log(allTopics);
-    /* for(const topic of allTopics){
-      //let topicRes = await imAPIGet(`topics/${topic.id}`);
-      //console.log(topicRes);
-    } */
+
     const allLessons = await imAPIGet('lessons');
     console.log(allLessons);
     let brondonInfo = await imAPIGet(`brondons/structure/true/statuses/production`)
     console.log(brondonInfo);
 
-    for(const lesson of allLessons){
-      
-    }
     // hide login modal
     document.getElementById('loginModal').style.display = 'none';
 
     // Clear cache
     document.getElementById('clearCacheBtn').addEventListener('click', imAPIClearCache);
+
+    document.getElementById('searchLessonNameBtn').addEventListener('click', async ()=>{
+        const lessonName = document.getElementById('lessonName').value;
+        try {
+            const response = await fetch('/cms/search-lesson-name', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ lessonName }),
+            });
+    
+            if (!response.ok) {
+                throw new Error('Network response was not ok ' + response.statusText);
+            }
+    
+            const data = await response.json();
+            console.log('Success:', data);
+            doConfetti();
+        } catch (error) {
+            console.error('Error:', error);
+        }
+    })
 
     // Get Lesson Data
     document.getElementById('getLessonDataBtn').addEventListener('click', async ()=>{
@@ -38,14 +53,41 @@ document.addEventListener('DOMContentLoaded', async() => {
         let lessonId = document.getElementById('lessonId').value;
         // nerves c143b5d9-c065-4c09-b516-ec14c8d8c858
         // muscles 9a64cac6-f34d-454e-a17f-3b314a6817eb
-
-        // delete this lesson quiz - 51d54999-05da-4f6d-b620-29915f021521
-        let lessonData = await imAPIGet(`lessons/${lessonId}/allData`);
-        console.log(lessonData);
+        let lessonData = await imAPIPost(`lessons/${lessonId}/allData`, { languageId:"english-uk" });
+        //console.log(lessonData);
+        console.log(JSON.parse(lessonData));
     });
 
+    // Set Pos Rot Per Point (batch)
+    document.getElementById('setRotScaleBatchBtn').addEventListener('click', async ()=>{
+        const values = document.getElementById('rotScaleTextArea').value;
+        console.log("setting rot & scale per point");
+        
+        // Split the input into lines
+        const lines = values.split('\n');
+        
+        // Process each line
+        const result = lines.map(line => {
+            const parts = line.split('\t');
+            if (parts.length === 3) {
+                return {
+                    mpd: parts[0],
+                    rotation: parts[1].replace('Vector3', '').replace('(', '').replace(')', '').split(',').map(Number),
+                    scale: parts[2].replace('Vector3', '').replace('(', '').replace(')', '').split(',').map(Number)
+                };
+            } else {
+                return null;
+            }
+        }).filter(item => item !== null);
+    
+        console.log(result);
+        // You can now use the `result` object for further processing
+    });
+    
+
+
     // Get matching asset paths
-    document.getElementById('getMatchingAssetPathsBtn').addEventListener('click', async () => {
+    document.getElementById('getMatchingAssetPathsBtn').addEventListener('click', async ()=> {
       const fileInput = document.getElementById('jsonFileInput');
       const file = fileInput.files[0];
 
@@ -68,7 +110,7 @@ document.addEventListener('DOMContentLoaded', async() => {
     });
 
     // Set Rotation Per Point
-    document.getElementById('setRotationBtn').addEventListener('click', async () => {
+    document.getElementById('setRotationBtn').addEventListener('click', async ()=> {
         const modelPointId = document.getElementById('mpdId').value;
         const rotationValue = document.getElementById('setRotationInput').value.split(',').map(Number);
         const dataToSet = 'rotation';
@@ -87,6 +129,7 @@ document.addEventListener('DOMContentLoaded', async() => {
     
             const data = await response.json();
             console.log('Success:', data);
+            doConfetti();
     
             alert('rotation updated successfully. Rows affected: ' + data.rowsAffected);
         } catch (error) {
@@ -116,6 +159,7 @@ document.addEventListener('DOMContentLoaded', async() => {
     
             const data = await response.json();
             console.log('Success:', data);
+            doConfetti();
     
             alert('scale updated successfully. Rows affected: ' + data.rowsAffected);
         } catch (error) {
@@ -123,59 +167,82 @@ document.addEventListener('DOMContentLoaded', async() => {
             alert('An error occurred while updating scale: ' + error.message);
         }
     });
-    
 
     // Set all scales
     document.getElementById('setAllScaleBtn').addEventListener('click', async () => {
-    console.log("setting scales for lesson");
-      const lessonId = document.getElementById('lessonIdInputForScale').value;
-      const scale = document.getElementById('scaleInput').value.split(',').map(Number);
-  
-      try {
-          const response = await fetch('/cms/set-lesson-scale', {
-              method: 'POST',
-              headers: {
-                  'Content-Type': 'application/json',
-              },
-              body: JSON.stringify({ lessonId, scale, jwtoken }),
-          });
-  
-          if (!response.ok) {
-              throw new Error('Network response was not ok ' + response.statusText);
-          }
-  
-          const data = await response.json();
-          console.log('Success:', data);
-  
-          alert('Scale updated successfully. Rows affected: ' + data.rowsAffected);
-      } catch (error) {
-          console.error('Error:', error);
-          alert('An error occurred while updating scale: ' + error.message);
-      }
+        console.log("setting scales for lesson");
+        const lessonId = document.getElementById('lessonIdInputForScale').value;
+        const scale = document.getElementById('scaleInput').value.split(',').map(Number);
+
+        try {
+            const response = await fetch('/cms/set-lesson-scale', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ lessonId, scale, jwtoken }),
+            });
+
+            if (!response.ok) {
+                throw new Error('Network response was not ok ' + response.statusText);
+            }
+
+            const data = await response.json();
+            console.log('Success:', data);
+            doConfetti();
+
+            alert('Scale updated successfully. Rows affected: ' + data.rowsAffected);
+        } catch (error) {
+            console.error('Error:', error);
+            alert('An error occurred while updating scale: ' + error.message);
+        }
     });
     
-    // Set Positions
+    // Set Positions 0
     document.getElementById('setPosBtn').addEventListener('click', async ()=>{
         try {
             const response = await fetch('/cms/set-model-point-pos-zero', {
-              method: 'GET',
-              headers: {
-                'Content-Type': 'application/json',
-              },
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
             });
-    
+
             if (!response.ok) {
-              throw new Error('Network response was not ok ' + response.statusText);
+                throw new Error('Network response was not ok ' + response.statusText);
             }
-    
+
             const data = await response.json();
             console.log('Success:', data);
-    
+
             alert('Positions updated successfully. Rows affected: ' + data.rowsAffected);
-          } catch (error) {
+            } catch (error) {
             console.error('Error:', error);
             alert('An error occurred while updating positions: ' + error.message);
-          }
+            }
+    });
+    // Set Scales 1
+    document.getElementById('setScales1Btn').addEventListener('click', async ()=>{
+        try {
+            const response = await fetch('/cms/set-model-point-scale-one', {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+            });
+
+            if (!response.ok) {
+                throw new Error('Network response was not ok ' + response.statusText);
+            }
+
+            const data = await response.json();
+            console.log('Success:', data);
+
+            alert('Positions updated successfully. Rows affected: ' + data.rowsAffected);
+        } catch (error) {
+            console.error('Error:', error);
+            alert('An error occurred while updating positions: ' + error.message);
+        }
     });
 
     // Approval
