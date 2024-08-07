@@ -25,7 +25,8 @@ const pool = new Pool({
 
 const imAPIBaseURL = "https://immersify-api.herokuapp.com";
 
-cmsRouter.get('/invalidate-cache', async (req, res) => {
+cmsRouter.get('/clear-s3-cache', async (req, res) => {
+  console.log("clearing s3 cache...");
   try {
     // List objects in the specified folder
     const listParams = {
@@ -53,10 +54,10 @@ cmsRouter.get('/invalidate-cache', async (req, res) => {
 
     await Promise.all(copyPromises);
 
-    res.send('Cache invalidation completed');
+    res.json({message:'Cache invalidation completed'});
   } catch (error) {
     console.error('Error invalidating cache:', error);
-    res.status(500).send('Error invalidating cache');
+    res.status(500).json({message:'Error invalidating cache'});
   }
 });
 
@@ -96,34 +97,63 @@ cmsRouter.post('/search-lesson-name', async(req, res) => {
   }
 });
 
-cmsRouter.post('/set-mpd-data', async (req, res) => {
-  const { modelPointId, dataToSet, value } = req.body;
+cmsRouter.post('/set-mpd-data-batch', async (req, res) => {
+  const { data } = req.body;
+  console.log(data);
 
-  if (!modelPointId || !dataToSet || !value) {
-      return res.status(400).json({ error: `MPD id, dataToSet and value are required` });
-  }
-
-  const allowedColumns = ['rotation', 'position', 'scale']; // Add other allowed columns here
-  if (!allowedColumns.includes(dataToSet)) {
-    return res.status(400).json({ error: 'Invalid dataToSet value' });
+  if (!data || !Array.isArray(data)) {
+      return res.status(400).json({ error: 'Data is required and should be an array' });
   }
 
   try {
-    // Update data for each modelPointId in PostgreSQL
-    const queryText = `
-        UPDATE public.model_point_data
-        SET ${dataToSet} = $1::numeric[]
-        WHERE id = $2::uuid
-    `;      
-    const values = [value, modelPointId];
+      const client = await pool.connect();
 
-    const result = await pool.query(queryText, values);
-    console.log(result);
+      try {
+          await client.query('BEGIN');
 
-    res.status(200).json({ message: `value (${dataToSet}) updated successfully`, rowsAffected: result.rowCount });
+          for (const item of data) {
+              const { mpd, rotation, scale } = item;
+
+              if (!mpd) {
+                  throw new Error(`Invalid data format for mpd ${mpd}`);
+              }
+              console.log("mpd: " + mpd);
+
+              if (rotation) {
+                  // Update rotation
+                  await client.query(
+                      `UPDATE public.model_point_data
+                       SET rotation = $1::numeric[]
+                       WHERE id = $2::uuid`,
+                      [rotation, mpd]
+                  );
+              }
+              console.log("rotation: " + rotation);
+
+              if (scale) {
+                  // Update scale
+                  await client.query(
+                      `UPDATE public.model_point_data
+                       SET scale = $1::numeric[]
+                       WHERE id = $2::uuid`,
+                      [scale, mpd]
+                  );
+              }
+              console.log("rotation: " + scale);
+          }
+
+          await client.query('COMMIT');
+          res.status(200).json({ message: 'Data updated successfully' });
+      } catch (error) {
+          await client.query('ROLLBACK');
+          console.error('Error during transaction, rolled back:', error);
+          res.status(500).json({ error: 'An error occurred while updating the data' });
+      } finally {
+          client.release();
+      }
   } catch (error) {
-      console.error(`Error updating mpd ${dataToSet}:`, error);
-      res.status(500).json({ error: `An error occurred while updating the mpd ${dataToSet}` });
+      console.error('Error connecting to the database:', error);
+      res.status(500).json({ error: 'An error occurred while connecting to the database' });
   }
 });
 

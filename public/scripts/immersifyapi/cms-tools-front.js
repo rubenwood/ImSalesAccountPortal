@@ -22,7 +22,27 @@ document.addEventListener('DOMContentLoaded', async() => {
     document.getElementById('loginModal').style.display = 'none';
 
     // Clear cache
-    document.getElementById('clearCacheBtn').addEventListener('click', imAPIClearCache);
+    document.getElementById('clearDBCacheBtn').addEventListener('click', imAPIClearCache);
+    document.getElementById('clearS3CacheBtn').addEventListener('click', async () => {
+        try {
+            const response = await fetch('/cms/clear-s3-cache', {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                }
+            });
+    
+            if (!response.ok) {
+                throw new Error('Network response was not ok ' + response.statusText);
+            }
+    
+            const data = await response.json();
+            console.log('Success:', data);
+            doConfetti();
+        } catch (error) {
+            console.error('Error:', error);
+        }
+    });
 
     document.getElementById('searchLessonNameBtn').addEventListener('click', async ()=>{
         const lessonName = document.getElementById('lessonName').value;
@@ -53,35 +73,63 @@ document.addEventListener('DOMContentLoaded', async() => {
         let lessonId = document.getElementById('lessonId').value;
         // nerves c143b5d9-c065-4c09-b516-ec14c8d8c858
         // muscles 9a64cac6-f34d-454e-a17f-3b314a6817eb
-        let lessonData = await imAPIPost(`lessons/${lessonId}/allData`, { languageId:"english-uk" });
-        //console.log(lessonData);
+        let lessonData = await imAPIPost(`lessons/${lessonId}/allData`, { languageId:"english-us" });
         console.log(JSON.parse(lessonData));
         doConfetti();
     });
 
     // Set Pos Rot Per Point (batch)
-    document.getElementById('setRotScaleBatchBtn').addEventListener('click', async ()=>{
+    document.getElementById('setRotScaleBatchBtn').addEventListener('click', async () => {
         const values = document.getElementById('rotScaleTextArea').value;
         console.log("setting rot & scale per point");
-        
+    
         // Split the input into lines
         const lines = values.split('\n');
-        
+    
         // Process each line
         const result = lines.map(line => {
-            const parts = line.split('\t');
-            if (parts.length === 3) {
-                return {
+            // Trim the line to remove extra spaces
+            const trimmedLine = line.trim();
+    
+            // Ignore empty lines
+            if (trimmedLine === '') {
+                return null;
+            }
+    
+            const parts = trimmedLine.split('\t');
+            if (parts.length >= 1) {
+                const entry = {
                     mpd: parts[0],
-                    rotation: parts[1].replace('Vector3', '').replace('(', '').replace(')', '').split(',').map(Number),
-                    scale: parts[2].replace('Vector3', '').replace('(', '').replace(')', '').split(',').map(Number)
+                    rotation: parts[1] ? parts[1].replace('Vector3', '').replace('(', '').replace(')', '').split(',').map(Number) : null,
+                    scale: parts[2] ? parts[2].replace('Vector3', '').replace('(', '').replace(')', '').split(',').map(Number) : null
                 };
+                return entry;
             } else {
                 return null;
             }
         }).filter(item => item !== null);
     
         console.log(result);
+    
+        // Send the data to the back end
+        try {
+            const response = await fetch('/cms/set-mpd-data-batch', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ data: result })
+            });
+            const responseData = await response.json();
+            console.log(responseData);
+            if (response.ok) {
+                alert('Data updated successfully');
+            } else {
+                alert(`Error: ${responseData.error}`);
+            }
+        } catch (error) {
+            console.error('Error sending data to the server:', error);
+        }
         doConfetti();
     });
     
@@ -142,7 +190,7 @@ document.addEventListener('DOMContentLoaded', async() => {
     // Set Scale Per Point
     document.getElementById('setScaleBtn').addEventListener('click', async () => {
         const modelPointId = document.getElementById('mpdId').value;
-        const scaleValue = document.getElementById('setRotationInput').value.split(',').map(Number);
+        const scaleValue = document.getElementById('setScaleInput').value.split(',').map(Number);
         const dataToSet = 'scale';
 
         try {
