@@ -56,6 +56,7 @@ document.addEventListener('DOMContentLoaded', async() => {
         let lessonData = await imAPIPost(`lessons/${lessonId}/allData`, { languageId:"english-uk" });
         //console.log(lessonData);
         console.log(JSON.parse(lessonData));
+        doConfetti();
     });
 
     // Set Pos Rot Per Point (batch)
@@ -81,7 +82,7 @@ document.addEventListener('DOMContentLoaded', async() => {
         }).filter(item => item !== null);
     
         console.log(result);
-        // You can now use the `result` object for further processing
+        doConfetti();
     });
     
 

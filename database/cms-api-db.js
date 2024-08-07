@@ -3,6 +3,14 @@ const axios = require('axios');
 const cmsRouter = express.Router();
 const { Pool } = require('pg');
 
+const AWS = require('aws-sdk');
+AWS.config.update({
+  accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+  secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+  region: process.env.AWS_REGION
+});
+const s3 = new AWS.S3();
+
 const pool = new Pool({
     user: process.env.PG_CMSAPI_USER,
     host: process.env.PG_CMSAPI_HOST,
@@ -16,6 +24,42 @@ const pool = new Pool({
 });
 
 const imAPIBaseURL = "https://immersify-api.herokuapp.com";
+
+cmsRouter.get('/invalidate-cache', async (req, res) => {
+  try {
+    // List objects in the specified folder
+    const listParams = {
+      Bucket: 'com.immersifyeducation.cms',
+      Prefix: 'Models/'
+    };
+
+    const listedObjects = await s3.listObjectsV2(listParams).promise();
+
+    if (listedObjects.Contents.length === 0) {
+      return res.status(404).send('No files found in the specified folder');
+    }
+
+    // Prepare objects for copying with new metadata
+    const copyPromises = listedObjects.Contents.map(async (object) => {
+      const copyParams = {
+        Bucket: 'com.immersifyeducation.cms',
+        CopySource: `${'com.immersifyeducation.cms'}/${object.Key}`,
+        Key: object.Key,
+        MetadataDirective: 'REPLACE',
+        CacheControl: 'no-cache'
+      };
+      await s3.copyObject(copyParams).promise();
+    });
+
+    await Promise.all(copyPromises);
+
+    res.send('Cache invalidation completed');
+  } catch (error) {
+    console.error('Error invalidating cache:', error);
+    res.status(500).send('Error invalidating cache');
+  }
+});
+
 
 cmsRouter.post('/search-lesson-name', async(req, res) => {
   const { lessonName } = req.body;
