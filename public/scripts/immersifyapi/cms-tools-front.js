@@ -132,8 +132,6 @@ document.addEventListener('DOMContentLoaded', async() => {
         }
         doConfetti();
     });
-    
-
 
     // Get matching asset paths
     document.getElementById('getMatchingAssetPathsBtn').addEventListener('click', async ()=> {
@@ -216,6 +214,88 @@ document.addEventListener('DOMContentLoaded', async() => {
             alert('An error occurred while updating scale: ' + error.message);
         }
     });
+    //
+    /* let body = { languageNames:["english-us"],
+        fullFilePath:"Models/Submandibular_Gland.glb",
+        assetType:"model",
+        pointAssetProperties:{rotation:[35,180,0],scale:[1.2,1.2,1.2]}
+    }
+    imAPIPost(`createAsset/assignToPoint/4facfd14-2fe6-4c0d-a331-f6e163f732b4`, body); */
+
+    // link models to points
+    document.getElementById('linkModelsBtn').addEventListener('click', async () => {
+        let values = document.getElementById('linkModelsBatchText').value.split('\n');
+    
+        for (let value of values) {
+            if (value.trim() === '') continue; // Skip empty lines
+            let parts = value.split(/\s+/);
+    
+            let pointId = parts[0];
+            let assetType = parts[1];
+            let fullFilePath = parts[parts.length - 1]; // The file path is always the last part
+    
+            // Initialize properties for rotation and scale
+            let rotation = null;
+            let scale = null;
+    
+            if (parts.length === 5) {
+                // When both rotation and scale are present
+                rotation = parts[2];
+                scale = parts[3];
+            } else if (parts.length === 4) {
+                // When either rotation or scale is missing
+                if (parts[2].startsWith('Vector3')) {
+                    rotation = parts[2];
+                } else {
+                    scale = parts[2];
+                }
+            }
+    
+            // Prepare the pointAssetProperties based on assetType
+            let pointAssetProperties = {};
+            if (rotation && rotation.startsWith('Vector3')) {
+                let rotationValues = rotation.slice(8, -1).split(',').map(Number);
+                pointAssetProperties.rotation = rotationValues;
+            }
+            if (scale && scale.startsWith('Vector3')) {
+                let scaleValues = scale.slice(8, -1).split(',').map(Number);
+                pointAssetProperties.scale = scaleValues;
+            }
+    
+            // Ensure the fullFilePath is not empty
+            if (!fullFilePath) {
+                console.warn(`Skipping entry for pointId ${pointId} due to missing fullFilePath.`);
+                continue;
+            }
+    
+            // Call the API
+            let resp = await imAPIPost(`createAsset/assignToPoint/${pointId}`, {
+                languageNames: ["english-us"],
+                fullFilePath: fullFilePath,
+                assetType: assetType,
+                pointAssetProperties: pointAssetProperties
+            });
+    
+            console.log(resp); // Log the response for debugging
+            doConfetti();
+        }
+    });
+
+    // Link video
+    document.getElementById('linkVideoBtn').addEventListener('click', async () => {
+        const videoPath = document.getElementById('videoPath').value;
+        let pointId = document.getElementById('pointIdVideo').value;
+        console.log(pointId);
+        console.log(videoPath);
+
+        let resp = await imAPIPost(`createAsset/assignToPoint/${pointId}`, {
+            languageNames:["english-us"],
+            fullFilePath:videoPath,
+            assetType:"video",
+            pointAssetProperties:{}
+        });
+        console.log(resp);
+    });
 
     // Set all scales
     document.getElementById('setAllScaleBtn').addEventListener('click', async () => {
@@ -245,8 +325,7 @@ document.addEventListener('DOMContentLoaded', async() => {
             console.error('Error:', error);
             alert('An error occurred while updating scale: ' + error.message);
         }
-    });
-    
+    });    
     // Set Positions 0
     document.getElementById('setPosBtn').addEventListener('click', async ()=>{
         try {
