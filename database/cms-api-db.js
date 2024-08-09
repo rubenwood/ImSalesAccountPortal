@@ -25,13 +25,14 @@ const pool = new Pool({
 
 const imAPIBaseURL = "https://immersify-api.herokuapp.com";
 
-cmsRouter.get('/clear-s3-cache', async (req, res) => {
-  console.log("clearing s3 cache...");
+cmsRouter.post('/clear-s3-cache', async (req, res) => {  
+  const folderName = req.body.folderName;
+  console.log("clearing s3 cache..."+folderName);
   try {
     // List objects in the specified folder
     const listParams = {
-      Bucket: 'com.immersifyeducation.cms',
-      Prefix: 'Models/'
+      Bucket: process.env.AWS_CMS_BUCKET,
+      Prefix: folderName
     };
 
     const listedObjects = await s3.listObjectsV2(listParams).promise();
@@ -43,8 +44,8 @@ cmsRouter.get('/clear-s3-cache', async (req, res) => {
     // Prepare objects for copying with new metadata
     const copyPromises = listedObjects.Contents.map(async (object) => {
       const copyParams = {
-        Bucket: 'com.immersifyeducation.cms',
-        CopySource: `${'com.immersifyeducation.cms'}/${object.Key}`,
+        Bucket: process.env.AWS_CMS_BUCKET,
+        CopySource: `${process.env.AWS_CMS_BUCKET}/${object.Key}`,
         Key: object.Key,
         MetadataDirective: 'REPLACE',
         CacheControl: 'no-cache'

@@ -24,24 +24,30 @@ document.addEventListener('DOMContentLoaded', async() => {
     // Clear cache
     document.getElementById('clearDBCacheBtn').addEventListener('click', imAPIClearCache);
     document.getElementById('clearS3CacheBtn').addEventListener('click', async () => {
-        try {
-            const response = await fetch('/cms/clear-s3-cache', {
-                method: 'GET',
-                headers: {
-                    'Content-Type': 'application/json',
+        const folders = ['Models/', 'Images/', 'Videos/'];
+        for(let folder of folders){
+            try {
+                const response = await fetch('/cms/clear-s3-cache', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body:JSON.stringify({
+                        folderName:folder
+                    })
+                });
+        
+                if (!response.ok) {
+                    throw new Error('Network response was not ok ' + response.statusText);
                 }
-            });
-    
-            if (!response.ok) {
-                throw new Error('Network response was not ok ' + response.statusText);
+        
+                const data = await response.json();
+                console.log('Success:', data);
+                doConfetti();
+            } catch (error) {
+                console.error('Error:', error);
             }
-    
-            const data = await response.json();
-            console.log('Success:', data);
-            doConfetti();
-        } catch (error) {
-            console.error('Error:', error);
-        }
+        }        
     });
 
     document.getElementById('searchLessonNameBtn').addEventListener('click', async ()=>{
