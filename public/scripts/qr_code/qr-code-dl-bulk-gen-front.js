@@ -55,6 +55,22 @@ document.addEventListener('DOMContentLoaded', async() => {
         updateDBBtn.value = "Update Database (NYI)";
     });
 
+
+    // Manually add a Deeplink / QR Code to the database
+    document.getElementById('add-qr-dl-to-db').addEventListener('click', async ()=>{
+        let deeplink = document.getElementById('manual-dl-input').value;
+        console.log("manual " + deeplink);
+        let qrCodeUrls = generateQRCodesAndUpload([deeplink]);
+        console.log(qrCodeUrls);
+
+        if(deeplink.includes("AddTopic"))
+        {
+            console.log("TOPIC URL");
+        }
+
+        addToDatabase(deeplink, qrCodeUrls[0], );
+    });
+
     // Manually generate QR code from URL
     document.getElementById('manual-gen-qr-code-btn').addEventListener('click', async() => { 
         let generateQRCodeURL = await genQRCode(document.getElementById('deeplink-qr-code-input').value);
@@ -218,11 +234,12 @@ function genAddTopicLinks(topics){
     let links = [];
 
     for(const topic of topics){
-        //console.log(topic);
+        console.log(topic);
         let topicId = topic.topicId;
-        let topicName = topic.brondon.externalTitle;
+        let topicName = topic?.brondon?.externalTitle;
 
-        let imgName = topic.brondon.externalTitle;
+        let imgName = topic?.brondon?.externalTitle;
+        if(imgName == undefined){ console.log(`Cant generate topic link for ${topicId}`); continue; }
         imgName = "Topic_"+imgName.replace(/[^a-zA-Z0-9]/g, "");
         //console.log("topic: " + imgName);
 
@@ -239,13 +256,14 @@ function genLaunchActivityLinks(activities, activityBrondons){
 
     for(const activityBrondon of activityBrondons){
         let activityId = activityBrondon.activityId;
-        let activityName = activityBrondon.brondon.externalTitle;
+        let activityName = activityBrondon?.brondon?.externalTitle;
         let activityType = activityBrondon.type == undefined ? 'activity' : activityBrondon.type;
         console.log("ACTIVITY");
         console.log(activityBrondon);
         console.log(activityType);
 
-        let imgName = activityBrondon.brondon.externalTitle;
+        let imgName = activityBrondon?.brondon?.externalTitle;
+        if(imgName == undefined){ console.log(`Cant generate activity link for ${activityId}`); continue; }
         imgName = "Activity_"+imgName.replace(/[^a-zA-Z0-9]/g, "");
 
         let link = `https://immersifyeducation.com/deeplink?dl=%5Bimmersifyeducation%3A%2F%2Fimmersifydental%3FLaunchActivity%3D${activityId}%5D`
@@ -329,5 +347,6 @@ async function addToDatabase(deeplink, qrCodeUrl, areaId, areaName, topicId, top
         body: JSON.stringify({ deeplink, qrCodeUrl, areaId, areaName, topicId, topicName, activityId, activityName, type })
     });
     const resp = await addDLQRResponse.json();
+    return resp;
     //console.log(resp);
 }
