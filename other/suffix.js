@@ -255,7 +255,22 @@ function setupDataForExport(sortedData){
             averageTimePerPlay,
             loginData
         }
-        exportData.push(userExportData);
+        // remove certain emails from the report data
+        let blacklistedEmails = [
+            "maxtest@highpoint.edu",
+            "maxhputest2@highpoint.edu",
+            "hputest33@highpoint.edu",
+            "maxhputest15@highpoint.edu",
+            "maxboardman@highpoint.edu",
+            "maxwellboardman@highpoint.edu",
+            "testing@highpoint.edu",
+            "maxboardman56@highpoint.edu",
+            "test@highpoint.edu"
+        ];
+        if(!blacklistedEmails.includes(userExportData.email))
+        {
+            exportData.push(userExportData);
+        }        
     });
     return exportData;
 }
