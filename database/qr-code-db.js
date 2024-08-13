@@ -32,9 +32,9 @@ qrCodeDBRouter.post('/add-dl-qr', async (req, res) => {
 
     try {
         const existingQuery = await findExistingEntry(deeplink,qrCodeUrl,areaId,topicId,activityId);
-        console.log("--- Existing ---");
-        console.log(existingQuery);
-        console.log("--- END Existing ---");
+        //console.log("--- Existing ---");
+        //console.log(existingQuery);
+        //console.log("--- END Existing ---");
         if (existingQuery)
         {
             return res.status(409).json({ error: `Entry already exists, not adding: ${deeplink}` });

@@ -110,6 +110,7 @@ document.addEventListener('DOMContentLoaded', async() => {
             console.log(qrCodeUrls);
             let resp = await addToDatabase(deeplink, qrCodeUrls[0].qrCodeS3Url, null, null, null, null, activityIdFromLink, activityName, "activity");
             console.log(resp);
+            if(resp.error!=undefined){ alert(resp.error); }
             doConfetti();
         }
     });
