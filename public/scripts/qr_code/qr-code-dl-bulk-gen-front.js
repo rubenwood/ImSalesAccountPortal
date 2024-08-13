@@ -87,6 +87,29 @@ document.addEventListener('DOMContentLoaded', async() => {
             console.log(qrCodeUrls);
             await addToDatabase(deeplink, qrCodeUrls[0].qrCodeS3Url, null, null, topicIdFromLink, topicName, null, null, "topic");
             doConfetti();
+        } 
+        else if(deeplink.includes("LaunchActivity"))
+        {
+            // get topic id and name from url
+            let activityIdFromLink = extractIdFromUrl(deeplink);            
+            let activityBrondon = allActivityBrondons.find(item => item.activityId === activityIdFromLink).brondon;            
+            let activityName = activityBrondon.externalTitle;            
+            let imageName = "Activity_"+activityName.replace(/[^a-zA-Z0-9]/g, "");
+
+            console.log("ACtivity ID Link:\n" + activityIdFromLink);
+            console.log(activityBrondon);
+            console.log("ACtivity name:\n" + activityName);
+            console.log("Image name:\n" + imageName);
+
+            let newLink = {
+                type:"activity",
+                imgName:imageName,
+                link:deeplink
+            }
+            let qrCodeUrls = await generateQRCodesAndUpload([newLink]);
+            console.log(qrCodeUrls);
+            await addToDatabase(deeplink, qrCodeUrls[0].qrCodeS3Url, null, null, null, null, activityIdFromLink, activityName, "activity");
+            doConfetti();
         }
     });
 
@@ -383,8 +406,8 @@ function extractIdFromUrl(url) {
     // Decode the 'dl' parameter
     const decodedDlParam = decodeURIComponent(dlParam);
     
-    // Extract the ID using a regular expression
-    const idMatch = decodedDlParam.match(/AddTopic=([a-f0-9-]+)/);
+    // Extract the ID using a regular expression for either AddTopic or LaunchActivity
+    const idMatch = decodedDlParam.match(/(?:AddTopic|LaunchActivity)=([a-f0-9-]+)/);
     
     // If there's a match, return the captured group (the ID)
     if (idMatch && idMatch[1]) {
