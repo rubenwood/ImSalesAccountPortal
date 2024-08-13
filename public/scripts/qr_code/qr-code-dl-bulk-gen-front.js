@@ -85,7 +85,7 @@ document.addEventListener('DOMContentLoaded', async() => {
             }
             let qrCodeUrls = await generateQRCodesAndUpload([newLink]);
             console.log(qrCodeUrls);
-            await addToDatabase(deeplink, qrCodeUrls[0].qrCodeS3Url, null, null, topicIdFromLink, topicName, null, null, "topic");
+            let resp = await addToDatabase(deeplink, qrCodeUrls[0].qrCodeS3Url, null, null, topicIdFromLink, topicName, null, null, "topic");
             doConfetti();
         } 
         else if(deeplink.includes("LaunchActivity"))
@@ -108,7 +108,8 @@ document.addEventListener('DOMContentLoaded', async() => {
             }
             let qrCodeUrls = await generateQRCodesAndUpload([newLink]);
             console.log(qrCodeUrls);
-            await addToDatabase(deeplink, qrCodeUrls[0].qrCodeS3Url, null, null, null, null, activityIdFromLink, activityName, "activity");
+            let resp = await addToDatabase(deeplink, qrCodeUrls[0].qrCodeS3Url, null, null, null, null, activityIdFromLink, activityName, "activity");
+            console.log(resp);
             doConfetti();
         }
     });
@@ -390,8 +391,8 @@ async function addToDatabase(deeplink, qrCodeUrl, areaId, areaName, topicId, top
         body: JSON.stringify({ deeplink, qrCodeUrl, areaId, areaName, topicId, topicName, activityId, activityName, type })
     });
     const resp = await addDLQRResponse.json();
-    return resp;
     //console.log(resp);
+    return resp;    
 }
 
 

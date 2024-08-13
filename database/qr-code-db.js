@@ -31,6 +31,15 @@ qrCodeDBRouter.post('/add-dl-qr', async (req, res) => {
     }
 
     try {
+        const existingQuery = await findExistingEntry(deeplink,qrCodeUrl,areaId,topicId,activityId);
+        console.log("--- Existing ---");
+        console.log(existingQuery);
+        console.log("--- END Existing ---");
+        if (existingQuery)
+        {
+            return res.status(409).json({ error: `Entry already exists, not adding: ${deeplink}` });
+        }
+
         const result = await addDeepLinkQRCode(deeplink,qrCodeUrl,areaId,areaName,topicId,topicName,activityId,activityName,type);
         res.status(201).json(result);
     } catch (error) {
@@ -55,11 +64,30 @@ async function addDeepLinkQRCode(deeplink, qrCodeUrl, areaId, areaName, topicId,
 
 // FIND EXISTING
 async function findExistingEntry(deeplink, qrCodeUrl, areaId, topicId, activityId) {
+    const criteria = [
+        { column: 'deeplink', value: deeplink },
+        { column: 'qr_code_url', value: qrCodeUrl },
+        { column: 'area_id', value: areaId },
+        { column: 'topic_id', value: topicId },
+        { column: 'activity_id', value: activityId }
+    ];
+
+    const conditions = criteria
+        .filter(item => item.value !== null) // Filter out null values
+        .map((item, index) => `${item.column} = $${index + 1}`); // Create conditions
+
+    const values = criteria
+        .filter(item => item.value !== null) // Filter out null values
+        .map(item => item.value); // Extract the values
+
+    if (conditions.length === 0) {
+        return null;
+    }
+
     const queryText = `
         SELECT * FROM public."DeepLinkQRCodes"
-        WHERE deeplink = $1 OR qr_code_url = $2 OR area_id = $3 OR topic_id = $4 OR activity_id = $5
+        WHERE ${conditions.join(' OR ')}
         LIMIT 1`;
-    const values = [deeplink, qrCodeUrl, areaId, topicId, activityId];
 
     try {
         const result = await pool.query(queryText, values);
