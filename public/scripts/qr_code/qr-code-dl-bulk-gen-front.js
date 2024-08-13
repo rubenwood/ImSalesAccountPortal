@@ -63,7 +63,7 @@ document.addEventListener('DOMContentLoaded', async() => {
 
     // Manually add a Deeplink / QR Code to the database
     document.getElementById('add-qr-dl-to-db').addEventListener('click', async ()=>{
-        let deeplink = document.getElementById('manual-dl-input').value;      
+        let deeplink = document.getElementById('manual-dl-input').value.trim();      
 
         if(deeplink.includes("AddTopic"))
         {
@@ -71,7 +71,7 @@ document.addEventListener('DOMContentLoaded', async() => {
             let topicIdFromLink = extractIdFromUrl(deeplink);            
             let topicBrondon = allTopicBrondons.find(item => item.topicId === topicIdFromLink).brondon;            
             let topicName = topicBrondon.externalTitle;            
-            let imageName = topicName.replace(/[^a-zA-Z0-9]/g, "");
+            let imageName = "Topic_"+topicName.replace(/[^a-zA-Z0-9]/g, "");
 
             console.log("Topic ID Link:\n" + topicIdFromLink);
             console.log(topicBrondon);
@@ -85,7 +85,7 @@ document.addEventListener('DOMContentLoaded', async() => {
             }
             let qrCodeUrls = await generateQRCodesAndUpload([newLink]);
             console.log(qrCodeUrls);
-            await addToDatabase(deeplink, qrCodeUrls[0], null, null, topicIdFromLink, topicName, null, null, "topic");
+            await addToDatabase(deeplink, qrCodeUrls[0].qrCodeS3Url, null, null, topicIdFromLink, topicName, null, null, "topic");
             doConfetti();
         }
     });
