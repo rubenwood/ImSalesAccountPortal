@@ -26,7 +26,12 @@ document.addEventListener('DOMContentLoaded', async() => {
 
     [areas, topics, activities] = await Promise.all([ getAreas(), getTopics(), getActivities()]);
     console.log("got all areas:\n", areas, "\ntopics:\n" , topics, "\nactivities:\n", activities);
-    [allTopicBrondons, allActivityBrondons] = await Promise.all([getTopicBrondons(topics), getActivityBrondons(activities)]);
+
+    if (allTopicBrondons == undefined || allActivityBrondons == undefined) {
+        [allTopicBrondons, allActivityBrondons] = await Promise.all([getTopicBrondons(topics), getActivityBrondons(activities)]);
+    }
+
+    // Ensure that `allTopicBrondons` and `allActivityBrondons` are arrays or objects if expected
     console.log("got topic brondons:\n", allTopicBrondons, "\ngot activity brondons\n", allActivityBrondons);
     doConfetti();
 
@@ -60,16 +65,23 @@ document.addEventListener('DOMContentLoaded', async() => {
     document.getElementById('add-qr-dl-to-db').addEventListener('click', async ()=>{
         let deeplink = document.getElementById('manual-dl-input').value;
         console.log("manual " + deeplink);
-        let qrCodeUrls = generateQRCodesAndUpload([deeplink]);
+        let qrCodeUrls = await generateQRCodesAndUpload([deeplink]);
         console.log(qrCodeUrls);
 
         if(deeplink.includes("AddTopic"))
         {
             console.log("TOPIC URL");
+            // get topic id and name from url
+            let topicIdLink = extractIdFromUrl(deeplink);
+            console.log(topicIdLink);
+            let topicBrondon = allTopicBrondons.find(item => item.topicId === topicIdLink).brondon;
+            console.log(topicBrondon);
+            let topicName = topicBrondon.externalTitle;
+            console.log(topicName);
+            addToDatabase(deeplink, qrCodeUrls[0], null, null, topicIdLink, topicName, null, null, "topic");
         }
-
-        addToDatabase(deeplink, qrCodeUrls[0], );
     });
+
 
     // Manually generate QR code from URL
     document.getElementById('manual-gen-qr-code-btn').addEventListener('click', async() => { 
@@ -349,4 +361,28 @@ async function addToDatabase(deeplink, qrCodeUrl, areaId, areaName, topicId, top
     const resp = await addDLQRResponse.json();
     return resp;
     //console.log(resp);
+}
+
+
+// Extract Params
+function extractIdFromUrl(url) {
+    // Create a URL object from the input URL string
+    const urlObj = new URL(url);
+    
+    // Get the 'dl' parameter from the URL
+    const dlParam = urlObj.searchParams.get('dl');
+    
+    // Decode the 'dl' parameter
+    const decodedDlParam = decodeURIComponent(dlParam);
+    
+    // Extract the ID using a regular expression
+    const idMatch = decodedDlParam.match(/AddTopic=([a-f0-9-]+)/);
+    
+    // If there's a match, return the captured group (the ID)
+    if (idMatch && idMatch[1]) {
+        return idMatch[1];
+    }
+    
+    // Return null if no ID is found
+    return null;
 }
