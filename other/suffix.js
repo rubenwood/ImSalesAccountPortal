@@ -509,7 +509,7 @@ function exportToExcel(suffixes, exportData){
         'This page contains some general analytics about each account,',
         'when was the account created, last logged in, and how active they have been.',
         ''
-    ];    
+    ];  
     addMessages(insightsWorksheet, insightsMessages);
     addMessages(progressWorksheet, progressMessages);
     addMessages(usageWorksheet, usageMessages);
@@ -519,13 +519,61 @@ function exportToExcel(suffixes, exportData){
     XLSX.utils.book_append_sheet(workbook, progressWorksheet, "Progress Report");
     XLSX.utils.book_append_sheet(workbook, usageWorksheet, "Usage Report");
     XLSX.utils.book_append_sheet(workbook, loginDataWorksheet, "Login Report");
+
+    // Seperate workbooks and seperate work sheets
+    
+    const insightsMessages2 = [
+        'This report shows some general insights, lesson specific insights and simulation specific insights.',
+        ''
+    ];
+    const progressMessages2 = [
+        'This report shows every user, the activities they have engaged with,',
+        'how long in total they have spent in the activity and the score for each attempt.',
+        ''
+    ];
+    const usageMessages2 = [
+        'This report shows overall progress and usage, similar to the progress report',
+        'However, it presents the date each attempt was made and the duration of each attempt.',
+        ''
+    ];
+    const loginMessages2 = [
+        'This report contains some general analytics about each account,',
+        'when was the account created, last logged in, and how active they have been.',
+        ''
+    ];
+    const workbookInsights = XLSX.utils.book_new();
+    const workbookProgress = XLSX.utils.book_new();
+    const workbookUsage = XLSX.utils.book_new();
+    const workbookLogin = XLSX.utils.book_new();
+
+    const insightsWorksheet2 = XLSX.utils.json_to_sheet(combinedInsightsData);
+    const progressWorksheet2 = XLSX.utils.json_to_sheet(progressData);
+    const usageWorksheet2 = XLSX.utils.json_to_sheet(usageData);
+    const loginDataWorksheet2 = XLSX.utils.json_to_sheet(loginData);
+
+    addMessages(insightsWorksheet2, insightsMessages2);
+    addMessages(progressWorksheet2, progressMessages2);
+    addMessages(usageWorksheet2, usageMessages2);
+    addMessages(loginDataWorksheet2, loginMessages2);
+
+    XLSX.utils.book_append_sheet(workbookInsights, insightsWorksheet2, "Insights");
+    XLSX.utils.book_append_sheet(workbookProgress, progressWorksheet2, "Progress Report");
+    XLSX.utils.book_append_sheet(workbookUsage, usageWorksheet2, "Usage Report");
+    XLSX.utils.book_append_sheet(workbookLogin, loginDataWorksheet2, "Login Report");
+
     // write to server
     //XLSX.writeFile(workbook, `Report-${suffixes.join('-')}-${formatDate(new Date())}.xlsx`);
     // write to s3
     const workbookOut = XLSX.write(workbook, { bookType: 'xlsx', type: 'buffer' });
+    const workbookInsightsOut = XLSX.write(workbookInsights, { bookType: 'xlsx', type: 'buffer' });
+    const workbookProgressOut = XLSX.write(workbookProgress, { bookType: 'xlsx', type: 'buffer' });
+    const workbookUsageOut = XLSX.write(workbookUsage, { bookType: 'xlsx', type: 'buffer' });
+    const workbookLoginOut = XLSX.write(workbookLogin, { bookType: 'xlsx', type: 'buffer' });
+
     const suffixesJoined = suffixes.join('-');
     let todayUTC = new Date().toISOString().split('.')[0] + 'Z';
     console.log(`Today in UTC: ${todayUTC}`);
+    // Combined
     const filename = `Analytics/${suffixesJoined}/Report-${suffixesJoined}-${todayUTC}-UTC.xlsx`;
     uploadToS3(workbookOut, filename, 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', process.env.AWS_BUCKET)
         .then((data) => {
@@ -534,8 +582,49 @@ function exportToExcel(suffixes, exportData){
         .catch((err) => {
             console.error(`Error uploading file: ${err.message}`);
         });
+
+    // Insights
+    const filenameInsights = `Analytics/${suffixesJoined}/Report-Insights-${suffixesJoined}-${todayUTC}-UTC.xlsx`;
+    uploadToS3(workbookInsightsOut, filenameInsights, 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', process.env.AWS_BUCKET)
+        .then((data) => {
+            console.log(`File uploaded successfully at ${filename}`);
+        })
+        .catch((err) => {
+            console.error(`Error uploading file: ${err.message}`);
+        });
+
+    // Progress
+    const filenameProgress = `Analytics/${suffixesJoined}/Report-Progress-${suffixesJoined}-${todayUTC}-UTC.xlsx`;
+    uploadToS3(workbookProgressOut, filenameProgress, 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', process.env.AWS_BUCKET)
+        .then((data) => {
+            console.log(`File uploaded successfully at ${filename}`);
+        })
+        .catch((err) => {
+            console.error(`Error uploading file: ${err.message}`);
+        });
+
+    // Usage
+    const filenameUsage = `Analytics/${suffixesJoined}/Report-Usage-${suffixesJoined}-${todayUTC}-UTC.xlsx`;
+    uploadToS3(workbookUsageOut, filenameUsage, 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', process.env.AWS_BUCKET)
+        .then((data) => {
+            console.log(`File uploaded successfully at ${filename}`);
+        })
+        .catch((err) => {
+            console.error(`Error uploading file: ${err.message}`);
+        });
+
+    // Login
+    const filenameLogin = `Analytics/${suffixesJoined}/Report-Login-${suffixesJoined}-${todayUTC}-UTC.xlsx`;
+    uploadToS3(workbookLoginOut, filenameLogin, 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', process.env.AWS_BUCKET)
+        .then((data) => {
+            console.log(`File uploaded successfully at ${filename}`);
+        })
+        .catch((err) => {
+            console.error(`Error uploading file: ${err.message}`);
+        });
 }
 
+// Adds arbitrary text to a worksheet
 function addMessages(worksheet, messages) {
     const range = XLSX.utils.decode_range(worksheet['!ref']);
     const newRange = XLSX.utils.encode_range({ s: { c: range.s.c, r: 0 }, e: { c: range.e.c, r: range.e.r + messages.length } });
