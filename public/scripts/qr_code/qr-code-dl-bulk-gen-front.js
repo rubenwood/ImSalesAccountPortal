@@ -63,22 +63,30 @@ document.addEventListener('DOMContentLoaded', async() => {
 
     // Manually add a Deeplink / QR Code to the database
     document.getElementById('add-qr-dl-to-db').addEventListener('click', async ()=>{
-        let deeplink = document.getElementById('manual-dl-input').value;
-        console.log("manual " + deeplink);
-        let qrCodeUrls = await generateQRCodesAndUpload([deeplink]);
-        console.log(qrCodeUrls);
+        let deeplink = document.getElementById('manual-dl-input').value;      
 
         if(deeplink.includes("AddTopic"))
         {
-            console.log("TOPIC URL");
             // get topic id and name from url
-            let topicIdLink = extractIdFromUrl(deeplink);
-            console.log(topicIdLink);
-            let topicBrondon = allTopicBrondons.find(item => item.topicId === topicIdLink).brondon;
+            let topicIdFromLink = extractIdFromUrl(deeplink);            
+            let topicBrondon = allTopicBrondons.find(item => item.topicId === topicIdFromLink).brondon;            
+            let topicName = topicBrondon.externalTitle;            
+            let imageName = topicName.replace(/[^a-zA-Z0-9]/g, "");
+
+            console.log("Topic ID Link:\n" + topicIdFromLink);
             console.log(topicBrondon);
-            let topicName = topicBrondon.externalTitle;
-            console.log(topicName);
-            addToDatabase(deeplink, qrCodeUrls[0], null, null, topicIdLink, topicName, null, null, "topic");
+            console.log("Topic name:\n" + topicName);
+            console.log("Image name:\n" + imageName);
+
+            let newLink = {
+                type:"topic",
+                imgName:imageName,
+                link:deeplink
+            }
+            let qrCodeUrls = await generateQRCodesAndUpload([newLink]);
+            console.log(qrCodeUrls);
+            await addToDatabase(deeplink, qrCodeUrls[0], null, null, topicIdFromLink, topicName, null, null, "topic");
+            doConfetti();
         }
     });
 

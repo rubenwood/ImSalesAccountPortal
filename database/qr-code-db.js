@@ -53,6 +53,23 @@ async function addDeepLinkQRCode(deeplink, qrCodeUrl, areaId, areaName, topicId,
     }
 }
 
+// FIND EXISTING
+async function findExistingEntry(deeplink, qrCodeUrl, areaId, topicId, activityId) {
+    const queryText = `
+        SELECT * FROM public."DeepLinkQRCodes"
+        WHERE deeplink = $1 OR qr_code_url = $2 OR area_id = $3 OR topic_id = $4 OR activity_id = $5
+        LIMIT 1`;
+    const values = [deeplink, qrCodeUrl, areaId, topicId, activityId];
+
+    try {
+        const result = await pool.query(queryText, values);
+        return result.rows[0];
+    } catch (error) {
+        console.error('Error finding existing entry:', error);
+        throw error;
+    }
+}
+
 // READ - Get all deeplink and QR code entries
 qrCodeDBRouter.get('/get-all-dl-qr', async (req, res) => {    
     try {
