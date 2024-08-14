@@ -121,7 +121,7 @@ async function getAllPlayerAccDataAndWriteToDB() {
         // Insert the player profiles into the PostgreSQL table
         console.log("updating ", response.data.data.PlayerProfiles.length, " entries");
         for (const profile of response.data.data.PlayerProfiles) {
-            let createdDate = profile.Created;
+            /* let createdDate = profile.Created;
             let lastLoginDate = profile.LastLogin;
             console.log(createdDate);
             console.log(lastLoginDate);
@@ -133,7 +133,7 @@ async function getAllPlayerAccDataAndWriteToDB() {
             else if(lastLoginDate > createdDate && lastLoginDate > lastUpdatedDate)
             {
                 // update existing user entry
-            }
+            } */
             //console.log(lastUpdatedDate);
             await pool.query('INSERT INTO public."AccountData"("AccountDataJSON") VALUES ($1)', [profile]);
         }
@@ -333,6 +333,10 @@ async function convertLegacySubData() {
     const androidSubUsers = androidRes.rows;
     const iOSSubUsers = iOSRes.rows;
     console.log("Got existing subs!");
+
+    /* console.log(stripeSubUsers);
+    console.log(androidSubUsers);
+    console.log(iOSSubUsers); */
 
     const output = [];
 

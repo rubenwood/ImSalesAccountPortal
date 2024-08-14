@@ -1,4 +1,4 @@
-const doConfetti = () => { confetti({particleCount: 100, spread: 70, origin:{ y: 0.6 }}); }
+ //const doConfetti = () => { confetti({particleCount: 100, spread: 70, origin:{ y: 0.6 }}); }
 
 document.addEventListener('DOMContentLoaded', async() => {
     // login button on modal
@@ -30,16 +30,18 @@ async function submitPass()
             console.log("Access granted");
             // Here you can add your code to grant access, e.g., redirect to another page
             document.getElementById('loginModal').style.display = 'none';
-            doConfetti(); // Show confetti on successful login
+            //doConfetti(); // Show confetti on successful login
             getReports();
         } else {
             console.log("Access denied");
             // Here you can handle access denial, e.g., show an error message
-            alert('Incorrect password. Please try again.');
+            //alert('Incorrect password. Please try again.');
+            document.getElementById('error-txt').innerHTML = 'Incorrect password. Please try again.';
         }
     } catch (err) {
         console.error("Error during authentication", err);
-        alert('An error occurred. Please try again later.');
+        //alert('An error occurred. Please try again later.');
+        document.getElementById('error-loading').innerHTML = 'Oops! An error occurred. Please try again later.';
     }
 }
 
@@ -58,9 +60,9 @@ async function getReports() {
 
     let responseHtml = '<ul>';
     result.forEach(file => {
-        responseHtml += `<li><a href="${file.url}" download="${file.filename}">${file.filename}</a></li>`;
+        responseHtml += `<li><a href="${file.url}" download="${file.filename}">${file.filename}<i class="fa fa-download" aria-hidden="true"></i></a></li>`;
     });
     responseHtml += '</ul>';
 
-    document.getElementById('reports-content').innerHTML += responseHtml;
+    document.getElementById('login').innerHTML += responseHtml;
 }

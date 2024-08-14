@@ -4,27 +4,71 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>User Reports</title>
-  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css" rel="stylesheet" />
   <link rel="stylesheet" type="text/css" href="../styles.css">
+  <link rel="stylesheet" type="text/css" href="../theme_style.css">
 </head>
 <body>
   <!-- Login Modal -->
-  <div id="loginModal" class="modal">
+  <div id="loginModal" class="modal custom_modal">
     <div class="modal-content">
+      <div class="login_sec">
         <img src="/immersify_logo.e141b23db21f4b78051561bc464eace7.svg" alt="Immersify Logo" class="login-logo">
-        <h2>Access Your Reports</h2>
-        <input type="password" id="password" placeholder="Password"><br>
+        <h2>Access your reports</h2>
+        <input type="password" id="password" placeholder="Password">
+        <p id="error-txt"></p>
         <input type="button" id="loginButton" value="Submit">
+      </div>
     </div>
   </div>
-  <div id="reports-content" class="form-container">
+  <div id="reports-content" class="form-container-report">
     <h1>Reports</h1>
-    <p>Find your reports below</p>
-    <br/><br/>
+    <p>Download and retrieve detailed reports from the sections below</p>
+    <div class="tabset">
+      <!-- Tab 1 -->
+      <input type="radio" name="tabset" id="tab1" aria-controls="login" checked>
+      <label for="tab1">Login</label>
+      <!-- Tab 2 -->
+      <input type="radio" name="tabset" id="tab2" aria-controls="insights">
+      <label for="tab2">Insights</label>
+      <!-- Tab 3 -->
+      <input type="radio" name="tabset" id="tab3" aria-controls="progress">
+      <label for="tab3">Progress</label>
+
+      <input type="radio" name="tabset" id="tab4" aria-controls="usage">
+      <label for="tab4">Usage</label>
+
+      <input type="radio" name="tabset" id="tab5" aria-controls="combined">
+      <label for="tab5">Combined</label>
+      
+      <div class="tab-panels">
+       
+        <section id="login" class="tab-panel">
+         
+      </section>
+        <section id="insights" class="tab-panel">
+         
+        </section>
+        <section id="progress" class="tab-panel">
+          
+         </section>
+        <section id="usage" class="tab-panel">
+          
+        </section>
+        <section id="combined" class="tab-panel">
+          
+        </section>
+      </div>
+      <span id="error-loading"></span>
+    </div>
+
   </div> 
-  
-  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.1/dist/confetti.browser.js"></script>
-  <script type="module" src="../scripts/reporting/user-reports-front.js"></script>  
+  <!-- <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.1/dist/confetti.browser.js"></script> -->
+  <script type="module" src="../scripts/reporting/user-reports-front.js"></script> 
+
   
 </body>
 </html>

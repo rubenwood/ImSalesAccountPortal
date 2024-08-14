@@ -1,0 +1,180 @@
+.custom_modal{
+    background-color: #F4F5FD;
+}
+
+
+.custom_modal .modal-content {
+    background-color: #ffffff;
+    border: none;
+    max-width: 400px;
+    border-radius: 15px;
+    box-shadow: 2px 3px 10px rgb(0 0 0 / 8%);
+    padding: 30px;
+}
+.custom_modal .login_sec h2{
+    font-size:18px;
+    margin-top: 30px;
+    text-align: center;
+}
+
+.form-container-report{
+    background: #fff;
+    padding: 30px;
+    margin-top: 50px;
+    border-radius: 15px;
+    box-shadow: 2px 3px 10px rgba(0, 0, 0, 0.08);
+    min-height: 400px;
+    min-width: 650px;
+}
+.form-container-report h1{
+    margin-top: 0px;
+    font-size: 24px;
+    margin-bottom: 5px;
+}
+.form-container-report ul {
+    padding-left: 0;
+    margin-bottom: 0;
+}
+.form-container-report ul li{
+    list-style: none;
+    margin-top: 15px;
+}
+.form-container-report ul li a{
+    text-decoration: none;
+    color: #2A1D47;
+    transition: .2s all ease;
+    display: flex;
+    background: #f3f5f7;
+    padding: 15px;
+    font-weight: 500;
+    border-radius: 5px;
+    max-width: 600px;
+    align-items: center;
+    justify-content: space-between;
+}
+.form-container-report p{
+    color: #919191;
+    margin-top: 8px;
+    margin-bottom: 20px;
+}
+.form-container-report ul li a:hover{
+    transform: scale(1.01, 1.01);
+    background: #e7f0ff;
+}
+.form-container-report ul li i {
+    float: right;
+    padding-left: 15px;
+    color: #0088EE;
+}
+input[type=text], input[type=password], select{
+    outline: none;
+}
+
+#error-txt{
+    font-size: 14px;
+    color: #dd1818;
+    margin: 0;
+}
+#error-loading{
+    font-size: 14px;
+    color: #dd1818;
+    margin: 0;
+    text-align: center;
+    display: block;
+}
+/*
+ CSS for the main interaction
+*/
+.tabset > input[type="radio"] {
+    position: absolute;
+    left: -200vw;
+  }
+  
+  .tabset .tab-panel {
+    display: none;
+  }
+  
+  .tabset > input:first-child:checked ~ .tab-panels > .tab-panel:first-child,
+  .tabset > input:nth-child(3):checked ~ .tab-panels > .tab-panel:nth-child(2),
+  .tabset > input:nth-child(5):checked ~ .tab-panels > .tab-panel:nth-child(3),
+  .tabset > input:nth-child(7):checked ~ .tab-panels > .tab-panel:nth-child(4),
+  .tabset > input:nth-child(9):checked ~ .tab-panels > .tab-panel:nth-child(5),
+  .tabset > input:nth-child(11):checked ~ .tab-panels > .tab-panel:nth-child(6) {
+    display: block;
+  }
+  
+  /*
+   Styling
+  */
+  body {
+    font: 16px/1.5em "Overpass", "Open Sans", Helvetica, sans-serif;
+    color: #333;
+    font-weight: 300;
+  }
+  
+  .tabset > label {
+    position: relative;
+    display: inline-block;
+    padding: 15px;
+    border-top-left-radius: 5px;
+    border-top-right-radius: 5px;
+    border: 1px solid transparent;
+    border-bottom: 0;
+    cursor: pointer;
+    font-weight: 600;
+  }
+  
+  /* .tabset > label::after {
+    content: "";
+    position: absolute;
+    left: 15px;
+    bottom: 10px;
+    width: 22px;
+    height: 4px;
+    background: #8d8d8d;
+  } */
+  
+  input:focus-visible + label {
+    outline: 2px solid #0088EE;
+    border-radius: 3px;
+  }
+  
+  .tabset > label:hover,
+  .tabset > input:focus + label,
+  .tabset > input:checked + label {
+    color: #0088EE;
+  }
+  
+  /* .tabset > label:hover::after,
+  .tabset > input:focus + label::after,
+  .tabset > input:checked + label::after {
+    background: #06c;
+  } */
+  
+  .tabset > input:checked + label {
+    border-color: #ccc;
+    border-bottom: 1px solid #fff;
+    margin-bottom: -1px;
+  }
+  
+  .tab-panel {
+    padding: 15px 0 0;
+    border-top: 1px solid #ccc;
+  }
+  
+  /*
+   Demo purposes only
+  */
+  *,
+  *:before,
+  *:after {
+    box-sizing: border-box;
+  }
+  
+  body {
+    padding: 30px;
+  }
+  
+  .tabset {
+    max-width: 65em;
+  }

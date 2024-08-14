@@ -70,7 +70,10 @@ dbRouter.post('/get-users-by-email', async (req, res) => {
         return res.status(400).json({ error: 'A non-empty list of player emails must be provided' });
     }
 
-    const inputEmails = playerEmails.map((_, index) => `$${index + 1}`).join(',');
+    console.log(playerEmails);
+    const lowerCaseEmails = playerEmails.map(email => email.toLowerCase());
+    console.log(lowerCaseEmails);
+    const inputEmails = lowerCaseEmails.map((_, index) => `$${index + 1}`).join(',');
 
     try {
         // account data
@@ -79,11 +82,11 @@ dbRouter.post('/get-users-by-email', async (req, res) => {
         FROM public."AccountData"
         WHERE EXISTS (
           SELECT 1 FROM jsonb_array_elements("AccountDataJSON"::jsonb->'LinkedAccounts') AS la
-          WHERE la->>'Platform' = 'PlayFab' AND la->>'Email' = ANY(ARRAY[${inputEmails}]::text[])
+          WHERE la->>'Platform' = 'PlayFab' AND LOWER(la->>'Email') = ANY(ARRAY[${inputEmails}]::text[])
         )
         OR EXISTS (
           SELECT 1 FROM jsonb_array_elements("AccountDataJSON"::jsonb->'ContactEmailAddresses') AS cea
-          WHERE cea->>'EmailAddress' = ANY(ARRAY[${inputEmails}]::text[])
+          WHERE LOWER(cea->>'EmailAddress') = ANY(ARRAY[${inputEmails}]::text[])
         );
         `;
         const accountDataResult = await pool.query(query, playerEmails);

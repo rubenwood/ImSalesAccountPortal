@@ -3,9 +3,9 @@ body {
     justify-content: center;
     gap: 20px; 
     width: 100%;
-    font-family: Arial, sans-serif;
-    background-color: #f4f4f4;
+    background-color: #F4F5FD;
     padding: 20px;
+    font-family: "Montserrat", sans-serif !important;
     color: #333;
     align-items: flex-start;
     box-sizing: border-box;
@@ -24,7 +24,7 @@ input[type=text], input[type=password], select {
 
 input[type=button] {
     width: 100%;
-    background-color: #0879da;
+    background-color: #0088EE;
     color: white;
     padding: 14px 20px;
     margin: 8px 0;
@@ -34,7 +34,7 @@ input[type=button] {
 }
 
 input[type=button]:hover {
-    background-color: #5089fa;
+    background-color: #1491f1;
 }
 
 input[type=button].small-toggle-button {
