@@ -171,10 +171,133 @@ input[type=text], input[type=password], select{
     box-sizing: border-box;
   }
   
-  body {
-    padding: 30px;
-  }
-  
   .tabset {
     max-width: 65em;
   }
+
+
+  /* QR CODE */
+
+  section.qr_code_sec {
+    max-width: 500px;
+    margin: 50px auto 0;
+}
+.qr_code_sec h2{
+    margin-bottom: 5px;
+}
+.qr_code_sec p{
+    margin-top: 0;
+    color: #919191;
+}
+
+  .accordion {
+    background-color: #ffffff;
+    color: #2A1D47;
+    cursor: pointer;
+    padding: 18px;
+    width: 100%;
+    text-align: left;
+    outline: none;
+    font-size: 18px;
+    display: flex;
+    align-items: center;
+    margin: 10px 0 0;
+    box-sizing: border-box;
+    border: 1px solid #c5c5c5;
+    border-radius: 10px;
+    position: relative;
+    font-weight: 600;
+}
+
+
+.accordion img {
+    margin-right: 15px;
+    height: 70px;
+    max-width: 100%;
+}
+.topic_img {
+    display: flex;
+}
+.topic_img img{
+    height: 60px;
+    width: 60px;
+    object-fit: contain;
+    max-width: 100%;
+}
+
+.qr_img{
+    display: flex;
+    align-items: center;
+}
+.qr_img img {
+    height: 80px;
+    width: 80px;
+    object-fit: contain;
+}
+
+.active, .accordion:hover {
+    background-color: #eef1f5;
+}
+.accordion.active{
+    border-bottom: 0;
+    border-bottom-right-radius: 0;
+    border-bottom-left-radius: 0;
+}
+
+.accordion:after {
+    content: '\002B';
+    color: #777;
+    font-weight: bold;
+    float: right;
+    margin-left: 5px;
+    position: absolute;
+    right: 0;
+    padding-right: 30px;
+    font-size: 1.5em;
+}
+
+.active:after {
+    content: "\2212";
+}
+
+.panel {
+    display: none;
+    background-color: #eef1f5;
+    overflow: hidden;
+    border-top-right-radius: 0;
+    border-top-left-radius: 0;
+    border-bottom-right-radius: 10px;
+    border-bottom-left-radius: 10px;
+    border: 1px solid #c5c5c5;
+    padding: 0 20px;
+}
+
+
+.panel .row_wrap {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: #ffffff;
+    margin: 15px 0;
+    border-radius: 10px;
+    padding: 10px 15px;
+    box-shadow: 2px 3px 10px rgba(0, 0, 0, 0.08);
+}
+
+
+
+
+.panel table img {
+    vertical-align: middle;
+}
+
+.panel h3 {
+    display: inline-block;
+    margin-left: 10px;
+    font-size: 16px;
+    font-weight: 600;
+}
+
+.panel tr td{
+    margin: 15px 0;
+}

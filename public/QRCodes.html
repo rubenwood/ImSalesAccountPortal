@@ -1,297 +1,256 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>QR Code Catalogue</title>
-  <script type="text/javascript" src="https://download.playfab.com/PlayFabClientApi.js"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600&display=swap" rel="stylesheet">
-  <link rel="stylesheet" type="text/css" href="styles.css">
-  <style>
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      text-align: center;
-    }
-    table, th, td {
-      border: 1px solid #717171;
-    }
-    th, td {
-      padding: 10px;
-    }
-    h1,h2,h3 {
-      text-align: center;
-      font-family: 'Montserrat', sans-serif;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" type="text/css" href="../theme_style.css">
+  
 </head>
 <body>
-<div class="form-container">
-    <!-- Head & Neck Anatomy -->
-    <table id="QRCodeTable">
-        <tbody id="QRCodeTableBody">
-            <tr>
-                <td colspan="2">
-                    <img src="https://s3.eu-west-1.amazonaws.com/com.immersifyeducation.cms/Icon/ModuleIcon_HeadNeckAnatomy.png" width="64" height="64">
-                    <h1>Head & Neck Anatomy</h1>
-                </td>
-            </tr>
-            <tr>
-                <td><h2>Topic</h2></td>
-                <td><h2>QR Code</h2></td>
-            </tr>
-            <tr>
-                <td>
-                    <img src="https://s3.eu-west-1.amazonaws.com/com.immersifyeducation.cms/Icon/Topic_Nerves.png" width="64" height="64">
-                    <h3>Cranial Nerves</h3>
-                <td>
-                    <img src="https://s3.eu-west-2.amazonaws.com/com.rubenwood.unityaatesting/QRCodes/new/Topic_Cranialnerves.jpg" alt="QR Code" width="256" height="256">
-                </td>
-            </tr>
-            <tr>
-                <td>
-                    <img src="https://s3.eu-west-1.amazonaws.com/com.immersifyeducation.cms/Icon/Topic_Muscles_Of_The_Head.png" width="64" height="64">
-                    <h3>Muscles of the Head & Neck</h3>
-                </td>
-                <td>
-                    <img src="https://s3.eu-west-2.amazonaws.com/com.rubenwood.unityaatesting/QRCodes/new/Topic_Musclesoftheheadneck.jpg" alt="QR Code" width="256" height="256">
-                </td>
-            </tr>
-            <tr>
-                <td>
-                    <img src="https://s3.eu-west-1.amazonaws.com/com.immersifyeducation.cms/Icon/Topic_SalivaryGlands.png" width="64" height="64">
-                    <h3>Salivary Glands</h3>
-                </td>
-                <td>
-                    <img src="https://s3.eu-west-2.amazonaws.com/com.rubenwood.unityaatesting/QRCodes/new/Topic_Salivaryglands.jpg" alt="QR Code" width="256" height="256">
-                </td>
-            </tr>
-            <tr>
-                <td>
-                    <img src="https://s3.eu-west-1.amazonaws.com/com.immersifyeducation.cms/Icon/Topic_Skull.png" width="64" height="64">
-                    <h3>Skull & TMJ</h3>
-                </td>
-                <td>
-                    <img src="https://s3.eu-west-2.amazonaws.com/com.rubenwood.unityaatesting/QRCodes/new/Topic_Skulltmj.jpg" alt="QR Code" width="256" height="256">
-                </td>
-            </tr>            
-        </tbody>
-    </table>
-    <br/>
-    <!-- Oral Anatomy & Biology -->
-    <table id="QRCodeTable">
-        <tbody id="QRCodeTableBody">
-            <tr>
-                <td colspan="2">
-                    <img src="https://s3.eu-west-1.amazonaws.com/com.immersifyeducation.cms/Icon/ModuleIcon_OralAnatomy.png" width="64" height="64">
-                    <h1>Oral Anatomy & Biology</h1>
-                </td>
-            </tr>
-            <tr>
-                <td><h2>Topic</h2></td>
-                <td><h2>QR Code</h2></td>
-            </tr>
-            <tr>
-                <td>
-                    <img src="https://s3.eu-west-1.amazonaws.com/com.immersifyeducation.cms/Icon/Topic_OralEmbryology.png" width="64" height="64">   
-                    <h3>Oral Embryology</h3>
-                </td>
-                <td>
-                    <img src="https://s3.eu-west-2.amazonaws.com/com.rubenwood.unityaatesting/QRCodes/new/Topic_Oralembryology.jpg" alt="QR Code" width="256" height="256">
-                </td>
-            </tr>
-            <tr>
-                <td>
-                    <img src="https://s3.eu-west-1.amazonaws.com/com.immersifyeducation.cms/Icon/Topic_Anatomy_Of_The_Oral_Cavity.png" width="64" height="64">
-                    <h3>Anatomy of the Oral Cavity</h3>
-                </td>
-                <td>
-                    <img src="https://s3.eu-west-2.amazonaws.com/com.rubenwood.unityaatesting/QRCodes/new/Topic_Anatomyoftheoralcavity.jpg" alt="QR Code" width="256" height="256">
-                </td>
-            </tr>
-        </tbody>
-    </table>
-    <br/>
-    <!-- History & Examination -->
-    <table id="QRCodeTable">
-        <tbody id="QRCodeTableBody">
-            <tr>
-                <td colspan="2">
-                    <img src="https://s3.eu-west-1.amazonaws.com/com.immersifyeducation.cms/Icon/ModuleIcon_HistoryExamination.png" width="64" height="63">
-                    <h1>History & Examination</h1>
-                </td>
-            </tr>
-            <tr>
-                <td><h2>Topic</h2></td>
-                <td><h2>QR Code</h2></td>
-            </tr>
-            <tr>
-                <td>
-                    <img src="https://s3.eu-west-1.amazonaws.com/com.immersifyeducation.cms/Icon/Topic_MedicalHistory.png" width="64" height="64">
-                    <h3>History & Risk Assessment</h3>
-                </td>
-                <td>
-                    <img src="https://s3.eu-west-2.amazonaws.com/com.rubenwood.unityaatesting/QRCodes/new/Topic_Historyriskassessment.jpg" alt="QR Code" width="256" height="256">
-                </td>
-            </tr>
-            <tr>
-                <td>
-                    <img src="https://s3.eu-west-1.amazonaws.com/com.immersifyeducation.cms/Icon/Topic_Intro_Instruments.png" width="64" height="64">
-                    <h3>Instruments</h3>
-                </td>
-                <td>
-                    <img src="https://s3.eu-west-2.amazonaws.com/com.rubenwood.unityaatesting/QRCodes/new/Topic_Instruments.jpg" alt="QR Code" width="256" height="256">
-                </td>
-            </tr>
-            <tr>
-                <td>
-                    <img src="https://s3.eu-west-1.amazonaws.com/com.immersifyeducation.cms/Icon/Topic_Intro_To_Radiography.png" width="64" height="64">
-                    <h3>Radiography & Radiology</h3>
-                </td>
-                <td>
-                    <img src="https://s3.eu-west-2.amazonaws.com/com.rubenwood.unityaatesting/QRCodes/new/Topic_Radiographyradiology.jpg" alt="QR Code" width="256" height="256">
-                </td>
-            </tr>
-            <tr>
-                <td>
-                    <img src="https://s3.eu-west-1.amazonaws.com/com.immersifyeducation.cms/Icon/Topic_MedicalHistory.png" width="64" height="64">
-                    <h3>Medical History</h3>
-                </td>
-                <td>
-                    <img src="https://s3.eu-west-2.amazonaws.com/com.rubenwood.unityaatesting/QRCodes/new/Topic_Medicalhistory.jpg" alt="QR Code" width="256" height="256">
-                </td>
-            </tr>
-            <tr>
-                <td>
-                    <img src="https://s3.eu-west-1.amazonaws.com/com.immersifyeducation.cms/Icon/Topic_Examination.png" width="64" height="64">                    
-                    <h3>Examination</h3>
-                </td>
-                <td>
-                    <img src="https://s3.eu-west-2.amazonaws.com/com.rubenwood.unityaatesting/QRCodes/new/Topic_Examination.jpg" alt="QR Code" width="256" height="256">
-                </td>
-            </tr>
-            <tr>
-                <td>
-                    <img src="https://s3.eu-west-1.amazonaws.com/com.immersifyeducation.cms/Icon/Topic_DentalCharting.png" width="64" height="64">                    
-                    <h3>Dental Charting</h3>
-                </td>
-                <td>
-                    <img src="https://s3.eu-west-2.amazonaws.com/com.rubenwood.unityaatesting/QRCodes/new/Topic_Dentalcharting.jpg" alt="QR Code" width="256" height="256">
-                </td>
-            </tr>
-        </tbody>
-    </table>
-    <br/>
-    <!-- Oral & Dental Diseases -->
-    <table id="QRCodeTable">
-        <tbody id="QRCodeTableBody">
-            <tr>
-                <td colspan="2">
-                    <img src="https://s3.eu-west-1.amazonaws.com/com.immersifyeducation.cms/Icon/ModuleIcon_OralDentalDisease.png" width="64" height="64">
-                    <h1>Oral & Dental Diseases</h1>
-                </td>
-            </tr>
-            <tr>
-                <td><h2>Topic</h2></td>
-                <td><h2>QR Code</h2></td>
-            </tr>
-            <tr>
-                <td>
-                    <img src="https://s3.eu-west-1.amazonaws.com/com.immersifyeducation.cms/Icon/Topic_Cariology.png" width="64" height="64">
-                    <h3>Cariology</h3>
-                </td>
-                <td>
-                    <img src="https://s3.eu-west-2.amazonaws.com/com.rubenwood.unityaatesting/QRCodes/new/Topic_Cariology.jpg" alt="QR Code" width="256" height="256">
-                </td>
-            </tr>
-        </tbody>
-    </table>
-    <br/>
-    <!-- Periodontology -->
-    <table id="QRCodeTable">
-        <tbody id="QRCodeTableBody">
-            <tr>
-                <td colspan="2">
-                    <img src="https://s3.eu-west-1.amazonaws.com/com.immersifyeducation.cms/Icon/ModuleIcon_Periodontology.png" width="64" height="64">
-                    <h1>Periodontology</h1>
-                </td>
-            </tr>
-            <tr>
-                <td><h2>Topic</h2></td>
-                <td><h2>QR Code</h2></td>
-            </tr>
-            <tr>
-                <td>
-                    <img src="https://s3.eu-west-1.amazonaws.com/com.immersifyeducation.cms/Icon/Topic_Basic_Periodontal_Exam.png" width="64" height="64">
-                    <h3>Screening & Anatomy</h3>
-                </td>
-                <td>
-                    <img src="https://s3.eu-west-2.amazonaws.com/com.rubenwood.unityaatesting/QRCodes/new/Topic_Screeninganatomy.jpg" alt="QR Code" width="256" height="256">
-                </td>
-            </tr>
-            <tr>
-                <td>
-                    <img src="https://s3.eu-west-1.amazonaws.com/com.immersifyeducation.cms/Icon/Topic_EtiologyDiagnosisOfPeriodontalDisease.png" width="64" height="64">
-                    <h3>Etiology & Diagnosis of Periodontal Diseases</h3>
-                </td>
-                <td>
-                    <img src="https://s3.eu-west-2.amazonaws.com/com.rubenwood.unityaatesting/QRCodes/new/Topic_Etiologydiagnosisofperiodontaldiseases.jpg" alt="QR Code" width="256" height="256">
-                </td>
-            </tr>
-            <tr>
-                <td>
-                    <img src="https://s3.eu-west-1.amazonaws.com/com.immersifyeducation.cms/Icon/Topic_NonSurgicalPeriodontalTreatment.png" width="64" height="64">
-                    <h3>Non-Surgical Periodontal Treatment</h3>
-                </td>
-                <td>
-                    <img src="https://s3.eu-west-2.amazonaws.com/com.rubenwood.unityaatesting/QRCodes/new/Topic_Nonsurgicalperiodontaltreatment.jpg" alt="QR Code" width="256" height="256">
-                </td>
-            </tr>
-            <tr>
-                <td>
-                    <img src="https://s3.eu-west-1.amazonaws.com/com.immersifyeducation.cms/Icon/Topic_SurgicalPeriodontalTreatment.png" width="64" height="64">
-                    <h3>Surgical Periodontal Treatment</h3>
-                </td>
-                <td>
-                    <img src="https://s3.eu-west-2.amazonaws.com/com.rubenwood.unityaatesting/QRCodes/new/Topic_Nonsurgicalperiodontaltreatment.jpg" alt="QR Code" width="256" height="256">
-                </td>
-            </tr>            
-        </tbody>
-    </table>
-    <br/>
-    <!-- Restorative Dentistry -->
-    <table id="QRCodeTable">
-        <tbody id="QRCodeTableBody">
-            <tr>
-                <td colspan="2">
-                    <img src="https://s3.eu-west-1.amazonaws.com/com.immersifyeducation.cms/Icon/ModuleIcon_RestorativeDentistry.png" width="64" height="64">
-                    <h1>Restorative Dentistry</h1>
-                </td>
-            </tr>
-            <tr>
-                <td><h2>Topic</h2></td>
-                <td><h2>QR Code</h2></td>
-            </tr>
-            <tr>
-                <td>
-                    <img src="https://s3.eu-west-1.amazonaws.com/com.immersifyeducation.cms/Icon/Topic_DirectRestorations.png" width="64" height="64">
-                    <h3>Direct Restorations</h3>
-                </td>
-                <td>
-                    <img src="https://s3.eu-west-2.amazonaws.com/com.rubenwood.unityaatesting/QRCodes/new/Topic_Directrestorations.jpg" alt="QR Code" width="256" height="256">
-                </td>
-            </tr>
-            <tr>
-                <td>
-                    <img src="https://s3.eu-west-1.amazonaws.com/com.immersifyeducation.cms/Icon/Topic_IndirectRestorations.png" width="64" height="64">
-                    <h3>Indirect Restorations</h3>
-                </td>
-                <td>
-                    <img src="https://s3.eu-west-2.amazonaws.com/com.rubenwood.unityaatesting/QRCodes/new/Topic_Indirectrestorations.jpg" alt="QR Code" width="256" height="256">
-                </td>
-            </tr>     
-        </tbody>
-    </table>
-</div>
+
+    <div class="form-container">
+        <!-- Head & Neck Anatomy -->
+        <section class="qr_code_sec">
+            <h2>Content available</h2>
+            <p>Scan the QR code to directly access the specific topic in the app.</p>
+            <button class="accordion">
+                <img src="https://s3.eu-west-1.amazonaws.com/com.immersifyeducation.cms/Icon/ModuleIcon_HeadNeckAnatomy.png" >
+                Head & Neck Anatomy
+            </button>
+            <div class="panel">
+                <div class=" row_wrap">
+                    <div class="topic_img">
+                        <img src="https://s3.eu-west-1.amazonaws.com/com.immersifyeducation.cms/Icon/Topic_Nerves.png" >
+                        <h3>Cranial Nerves</h3>
+                    </div>
+                    <div class="qr_img">
+                        <img src="https://s3.eu-west-2.amazonaws.com/com.rubenwood.unityaatesting/QRCodes/new/Topic_Cranialnerves.jpg" alt="QR Code" >
+                    </div>
+                </div>
+                <div class=" row_wrap">
+                    <div class="topic_img">
+                        <img src="https://s3.eu-west-1.amazonaws.com/com.immersifyeducation.cms/Icon/Topic_Muscles_Of_The_Head.png" >
+                        <h3>Muscles of the Head & Neck</h3>
+                    </div>
+                    <div class="qr_img">
+                        <img src="https://s3.eu-west-2.amazonaws.com/com.rubenwood.unityaatesting/QRCodes/new/Topic_Musclesoftheheadneck.jpg" alt="QR Code" >
+                    </div>
+                </div>
+                <div class=" row_wrap">
+                    <div class="topic_img">
+                        <img src="https://s3.eu-west-1.amazonaws.com/com.immersifyeducation.cms/Icon/Topic_SalivaryGlands.png" >
+                        <h3>Salivary Glands</h3>
+                    </div>
+                    <div class="qr_img">
+                        <img src="https://s3.eu-west-2.amazonaws.com/com.rubenwood.unityaatesting/QRCodes/new/Topic_Salivaryglands.jpg" alt="QR Code" >
+                    </div>
+                </div>
+                <div class=" row_wrap">
+                    <div class="topic_img">
+                        <img src="https://s3.eu-west-1.amazonaws.com/com.immersifyeducation.cms/Icon/Topic_Skull.png" >
+                        <h3>Skull & TMJ</h3>
+                    </div>
+                    <div class="qr_img">
+                        <img src="https://s3.eu-west-2.amazonaws.com/com.rubenwood.unityaatesting/QRCodes/new/Topic_Skulltmj.jpg" alt="QR Code" >
+                    </div>
+                </div>
+            </div>
+    
+            <!-- Oral Anatomy & Biology -->
+            <button class="accordion">
+                <img src="https://s3.eu-west-1.amazonaws.com/com.immersifyeducation.cms/Icon/ModuleIcon_OralAnatomy.png" >
+                Oral Anatomy & Biology
+            </button>
+            <div class="panel">
+                <div class=" row_wrap">
+                    <div class="topic_img">
+                        <img src="https://s3.eu-west-1.amazonaws.com/com.immersifyeducation.cms/Icon/Topic_OralEmbryology.png" >
+                        <h3>Oral Embryology</h3>
+                    </div>
+                    <div class="qr_img">
+                        <img src="https://s3.eu-west-2.amazonaws.com/com.rubenwood.unityaatesting/QRCodes/new/Topic_Oralembryology.jpg" alt="QR Code" >
+                    </div>
+                </div>
+                <div class=" row_wrap">
+                    <div class="topic_img">
+                        <img src="https://s3.eu-west-1.amazonaws.com/com.immersifyeducation.cms/Icon/Topic_Anatomy_Of_The_Oral_Cavity.png" >
+                        <h3>Anatomy of the Oral Cavity</h3>
+                    </div>
+                    <div class="qr_img">
+                        <img src="https://s3.eu-west-2.amazonaws.com/com.rubenwood.unityaatesting/QRCodes/new/Topic_Anatomyoftheoralcavity.jpg" alt="QR Code" >
+                    </div>
+                </div>
+            </div>
+    
+            <!-- History & Examination -->
+            <button class="accordion">
+                <img src="https://s3.eu-west-1.amazonaws.com/com.immersifyeducation.cms/Icon/ModuleIcon_HistoryExamination.png">
+                History & Examination
+            </button>
+            <div class="panel">
+                <div class=" row_wrap">
+                    <div class="topic_img">
+                        <img src="https://s3.eu-west-1.amazonaws.com/com.immersifyeducation.cms/Icon/Topic_MedicalHistory.png" >
+                        <h3>History & Risk Assessment</h3>
+                    </div>
+                    <div class="qr_img">
+                        <img src="https://s3.eu-west-2.amazonaws.com/com.rubenwood.unityaatesting/QRCodes/new/Topic_Historyriskassessment.jpg" alt="QR Code" >
+                    </div>
+                </div>
+                <div class=" row_wrap">
+                    <div class="topic_img">
+                        <img src="https://s3.eu-west-1.amazonaws.com/com.immersifyeducation.cms/Icon/Topic_Intro_Instruments.png" >
+                        <h3>Instruments</h3>
+                    </div>
+                    <div class="qr_img">
+                        <img src="https://s3.eu-west-2.amazonaws.com/com.rubenwood.unityaatesting/QRCodes/new/Topic_Instruments.jpg" alt="QR Code" >
+                    </div>
+                </div>
+                <div class=" row_wrap">
+                    <div class="topic_img">
+                        <img src="https://s3.eu-west-1.amazonaws.com/com.immersifyeducation.cms/Icon/Topic_Intro_To_Radiography.png" >
+                        <h3>Radiography & Radiology</h3>
+                    </div>
+                    <div class="qr_img">
+                        <img src="https://s3.eu-west-2.amazonaws.com/com.rubenwood.unityaatesting/QRCodes/new/Topic_Radiographyradiology.jpg" alt="QR Code" >
+                    </div>
+                </div>
+                <div class=" row_wrap">
+                    <div class="topic_img">
+                        <img src="https://s3.eu-west-1.amazonaws.com/com.immersifyeducation.cms/Icon/Topic_MedicalHistory.png" >
+                        <h3>Medical History</h3>
+                    </div>
+                    <div class="qr_img">
+                        <img src="https://s3.eu-west-2.amazonaws.com/com.rubenwood.unityaatesting/QRCodes/new/Topic_Medicalhistory.jpg" alt="QR Code" >
+                    </div>
+                </div>
+                <div class=" row_wrap">
+                    <div class="topic_img">
+                        <img src="https://s3.eu-west-1.amazonaws.com/com.immersifyeducation.cms/Icon/Topic_Examination.png" >
+                        <h3>Examination</h3>
+                    </div>
+                    <div class="qr_img">
+                        <img src="https://s3.eu-west-2.amazonaws.com/com.rubenwood.unityaatesting/QRCodes/new/Topic_Examination.jpg" alt="QR Code" >
+                    </div>
+                </div>
+                <div class=" row_wrap">
+                    <div class="topic_img">
+                        <img src="https://s3.eu-west-1.amazonaws.com/com.immersifyeducation.cms/Icon/Topic_DentalCharting.png" >
+                        <h3>Dental Charting</h3>
+                    </div>
+                    <div class="qr_img">
+                        <img src="https://s3.eu-west-2.amazonaws.com/com.rubenwood.unityaatesting/QRCodes/new/Topic_Dentalcharting.jpg" alt="QR Code" >
+                    </div>
+                </div>
+            </div>
+    
+            <!-- Oral & Dental Diseases -->
+            <button class="accordion">
+                <img src="https://s3.eu-west-1.amazonaws.com/com.immersifyeducation.cms/Icon/ModuleIcon_OralDentalDisease.png" >
+                Oral & Dental Diseases
+            </button>
+            <div class="panel">
+                <div class=" row_wrap">
+                    <div class="topic_img">
+                        <img src="https://s3.eu-west-1.amazonaws.com/com.immersifyeducation.cms/Icon/Topic_Cariology.png" >
+                        <h3>Cariology</h3>
+                    </div>
+                    <div class="qr_img">
+                        <img src="https://s3.eu-west-2.amazonaws.com/com.rubenwood.unityaatesting/QRCodes/new/Topic_Cariology.jpg" alt="QR Code" >
+                    </div>
+                </div>
+            </div>
+    
+            <!-- Periodontology -->
+            <button class="accordion">
+                <img src="https://s3.eu-west-1.amazonaws.com/com.immersifyeducation.cms/Icon/ModuleIcon_Periodontology.png" >
+                Periodontology
+            </button>
+            <div class="panel">
+                <div class=" row_wrap">
+                    <div class="topic_img">
+                        <img src="https://s3.eu-west-1.amazonaws.com/com.immersifyeducation.cms/Icon/Topic_Basic_Periodontal_Exam.png" >
+                        <h3>Screening & Anatomy</h3>
+                    </div>
+                    <div class="qr_img">
+                        <img src="https://s3.eu-west-2.amazonaws.com/com.rubenwood.unityaatesting/QRCodes/new/Topic_Screeninganatomy.jpg" alt="QR Code" >
+                    </div>
+                </div>
+                <div class=" row_wrap">
+                    <div class="topic_img">
+                        <img src="https://s3.eu-west-1.amazonaws.com/com.immersifyeducation.cms/Icon/Topic_EtiologyDiagnosisOfPeriodontalDisease.png" >
+                        <h3>Etiology & Diagnosis of Periodontal Diseases</h3>
+                    </div>
+                    <div class="qr_img">
+                        <img src="https://s3.eu-west-2.amazonaws.com/com.rubenwood.unityaatesting/QRCodes/new/Topic_Etiologydiagnosisofperiodontaldiseases.jpg" alt="QR Code" >
+                    </div>
+                </div>
+                <div class=" row_wrap">
+                    <div class="topic_img">
+                        <img src="https://s3.eu-west-1.amazonaws.com/com.immersifyeducation.cms/Icon/Topic_NonSurgicalPeriodontalTreatment.png" >
+                        <h3>Non-Surgical Periodontal Treatment</h3>
+                    </div>
+                    <div class="qr_img">
+                        <img src="https://s3.eu-west-2.amazonaws.com/com.rubenwood.unityaatesting/QRCodes/new/Topic_Nonsurgicalperiodontaltreatment.jpg" alt="QR Code" >
+                    </div>
+                </div>
+                <div class=" row_wrap">
+                    <div class="topic_img">
+                        <img src="https://s3.eu-west-1.amazonaws.com/com.immersifyeducation.cms/Icon/Topic_SurgicalPeriodontalTreatment.png" >
+                        <h3>Surgical Periodontal Treatment</h3>
+                    </div>
+                    <div class="qr_img">
+                        <img src="https://s3.eu-west-2.amazonaws.com/com.rubenwood.unityaatesting/QRCodes/new/Topic_Nonsurgicalperiodontaltreatment.jpg" alt="QR Code" >
+                    </div>
+                </div>
+            </div>
+    
+            <!-- Restorative Dentistry -->
+            <button class="accordion">
+                <img src="https://s3.eu-west-1.amazonaws.com/com.immersifyeducation.cms/Icon/ModuleIcon_RestorativeDentistry.png" >
+                Restorative Dentistry
+            </button>
+            <div class="panel">
+                <div class=" row_wrap">
+                    <div class="topic_img">
+                        <img src="https://s3.eu-west-1.amazonaws.com/com.immersifyeducation.cms/Icon/Topic_DirectRestorations.png">
+                        <h3>Direct Restorations</h3>
+                    </div>
+                    <div class="qr_img">
+                        <img src="https://s3.eu-west-2.amazonaws.com/com.rubenwood.unityaatesting/QRCodes/new/Topic_Directrestorations.jpg" alt="QR Code" >
+                    </div>
+                </div>
+                <div class=" row_wrap">
+                    <div class="topic_img">
+                        <img src="https://s3.eu-west-1.amazonaws.com/com.immersifyeducation.cms/Icon/Topic_IndirectRestorations.png">
+                        <h3>Indirect Restorations</h3>
+                    </div>
+                    <div class="qr_img">
+                        <img src="https://s3.eu-west-2.amazonaws.com/com.rubenwood.unityaatesting/QRCodes/new/Topic_Indirectrestorations.jpg" alt="QR Code" >
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+
+
+<script>
+    var acc = document.getElementsByClassName("accordion");
+    var i;
+
+    for (i = 0; i < acc.length; i++) {
+        acc[i].addEventListener("click", function() {
+            this.classList.toggle("active");
+            var panel = this.nextElementSibling;
+            if (panel.style.display === "block") {
+                panel.style.display = "none";
+            } else {
+                panel.style.display = "block";
+            }
+        });
+    }
+</script>
+
 </body>
 </html>
