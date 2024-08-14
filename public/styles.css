@@ -3,8 +3,7 @@ body {
     justify-content: center;
     gap: 20px; 
     width: 100%;
-    background-color: #F4F5FD;
-    padding: 20px;
+    background-color: #ffffff;
     font-family: "Montserrat", sans-serif !important;
     color: #333;
     align-items: flex-start;
@@ -198,7 +197,7 @@ label {
 .login-logo {
     display: block;
     margin: 0 auto;
-    max-width: 250px;
+    max-width: 170px;
     height: auto;
 }
 
