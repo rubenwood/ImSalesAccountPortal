@@ -574,7 +574,7 @@ function exportToExcel(suffixes, exportData){
     let todayUTC = new Date().toISOString().split('.')[0] + 'Z';
     console.log(`Today in UTC: ${todayUTC}`);
     // Combined
-    const filename = `Analytics/${suffixesJoined}/Report-${suffixesJoined}-${todayUTC}-UTC.xlsx`;
+    const filename = `Analytics/${suffixesJoined}/Report-Combined-${suffixesJoined}-${todayUTC}-UTC.xlsx`;
     uploadToS3(workbookOut, filename, 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', process.env.AWS_BUCKET)
         .then((data) => {
             console.log(`File uploaded successfully at ${filename}`);

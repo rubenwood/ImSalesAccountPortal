@@ -34,13 +34,10 @@ async function submitPass()
             getReports();
         } else {
             console.log("Access denied");
-            // Here you can handle access denial, e.g., show an error message
-            //alert('Incorrect password. Please try again.');
             document.getElementById('error-txt').innerHTML = 'Incorrect password. Please try again.';
         }
     } catch (err) {
         console.error("Error during authentication", err);
-        //alert('An error occurred. Please try again later.');
         document.getElementById('error-loading').innerHTML = 'Oops! An error occurred. Please try again later.';
     }
 }
@@ -57,12 +54,38 @@ async function getReports() {
 
     let result = await response.json();
     console.log(result);
-
-    let responseHtml = '<ul>';
+    let sectionHtml = {
+        login: '<ul>',
+        insights: '<ul>',
+        progress: '<ul>',
+        usage: '<ul>',
+        combined: '<ul>'
+    };
+    
     result.forEach(file => {
-        responseHtml += `<li><a href="${file.url}" download="${file.filename}">${file.filename}<i class="fa fa-download" aria-hidden="true"></i></a></li>`;
+        let listItem = `<li><a href="${file.url}" download="${file.filename}">${file.filename}<i class="fa fa-download" aria-hidden="true"></i></a></li>`;
+        console.log(file.filename);
+        if (file.filename.includes('-Login-')) {
+            sectionHtml.login += listItem;
+        } else if (file.filename.includes('-Insights-')) {
+            sectionHtml.insights += listItem;
+        } else if (file.filename.includes('-Progress-')) {
+            sectionHtml.progress += listItem;
+        } else if (file.filename.includes('-Usage-')) {
+            sectionHtml.usage += listItem;
+        } else if (file.filename.includes('-Combined-')) {
+            sectionHtml.combined += listItem;
+        }
     });
-    responseHtml += '</ul>';
 
-    document.getElementById('login').innerHTML += responseHtml;
+    for (let key in sectionHtml) {
+        sectionHtml[key] += '</ul>';
+    }
+    document.getElementById('login').innerHTML = sectionHtml.login;
+    document.getElementById('insights').innerHTML = sectionHtml.insights;
+    document.getElementById('progress').innerHTML = sectionHtml.progress;
+    document.getElementById('usage').innerHTML = sectionHtml.usage;
+    document.getElementById('combined').innerHTML = sectionHtml.combined;
+
+    //document.getElementById('login').innerHTML += responseHtml;
 }
