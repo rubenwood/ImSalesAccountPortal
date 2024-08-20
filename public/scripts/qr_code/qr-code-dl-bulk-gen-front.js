@@ -197,17 +197,16 @@ async function generateDeeplinks(){
         const ssoLinksStr = ssoURLs.join('\n');
         ssoLinksElement.value = ssoLinksStr;
 
-        let otherURLs = [];
-        // clear cache deeplink
-        otherURLs.push("https://immersifyeducation.com/deeplink?dl=%5Bimmersifyeducation%3A%2F%2Fimmersifydental%3FClearCache%5D");
-
+        // Other types of deeplinks
+        const otherLinks = await genOtherLinks();
+        
         // add to all URLs, so that we can generate the QR codes
         allURLs.push(...launcherSectionLinks);
         allURLs.push(...setAreaLinks);
         allURLs.push(...addTopicLinks);
         allURLs.push(...launchActivityLinks);
         allURLs.push(...ssoLinks);
-        allURLs.push(...otherURLs);
+        allURLs.push(...otherLinks);
 
         // Check for duplicates in allURLs by imgName and modify them to be unique
         let imgNameCount = {};
@@ -313,6 +312,16 @@ function genLaunchActivityLinks(activities, activityBrondons){
         let link = `https://immersifyeducation.com/deeplink?dl=%5Bimmersifyeducation%3A%2F%2Fimmersifydental%3FLaunchActivity%3D${activityId}%5D`
         links.push({ activityId, activityName, type:activityType, imgName, link });
     }
+    return links;
+}
+// other links
+function genOtherLinks()
+{
+    let links = [];
+    let imgName = "Other_ClearCache";
+    let link = "https://immersifyeducation.com/deeplink?dl=%5Bimmersifyeducation%3A%2F%2Fimmersifydental%3FClearCache%5D";
+
+    links.push({type:"other", imgName, link});
     return links;
 }
 
