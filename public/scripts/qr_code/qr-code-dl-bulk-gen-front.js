@@ -132,7 +132,6 @@ document.addEventListener('DOMContentLoaded', async() => {
         }
     });
 
-    // TODO: refactor duplicate code (qr-code-front)
     // Searchable list (for adding multiple topics)
     const listContainer = document.getElementById('listContainer');
     const searchInput = document.getElementById('searchInput');
@@ -140,7 +139,6 @@ document.addEventListener('DOMContentLoaded', async() => {
     let topicsSelected = [];
     const onListUpdated = (selectedItems) => {
         topicsSelected = selectedItems;
-        //console.log('selected topics: ', topicsSelected);
     };
     new SearchableList(allTopicBrondons, listContainer, searchInput, selectedItemsContainer, 'brondon.externalTitle', onListUpdated);
     // topic collection to deeplink
@@ -188,7 +186,6 @@ async function generateDeeplinks(){
         addTopicLinksElement.value = addTopicLinksStr;
 
         let launchActivityURLs = [];
-        //console.log(launchActivityLinks);
         launchActivityLinks.forEach(element => { launchActivityURLs.push(element.link); });
         const launchActivityLinksStr = launchActivityURLs.join('\n');
         launchActivityLinksElement.value = launchActivityLinksStr;
@@ -200,8 +197,9 @@ async function generateDeeplinks(){
         const ssoLinksStr = ssoURLs.join('\n');
         ssoLinksElement.value = ssoLinksStr;
 
+        let otherURLs = [];
         // clear cache deeplink
-        //https://immersifyeducation.com/deeplink?dl=%5Bimmersifyeducation%3A%2F%2Fimmersifydental%3FClearCache%5D
+        otherURLs.push("https://immersifyeducation.com/deeplink?dl=%5Bimmersifyeducation%3A%2F%2Fimmersifydental%3FClearCache%5D");
 
         // add to all URLs, so that we can generate the QR codes
         allURLs.push(...launcherSectionLinks);
@@ -209,6 +207,7 @@ async function generateDeeplinks(){
         allURLs.push(...addTopicLinks);
         allURLs.push(...launchActivityLinks);
         allURLs.push(...ssoLinks);
+        allURLs.push(...otherURLs);
 
         // Check for duplicates in allURLs by imgName and modify them to be unique
         let imgNameCount = {};
@@ -316,19 +315,6 @@ function genLaunchActivityLinks(activities, activityBrondons){
     }
     return links;
 }
-// generate discount code links
-
-// generate topic collection link
-/*function genTopicCollectionLink(topicCollection){
-    // for each topic in collection, get the topic ID, put into string (comma separated), put that into link
-    let topicIdList = [];
-    for(const topic of topicCollection){
-        topicIdList.push(topic.topicId);
-    }
-    let topicListStr = topicIdList.join();
-    let link = `https://immersifyeducation.com/deeplink?dl=%5Bimmersifyeducation%3A%2F%2Fimmersifydental%3FAddTopic%3D${topicListStr}%5D`
-    return link;
-}*/
 
 // Update the database
 async function bulkAddToDatabase(allURLs, allQRCodeURLs) {
@@ -360,7 +346,6 @@ async function bulkAddToDatabase(allURLs, allQRCodeURLs) {
 
     console.log(databaseUpdateData);
 
-    //TODO: change database structure to reflect new data being written
     const addPromises = databaseUpdateData.map(dbData => {
         return addToDatabase(
             dbData.deeplink, 
@@ -396,26 +381,18 @@ async function addToDatabase(deeplink, qrCodeUrl, areaId, areaName, topicId, top
     return resp;    
 }
 
-
 // Extract Params
 function extractIdFromUrl(url) {
-    // Create a URL object from the input URL string
     const urlObj = new URL(url);
-    
-    // Get the 'dl' parameter from the URL
     const dlParam = urlObj.searchParams.get('dl');
-    
-    // Decode the 'dl' parameter
     const decodedDlParam = decodeURIComponent(dlParam);
     
     // Extract the ID using a regular expression for either AddTopic or LaunchActivity
     const idMatch = decodedDlParam.match(/(?:AddTopic|LaunchActivity)=([a-f0-9-]+)/);
     
-    // If there's a match, return the captured group (the ID)
     if (idMatch && idMatch[1]) {
         return idMatch[1];
     }
     
-    // Return null if no ID is found
     return null;
 }
