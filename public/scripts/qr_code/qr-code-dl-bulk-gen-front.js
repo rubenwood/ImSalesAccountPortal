@@ -392,7 +392,7 @@ async function addToDatabase(deeplink, qrCodeUrl, areaId, areaName, topicId, top
         body: JSON.stringify({ deeplink, qrCodeUrl, areaId, areaName, topicId, topicName, activityId, activityName, type })
     });
     const resp = await addDLQRResponse.json();
-    //console.log(resp);
+    console.log(resp);
     return resp;    
 }
 
