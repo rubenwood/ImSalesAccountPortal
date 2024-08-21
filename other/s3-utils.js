@@ -1,5 +1,7 @@
+const express = require('express');
 const AWS = require('aws-sdk');
 const fs = require('fs');
+const s3Router = express.Router();
 
 AWS.config.update({
     region: process.env.AWS_REGION,
@@ -7,6 +9,25 @@ AWS.config.update({
     secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY
 });
 const s3 = new AWS.S3();
+
+
+// Generic call to get JSON files from S3 
+s3Router.post('/s3GetJSONFile', async (req, res) => {
+  const filepath = req.body.filepath;
+
+  try {
+      const params = {
+          Bucket: process.env.AWS_BUCKET,
+          Key: filepath
+      };
+
+      const data = await s3.getObject(params).promise();
+      res.send(JSON.parse(data.Body.toString()));
+  } catch (error) {
+      console.error('Error:', error);
+      res.status(500).send('Error fetching data from S3');
+  }
+});
 
 async function uploadToS3(buffer, filename, contentType, bucketName, acl = undefined) {
   const params = {
@@ -127,4 +148,4 @@ async function checkFileLastModified(bucket, fileKey) {
     }
 }
 
-module.exports = { uploadToS3, anyFileModifiedSince, checkFileLastModified, checkFilesLastModifiedList  };
+module.exports = { s3Router, uploadToS3, anyFileModifiedSince, checkFileLastModified, checkFilesLastModifiedList  };

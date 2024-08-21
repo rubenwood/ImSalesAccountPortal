@@ -2,7 +2,7 @@ import { canAccess } from './access-check.js';
 import { closePlayerDataModal } from './user-report-formatting.js';
 import { Login, RegisterUserEmailAddress, UpdateUserDataServer, getPlayerEmailAddr } from './PlayFabManager.js';
 import { showInsightsModal, closeInsightsModal, getTotalPlayTime, findPlayersWithMostPlayTime, findPlayersWithMostPlays, findPlayersWithMostUniqueActivitiesPlayed, findMostPlayedActivities, getUserAccessPerPlatform } from './insights.js';
-import { formatTimeToHHMMSS, formatActivityData, getAcademicAreas } from './utils.js';
+import { formatTimeToHHMMSS, formatActivityData, getAcademicAreas, fetchS3JSONFile } from './utils.js';
 import { playerProfiles, getSegmentsClicked, getPlayersInSegmentClicked } from './segments.js';
 import { fetchPlayersBySuffixList } from './suffix-front.js';
 import { populateForm, sortAndCombineData, fetchAllUsersByArea } from './academic-area.js';
@@ -29,6 +29,7 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('registerButton').addEventListener('click', RegisterUserEmailAddress);
     document.getElementById('updateButton').addEventListener('click', UpdateUserDataServer);
     document.getElementById('generatePassword').addEventListener('click', generatePass);
+
     // segments
     document.getElementById('getSegmentsButton').addEventListener('click', ()=>getSegmentsClicked(document.getElementById('segmentSelection')));
     document.getElementById('getSegmentPlayersButton').addEventListener('click', async ()=>
@@ -75,11 +76,11 @@ function toggleForms() {
     const modifyForm = document.getElementById('modify-existing-container');
 
     if (isSignUpSelected) {
-        signUpForm.style.display = 'flex'; // or 'flex' or whatever is appropriate
+        signUpForm.style.display = 'flex';
         modifyForm.style.display = 'none';
     } else {
         signUpForm.style.display = 'none';
-        modifyForm.style.display = 'flex'; // or 'flex' or whatever is appropriate
+        modifyForm.style.display = 'flex';
     }
 }
 
@@ -104,7 +105,7 @@ export function generatePass() {
 }
 
 // POPULATE DROP DOWN (ACADEMIC AREA)
-async function initializeDropdown(selectElement) {
+async function initAcademicAreaDD(selectElement) {
     try {
         const academicAreas = await getAcademicAreas();
         if (academicAreas) {
@@ -120,8 +121,29 @@ async function initializeDropdown(selectElement) {
         console.error('Error:', error);
     }
 }
-initializeDropdown(document.getElementById('academicArea'));
-initializeDropdown(document.getElementById('academicAreaUpdate'));
+initAcademicAreaDD(document.getElementById('academicArea'));
+initAcademicAreaDD(document.getElementById('academicAreaUpdate'));
+
+async function initLangStudyDD(selectElement) {
+    try {
+        const languageResp = await fetchS3JSONFile("TestFiles/OtherData/LanguageStudyData.json");
+        console.log(languageResp);
+        const languages = languageResp.languages;
+        console.log(languages);
+        if (languages) {            
+            languages.forEach(item => {
+                const option = document.createElement('option');
+                option.value = item.languageId;
+                option.textContent = item.languageId;
+                selectElement.appendChild(option);
+            });
+        }
+    } catch (error) {
+        console.error('Error:', error);
+    }
+}
+initLangStudyDD(document.getElementById('language'));
+initLangStudyDD(document.getElementById('languageUpdate'));
 
 
 // GET LAST DATABASE UPDATE DATE
@@ -353,8 +375,7 @@ export function writeDataForReport(pID, pEmail, pCreatedDate,
         "maxboardman56@highpoint.edu",
         "test@highpoint.edu"
     ];
-    if(!blacklistedEmails.includes(userExportData.email))
-    {
+    if(!blacklistedEmails.includes(userExportData.email)){
         exportData.push(userExportData);
     }
 }
@@ -392,25 +413,6 @@ export function updateIDList(playerIdList){
 
 // EXPORT REPORT
 let exportData;
-/* function createUserRow(dataToExport, activity, isFirstActivity) {
-    let userRow = {
-        email: dataToExport.email,
-        createdDate: dataToExport.createdDate,
-        lastLoginDate: dataToExport.lastLoginDate,
-        daysSinceLastLogin: dataToExport.daysSinceLastLogin,
-        daysSinceCreation: dataToExport.daysSinceCreation,
-        accountExpiryDate: dataToExport.accountExpiryDate,
-        daysToExpire: dataToExport.daysToExpire, // TODO: hide this
-        linkedAccounts: dataToExport.linkedAccounts,
-        lastLoginAndroid: dataToExport.loginData.lastLoginAndr,
-        lastLoginIOS: dataToExport.loginData.lastLoginIOS,
-        lastLoginWeb: dataToExport.loginData.lastLoginWeb,
-        totalPlays: dataToExport.totalPlays,
-        totalPlayTime: formatTimeToHHMMSS(dataToExport.totalPlayTime),
-        averageTimePerPlay: formatTimeToHHMMSS(dataToExport.averageTimePerPlay)
-    };
-    return isFirstActivity ? { ...userRow, ...activity } : activity;
-} */
 function createLoginRow(dataToExport) {
     let userRow = {
         email: dataToExport.email,

@@ -102,6 +102,7 @@ var RegisterCallback = async function (result, error){
     //const SubOverride = true;
     const VerifyEmailOverride = true;
     const AcademicArea = document.getElementById("academicArea").value;
+    const LanguageOfStudyInput = document.getElementById("language").value;
     const CanEmail = true;
     const TestAccountExpiryDate = document.getElementById("expiry").value;
     const TestAccountExpiryDateFormatted = formatDate(new Date(TestAccountExpiryDate));
@@ -120,8 +121,20 @@ var RegisterCallback = async function (result, error){
         SubscriptionTier:"gold",
         SubscriptionPeriod:"yearly"
     }
-    console.log(OtherSubDataJSON);
+    //console.log(OtherSubDataJSON);
     const otherSubDataStr = JSON.stringify(OtherSubDataJSON);
+
+    const UserProfileDataJSON = {
+        selectedAvatarId: "",
+        selectedSkinToneId: "",
+        selectedHairColourId: "",
+        languageOfStudy: LanguageOfStudyInput,
+        selectedYearId: 0,
+        selectedAbilityId: "",
+        activityTypePreference: []
+    }
+    const userProfileDataStr = JSON.stringify(UserProfileDataJSON);
+
     const LastWriteDevice = "";
 
     const data = {
@@ -133,7 +146,8 @@ var RegisterCallback = async function (result, error){
         CreatedBy,
         CreatedUpdatedReason,
         OtherSubData:otherSubDataStr,
-        LastWriteDevice
+        LastWriteDevice,
+        UserProfileData:userProfileDataStr // localisation
     };
     console.log(data);
     UpdateUserData(data);

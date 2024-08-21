@@ -224,3 +224,28 @@ export function fetchUserData(playFabID) {
         return response.json();
     });
 }
+
+export async function fetchS3JSONFile(inFilepath){
+    const url = `/S3/s3GetJSONFile`;
+    let filepath = inFilepath;
+
+    try {
+        console.log(`fetching file ${filepath}`);
+
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json', 
+            },
+            body: JSON.stringify({ filepath }),
+        });
+        
+        if (!response.ok) {
+            throw new Error('Network response was not ok');
+        }
+        const data = await response.json();
+        return data;
+    } catch (error) {
+        console.error('Error fetching data:', error);
+    }
+}
