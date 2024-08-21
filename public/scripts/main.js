@@ -11,10 +11,11 @@ import { fetchUsersByClickIDList } from './click-id-front.js';
 import { getLessonStats } from './lesson-insights.js';
 import { getSimStats } from './sim-insights.js';
 import { initializeDarkMode } from './themes/dark-mode.js';
+import { waitForJWT, imAPIGet } from './immersifyapi/immersify-api.js';
 
 const doConfetti = () => { confetti({particleCount: 100, spread: 70, origin: { y: 0.6 }}); }
 
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
     // setup dark mode toggle
     initializeDarkMode('darkModeSwitch');
 
@@ -53,6 +54,11 @@ document.addEventListener('DOMContentLoaded', () => {
     // insights modal
     document.getElementById('insightsButton').addEventListener('click', ()=>showInsightsModal(reportData));
     document.getElementById('closeInsightsButton').addEventListener('click', closeInsightsModal);
+
+    // wait for login
+    await waitForJWT();
+    initAcademicAreaDD(document.getElementById('academicArea'));
+    initAcademicAreaDD(document.getElementById('academicAreaUpdate'));
 });
 window.onload = function() {
     document.getElementById('loginModal').style.display = 'block';
@@ -107,13 +113,13 @@ export function generatePass() {
 // POPULATE DROP DOWN (ACADEMIC AREA)
 async function initAcademicAreaDD(selectElement) {
     try {
-        const academicAreas = await getAcademicAreas();
-        if (academicAreas) {
-            
-            academicAreas.forEach(item => {
+        const academicAreaCMS = await imAPIGet("areas");
+        // const academicAreas = await getAcademicAreas();
+        if (academicAreaCMS) {            
+            academicAreaCMS.forEach(item => {
                 const option = document.createElement('option');
                 option.value = item.id;
-                option.textContent = item.id;
+                option.textContent = item.slug;
                 selectElement.appendChild(option);
             });
         }
@@ -121,8 +127,8 @@ async function initAcademicAreaDD(selectElement) {
         console.error('Error:', error);
     }
 }
-initAcademicAreaDD(document.getElementById('academicArea'));
-initAcademicAreaDD(document.getElementById('academicAreaUpdate'));
+//initAcademicAreaDD(document.getElementById('academicArea'));
+//initAcademicAreaDD(document.getElementById('academicAreaUpdate'));
 
 async function initLangStudyDD(selectElement) {
     try {
