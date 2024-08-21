@@ -199,12 +199,13 @@ export async function UpdateUserDataServer(){
     const SubOverride = true;
     const VerifyEmailOverride = true;
     const AcademicArea = document.getElementById("academicAreaUpdate").value;
+    const LanguageOfStudyInput = document.getElementById("languageUpdate").value;
     const TestAccountExpiryDate = document.getElementById("expiry").value;
     const TestAccountExpiryDateFormatted = formatDate(new Date(TestAccountExpiryDate));
     const today = formatDate(new Date());
     const UpdatedBy = document.getElementById("updatedBy").value;
     const CreatedUpdatedReason = document.getElementById("updatedReason").value;
-    // TODO: new data field
+
     const OtherSubDataJSON = {
         Platform:"Other",
         Product:"immersify.gold_yearly",
@@ -214,9 +215,20 @@ export async function UpdateUserDataServer(){
         SubscriptionTier:"gold",
         SubscriptionPeriod:"yearly"
     }
-    console.log(OtherSubDataJSON);
+    //console.log(OtherSubDataJSON);
     const otherSubDataStr = JSON.stringify(OtherSubDataJSON);
 
+    const UserProfileDataJSON = {
+        selectedAvatarId: "",
+        selectedSkinToneId: "",
+        selectedHairColourId: "",
+        languageOfStudy: LanguageOfStudyInput,
+        selectedYearId: 0,
+        selectedAbilityId: "",
+        activityTypePreference: []
+    }
+    const userProfileDataStr = JSON.stringify(UserProfileDataJSON);
+    
     const data = {
         //SubOverride,
         VerifyEmailOverride,
@@ -224,7 +236,8 @@ export async function UpdateUserDataServer(){
         TestAccountExpiryDate:TestAccountExpiryDateFormatted.toString(),
         UpdatedBy,
         CreatedUpdatedReason,
-        OtherSubData:otherSubDataStr
+        OtherSubData:otherSubDataStr,
+        UserProfileData:userProfileDataStr // localisation
     };
 
     const url = `/update-user-data`;
