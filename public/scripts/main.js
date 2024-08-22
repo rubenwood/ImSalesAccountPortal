@@ -217,28 +217,35 @@ export async function generateReportBySuffixDB(){
 }
 
 // Generates a report by topic name (Database)
-export async function generateReportByTopicDB(){
+export async function generateReportByTopicDB() {
     const hasAccess = await canAccess();
-    if(!hasAccess){ return; }
+    if (!hasAccess) { return; }
 
-    const topics = document.getElementById("emailList").value.split('\n').filter(Boolean);
-    if(topics.length < 1){ return; }
-    console.log(`Generating report by topic for: ${topics}`);
+    const inputTopics = document.getElementById("emailList").value.split('\n').filter(Boolean);
+    if (inputTopics.length < 1) { return; }
+    console.log(`Generating report by topic for: ${inputTopics}`);
 
     const topicIds = await imAPIGet("topics");
     const topicBrondons = await getTopicBrondons(topicIds);
-    console.log(topicIds);
-    console.log(topicBrondons);
 
-    const playFabIdsAssigned = await imAPIGet(`structure/72d6761c-99b9-4a59-87a6-c15ddd123778/assigned/playFabUser`);
-    console.log(playFabIdsAssigned);
-    // we will take in a topic name,
-    // search for that topic name to get its id
-    // then use an API call James will make to get the PlayFabIds from his table
-    // I will then use those PlayFabIds to generate the report
+    // Test topic
 
-    // set this to the id list (1 PlayFabId per line)
-    //document.getElementById("playerIDList").value = playFabIdsAssigned;
+    // Find matching entries based on externalTitle
+    const matchingEntries = topicBrondons.filter(entry =>
+        inputTopics.some(topic => topic.trim().toLowerCase() === entry.brondon?.externalTitle.trim().toLowerCase())
+    );
+
+    console.log("Matching Entries:", matchingEntries);
+
+    // currently, can only search for 1 topic at a time
+    // TODO: modify this so we can search for multiple topics
+    // Extract playFabIds from the matching entries (assuming each topic has associated playFabIds)
+    const playFabIdsAssigned = await imAPIGet(`structure/${matchingEntries[0].topicId}/assigned/playFabUser`);
+    const playFabIdsJoined = playFabIdsAssigned.playfabIds.join('\n');
+
+    // Set this to the id list (1 PlayFabId per line)
+    document.getElementById("playerIDList").value = playFabIdsJoined;
+    generateReportByIdDB();
 }
 
 // Generate report by ID (Database)
