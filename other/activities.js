@@ -105,7 +105,7 @@ activitiesRouter.get('/get-activity-report-id', async (req, res) => {
 });
 
 // GET USER BY ACTIVITY ID
-activitiesRouter.get('/get-users-by-activity', async (req, res) => {
+activitiesRouter.get('/get-users-by-activity-id', async (req, res) => {
     const activityIds = req.query.activities ? req.query.activities.split(',') : [];
 
     if (activityIds.length === 0) {
@@ -142,7 +142,7 @@ activitiesRouter.get('/get-users-by-activity', async (req, res) => {
 
     try {
         const { rows } = await pool.query(query, queryParams);
-        const allPlayersWithActivity = new Map(activityIds.map(id => [id, new Set()]));
+        const allPlayersWithActivity = new Map(activityIds.map(id => [id, new Map()]));
 
         rows.forEach(row => {
             const playerDataRAW = row.UsageDataJSON?.Data?.PlayerData?.Value ?? undefined;
@@ -152,9 +152,17 @@ activitiesRouter.get('/get-users-by-activity', async (req, res) => {
                     if (Array.isArray(playerDataJSON.activities)) {
                         playerDataJSON.activities.forEach(activity => {
                             if (allPlayersWithActivity.has(activity.activityID)) {
-                                allPlayersWithActivity.get(activity.activityID).add({
-                                    user: row
-                                });
+                                const playersMap = allPlayersWithActivity.get(activity.activityID);
+                                if (!playersMap.has(row.PlayFabId)) {
+                                    playersMap.set(row.PlayFabId, {
+                                        user: row,
+                                        accountData: row.AccountDataJSON,
+                                    });
+                                }
+                                // Ensure activityTitle is also stored for this activityID
+                                if (!playersMap.activityTitle) {
+                                    playersMap.activityTitle = activity.activityTitle;
+                                }
                             }
                         });
                     }
@@ -165,14 +173,16 @@ activitiesRouter.get('/get-users-by-activity', async (req, res) => {
         });
 
         const outputList = [];
-        allPlayersWithActivity.forEach((players, activityId) => {
-            const totalPlays = calcTotalPlaysPerActivity(Array.from(players), activityId);
+        allPlayersWithActivity.forEach((playersMap, activityId) => {
+            const players = Array.from(playersMap.values());
+            const totalPlays = calcTotalPlaysPerActivity(players, activityId);
+
             const output = {
                 activityID: activityId,
-                activityName: activityId, // TODO: get activity title
-                uniquePlays: players.size,
+                activityName: playersMap.activityTitle, // Now correctly getting the activity title
+                uniquePlays: players.length,
                 plays: totalPlays,
-                users: Array.from(players).map(player => ({
+                users: players.map(player => ({
                     ...player.user,
                     accountData: player.accountData
                 }))
@@ -186,6 +196,111 @@ activitiesRouter.get('/get-users-by-activity', async (req, res) => {
         res.status(500).json({ error: 'Internal server error' });
     }
 });
+
+
+// TODO: Get activities by title
+activitiesRouter.get('/get-users-by-activity-title', async (req, res) => {
+    const activityTitles = req.query.activities ? req.query.activities.split(',') : [];
+
+    if (activityTitles.length === 0) {
+        return res.status(400).json({ message: 'Missing activities parameter or it is empty.' });
+    }
+
+    const query = `
+        WITH valid_usage_data AS (
+            SELECT *
+            FROM public."UsageData"
+            WHERE ("UsageDataJSON"->'Data'->'PlayerData'->>'Value') IS NOT NULL
+              AND ("UsageDataJSON"->'Data'->'PlayerData'->>'Value')::jsonb IS NOT NULL
+              AND ("UsageDataJSON"->'Data'->'PlayerData'->>'Value') NOT LIKE '%NaN%'
+        ),
+        user_activity_data AS (
+            SELECT 
+                vud.*, 
+                ad."AccountDataJSON"
+            FROM valid_usage_data vud
+            JOIN public."AccountData" ad ON vud."PlayFabId" = ad."PlayFabId"
+        )
+        SELECT *
+        FROM user_activity_data
+        WHERE EXISTS (
+            SELECT 1
+            FROM jsonb_array_elements(
+                ("UsageDataJSON"->'Data'->'PlayerData'->>'Value')::jsonb->'activities'
+            ) as activity
+            WHERE activity->>'activityTitle' = ANY($1::text[])
+        )
+    `;
+
+    const queryParams = [activityTitles];
+
+    try {
+        const { rows } = await pool.query(query, queryParams);
+        const allPlayersWithActivity = new Map();
+
+        rows.forEach(row => {
+            const playerDataRAW = row.UsageDataJSON?.Data?.PlayerData?.Value ?? undefined;
+            if (playerDataRAW) {
+                try {
+                    const playerDataJSON = JSON.parse(playerDataRAW);
+                    if (Array.isArray(playerDataJSON.activities)) {
+                        playerDataJSON.activities.forEach(activity => {
+                            const title = activity.activityTitle;
+                            const id = activity.activityID;
+
+                            if (activityTitles.includes(title)) {  // Exact match only
+                                const key = `${title}-${id}`; // Composite key for uniqueness
+
+                                if (!allPlayersWithActivity.has(key)) {
+                                    allPlayersWithActivity.set(key, {
+                                        activityID: id,
+                                        activityTitle: title,
+                                        players: new Map(),
+                                    });
+                                }
+
+                                const activityData = allPlayersWithActivity.get(key);
+                                const playersMap = activityData.players;
+
+                                if (!playersMap.has(row.PlayFabId)) {
+                                    playersMap.set(row.PlayFabId, {
+                                        user: row,
+                                        accountData: row.AccountDataJSON,
+                                    });
+                                }
+                            }
+                        });
+                    }
+                } catch (err) {
+                    console.error('Error parsing JSON:', err);
+                }
+            }
+        });
+
+        const outputList = [];
+        allPlayersWithActivity.forEach(activityData => {
+            const players = Array.from(activityData.players.values());
+            const totalPlays = calcTotalPlaysPerActivity(players, activityData.activityID);
+            const output = {
+                activityID: activityData.activityID,
+                activityName: activityData.activityTitle,
+                uniquePlays: players.length,
+                plays: totalPlays,
+                users: players.map(player => ({
+                    ...player.user,
+                    accountData: player.accountData,
+                }))
+            };
+            outputList.push(output);
+        });
+
+        res.json(outputList);
+    } catch (err) {
+        console.error('Error fetching usage data from db:', err);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
 
 function calcTotalPlaysPerActivity(allPlayersWithActivity, activityId) {
     let totalPlays = 0;

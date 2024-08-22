@@ -339,6 +339,43 @@ body.dark-mode a:hover {
     color: #1E90FF; /* Dodger blue for hover */
 }
 
+/* Dark Mode for modals */
+body.dark-mode .modal {
+    background-color: rgba(0, 0, 0, 0.8); /* Darken the background overlay */
+}
+
+body.dark-mode .modal-content {
+    background-color: #1e1e1e; /* Dark background for modal content */
+    color: white;
+    border: 1px solid #444444; /* Border to differentiate content */
+}
+
+/* Dark mode for the modal close button */
+body.dark-mode .modal-content .close {
+    color: #ffffff; /* White close button */
+}
+
+body.dark-mode .modal-content .close:hover,
+body.dark-mode .modal-content .close:focus {
+    color: #0879da; /* Light red on hover/focus */
+}
+
+/* Dark mode for lists inside modals */
+body.dark-mode .modal-content ul {
+    background-color: #333333; /* Darker background for lists */
+    color: white;
+    border: 1px solid #444444;
+}
+
+body.dark-mode .modal-content ul li {
+    background-color: #1e1e1e;
+    color: white;
+    border-bottom: 1px solid #444444;
+}
+
+body.dark-mode .modal-content ul li:hover {
+    background-color: #555555; /* Highlight list item on hover */
+}
 
 /* Toggle switch styles */
 .dark-mode-toggle {

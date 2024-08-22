@@ -2,6 +2,7 @@ import {canAccess} from './access-check.js';
 import {Login} from './PlayFabManager.js';
 import {formatTimeToHHMMSS,updateButtonText} from './utils.js';
 import {showActivitiesInsightsModal} from './activities-insights.js';
+import { initializeDarkMode } from './themes/dark-mode.js';
 
 let countryNameMap = {};
 
@@ -20,9 +21,13 @@ function loadCountryNames() {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
+    // setup dark mode toggle
+    initializeDarkMode('darkModeSwitch');
+    
     loadCountryNames().then(() => {
         document.getElementById('loginButton').addEventListener('click', Login);
-        document.getElementById('generateByActivityIdButton').addEventListener('click', fetchActivityReport);
+        document.getElementById('generateByActivityTitleButton').addEventListener('click', fetchActivityReportByTitle);
+        document.getElementById('generateByActivityIdButton').addEventListener('click', fetchActivityReportById);
         document.getElementById('genActivityInsightsButton').addEventListener('click', ()=>showActivitiesInsightsModal('test'));
         document.getElementById('genReportByActivityIdButton').addEventListener('click', ()=>exportActivityReport(dataToExport));
     });
@@ -32,7 +37,7 @@ window.onload = function() {
 };
 
 let dataToExport;
-async function fetchActivityReport(){
+async function fetchActivityReportById(){
     let hasAccess = await canAccess();
     if(!hasAccess){ return; }
 
@@ -42,16 +47,47 @@ async function fetchActivityReport(){
     tickUpdater();
     const tickInterval = setInterval(tickUpdater, 500);
 
-    let activityIdsText = document.getElementById("activityIDList").value;
+    let activityIdsText = document.getElementById("activityList").value;
     let activityIdsList = activityIdsText.split('\n').filter(Boolean);
-    const resp = await fetch(`/activities/get-users-by-activity?activities=${activityIdsList}`);
+    const resp = await fetch(`/activities/get-users-by-activity-id?activities=${activityIdsList}`);
     let output = await resp.json();
     console.log(output);
 
     let reportBody = document.getElementById("reportTableBody");
     reportBody.innerHTML = '';
+    processReportOutput(output, reportBody);
+    
+    clearInterval(tickInterval); // Stop the ticking animation
+    button.value = "Search by Activity ID"; 
+}
 
+async function fetchActivityReportByTitle(){
+    let hasAccess = await canAccess();
+    if(!hasAccess){ return; }
+
+    // update the button text, so we can see something is happening
+    const button = document.getElementById('generateByActivityTitleButton');
+    const tickUpdater = updateButtonText(button, "Search by Activity Title", 3);
+    tickUpdater();
+    const tickInterval = setInterval(tickUpdater, 500);
+
+    let activityIdsText = document.getElementById("activityList").value;
+    let activityTitleList = activityIdsText.split('\n').filter(Boolean);
+    const resp = await fetch(`/activities/get-users-by-activity-title?activities=${activityTitleList}`);
+    let output = await resp.json();
+    console.log(output);
+
+    let reportBody = document.getElementById("reportTableBody");
+    reportBody.innerHTML = '';
+    processReportOutput(output, reportBody);
+    
+    clearInterval(tickInterval); // Stop the ticking animation
+    button.value = "Search by Activity Title"; 
+}
+
+function processReportOutput(output, reportBody){
     output.forEach(element => {
+        console.log(element);
         let totalPlayTimerPerActivity = formatTimeToHHMMSS(calcTotalPlayTime(element, element.activityID));
 
         let row = reportBody.insertRow();
@@ -73,9 +109,8 @@ async function fetchActivityReport(){
         locsButton.type = 'button';
         locsButton.value = 'Locations';
         locsButton.textContent = 'Show Locations';
-        locsButton.onclick = () => showLocationsModal(element.users);
+        locsButton.onclick = () => showLocationsModal(element.users); // get locations from users
         cellLocations.appendChild(locsButton);
-        element.locations = 'Locations will go here';
 
         let cellUsers = row.insertCell(6);
         let usersButton = document.createElement('input');
@@ -84,14 +119,9 @@ async function fetchActivityReport(){
         usersButton.textContent = 'Show Users';
         usersButton.onclick = () => showUsersModal(element.users);
         cellUsers.appendChild(usersButton);
-        element.users = 'Users will go here';
     });
 
     dataToExport = output;
-    console.log(dataToExport);
-    
-    clearInterval(tickInterval); // Stop the ticking animation
-    button.value = "Search by Activity ID"; 
 }
 
 function calcTotalPlayTime(element, activityID){
@@ -119,7 +149,7 @@ function calcTotalPlayTime(element, activityID){
 function showLocationsModal(users) {
     const modal = document.getElementById('locModal');
     const locList = document.getElementById('modalLocList');
-    const span = document.getElementsByClassName("close")[0];
+    const closeButton = modal.querySelector('.close');
 
     locList.innerHTML = '';
     let countries = {};
@@ -157,7 +187,7 @@ function showLocationsModal(users) {
 
     // Modal
     modal.style.display = "block";
-    span.onclick = function () {
+    closeButton.onclick = function () {
         modal.style.display = "none";
     }
     window.onclick = function (event) {
@@ -170,7 +200,7 @@ function showLocationsModal(users) {
 function showUsersModal(users){
     const modal = document.getElementById('userModal');
     const userList = document.getElementById('modalUserList');
-    const span = document.getElementsByClassName("close")[0];
+    const closeButton = modal.querySelector('.close');
 
     userList.innerHTML = '';
     users.forEach(user => {
@@ -192,7 +222,7 @@ function showUsersModal(users){
 
     // Modal
     modal.style.display = "block";
-    span.onclick = function() {
+    closeButton.onclick = function() {
         modal.style.display = "none";
     }
     window.onclick = function(event) {

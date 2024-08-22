@@ -33,9 +33,16 @@ export function showInsightsModal(reportData) {
     //content += totalPlayTimeBetweenDates;
 
     document.getElementById('insightsContent').innerHTML = content;
-    document.getElementById('insightsModal').style.display = 'block';
+    const insightsModel = document.getElementById('insightsModal');
+    insightsModel.style.display = 'block';
 
     setupInsightTabs(reportData);
+
+    window.onclick = function(event) {
+        if (event.target == insightsModel) {
+            closeInsightsModal();
+        }
+    }
 }
 export function closeInsightsModal() {
     document.getElementById('insightsModal').style.display = 'none';

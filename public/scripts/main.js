@@ -7,11 +7,11 @@ import { playerProfiles, getSegmentsClicked, getPlayersInSegmentClicked } from '
 import { fetchPlayersBySuffixList } from './suffix-front.js';
 import { populateForm, sortAndCombineData, fetchAllUsersByArea } from './academic-area.js';
 import { fetchUsersByID, fetchUsersByEmail } from './db/db-front.js';
-import { fetchUsersByClickIDList } from './click-id-front.js';
+//import { fetchUsersByClickIDList } from './click-id-front.js';
 import { getLessonStats } from './lesson-insights.js';
 import { getSimStats } from './sim-insights.js';
 import { initializeDarkMode } from './themes/dark-mode.js';
-import { waitForJWT, imAPIGet } from './immersifyapi/immersify-api.js';
+import { waitForJWT, imAPIGet, getTopicBrondons } from './immersifyapi/immersify-api.js';
 
 const doConfetti = () => { confetti({particleCount: 100, spread: 70, origin: { y: 0.6 }}); }
 
@@ -46,8 +46,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     document.getElementById('generateReportButton').addEventListener('click', generateReportByEmailDB);
     document.getElementById('generateReportByIdButton').addEventListener('click', generateReportByIdDB);
     document.getElementById('generateReportBySuffixButton').addEventListener('click', generateReportBySuffixDB);
+    document.getElementById('generateReportByTopicButton').addEventListener('click', generateReportByTopicDB);
     document.getElementById('generateReportByAreaButton').addEventListener('click', fetchAllUsersByArea);
-    document.getElementById('generateReportByClickIDButton').addEventListener('click', fetchUsersByClickIDList);
+    //document.getElementById('generateReportByClickIDButton').addEventListener('click', fetchUsersByClickIDList);
     
     document.getElementById('exportReportButton').addEventListener('click', exportToExcel);
     document.getElementById('closePlayerDataModal').addEventListener('click', closePlayerDataModal);    
@@ -127,15 +128,13 @@ async function initAcademicAreaDD(selectElement) {
         console.error('Error:', error);
     }
 }
-//initAcademicAreaDD(document.getElementById('academicArea'));
-//initAcademicAreaDD(document.getElementById('academicAreaUpdate'));
 
 async function initLangStudyDD(selectElement) {
     try {
         const languageResp = await fetchS3JSONFile("TestFiles/OtherData/LanguageStudyData.json");
-        console.log(languageResp);
+        //console.log(languageResp);
         const languages = languageResp.languages;
-        console.log(languages);
+        //console.log(languages);
         if (languages) {            
             languages.forEach(item => {
                 const option = document.createElement('option');
@@ -173,8 +172,6 @@ async function getDatabaseLastUpdated() {
 getDatabaseLastUpdated();
 
 // GENERATE REPORT
-// Helper function to delay execution
-//const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
 export let reportData = [];
 
 // Generate report by email suffix (Database)
@@ -217,6 +214,31 @@ export async function generateReportBySuffixDB(){
         resetButtonTexts();
         doConfetti();
     });
+}
+
+// Generates a report by topic name (Database)
+export async function generateReportByTopicDB(){
+    const hasAccess = await canAccess();
+    if(!hasAccess){ return; }
+
+    const topics = document.getElementById("emailList").value.split('\n').filter(Boolean);
+    if(topics.length < 1){ return; }
+    console.log(`Generating report by topic for: ${topics}`);
+
+    const topicIds = await imAPIGet("topics");
+    const topicBrondons = await getTopicBrondons(topicIds);
+    console.log(topicIds);
+    console.log(topicBrondons);
+
+    const playFabIdsAssigned = await imAPIGet(`structure/72d6761c-99b9-4a59-87a6-c15ddd123778/assigned/playFabUser`);
+    console.log(playFabIdsAssigned);
+    // we will take in a topic name,
+    // search for that topic name to get its id
+    // then use an API call James will make to get the PlayFabIds from his table
+    // I will then use those PlayFabIds to generate the report
+
+    // set this to the id list (1 PlayFabId per line)
+    //document.getElementById("playerIDList").value = playFabIdsAssigned;
 }
 
 // Generate report by ID (Database)
