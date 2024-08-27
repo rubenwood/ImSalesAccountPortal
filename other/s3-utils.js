@@ -16,18 +16,29 @@ s3Router.post('/s3GetJSONFile', async (req, res) => {
   const filepath = req.body.filepath;
 
   try {
-      const params = {
-          Bucket: process.env.AWS_BUCKET,
-          Key: filepath
-      };
-
-      const data = await s3.getObject(params).promise();
-      res.send(JSON.parse(data.Body.toString()));
+    const data = await getS3JSONFile(filepath);
+    res.send(data);
   } catch (error) {
-      console.error('Error:', error);
-      res.status(500).send('Error fetching data from S3');
+    console.error('Error:', error);
+    res.status(500).send('Error fetching data from S3');
   }
 });
+async function getS3JSONFile(filepath) {
+  const params = {
+    Bucket: process.env.AWS_BUCKET,
+    Key: filepath,
+  };
+
+  try {
+    const data = await s3.getObject(params).promise();
+    const jsonOuput = JSON.parse(data.Body.toString());
+    //console.log(jsonOuput);
+    return jsonOuput;
+  } catch (error) {
+    console.error('Error fetching data from S3:', error);
+    throw new Error('Error fetching data from S3');
+  }
+}
 
 async function uploadToS3(buffer, filename, contentType, bucketName, acl = undefined) {
   const params = {
