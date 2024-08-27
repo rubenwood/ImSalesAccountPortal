@@ -116,26 +116,26 @@ async function generateReportByEmailSuffixDB(suffixes, exportReport) {
         let user = row.AccountDataJSON;
         suffixes.forEach(suffix => {
             let checkContact = true;
-
+    
             if (Array.isArray(user.LinkedAccounts) && user.LinkedAccounts.length > 0) {
                 user.LinkedAccounts.forEach(account => {
                     // if the user has PlayFab or OpenIdConnect account, then don't check contact address
                     if(account.Platform == "PlayFab" || account.Platform == "OpenIdConnect"){ checkContact = false; }
-
-                    if (account.Platform == "PlayFab" && account.Email && account.Email.includes(suffix)){// && !encounteredEmails.has(account.Email)) {
+    
+                    if (account.Platform == "PlayFab" && account.Email && isValidSuffix(account.Email, suffix)) {
                         encounteredEmails.add(account.Email);
                         matchedUsersMap.set(user.PlayerId, user);
                         checkContact = false;
-                    } else if (account.Platform == "OpenIdConnect" && account.PlatformUserId.includes(suffixMappings[suffix])) {
+                    } else if (account.Platform == "OpenIdConnect" && isValidSuffix(account.PlatformUserId, suffixMappings[suffix])) {
                         matchedUsersMap.set(user.PlayerId, user);
                         checkContact = false;
                     }
                 });
             }
-
+    
             if (checkContact && Array.isArray(user.ContactEmailAddresses) && !matchedUsersMap.has(user.PlayerId)) {
                 user.ContactEmailAddresses.forEach(contact => {
-                    if (contact.EmailAddress && contact.EmailAddress.includes(suffix) && 
+                    if (contact.EmailAddress && isValidSuffix(contact.EmailAddress, suffix) && 
                     !encounteredEmails.has(contact.EmailAddress)) {
                         encounteredEmails.add(contact.EmailAddress);
                         matchedUsersMap.set(user.PlayerId, user);
@@ -161,6 +161,27 @@ async function generateReportByEmailSuffixDB(suffixes, exportReport) {
     }
 
     return output;
+}
+
+function isValidSuffix(email, suffix) {
+    const parts = email.split('@');
+    if (parts.length !== 2) return false;
+    const domain = parts[1];
+    
+    if (domain === suffix) return true;
+    
+    const domainParts = domain.split('.');
+    const suffixParts = suffix.split('.');
+    
+    if (domainParts.length < suffixParts.length) return false;
+    
+    for (let i = 1; i <= suffixParts.length; i++) {
+        if (domainParts[domainParts.length - i] !== suffixParts[suffixParts.length - i]) {
+            return false;
+        }
+    }
+    
+    return true;
 }
 
 // function to generate out a report (excel sheet)
@@ -257,6 +278,10 @@ function setupDataForExport(sortedData){
         }
         // remove certain emails from the report data
         let blacklistedEmails = [
+            "maxboardmanhdhd@highpoint.edu",
+            "testkdbrnfidnn@highpoint.edu",
+            "ndjdjfhbdj@highpoint.edu",
+            "testhsu@highpoint.edu",
             "maxtest@highpoint.edu",
             "maxhputest2@highpoint.edu",
             "hputest33@highpoint.edu",
