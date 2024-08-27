@@ -165,24 +165,18 @@ async function generateReportByEmailSuffixDB(suffixes, exportReport) {
 
 function isValidSuffix(email, suffix) {
     const parts = email.split('@');
-    if (parts.length !== 2) return false;
-    const domain = parts[1];
+    if (parts.length !== 2) return false; // Ensure there's only one '@'
+
+    const domain = parts[1].toLowerCase(); // Convert domain to lowercase
+    const normalizedSuffix = suffix.toLowerCase(); // Normalize suffix
+
+    // Construct a regex pattern to check if the suffix is a valid segment in the domain
+    // This regex allows for dots before and after the suffix, ensuring the suffix is a distinct segment
+    const pattern = new RegExp(`(^|\\.)${normalizedSuffix}(\\.|$)`);
     
-    if (domain === suffix) return true;
-    
-    const domainParts = domain.split('.');
-    const suffixParts = suffix.split('.');
-    
-    if (domainParts.length < suffixParts.length) return false;
-    
-    for (let i = 1; i <= suffixParts.length; i++) {
-        if (domainParts[domainParts.length - i] !== suffixParts[suffixParts.length - i]) {
-            return false;
-        }
-    }
-    
-    return true;
+    return pattern.test(domain);
 }
+
 
 // function to generate out a report (excel sheet)
 // add a url param to end point to notify report generation
