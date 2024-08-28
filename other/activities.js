@@ -132,8 +132,7 @@ activitiesRouter.get('/get-users-by-activity-id', async (req, res) => {
         WHERE EXISTS (
             SELECT 1
             FROM jsonb_array_elements(
-                ("UsageDataJSON"->'Data'->'PlayerData'->>'Value')::jsonb->'activities'
-            ) as activity
+                ("UsageDataJSON"->'Data'->'PlayerData'->>'Value')::jsonb->'activities') as activity
             WHERE activity->>'activityID' = ANY($1::text[])
         )
     `;
@@ -158,8 +157,7 @@ activitiesRouter.get('/get-users-by-activity-id', async (req, res) => {
         WHERE EXISTS (
             SELECT 1
             FROM jsonb_array_elements(
-                ("UsageDataJSON"->'Data'->'PlayerDataNewLauncher'->>'Value')::jsonb->'activities'
-            ) as activity
+                ("UsageDataJSON"->'Data'->'PlayerDataNewLauncher'->>'Value')::jsonb->'activities') as activity
             WHERE activity->>'activityID' = ANY($1::text[])
         )
     `;
@@ -251,75 +249,116 @@ activitiesRouter.get('/get-users-by-activity-title', async (req, res) => {
         return res.status(400).json({ message: 'Missing activities parameter or it is empty.' });
     }
 
-    const query1 = `
-        WITH valid_usage_data AS (
-            SELECT *
-            FROM public."UsageData"
+    const queryToFetchIDs = `
+        WITH all_activities AS (
+            SELECT 
+                activity->>'activityID' AS "activityID",
+                activity->>'activityTitle' AS "activityTitle"
+            FROM public."UsageData", jsonb_array_elements(("UsageDataJSON"->'Data'->'PlayerData'->>'Value')::jsonb->'activities') as activity
             WHERE ("UsageDataJSON"->'Data'->'PlayerData'->>'Value') IS NOT NULL
-              AND ("UsageDataJSON"->'Data'->'PlayerData'->>'Value')::jsonb IS NOT NULL
-              AND ("UsageDataJSON"->'Data'->'PlayerData'->>'Value') NOT LIKE '%NaN%'
-        ),
-        user_activity_data AS (
+            AND ("UsageDataJSON"->'Data'->'PlayerData'->>'Value') NOT LIKE '%NaN%'
+
+            UNION ALL
+
             SELECT 
-                vud.*, 
-                ad."AccountDataJSON"
-            FROM valid_usage_data vud
-            JOIN public."AccountData" ad ON vud."PlayFabId" = ad."PlayFabId"
-        )
-        SELECT *
-        FROM user_activity_data
-        WHERE EXISTS (
-            SELECT 1
-            FROM jsonb_array_elements(
-                ("UsageDataJSON"->'Data'->'PlayerData'->>'Value')::jsonb->'activities'
-            ) as activity
-            WHERE activity->>'activityTitle' = ANY($1::text[])
-        )
-    `;
-    const query2 = `
-        WITH valid_usage_data AS (
-            SELECT *
-            FROM public."UsageData"
+                activity->>'activityID' AS "activityID",
+                activity->>'activityTitle' AS "activityTitle"
+            FROM public."UsageData", jsonb_array_elements(("UsageDataJSON"->'Data'->'PlayerDataNewLauncher'->>'Value')::jsonb->'activities') as activity
             WHERE ("UsageDataJSON"->'Data'->'PlayerDataNewLauncher'->>'Value') IS NOT NULL
-              AND ("UsageDataJSON"->'Data'->'PlayerDataNewLauncher'->>'Value')::jsonb IS NOT NULL
-              AND ("UsageDataJSON"->'Data'->'PlayerDataNewLauncher'->>'Value') NOT LIKE '%NaN%'
-        ),
-        user_activity_data AS (
-            SELECT 
-                vud.*, 
-                ad."AccountDataJSON"
-            FROM valid_usage_data vud
-            JOIN public."AccountData" ad ON vud."PlayFabId" = ad."PlayFabId"
+            AND ("UsageDataJSON"->'Data'->'PlayerDataNewLauncher'->>'Value') NOT LIKE '%NaN%'
         )
-        SELECT *
-        FROM user_activity_data
-        WHERE EXISTS (
-            SELECT 1
-            FROM jsonb_array_elements(
-                ("UsageDataJSON"->'Data'->'PlayerDataNewLauncher'->>'Value')::jsonb->'activities'
-            ) as activity
-            WHERE activity->>'activityTitle' = ANY($1::text[])
-        )
+        SELECT DISTINCT "activityID"
+        FROM all_activities
+        WHERE "activityTitle" = ANY($1::text[]);
     `;
 
-    const queryParams = [activityTitles];
+    const createJsonbTryCastFunction = `
+        CREATE OR REPLACE FUNCTION jsonb_try_cast(text)
+        RETURNS jsonb AS $$
+        BEGIN
+            RETURN $1::jsonb;
+        EXCEPTION WHEN OTHERS THEN
+            RETURN NULL;
+        END;
+        $$ LANGUAGE plpgsql;
+    `;
+
+    const queryToFetchUsers = `
+        WITH valid_usage_data AS (
+            SELECT *
+            FROM public."UsageData"
+            WHERE jsonb_try_cast("UsageDataJSON"->'Data'->'PlayerData'->>'Value') IS NOT NULL
+            AND ("UsageDataJSON"->'Data'->'PlayerData'->>'Value') NOT LIKE '%NaN%'
+            
+            UNION ALL
+            
+            SELECT *
+            FROM public."UsageData"
+            WHERE jsonb_try_cast("UsageDataJSON"->'Data'->'PlayerDataNewLauncher'->>'Value') IS NOT NULL
+            AND ("UsageDataJSON"->'Data'->'PlayerDataNewLauncher'->>'Value') NOT LIKE '%NaN%'
+        ),
+        user_activity_data AS (
+            SELECT 
+                vud.*, 
+                ad."AccountDataJSON"
+            FROM valid_usage_data vud
+            JOIN public."AccountData" ad ON vud."PlayFabId" = ad."PlayFabId"
+        )
+        SELECT *
+        FROM user_activity_data
+        WHERE EXISTS (
+            SELECT 1
+            FROM (
+                SELECT activity
+                FROM jsonb_array_elements(
+                    COALESCE(
+                        jsonb_try_cast("UsageDataJSON"->'Data'->'PlayerData'->>'Value')->'activities',
+                        '[]'::jsonb
+                    )
+                ) AS activity
+                WHERE activity->>'activityID' = ANY($1::text[])
+            ) valid_activity_data
+            
+            UNION ALL
+            
+            SELECT 1
+            FROM (
+                SELECT activity
+                FROM jsonb_array_elements(
+                    COALESCE(
+                        jsonb_try_cast("UsageDataJSON"->'Data'->'PlayerDataNewLauncher'->>'Value')->'activities',
+                        '[]'::jsonb
+                    )
+                ) AS activity
+                WHERE activity->>'activityID' = ANY($1::text[])
+            ) valid_activity_data
+        );
+    `;
 
     try {
-        const [result1, result2] = await Promise.all([pool.query(query1, queryParams), pool.query(query2, queryParams)]);
-        const rows1 = result1.rows;
-        const rows2 = result2.rows;
-        const combinedRows = [...rows1, ...rows2];
+        // Create the jsonb_try_cast function if it doesn't exist
+        await pool.query(createJsonbTryCastFunction);
+
+        // Query to get ids by title
+        const resultIDs = await pool.query(queryToFetchIDs, [activityTitles]);
+        const activityIds = resultIDs.rows.map(row => row.activityID);
+        if (activityIds.length === 0) {
+            return res.json([]); // No activities found
+        }
+
+        // Uses activity ids to get the users who have played an activity with that id
+        const resultUsers = await pool.query(queryToFetchUsers, [activityIds]);
+
+        // Process the combined results
         const allPlayersWithActivity = new Map();
 
-        combinedRows.forEach(row => {
+        resultUsers.rows.forEach(row => {
             const playerDataRAW = row.UsageDataJSON?.Data?.PlayerData?.Value ?? undefined;
             const playerDataNewLauncherRAW = row.UsageDataJSON?.Data?.PlayerDataNewLauncher?.Value ?? undefined;
-            processPlayerDataTitles(playerDataRAW, activityTitles, row, allPlayersWithActivity);
-            processPlayerDataTitles(playerDataNewLauncherRAW, activityTitles, row, allPlayersWithActivity);
+
+            processPlayerDataIDs(playerDataRAW, activityIds, row, allPlayersWithActivity);
+            processPlayerDataIDs(playerDataNewLauncherRAW, activityIds, row, allPlayersWithActivity);
         });
-        
-        const firstElement = Array.from(allPlayersWithActivity.values())[0];
-        console.log("Number of players in the first element:", firstElement.players.size);
 
         const outputList = [];
         allPlayersWithActivity.forEach(activityData => {
@@ -344,6 +383,42 @@ activitiesRouter.get('/get-users-by-activity-title', async (req, res) => {
         res.status(500).json({ error: 'Internal server error' });
     }
 });
+function processPlayerDataIDs(playerDataInput, activityIdsInput, rowInput, allPlayersWithActivityInput){
+    if (playerDataInput == undefined) { return; }
+
+    try {
+        const playerDataJSON = JSON.parse(playerDataInput);
+        if (Array.isArray(playerDataJSON.activities)) {
+            playerDataJSON.activities.forEach(activity => {
+                const id = activity.activityID;
+
+                if (activityIdsInput.includes(id)) {
+                    const key = `${id}`; // Use ID as the key
+
+                    if (!allPlayersWithActivityInput.has(key)) {
+                        allPlayersWithActivityInput.set(key, {
+                            activityID: id,
+                            activityTitle: activity.activityTitle || "", // Handle empty titles
+                            players: new Map(),
+                        });
+                    }
+
+                    const activityData = allPlayersWithActivityInput.get(key);
+                    const playersMap = activityData.players;
+
+                    if (!playersMap.has(rowInput.PlayFabId)) {
+                        playersMap.set(rowInput.PlayFabId, {
+                            user: rowInput,
+                            accountData: rowInput.AccountDataJSON,
+                        });
+                    }
+                }
+            });
+        }
+    } catch (err) {
+        console.error('Error parsing JSON:', err);
+    }
+}
 function processPlayerDataTitles(playerDataInput, activityTitlesInput, rowInput, allPlayersWithActivityInput){
     if (playerDataInput == undefined) { return; }
 
