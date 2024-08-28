@@ -393,7 +393,7 @@ function processPlayerDataIDs(playerDataInput, activityIdsInput, rowInput, allPl
                 const id = activity.activityID;
 
                 if (activityIdsInput.includes(id)) {
-                    const key = `${id}`; // Use ID as the key
+                    const key = `${id}-${activity.activityTitle}`; // Use ID as the key
 
                     if (!allPlayersWithActivityInput.has(key)) {
                         allPlayersWithActivityInput.set(key, {
