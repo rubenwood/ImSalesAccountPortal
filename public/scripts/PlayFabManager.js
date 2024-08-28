@@ -187,7 +187,7 @@ var UpdateUserDataCallback = function (result, error){
 
 // UPDATE USER DATA (SERVER SIDE)
 export async function UpdateUserDataServer(){
-    const resultOutput = document.getElementById("updateResultOutput").value;
+    let resultOutput = document.getElementById("updateResultOutput").value;
     resultOutput = '';
     const email =  document.getElementById("emailAddressUpdate").value;
     const userAccInfoResp = await fetchUserAccInfoByEmail(email); // input email address, get playfabID
@@ -200,7 +200,7 @@ export async function UpdateUserDataServer(){
     const VerifyEmailOverride = true;
     const AcademicArea = document.getElementById("academicAreaUpdate").value;
     const LanguageOfStudyInput = document.getElementById("languageUpdate").value;
-    const TestAccountExpiryDate = document.getElementById("expiry").value;
+    const TestAccountExpiryDate = document.getElementById("expiryUpdate").value;
     const TestAccountExpiryDateFormatted = formatDate(new Date(TestAccountExpiryDate));
     const today = formatDate(new Date());
     const UpdatedBy = document.getElementById("updatedBy").value;
