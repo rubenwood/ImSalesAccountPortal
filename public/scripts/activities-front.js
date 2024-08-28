@@ -37,7 +37,7 @@ window.onload = function() {
 };
 
 let dataToExport;
-async function fetchActivityReportById(){
+async function fetchActivityReportById() {
     let hasAccess = await canAccess();
     if(!hasAccess){ return; }
 
@@ -50,12 +50,12 @@ async function fetchActivityReportById(){
     let activityIdsText = document.getElementById("activityList").value;
     let activityIdsList = activityIdsText.split('\n').filter(Boolean);
     const resp = await fetch(`/activities/get-users-by-activity-id?activities=${activityIdsList}`);
-    let output = await resp.json();
-    console.log(output);
+    let dbOutput = await resp.json();
+    console.log(dbOutput);
 
     let reportBody = document.getElementById("reportTableBody");
     reportBody.innerHTML = '';
-    processReportOutput(output, reportBody);
+    processReportOutput(dbOutput, reportBody);
     
     clearInterval(tickInterval); // Stop the ticking animation
     button.value = "Search by Activity ID"; 
@@ -74,19 +74,19 @@ async function fetchActivityReportByTitle(){
     let activityIdsText = document.getElementById("activityList").value;
     let activityTitleList = activityIdsText.split('\n').filter(Boolean);
     const resp = await fetch(`/activities/get-users-by-activity-title?activities=${activityTitleList}`);
-    let output = await resp.json();
-    console.log(output);
+    const dbOutput = await resp.json();
+    console.log(dbOutput);
 
     let reportBody = document.getElementById("reportTableBody");
     reportBody.innerHTML = '';
-    processReportOutput(output, reportBody);
+    processReportOutput(dbOutput, reportBody);
     
     clearInterval(tickInterval); // Stop the ticking animation
     button.value = "Search by Activity Title"; 
 }
 
-function processReportOutput(output, reportBody){
-    output.forEach(element => {
+function processReportOutput(dbOutput, reportBody) {
+    dbOutput.forEach(element => {
         console.log(element);
         let totalPlayTimerPerActivity = formatTimeToHHMMSS(calcTotalPlayTime(element, element.activityID));
 
@@ -121,7 +121,7 @@ function processReportOutput(output, reportBody){
         cellUsers.appendChild(usersButton);
     });
 
-    dataToExport = output;
+    dataToExport = dbOutput;
 }
 
 function calcTotalPlayTime(element, activityID){
@@ -130,19 +130,32 @@ function calcTotalPlayTime(element, activityID){
 
     users.forEach(user =>{
         let playerDataRAW =  user.UsageDataJSON?.Data?.PlayerData?.Value ?? undefined;
-        let playerData = JSON.parse(playerDataRAW);
-        let playerActivities = playerData.activities;
-        playerActivities.forEach(activity =>{
-            if(activity.activityID == activityID){
-                let plays = activity.plays;
-                let playTime = 0;
-                plays.forEach(play => playTime += play.sessionTime);
-                totalPlayTime += playTime;
-            }
-        })
+        let playerDataNewLauncherRAW =  user.UsageDataJSON?.Data?.PlayerDataNewLauncher?.Value ?? undefined;
+        totalPlayTime += processPlayTime(playerDataRAW, activityID);
+        totalPlayTime += processPlayTime(playerDataNewLauncherRAW, activityID);
     });
 
     console.log("Total playTime for ", activityID, " is ", totalPlayTime);
+    return totalPlayTime;
+}
+function processPlayTime(inputPlayerData, activityID) {
+    if (inputPlayerData === undefined) { return 0; }
+
+    let totalPlayTime = 0;
+    try {
+        let playerData = JSON.parse(inputPlayerData);
+        let playerActivities = playerData.activities;
+
+        playerActivities.forEach(activity => {
+            if (activity.activityID == activityID) {
+                let plays = activity.plays;
+                plays.forEach(play => totalPlayTime += play.sessionTime);
+            }
+        });
+    } catch (err) {
+        console.error('Error parsing player data:', err);
+    }
+
     return totalPlayTime;
 }
 
@@ -154,6 +167,7 @@ function showLocationsModal(users) {
     locList.innerHTML = '';
     let countries = {};
 
+    // Populate the countries object with user counts
     users.forEach(user => {
         let lastLoginLoc = user.AccountDataJSON.Locations?.LastLogin;
         if (lastLoginLoc && lastLoginLoc.CountryCode) {
@@ -167,20 +181,23 @@ function showLocationsModal(users) {
     });
 
     // Calculate total count
-    let totalUsers = 0;
-    Object.entries(countries).forEach(([country, { count }]) => {
-        totalUsers += count;
-        let countryName = countryNameMap[country.toUpperCase()] || country;
-        let listItem = document.createElement('li');
-        listItem.textContent = `${countryName}: ${count}`;
-        locList.appendChild(listItem);
-    });
+    let totalUsers = Object.values(countries).reduce((sum, { count }) => sum + count, 0);
 
     // Add total count to the modal
     let totalItem = document.createElement('li');
     totalItem.textContent = `Total Users: ${totalUsers}`;
     totalItem.style.fontWeight = 'bold';
     locList.appendChild(totalItem);
+
+    // Sort countries by count (descending) and add them to the modal
+    Object.values(countries)
+        .sort((a, b) => b.count - a.count)
+        .forEach(({ country, count }) => {
+            let countryName = countryNameMap[country.toUpperCase()] || country;
+            let listItem = document.createElement('li');
+            listItem.textContent = `${countryName}: ${count}`;
+            locList.appendChild(listItem);
+        });
 
     console.log(countries);
     console.log(`Total Users: ${totalUsers}`);
@@ -197,7 +214,7 @@ function showLocationsModal(users) {
     }
 }
 
-function showUsersModal(users){
+function showUsersModal(users) {
     const modal = document.getElementById('userModal');
     const userList = document.getElementById('modalUserList');
     const closeButton = modal.querySelector('.close');
