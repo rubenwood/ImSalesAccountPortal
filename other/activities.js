@@ -419,43 +419,6 @@ function processPlayerDataIDs(playerDataInput, activityIdsInput, rowInput, allPl
         console.error('Error parsing JSON:', err);
     }
 }
-function processPlayerDataTitles(playerDataInput, activityTitlesInput, rowInput, allPlayersWithActivityInput){
-    if (playerDataInput == undefined) { return; }
-
-    try {
-        const playerDataJSON = JSON.parse(playerDataInput);
-        if (Array.isArray(playerDataJSON.activities)) {
-            playerDataJSON.activities.forEach(activity => {
-                const title = activity.activityTitle;
-                const id = activity.activityID;
-
-                if (activityTitlesInput.includes(title)) {
-                    const key = `${title}-${id}`; // Composite key for uniqueness
-
-                    if (!allPlayersWithActivityInput.has(key)) {
-                        allPlayersWithActivityInput.set(key, {
-                            activityID: id,
-                            activityTitle: title,
-                            players: new Map(),
-                        });
-                    }
-
-                    const activityData = allPlayersWithActivityInput.get(key);
-                    const playersMap = activityData.players;
-
-                    if (!playersMap.has(rowInput.PlayFabId)) {
-                        playersMap.set(rowInput.PlayFabId, {
-                            user: rowInput,
-                            accountData: rowInput.AccountDataJSON,
-                        });
-                    }
-                }
-            });
-        }
-    } catch (err) {
-        console.error('Error parsing JSON:', err);
-    }
-}
 
 function calcTotalPlaysPerActivity(allPlayersWithActivity, activityId) {
     let totalPlays = 0;
