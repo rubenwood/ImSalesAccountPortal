@@ -598,48 +598,64 @@ function exportToExcel(suffixes, exportData){
     let todayUTC = new Date().toISOString().split('.')[0] + 'Z';
     console.log(`Today in UTC: ${todayUTC}`);
     // Combined
-    const filename = `Analytics/${suffixesJoined}/Report-Combined-${suffixesJoined}-${todayUTC}-UTC.xlsx`;
+    uploadWorkbookToS3(workbookOut, 'Report-Combined', suffixesJoined, todayUTC);
+    /* const filename = `Analytics/${suffixesJoined}/Report-Combined-${suffixesJoined}-${todayUTC}-UTC.xlsx`;
     uploadToS3(workbookOut, filename, 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', process.env.AWS_BUCKET)
         .then((data) => {
             console.log(`File uploaded successfully at ${filename}`);
         })
         .catch((err) => {
             console.error(`Error uploading file: ${err.message}`);
-        });
+        }); */
 
     // Insights
-    const filenameInsights = `Analytics/${suffixesJoined}/Report-Insights-${suffixesJoined}-${todayUTC}-UTC.xlsx`;
+    uploadWorkbookToS3(workbookInsightsOut, 'Report-Insights', suffixesJoined, todayUTC);
+    /* const filenameInsights = `Analytics/${suffixesJoined}/Report-Insights-${suffixesJoined}-${todayUTC}-UTC.xlsx`;
     uploadToS3(workbookInsightsOut, filenameInsights, 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', process.env.AWS_BUCKET)
         .then((data) => {
             console.log(`File uploaded successfully at ${filename}`);
         })
         .catch((err) => {
             console.error(`Error uploading file: ${err.message}`);
-        });
+        }); */
 
     // Progress
-    const filenameProgress = `Analytics/${suffixesJoined}/Report-Progress-${suffixesJoined}-${todayUTC}-UTC.xlsx`;
+    uploadWorkbookToS3(workbookProgressOut, 'Report-Progress', suffixesJoined, todayUTC);
+    /* const filenameProgress = `Analytics/${suffixesJoined}/Report-Progress-${suffixesJoined}-${todayUTC}-UTC.xlsx`;
     uploadToS3(workbookProgressOut, filenameProgress, 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', process.env.AWS_BUCKET)
         .then((data) => {
             console.log(`File uploaded successfully at ${filename}`);
         })
         .catch((err) => {
             console.error(`Error uploading file: ${err.message}`);
-        });
+        }); */
 
     // Usage
-    const filenameUsage = `Analytics/${suffixesJoined}/Report-Usage-${suffixesJoined}-${todayUTC}-UTC.xlsx`;
+    uploadWorkbookToS3(workbookUsageOut, 'Report-Usage', suffixesJoined, todayUTC);
+    /* const filenameUsage = `Analytics/${suffixesJoined}/Report-Usage-${suffixesJoined}-${todayUTC}-UTC.xlsx`;
     uploadToS3(workbookUsageOut, filenameUsage, 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', process.env.AWS_BUCKET)
         .then((data) => {
             console.log(`File uploaded successfully at ${filename}`);
         })
         .catch((err) => {
             console.error(`Error uploading file: ${err.message}`);
-        });
+        }); */
 
     // Login
-    const filenameLogin = `Analytics/${suffixesJoined}/Report-Login-${suffixesJoined}-${todayUTC}-UTC.xlsx`;
+    uploadWorkbookToS3(workbookLoginOut, 'Report-Login', suffixesJoined, todayUTC);
+    /* const filenameLogin = `Analytics/${suffixesJoined}/Report-Login-${suffixesJoined}-${todayUTC}-UTC.xlsx`;
     uploadToS3(workbookLoginOut, filenameLogin, 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', process.env.AWS_BUCKET)
+        .then((data) => {
+            console.log(`File uploaded successfully at ${filename}`);
+        })
+        .catch((err) => {
+            console.error(`Error uploading file: ${err.message}`);
+        }); */
+}
+
+function uploadWorkbookToS3(workbook, reportType, suffixesJoined, todayUTC){
+    let filname = `Analytics/${suffixesJoined}/${reportType}-${suffixesJoined}-${todayUTC}-UTC.xlsx`;
+    uploadToS3(workbook, filname, 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', process.env.AWS_BUCKET)
         .then((data) => {
             console.log(`File uploaded successfully at ${filename}`);
         })
