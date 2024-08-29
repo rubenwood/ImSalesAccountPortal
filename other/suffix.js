@@ -42,6 +42,7 @@ async function getSuffixMappings() {
         }
         console.log("got s3 suffix mappings");
         lastDateGotSuffixMappings = new Date();
+        //console.log(adjustedMappings);
         return adjustedMappings;
     } catch (err) {
         console.error('Error fetching or processing suffix mappings from S3:', err);
@@ -74,7 +75,7 @@ async function generateReportByEmailSuffixDB(suffixes, exportReport) {
         downloadPromises.push(getSuffixMappings().then(data => { suffixMappings = data; }));
     }
     await Promise.all(downloadPromises);
-
+    console.log(suffixMappings);
     // Construct LIKE patterns for suffixes and their corresponding mapped values for OpenIDConnect
     const likePatterns = suffixes.map(suffix => `%${suffix}%`);
     const mappedPatterns = suffixes.map(suffix => suffixMappings[suffix])
@@ -103,6 +104,7 @@ async function generateReportByEmailSuffixDB(suffixes, exportReport) {
     `;
 
     let accountDataResult = await pool.query(query, params);
+    console.log(accountDataResult.rows.length);
 
     const playFabIds = accountDataResult.rows.map(row => row.PlayFabId);
     // usage data
@@ -126,7 +128,7 @@ async function generateReportByEmailSuffixDB(suffixes, exportReport) {
                         encounteredEmails.add(account.Email);
                         matchedUsersMap.set(user.PlayerId, user);
                         checkContact = false;
-                    } else if (account.Platform == "OpenIdConnect" && isValidSuffix(account.PlatformUserId, suffixMappings[suffix])) {
+                    } else if (account.Platform == "OpenIdConnect" && isValidPlatformUserId(account.PlatformUserId, suffixMappings[suffix])) {
                         matchedUsersMap.set(user.PlayerId, user);
                         checkContact = false;
                     }
@@ -176,6 +178,14 @@ function isValidSuffix(email, suffix) {
     
     return pattern.test(domain);
 }
+function isValidPlatformUserId(platformUserId, suffix) {
+    
+    if(platformUserId.includes(suffix)){
+        return true;
+    }
+    return false;
+}
+
 
 
 // function to generate out a report (excel sheet)

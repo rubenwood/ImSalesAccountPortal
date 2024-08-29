@@ -104,7 +104,7 @@ activitiesRouter.get('/get-activity-report-id', async (req, res) => {
     }
 });
 
-// GET USER BY ACTIVITY ID
+// GET USERS BY ACTIVITY ID
 activitiesRouter.get('/get-users-by-activity-id', async (req, res) => {
     const activityIds = req.query.activities ? req.query.activities.split(',') : [];
 
@@ -241,7 +241,7 @@ function processPlayerDataIds(playerDataInput, rowInput, allPlayersWithActivityI
 }
 
 
-// TODO: Get activities by title
+// GET USERS BY ACTIVITY TITLE
 activitiesRouter.get('/get-users-by-activity-title', async (req, res) => {
     const activityTitles = req.query.activities ? req.query.activities.split(',') : [];
 
@@ -356,8 +356,8 @@ activitiesRouter.get('/get-users-by-activity-title', async (req, res) => {
             const playerDataRAW = row.UsageDataJSON?.Data?.PlayerData?.Value ?? undefined;
             const playerDataNewLauncherRAW = row.UsageDataJSON?.Data?.PlayerDataNewLauncher?.Value ?? undefined;
 
-            processPlayerDataIDs(playerDataRAW, activityIds, row, allPlayersWithActivity);
-            processPlayerDataIDs(playerDataNewLauncherRAW, activityIds, row, allPlayersWithActivity);
+            processPlayerDataTitles(playerDataRAW, activityIds, row, allPlayersWithActivity);
+            processPlayerDataTitles(playerDataNewLauncherRAW, activityIds, row, allPlayersWithActivity);
         });
 
         const outputList = [];
@@ -383,7 +383,7 @@ activitiesRouter.get('/get-users-by-activity-title', async (req, res) => {
         res.status(500).json({ error: 'Internal server error' });
     }
 });
-function processPlayerDataIDs(playerDataInput, activityIdsInput, rowInput, allPlayersWithActivityInput){
+function processPlayerDataTitles(playerDataInput, activityIdsInput, rowInput, allPlayersWithActivityInput){
     if (playerDataInput == undefined) { return; }
 
     try {

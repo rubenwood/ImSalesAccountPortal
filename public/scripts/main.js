@@ -238,6 +238,7 @@ export async function generateReportByTopicDB() {
     console.log("Matching Entries:", matchingEntries);
 
     // currently, can only search for 1 topic at a time
+    // currently, only works for assigned / floating topics
     // TODO: modify this so we can search for multiple topics
     // Extract playFabIds from the matching entries (assuming each topic has associated playFabIds)
     const playFabIdsAssigned = await imAPIGet(`structure/${matchingEntries[0].topicId}/assigned/playFabUser`);
