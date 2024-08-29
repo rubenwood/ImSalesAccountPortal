@@ -178,14 +178,12 @@ function isValidSuffix(email, suffix) {
     
     return pattern.test(domain);
 }
-function isValidPlatformUserId(platformUserId, suffix) {
-    
+function isValidPlatformUserId(platformUserId, suffix) {    
     if(platformUserId.includes(suffix)){
         return true;
     }
     return false;
 }
-
 
 
 // function to generate out a report (excel sheet)
