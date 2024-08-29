@@ -42,7 +42,6 @@ async function getSuffixMappings() {
         }
         console.log("got s3 suffix mappings");
         lastDateGotSuffixMappings = new Date();
-        //console.log(adjustedMappings);
         return adjustedMappings;
     } catch (err) {
         console.error('Error fetching or processing suffix mappings from S3:', err);
@@ -75,7 +74,6 @@ async function generateReportByEmailSuffixDB(suffixes, exportReport) {
         downloadPromises.push(getSuffixMappings().then(data => { suffixMappings = data; }));
     }
     await Promise.all(downloadPromises);
-    console.log(suffixMappings);
     // Construct LIKE patterns for suffixes and their corresponding mapped values for OpenIDConnect
     const likePatterns = suffixes.map(suffix => `%${suffix}%`);
     const mappedPatterns = suffixes.map(suffix => suffixMappings[suffix])
@@ -104,7 +102,6 @@ async function generateReportByEmailSuffixDB(suffixes, exportReport) {
     `;
 
     let accountDataResult = await pool.query(query, params);
-    console.log(accountDataResult.rows.length);
 
     const playFabIds = accountDataResult.rows.map(row => row.PlayFabId);
     // usage data
@@ -942,18 +939,6 @@ function formatTimeToHHMMSS(seconds) {
     const paddedSeconds = String(secs).padStart(2, '0');
 
     return `${paddedHours}:${paddedMinutes}:${paddedSeconds}`;
-}
-function formatDate(date) {
-    const pad = num => num.toString().padStart(2, '0');
-
-    const day = pad(date.getDate());
-    const month = pad(date.getMonth() + 1); // Months are zero-based
-    const year = date.getFullYear();
-    const hours = pad(date.getHours());
-    const minutes = pad(date.getMinutes());
-    const seconds = pad(date.getSeconds());
-
-    return `${year}-${month}-${day}T${hours}-${minutes}-${seconds}`;
 }
 function createLoginRow(dataToExport) {
     let userRow = {
