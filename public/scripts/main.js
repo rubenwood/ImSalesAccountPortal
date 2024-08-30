@@ -401,6 +401,10 @@ export function writeDataForReport(pID, pEmail, pCreatedDate,
     }
     // remove certain emails from the report data
     let blacklistedEmails = [
+        "maxboardmanhdhd@highpoint.edu",
+        "testkdbrnfidnn@highpoint.edu",
+        "ndjdjfhbdj@highpoint.edu",
+        "testhsu@highpoint.edu",
         "maxtest@highpoint.edu",
         "maxhputest2@highpoint.edu",
         "hputest33@highpoint.edu",

@@ -53,6 +53,7 @@ topicsRouter.get('/get-users-by-topic-id', async (req, res) => {
         const [result1] = await Promise.all([pool.query(query1, queryParams)]);
         const rows1 = result1.rows;
         console.log(rows1.size); 
+        res.json(rows1);
     } catch (err) {
         console.error('Error fetching usage data from db:', err);
         res.status(500).json({ error: 'Internal server error' });
@@ -60,7 +61,48 @@ topicsRouter.get('/get-users-by-topic-id', async (req, res) => {
 });
 
 topicsRouter.get('/get-users-by-topic-title', async (req, res) => {
+    const topicTitles = req.query.topics ? req.query.topics.split(',') : [];
 
+    if (topicTitles.length === 0) {
+        return res.status(400).json({ message: 'Missing activities parameter or it is empty.' });
+    }
+
+    const query1 = `
+        WITH valid_usage_data AS (
+            SELECT *
+            FROM public."UsageData"
+            WHERE ("UsageDataJSON"->'Data'->'PlayerDataNewLauncher'->>'Value') IS NOT NULL
+              AND ("UsageDataJSON"->'Data'->'PlayerDataNewLauncher'->>'Value')::jsonb IS NOT NULL
+              AND ("UsageDataJSON"->'Data'->'PlayerDataNewLauncher'->>'Value') NOT LIKE '%NaN%'
+        ),
+        user_activity_data AS (
+            SELECT 
+                vud.*, 
+                ad."AccountDataJSON"
+            FROM valid_usage_data vud
+            JOIN public."AccountData" ad ON vud."PlayFabId" = ad."PlayFabId"
+        )
+        SELECT *
+        FROM user_activity_data
+        WHERE EXISTS (
+            SELECT 1
+            FROM jsonb_array_elements(
+                ("UsageDataJSON"->'Data'->'PlayerDataNewLauncher'->>'Value')::jsonb->'activities') as activity
+            WHERE activity->>'topicTitle' = ANY($1::text[])
+        )
+    `;
+
+    try {
+        const queryParams = [topicTitles];
+        const [result1] = await Promise.all([pool.query(query1, queryParams)]);
+        const rows1 = result1.rows;
+        console.log(rows1);
+        console.log(rows1.length);
+        res.json(rows1);
+    } catch (err) {
+        console.error('Error fetching usage data from db:', err);
+        res.status(500).json({ error: 'Internal server error' });
+    }
 });
 
 
