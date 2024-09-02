@@ -289,7 +289,8 @@ function setupDataForExport(sortedData){
             "maxwellboardman@highpoint.edu",
             "testing@highpoint.edu",
             "maxboardman56@highpoint.edu",
-            "test@highpoint.edu"
+            "test@highpoint.edu",
+            "test123@highpoint.edu"
         ];
         if(!blacklistedEmails.includes(userExportData.email))
         {
