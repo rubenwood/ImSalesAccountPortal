@@ -107,18 +107,15 @@ function filterReports(inDate) {
         return;
     }
 
-    // Filter the reports matching the given date
     let reportsMatchingDate = reportResponse.filter(report => {
-        // Extract the date from the filename
         let filename = report.filename;
         let dateMatch = filename.match(/\d{4}-\d{2}-\d{2}/); // Regex to match the date part
         
         if (dateMatch) {
-            let reportDate = dateMatch[0]; // Extract the matched date string
-            return reportDate === inDate;  // Compare with the input date
-        }
-        
-        return false; // If no date is found, don't include this report
+            let reportDate = dateMatch[0];
+            return reportDate === inDate;
+        }        
+        return false; 
     });
 
     console.log("Reports matching date: ", reportsMatchingDate);
