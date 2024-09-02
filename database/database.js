@@ -47,7 +47,7 @@ dbRouter.post('/get-users-by-id', async (req, res) => {
         const totalRows = accountDataResult.rowCount + usageDataResult.rowCount;
         const totalPages = 1; // Placeholder values for pagination
         const currentPage = 1;
-        const pageSize = totalRows; // This assumes no pagination. Adjust as necessary.
+        const pageSize = totalRows; // This assumes no pagination
 
         res.json({
             totalRows: totalRows,

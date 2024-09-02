@@ -1,5 +1,3 @@
- //const doConfetti = () => { confetti({particleCount: 100, spread: 70, origin:{ y: 0.6 }}); }
-
 document.addEventListener('DOMContentLoaded', async() => {
     // login button on modal
     document.getElementById('loginButton').addEventListener('click', submitPass);
@@ -23,28 +21,33 @@ async function submitPass()
             },
             body: JSON.stringify({ pass: inPass })
         });
-
         let result = await response.json();
-
-        if (result === true) {
-            console.log("Access granted");
-            // Here you can add your code to grant access, e.g., redirect to another page
-            document.getElementById('loginModal').style.display = 'none';
-            //doConfetti(); // Show confetti on successful login
-            getReports();
-        } else {
+        
+        if (result != true) {
             console.log("Access denied");
             document.getElementById('error-txt').innerHTML = 'Incorrect password. Please try again.';
+            return;
         }
+        
+        document.getElementById('loginModal').style.display = 'none';
+        getReports();
+
+        const dateInput = document.getElementById('dateInput');
+        dateInput.addEventListener('change', function () {
+            filterReports(dateInput.value);
+        });
+    
     } catch (err) {
         console.error("Error during authentication", err);
         document.getElementById('error-loading').innerHTML = 'Oops! An error occurred. Please try again later.';
     }
 }
 
+// Get Reports
+let reportResponse = undefined;
 async function getReports() {
-    let inPass = document.getElementById('password').value;
-    let response = await fetch('/reporting/reports/highpoint.edu', {
+    const inPass = document.getElementById('password').value;
+    const response = await fetch('/reporting/reports/highpoint.edu', {
         method: 'GET',
         headers: {
             'Content-Type': 'application/json',
@@ -52,8 +55,14 @@ async function getReports() {
         }
     });
 
-    let result = await response.json();
+    const result = await response.json();
+    reportResponse = result;
     console.log(result);
+    formatHTMLOutput(reportResponse);
+}
+
+// format HTML
+function formatHTMLOutput(reports){
     let sectionHtml = {
         login: '<ul>',
         insights: '<ul>',
@@ -62,8 +71,8 @@ async function getReports() {
         combined: '<ul>'
     };
     
-    result.forEach(file => {
-        let listItem = `<li><a href="${file.url}" download="${file.filename}">${file.filename}<i class="fa fa-download" aria-hidden="true"></i></a></li>`;
+    reports.forEach(file => {
+        const listItem = `<li><a href="${file.url}" download="${file.filename}">${file.filename}<i class="fa fa-download" aria-hidden="true"></i></a></li>`;
         console.log(file.filename);
         if (file.filename.includes('-Login-')) {
             sectionHtml.login += listItem;
@@ -78,7 +87,7 @@ async function getReports() {
         }
     });
 
-    for (let key in sectionHtml) {
+    for (const key in sectionHtml) {
         sectionHtml[key] += '</ul>';
     }
     document.getElementById('login').innerHTML = sectionHtml.login;
@@ -86,6 +95,43 @@ async function getReports() {
     document.getElementById('progress').innerHTML = sectionHtml.progress;
     document.getElementById('usage').innerHTML = sectionHtml.usage;
     document.getElementById('combined').innerHTML = sectionHtml.combined;
-
-    //document.getElementById('login').innerHTML += responseHtml;
 }
+
+// Filter Reports
+function filterReports(inDate) {
+    console.log("DATE SET TO: " + inDate);
+    console.log("Report Response ", reportResponse);
+
+    if(inDate == undefined || inDate == ""){
+        formatHTMLOutput(reportResponse);
+        return;
+    }
+
+    // Filter the reports matching the given date
+    let reportsMatchingDate = reportResponse.filter(report => {
+        // Extract the date from the filename
+        let filename = report.filename;
+        let dateMatch = filename.match(/\d{4}-\d{2}-\d{2}/); // Regex to match the date part
+        
+        if (dateMatch) {
+            let reportDate = dateMatch[0]; // Extract the matched date string
+            return reportDate === inDate;  // Compare with the input date
+        }
+        
+        return false; // If no date is found, don't include this report
+    });
+
+    console.log("Reports matching date: ", reportsMatchingDate);
+    if(reportsMatchingDate.length <= 0 ){ 
+        document.getElementById('login').innerHTML = "<h1>No Reports</h1>";
+        document.getElementById('insights').innerHTML = "<h1>No Reports</h1>";
+        document.getElementById('progress').innerHTML = "<h1>No Reports</h1>";
+        document.getElementById('usage').innerHTML = "<h1>No Reports</h1>";
+        document.getElementById('combined').innerHTML = "<h1>No Reports</h1>";
+    }
+    else
+    {
+        formatHTMLOutput(reportsMatchingDate);
+    }
+}
+//4yKxvmN87PVZRJB
