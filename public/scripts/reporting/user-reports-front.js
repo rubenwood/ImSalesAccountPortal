@@ -119,16 +119,19 @@ function filterReports(inDate) {
     });
 
     console.log("Reports matching date: ", reportsMatchingDate);
+
+    // Set "No Reports HTML here"
+    const noReportHTML = "<h1>No Reports</h1>";
+
     if(reportsMatchingDate.length <= 0 ){ 
-        document.getElementById('login').innerHTML = "<h1>No Reports</h1>";
-        document.getElementById('insights').innerHTML = "<h1>No Reports</h1>";
-        document.getElementById('progress').innerHTML = "<h1>No Reports</h1>";
-        document.getElementById('usage').innerHTML = "<h1>No Reports</h1>";
-        document.getElementById('combined').innerHTML = "<h1>No Reports</h1>";
+        document.getElementById('login').innerHTML = noReportHTML;
+        document.getElementById('insights').innerHTML = noReportHTML;
+        document.getElementById('progress').innerHTML = noReportHTML;
+        document.getElementById('usage').innerHTML = noReportHTML;
+        document.getElementById('combined').innerHTML = noReportHTML;
     }
     else
     {
         formatHTMLOutput(reportsMatchingDate);
     }
 }
-//4yKxvmN87PVZRJB
