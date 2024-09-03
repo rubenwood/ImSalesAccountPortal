@@ -2,7 +2,7 @@ import { canAccess } from './access-check.js';
 import { closePlayerDataModal } from './user-report-formatting.js';
 import { Login, RegisterUserEmailAddress, UpdateUserDataServer, getPlayerEmailAddr } from './PlayFabManager.js';
 import { showInsightsModal, closeInsightsModal, getTotalPlayTime, findPlayersWithMostPlayTime, findPlayersWithMostPlays, findPlayersWithMostUniqueActivitiesPlayed, findMostPlayedActivities, getUserAccessPerPlatform } from './insights.js';
-import { formatTimeToHHMMSS, formatActivityData, getAcademicAreas, fetchS3JSONFile } from './utils.js';
+import { formatTimeToHHMMSS, formatActivityData, fetchS3JSONFile } from './utils.js';
 import { playerProfiles, getSegmentsClicked, getPlayersInSegmentClicked } from './segments.js';
 import { fetchPlayersBySuffixList } from './suffix-front.js';
 import { fetchTopicReportByTitle } from './topics-front.js';
@@ -71,15 +71,6 @@ window.onload = function() {
     document.getElementById('segments-section').style.display = 'none';
 };
 
-function toggleSegmentSection(){
-    console.log("toggling segment section");
-    const segmentSection = document.getElementById('segments-section');
-    if(segmentSection.style.display == 'block'){
-        segmentSection.style.display = 'none';
-    }else{
-        segmentSection.style.display = 'block';
-    }
-}
 // Function to toggle between sign up and modify existing forms
 function toggleForms() {
     const isSignUpSelected = document.getElementById('signUpFormRadio').checked;
@@ -94,7 +85,7 @@ function toggleForms() {
         modifyForm.style.display = 'flex';
     }
 }
-
+// Generate password
 export function generatePass() {
     const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
     const digits = '0123456789';
@@ -114,7 +105,6 @@ export function generatePass() {
     document.getElementById("emailSignUpPassword").value = password;
     return password;
 }
-
 // POPULATE DROP DOWN (ACADEMIC AREA)
 async function initAcademicAreaDD(selectElement) {
     try {
@@ -132,7 +122,7 @@ async function initAcademicAreaDD(selectElement) {
         console.error('Error:', error);
     }
 }
-
+// POPULATE DROP DOWN (LANGUAGE OF STUDY)
 async function initLangStudyDD(selectElement) {
     try {
         const languageResp = await fetchS3JSONFile("TestFiles/OtherData/LanguageStudyData.json");
@@ -154,7 +144,16 @@ async function initLangStudyDD(selectElement) {
 initLangStudyDD(document.getElementById('language'));
 initLangStudyDD(document.getElementById('languageUpdate'));
 
-
+// TOGGLE SEGMENT SECTION
+function toggleSegmentSection(){
+    console.log("toggling segment section");
+    const segmentSection = document.getElementById('segments-section');
+    if(segmentSection.style.display == 'block'){
+        segmentSection.style.display = 'none';
+    }else{
+        segmentSection.style.display = 'block';
+    }
+}
 // GET LAST DATABASE UPDATE DATE
 async function getDatabaseLastUpdated() {
     try {
@@ -225,6 +224,8 @@ export async function generateReportByTopicDB() {
     const hasAccess = await canAccess();
     if (!hasAccess) { return; }
 
+    document.getElementById('generateReportByTopicButton').value = `Generating Report By Email List...`;  
+
     const inputTopics = document.getElementById("emailList").value.split('\n').filter(Boolean);
     if (inputTopics.length < 1) { return; }
     console.log(`Generating report by topic for: ${inputTopics}`);
@@ -232,7 +233,6 @@ export async function generateReportByTopicDB() {
     // Search the analytics database for users how have the topic (external) title
     const output = await fetchTopicReportByTitle(inputTopics);
     const playFabIdsFromDBSearch = output.map(entry => entry.PlayFabId);
-    console.log(playFabIdsFromDBSearch);
 
     // Search by assigned topics
     const searchByAssignTopicResult = await searchByAssignedTopic(inputTopics);    
@@ -241,13 +241,11 @@ export async function generateReportByTopicDB() {
     const uniqueIds = [...new Set(outputPlayFabIds)];
     // join it all together (as a string seperated by new lines)
     const playFabIdsJoined = uniqueIds.join('\n');
-    console.log(playFabIdsJoined);
     // Set this to the id list (1 PlayFabId per line)
     document.getElementById("playerIDList").value = playFabIdsJoined;
     generateReportByIdDB();
 }
-
-async function searchByAssignedTopic(inputTopics){
+async function searchByAssignedTopic(inputTopics) {
     const topicIds = await imAPIGet("topics");
     const topicBrondons = await getTopicBrondons(topicIds);
     // Find matching entries based on externalTitle
@@ -270,7 +268,7 @@ export async function generateReportByIdDB() {
     let hasAccess = await canAccess();
     if (!hasAccess) { return; }
 
-    resetButtonTexts();
+    //resetButtonTexts();
     document.getElementById('generateReportByIdButton').value = `Generating Report By Ids...`;  
 
     const playerIDText = document.getElementById("playerIDList").value;
@@ -372,6 +370,7 @@ export function resetExportData(){
     exportData = [];
 }
 
+// Write data for report to reportData and exportData objects
 export async function writeDataForReport(pID, pEmail, pCreatedDate,
                             pLastLoginDate, pDaysSinceLastLogin, pDaysSinceCreation,
                             pAccountExpiryDate, pDaysToExpire, pCreatedBy, pCreatedFor, pLinkedAccounts,
@@ -421,37 +420,6 @@ export async function writeDataForReport(pID, pEmail, pCreatedDate,
     if(!blacklistedEmails.includes(userExportData.email)){
         exportData.push(userExportData);
     }
-}
-
-// GET PLAYERS IN SEGMENT BUTTON CLICKED
-async function getSegmentPlayersButtonClicked() {
-    resetButtonTexts();
-
-    let playersInSegOutput = await getPlayersInSegmentClicked(document.getElementById('segmentSelection').value);
-
-    let playerIdList = [];
-    let playerEmailPromises = [];
-
-    playersInSegOutput.forEach((playerJson) => {
-        playerIdList.push(playerJson.PlayerId);
-        // Create a promise for each getPlayerEmailAddr call and add it to the array
-        playerEmailPromises.push(getPlayerEmailAddr(playerJson.PlayerId));
-    });
-
-    // Wait for all getPlayerEmailAddr calls to complete
-    let playerEmailAddrList = await Promise.all(playerEmailPromises);
-    playerEmailAddrList = playerEmailAddrList.filter(Boolean); // filter out empty results
-    document.getElementById('totalPlayersReport').innerHTML = 'Total users in report: ' + playerEmailAddrList.length;
-
-    // Update the page with the player IDs and email addresses
-    updateIDList(playerIdList);
-    if(document.getElementById("emailList")){ document.getElementById("emailList").value = playerEmailAddrList.join('\n') }
-}
-
-// UPDATE ID LIST
-export function updateIDList(playerIdList){
-    document.getElementById("playerIDList").value = "";
-    if(document.getElementById("playerIDList")){ document.getElementById("playerIDList").value = playerIdList.join('\n') }
 }
 
 // EXPORT REPORT
@@ -683,6 +651,31 @@ function addMessages(worksheet, messages) {
     worksheet['!ref'] = newRange;
 }
 
+
+// GET PLAYERS IN SEGMENT BUTTON CLICKED
+async function getSegmentPlayersButtonClicked() {
+    resetButtonTexts();
+
+    let playersInSegOutput = await getPlayersInSegmentClicked(document.getElementById('segmentSelection').value);
+
+    let playerIdList = [];
+    let playerEmailPromises = [];
+
+    playersInSegOutput.forEach((playerJson) => {
+        playerIdList.push(playerJson.PlayerId);
+        // Create a promise for each getPlayerEmailAddr call and add it to the array
+        playerEmailPromises.push(getPlayerEmailAddr(playerJson.PlayerId));
+    });
+
+    // Wait for all getPlayerEmailAddr calls to complete
+    let playerEmailAddrList = await Promise.all(playerEmailPromises);
+    playerEmailAddrList = playerEmailAddrList.filter(Boolean); // filter out empty results
+    document.getElementById('totalPlayersReport').innerHTML = 'Total users in report: ' + playerEmailAddrList.length;
+
+    // Update the page with the player IDs and email addresses
+    updateIDList(playerIdList);
+    if(document.getElementById("emailList")){ document.getElementById("emailList").value = playerEmailAddrList.join('\n') }
+}
 // RESET BUTTONS
 export function resetButtonTexts() {
     const generateReportButton = document.getElementById('generateReportButton');
@@ -699,8 +692,15 @@ export function resetButtonTexts() {
 
     const generateReportByClickIDButton = document.getElementById('generateReportByClickIDButton');
     generateReportByClickIDButton ? generateReportByClickIDButton.value = "Generate Report By Click ID" : null;
-}
 
+    const generateReportByTopicButton= document.getElementById('generateReportByTopicButton');
+    generateReportByTopicButton ? generateReportByTopicButton.value = `Generating Report By Topic` : null;  
+}
+// UPDATE ID LIST
+export function updateIDList(playerIdList){
+    document.getElementById("playerIDList").value = "";
+    if(document.getElementById("playerIDList")){ document.getElementById("playerIDList").value = playerIdList.join('\n') }
+}
 // TOGGLE PLAYER ID TEXT
 async function togglePlayerIdsTextArea(){
     let hasAccess = await canAccess();

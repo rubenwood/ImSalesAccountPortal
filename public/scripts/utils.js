@@ -76,26 +76,6 @@ export function updateButtonText(button, text, maxTicks) {
     };
 }
 
-// NOT CMS RELATED
-// TODO: change this to get academic areas from CMS
-export let academicAreas;
-export async function getAcademicAreas() {
-    const url = `/getAcademicAreas`;
-
-    try {
-        const response = await fetch(url);
-        if (!response.ok) {
-            throw new Error('Network response was not ok');
-        }
-        const data = await response.json();
-        return data.academicAreas;
-    } catch (error) {
-        console.error('Error fetching data:', error);
-    }
-}
-getAcademicAreas();
-
-
 export function fetchUserAccInfoById(playFabID) {
     const url = `/get-user-acc-info-id/${playFabID}`;
 

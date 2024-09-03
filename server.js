@@ -69,21 +69,6 @@ app.get('/getExchangeRates', async (req, res) => {
   res.send("-- Got exchange rate data --");
 });
 
-// GET ACADEMIC AREA JSON
-app.get('/getAcademicAreas', async (req, res) => {
-  try {
-      const params = {
-          Bucket: process.env.AWS_BUCKET,
-          Key: 'TestFiles/OtherData/AcademicAreasData.json'
-      };
-
-      const data = await s3.getObject(params).promise();
-      res.send(JSON.parse(data.Body.toString()));
-  } catch (error) {
-      console.error('Error:', error);
-      res.status(500).send('Error fetching data from S3');
-  }
-});
 // GET LESSON INFO
 app.post('/getLessonInfo', async (req, res) => {
   try {
