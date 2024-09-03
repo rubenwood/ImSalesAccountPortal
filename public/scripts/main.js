@@ -14,6 +14,7 @@ import { initializeDarkMode } from './themes/dark-mode.js';
 import { waitForJWT, imAPIGet, getTopicBrondons } from './immersifyapi/immersify-api.js';
 
 const doConfetti = () => { confetti({particleCount: 100, spread: 70, origin: { y: 0.6 }}); }
+let emailBlacklist;
 
 document.addEventListener('DOMContentLoaded', async () => {
     // setup dark mode toggle
@@ -58,6 +59,8 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // wait for login
     await waitForJWT();
+    emailBlacklist = await fetchS3JSONFile("Analytics/EmailBlackList.json");
+    console.log(emailBlacklist);
     initAcademicAreaDD(document.getElementById('academicArea'));
     initAcademicAreaDD(document.getElementById('academicAreaUpdate'));
 });
@@ -356,7 +359,7 @@ export function resetExportData(){
     exportData = [];
 }
 
-export function writeDataForReport(pID, pEmail, pCreatedDate,
+export async function writeDataForReport(pID, pEmail, pCreatedDate,
                             pLastLoginDate, pDaysSinceLastLogin, pDaysSinceCreation,
                             pAccountExpiryDate, pDaysToExpire, pCreatedBy, pCreatedFor, pLinkedAccounts,
                             pActivityDataForReport, pTotalPlays, pTotalPlayTime, pAveragePlayTimePerPlay, pLoginData){
@@ -399,23 +402,9 @@ export function writeDataForReport(pID, pEmail, pCreatedDate,
         averageTimePerPlay: pAveragePlayTimePerPlay,
         loginData: pLoginData
     }
+    
     // remove certain emails from the report data
-    let blacklistedEmails = [
-        "maxboardmanhdhd@highpoint.edu",
-        "testkdbrnfidnn@highpoint.edu",
-        "ndjdjfhbdj@highpoint.edu",
-        "testhsu@highpoint.edu",
-        "maxtest@highpoint.edu",
-        "maxhputest2@highpoint.edu",
-        "hputest33@highpoint.edu",
-        "maxhputest15@highpoint.edu",
-        "maxboardman@highpoint.edu",
-        "maxwellboardman@highpoint.edu",
-        "testing@highpoint.edu",
-        "maxboardman56@highpoint.edu",
-        "test@highpoint.edu",
-        "test123@highpoint.edu"
-    ];
+    let blacklistedEmails = emailBlacklist.blacklistedEmails;
     if(!blacklistedEmails.includes(userExportData.email)){
         exportData.push(userExportData);
     }

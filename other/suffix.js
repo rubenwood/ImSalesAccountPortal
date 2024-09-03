@@ -4,7 +4,7 @@ const suffixRouter = express.Router();
 const { Pool } = require('pg');
 const XLSX = require('xlsx');
 
-const { uploadToS3, anyFileModifiedSince, checkFileLastModified } = require('./s3-utils');
+const { getS3JSONFile, uploadToS3, anyFileModifiedSince, checkFileLastModified } = require('./s3-utils');
 
 AWS.config.update({
     region: process.env.AWS_REGION,
@@ -12,6 +12,12 @@ AWS.config.update({
     secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY
 });
 const s3 = new AWS.S3();
+
+// Get email blacklist
+async function getEmailBlacklist(){
+    const emailBlacklist = await getS3JSONFile('Analytics/EmailBlackList.json');
+    return emailBlacklist;
+}
 
 // Get suffix mappings from S3 (connections_list)
 let suffixMappings;
@@ -209,7 +215,9 @@ function sortAndCombineDataForReport(data) {
         return acc;
     }, []);
 }
-function setupDataForExport(sortedData){
+async function setupDataForExport(sortedData){
+    let emailBlacklistResp = await getEmailBlacklist();
+    console.log(emailBlacklistResp);
     let exportData = [];
     sortedData.forEach(element =>{
         //let playFabId = element.accountData.PlayFabId;
@@ -253,11 +261,6 @@ function setupDataForExport(sortedData){
         let averageTimePerPlay = newDataState.averageTimePerPlay;
         let totalPlays = newDataState.totalPlays;
         let totalPlayTime = newDataState.totalPlayTime;
-        
-        // need all of this data to generate out an excel report
-        /* writeDataForReport(playFabId, email, createdDate, lastLoginDate, daysSinceLastLogin, daysSinceCreation,
-            accountExpiryDate, 0, "", "", linkedAccounts, activityDataForReport, totalPlays, totalPlayTime,
-            averageTimePerPlay, loginData); */
 
         let userExportData = {
             email,
@@ -276,22 +279,7 @@ function setupDataForExport(sortedData){
             loginData
         }
         // remove certain emails from the report data
-        let blacklistedEmails = [
-            "maxboardmanhdhd@highpoint.edu",
-            "testkdbrnfidnn@highpoint.edu",
-            "ndjdjfhbdj@highpoint.edu",
-            "testhsu@highpoint.edu",
-            "maxtest@highpoint.edu",
-            "maxhputest2@highpoint.edu",
-            "hputest33@highpoint.edu",
-            "maxhputest15@highpoint.edu",
-            "maxboardman@highpoint.edu",
-            "maxwellboardman@highpoint.edu",
-            "testing@highpoint.edu",
-            "maxboardman56@highpoint.edu",
-            "test@highpoint.edu",
-            "test123@highpoint.edu"
-        ];
+        let blacklistedEmails = emailBlacklistResp.blacklistedEmails;
         if(!blacklistedEmails.includes(userExportData.email))
         {
             exportData.push(userExportData);

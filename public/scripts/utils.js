@@ -76,54 +76,6 @@ export function updateButtonText(button, text, maxTicks) {
     };
 }
 
-// GET LESSON INFO & PRAC INFO
-function getLessonInfo(){
-    const url = `/getLessonInfo`;
-    let area = "ucla";
-  
-    fetch(url, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ area }) 
-    })
-    .then(response => {
-        if (!response.ok) {
-            throw new Error('Network response was not ok');
-        }
-        
-        return response.json();
-    })
-    .then(data =>{
-        lessonInfo = data;
-    })
-  }
-function getPracInfo(){
-    const url = `/getPracInfo`;
-    let area = "ucla";
-    
-    fetch(url, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ area }) 
-    })
-    .then(response => {
-        if (!response.ok) {
-            throw new Error('Network response was not ok');
-        }
-        
-        return response.json();
-    })
-    .then(data =>{        
-        pracInfo = data;
-    })
-}
-//getLessonInfo();
-//getPracInfo();
-
 // NOT CMS RELATED
 // TODO: change this to get academic areas from CMS
 export let academicAreas;

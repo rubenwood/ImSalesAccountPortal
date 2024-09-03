@@ -16,6 +16,7 @@ const pool = new Pool({
     },
 });
 
+// GET TOPICS BY ID
 topicsRouter.get('/get-users-by-topic-id', async (req, res) => {
     const topicIds = req.query.topics ? req.query.topics.split(',') : [];
 
@@ -60,6 +61,7 @@ topicsRouter.get('/get-users-by-topic-id', async (req, res) => {
     }
 });
 
+// GET TOPICS BY TITLE
 topicsRouter.get('/get-users-by-topic-title', async (req, res) => {
     const topicTitles = req.query.topics ? req.query.topics.split(',') : [];
 

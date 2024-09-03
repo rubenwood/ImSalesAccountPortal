@@ -159,4 +159,4 @@ async function checkFileLastModified(bucket, fileKey) {
     }
 }
 
-module.exports = { s3Router, uploadToS3, anyFileModifiedSince, checkFileLastModified, checkFilesLastModifiedList  };
+module.exports = { s3Router, getS3JSONFile, uploadToS3, anyFileModifiedSince, checkFileLastModified, checkFilesLastModifiedList  };
