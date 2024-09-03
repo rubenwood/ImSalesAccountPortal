@@ -188,13 +188,12 @@ function isValidPlatformUserId(platformUserId, suffix) {
     return false;
 }
 
-
 // function to generate out a report (excel sheet)
 // add a url param to end point to notify report generation
-function genExcelReport(suffixes, data){
+async function genExcelReport(suffixes, data){
     console.log("exporting report");
     let sortedData = sortAndCombineDataForReport(data);
-    let exportData = setupDataForExport(sortedData);
+    let exportData = await setupDataForExport(sortedData);
     exportToExcel(suffixes, exportData);
 }
 function sortAndCombineDataForReport(data) {
@@ -216,8 +215,9 @@ function sortAndCombineDataForReport(data) {
     }, []);
 }
 async function setupDataForExport(sortedData){
+    // get email blacklist (we'll need this later)
     let emailBlacklistResp = await getEmailBlacklist();
-    console.log(emailBlacklistResp);
+
     let exportData = [];
     sortedData.forEach(element =>{
         //let playFabId = element.accountData.PlayFabId;
@@ -290,7 +290,6 @@ async function setupDataForExport(sortedData){
 // SETUP DATA FOR EXPORT HELPER FUNCTIONS
 function getUserEmailFromAccData(element){
     let email = "no email";
-    //console.log(element);
     if(element.LinkedAccounts !== undefined && element.LinkedAccounts.length > 0){
         let gotAcc = false;
         element.LinkedAccounts.forEach(linkedAcc =>{
@@ -308,7 +307,6 @@ function getUserEmailFromAccData(element){
         let contactEmail = checkForContactEmailAddr(element);
         email = contactEmail == undefined ? "no email" : contactEmail;
     }
-    //console.log(email);
     return email;
 }
 function checkForContactEmailAddr(input){
@@ -599,8 +597,8 @@ function exportToExcel(suffixes, exportData){
 }
 
 function uploadWorkbookToS3(workbook, reportType, suffixesJoined, todayUTC){
-    let filname = `Analytics/${suffixesJoined}/${reportType}-${suffixesJoined}-${todayUTC}-UTC.xlsx`;
-    uploadToS3(workbook, filname, 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', process.env.AWS_BUCKET)
+    let filename = `Analytics/${suffixesJoined}/${reportType}-${suffixesJoined}-${todayUTC}-UTC.xlsx`;
+    uploadToS3(workbook, filename, 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', process.env.AWS_BUCKET)
         .then((data) => {
             console.log(`File uploaded successfully at ${filename}`);
         })
@@ -761,7 +759,6 @@ function findPlayersWithMostUniqueActivitiesPlayed(data, start, end) {
 
     // Slice the array to get the specified range
     const selectedPlayers = playersWithUniqueActivityCount.slice(start, end);
-    //console.log(selectedPlayers);
     return selectedPlayers;
 }
 function findMostPlayedActivities(reportData, start, end, activityType = null) {
@@ -961,7 +958,6 @@ function getLessonStats(data){
     return output;
 }
 function getSimStats(data){
-    //console.log(data);
     let output = {
         totalSimPlayTime:0,
         totalSimsAttempted:0,
@@ -997,7 +993,6 @@ suffixRouter.get('/gen-suffix-rep', async (req, res) => {
     try {
         // Splits the suffixes into an array
         let exportReport = req.query.exportReport === "true" ? true : false;
-        console.log(exportReport);
         let suffixes = req.query.suffixes.split(',');
         const matchedUsers = await generateReportByEmailSuffixDB(suffixes, exportReport);
         res.json(matchedUsers);
