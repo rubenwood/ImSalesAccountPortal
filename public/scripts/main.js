@@ -2,7 +2,7 @@ import { canAccess } from './access-check.js';
 import { closePlayerDataModal } from './user-report-formatting.js';
 import { Login, RegisterUserEmailAddress, UpdateUserDataServer, getPlayerEmailAddr } from './PlayFabManager.js';
 import { showInsightsModal, closeInsightsModal, getTotalPlayTime, findPlayersWithMostPlayTime, findPlayersWithMostPlays, findPlayersWithMostUniqueActivitiesPlayed, findMostPlayedActivities, getUserAccessPerPlatform } from './insights.js';
-import { formatTimeToHHMMSS, formatActivityData, fetchS3JSONFile } from './utils.js';
+import { formatTimeToHHMMSS, formatActivityData, generatePass, fetchS3JSONFile } from './utils.js';
 import { playerProfiles, getSegmentsClicked, getPlayersInSegmentClicked } from './segments.js';
 import { fetchPlayersBySuffixList } from './suffix-front.js';
 import { fetchTopicReportByTitle } from './topics-front.js';
@@ -85,26 +85,7 @@ function toggleForms() {
         modifyForm.style.display = 'flex';
     }
 }
-// Generate password
-export function generatePass() {
-    const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
-    const digits = '0123456789';
-    const allCharacters = alphabet + digits;
-    // Randomly choose a length between 8 and 12
-    const length = Math.floor(Math.random() * 5) + 8;
-    let password = '';
-    // Ensure at least one digit is included
-    password += digits[Math.floor(Math.random() * digits.length)];
-    // Generate the rest of the password
-    for (let i = 1; i < length; i++) {
-        password += allCharacters[Math.floor(Math.random() * allCharacters.length)];
-    }
 
-    // Shuffle to randomize the position of the digit
-    password = password.split('').sort(() => 0.5 - Math.random()).join('');
-    document.getElementById("emailSignUpPassword").value = password;
-    return password;
-}
 // POPULATE DROP DOWN (ACADEMIC AREA)
 async function initAcademicAreaDD(selectElement) {
     try {
