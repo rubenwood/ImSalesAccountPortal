@@ -3,16 +3,13 @@ document.addEventListener('DOMContentLoaded', async() => {
     document.getElementById('loginButton').addEventListener('click', submitPass);
     
 });
-window.onload = function()
-{
+window.onload = function() {
     document.getElementById('loginModal').style.display = 'block';
 };
 
-async function submitPass()
-{
+async function submitPass() {
     let inPass = document.getElementById('password').value;
     
-    console.log("submit pass clicked");
     try {
         let response = await fetch('/reporting/auth', {
             method: 'POST',
@@ -32,9 +29,13 @@ async function submitPass()
         document.getElementById('loginModal').style.display = 'none';
         getReports();
 
-        const dateInput = document.getElementById('dateInput');
-        dateInput.addEventListener('change', function () {
-            filterReports(dateInput.value);
+        const startDateInput = document.getElementById('startDateInput');
+        const endDateInput = document.getElementById('endDateInput');
+        startDateInput.addEventListener('change', function () {
+            filterReports(startDateInput.value, endDateInput.value);
+        });
+        endDateInput.addEventListener('change', function () {
+            filterReports(startDateInput.value, endDateInput.value);
         });
     
     } catch (err) {
@@ -62,7 +63,7 @@ async function getReports() {
 }
 
 // format HTML
-function formatHTMLOutput(reports){
+function formatHTMLOutput(reports) {
     let sectionHtml = {
         login: '<ul>',
         insights: '<ul>',
@@ -73,7 +74,6 @@ function formatHTMLOutput(reports){
     
     reports.forEach(file => {
         const listItem = `<li><a href="${file.url}" download="${file.filename}">${file.filename}<i class="fa fa-download" aria-hidden="true"></i></a></li>`;
-        console.log(file.filename);
         if (file.filename.includes('-Login-')) {
             sectionHtml.login += listItem;
         } else if (file.filename.includes('-Insights-')) {
@@ -98,40 +98,37 @@ function formatHTMLOutput(reports){
 }
 
 // Filter Reports
-function filterReports(inDate) {
-    console.log("DATE SET TO: " + inDate);
-    console.log("Report Response ", reportResponse);
-
-    if(inDate == undefined || inDate == ""){
-        formatHTMLOutput(reportResponse);
-        return;
-    }
+function filterReports(startDate, endDate) {
+    // Convert the input dates to Date objects for comparison
+    let start = startDate ? new Date(startDate) : null;
+    let end = endDate ? new Date(endDate) : null;
 
     let reportsMatchingDate = reportResponse.filter(report => {
         let filename = report.filename;
         let dateMatch = filename.match(/\d{4}-\d{2}-\d{2}/); // Regex to match the date part
-        
+
         if (dateMatch) {
-            let reportDate = dateMatch[0];
-            return reportDate === inDate;
-        }        
-        return false; 
+            let reportDate = new Date(dateMatch[0]);
+
+            if ((start === null || reportDate >= start) && (end === null || reportDate <= end)) {
+                return true;
+            }
+        }
+        return false;
     });
 
-    console.log("Reports matching date: ", reportsMatchingDate);
+    console.log("Reports matching date range: ", reportsMatchingDate);
 
-    // Set "No Reports HTML here"
+    // Set "No Reports HTML here" if no reports match
     const noReportHTML = "<h1>No Reports</h1>";
 
-    if(reportsMatchingDate.length <= 0 ){ 
+    if (reportsMatchingDate.length <= 0) {
         document.getElementById('login').innerHTML = noReportHTML;
         document.getElementById('insights').innerHTML = noReportHTML;
         document.getElementById('progress').innerHTML = noReportHTML;
         document.getElementById('usage').innerHTML = noReportHTML;
         document.getElementById('combined').innerHTML = noReportHTML;
-    }
-    else
-    {
+    } else {
         formatHTMLOutput(reportsMatchingDate);
     }
 }

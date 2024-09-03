@@ -596,7 +596,7 @@ function exportToExcel(suffixes, exportData){
     const workbookLoginOut = XLSX.write(workbookLogin, { bookType: 'xlsx', type: 'buffer' });
 
     const suffixesJoined = suffixes.join('-');
-    let todayUTC = new Date().toISOString().split('.')[0] + 'Z';
+    let todayUTC = new Date().toISOString().split('T')[0];
     console.log(`Today in UTC: ${todayUTC}`);
     // Combined
     uploadWorkbookToS3(workbookOut, 'Report-Combined', suffixesJoined, todayUTC);
