@@ -53,7 +53,6 @@ topicsRouter.get('/get-users-by-topic-id', async (req, res) => {
         const queryParams = [topicIds];
         const [result1] = await Promise.all([pool.query(query1, queryParams)]);
         const rows1 = result1.rows;
-        console.log(rows1.size); 
         res.json(rows1);
     } catch (err) {
         console.error('Error fetching usage data from db:', err);
@@ -98,15 +97,11 @@ topicsRouter.get('/get-users-by-topic-title', async (req, res) => {
         const queryParams = [topicTitles];
         const [result1] = await Promise.all([pool.query(query1, queryParams)]);
         const rows1 = result1.rows;
-        console.log(rows1);
-        console.log(rows1.length);
         res.json(rows1);
     } catch (err) {
         console.error('Error fetching usage data from db:', err);
         res.status(500).json({ error: 'Internal server error' });
     }
 });
-
-
 
 module.exports = topicsRouter;

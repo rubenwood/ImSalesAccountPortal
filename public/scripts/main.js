@@ -5,6 +5,7 @@ import { showInsightsModal, closeInsightsModal, getTotalPlayTime, findPlayersWit
 import { formatTimeToHHMMSS, formatActivityData, getAcademicAreas, fetchS3JSONFile } from './utils.js';
 import { playerProfiles, getSegmentsClicked, getPlayersInSegmentClicked } from './segments.js';
 import { fetchPlayersBySuffixList } from './suffix-front.js';
+import { fetchTopicReportByTitle } from './topics-front.js';
 import { populateForm, sortAndCombineData, fetchAllUsersByArea } from './academic-area.js';
 import { fetchUsersByID, fetchUsersByEmail } from './db/db-front.js';
 //import { fetchUsersByClickIDList } from './click-id-front.js';
@@ -228,16 +229,31 @@ export async function generateReportByTopicDB() {
     if (inputTopics.length < 1) { return; }
     console.log(`Generating report by topic for: ${inputTopics}`);
 
+    // Search the analytics database for users how have the topic (external) title
+    const output = await fetchTopicReportByTitle(inputTopics);
+    const playFabIdsFromDBSearch = output.map(entry => entry.PlayFabId);
+    console.log(playFabIdsFromDBSearch);
+
+    // Search by assigned topics
+    const searchByAssignTopicResult = await searchByAssignedTopic(inputTopics);    
+    const outputPlayFabIds = [...playFabIdsFromDBSearch, ...searchByAssignTopicResult.playfabIds];
+    // ensure unique ids (filter out duplicates)
+    const uniqueIds = [...new Set(outputPlayFabIds)];
+    // join it all together (as a string seperated by new lines)
+    const playFabIdsJoined = uniqueIds.join('\n');
+    console.log(playFabIdsJoined);
+    // Set this to the id list (1 PlayFabId per line)
+    document.getElementById("playerIDList").value = playFabIdsJoined;
+    generateReportByIdDB();
+}
+
+async function searchByAssignedTopic(inputTopics){
     const topicIds = await imAPIGet("topics");
     const topicBrondons = await getTopicBrondons(topicIds);
-
-    // Test topic
-
     // Find matching entries based on externalTitle
     const matchingEntries = topicBrondons.filter(entry =>
         inputTopics.some(topic => topic.trim().toLowerCase() === entry.brondon?.externalTitle.trim().toLowerCase())
     );
-
     console.log("Matching Entries:", matchingEntries);
 
     // currently, can only search for 1 topic at a time
@@ -245,12 +261,9 @@ export async function generateReportByTopicDB() {
     // TODO: modify this so we can search for multiple topics
     // Extract playFabIds from the matching entries (assuming each topic has associated playFabIds)
     const playFabIdsAssigned = await imAPIGet(`structure/${matchingEntries[0].topicId}/assigned/playFabUser`);
-    const playFabIdsJoined = playFabIdsAssigned.playfabIds.join('\n');
-
-    // Set this to the id list (1 PlayFabId per line)
-    document.getElementById("playerIDList").value = playFabIdsJoined;
-    generateReportByIdDB();
+    return playFabIdsAssigned;
 }
+
 
 // Generate report by ID (Database)
 export async function generateReportByIdDB() {
