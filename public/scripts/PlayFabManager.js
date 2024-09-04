@@ -62,14 +62,17 @@ export async function RegisterUserEmailAddress(){
     let pass = document.getElementById("emailSignUpPassword").value;
     let expiry = document.getElementById("expiry").value;
     if (!isValidEmail(email)) {
+        alert("Invalid email address!");
         document.getElementById("resultOutput").innerHTML = "Invalid email address.";
         return;
     }
     if (!isValidPassword(pass)) {
+        alert("Password must be at least 8 characters and include at least 1 number!");
         document.getElementById("resultOutput").innerHTML = "Password must be at least 8 characters and include at least 1 number.";
         return;
     }
     if(!isValidExpiryDate(expiry)){
+        alert("Select an expiry date!");
         document.getElementById("resultOutput").innerHTML = "Select an expiry date!";
         return;
     }
@@ -92,8 +95,9 @@ var RegisterCallback = async function (result, error){
     // once the account is created, update the user data
     if (error !== null){
         document.getElementById("registerButton").value  = "Register";
-        document.getElementById("resultOutput").innerHTML =
-            `Something went wrong\nHere's some debug information:\n${PlayFab.GenerateErrorReport(error)}`;
+        let errorOutput = `Something went wrong:\n${PlayFab.GenerateErrorReport(error)}`;
+        alert(errorOutput);
+        document.getElementById("resultOutput").innerHTML = errorOutput;
         return;
     }
 
@@ -149,7 +153,7 @@ var RegisterCallback = async function (result, error){
         LastWriteDevice,
         UserProfileData:userProfileDataStr // localisation
     };
-    console.log(data);
+    //console.log(data);
     UpdateUserData(data);
     // wait for UpdateUserData to complete
     await waitUntil(()=> doneUpdatingUserData == true);
@@ -176,10 +180,9 @@ var UpdateUserDataCallback = function (result, error){
         document.getElementById("resultOutput").innerHTML = "Account created & user data updated...\nUpdating confluence...";
     } else if (error !== null) {
         document.getElementById("registerButton").value  = "Register";
-        document.getElementById("resultOutput").innerHTML =
-            "Something went wrong\n" +
-            "Here's some debug information:\n" +
-            PlayFab.GenerateErrorReport(error);
+        let errorOutput = "Something went wrong:\n"+PlayFab.GenerateErrorReport(error);
+        alert(errorOutput);
+        document.getElementById("resultOutput").innerHTML = errorOutput;
     }
 
     doneUpdatingUserData = true;

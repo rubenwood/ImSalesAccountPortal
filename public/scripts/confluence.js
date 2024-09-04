@@ -17,7 +17,7 @@ export function callUpdateConfluencePage(email, pass, area, expiry, createdBy, r
         return response.json();
     })
     .then(data => {
-        //console.log('Success:', data);
+        // requires confetti.browser.js (add in html)
         confetti({
             particleCount: 100,
             spread: 70,
