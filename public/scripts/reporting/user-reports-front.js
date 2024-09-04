@@ -1,11 +1,7 @@
 
-let userSuffix;
 document.addEventListener('DOMContentLoaded', async() => {
-    userSuffix = localStorage.getItem("suffix");
-    console.log(userSuffix);
     // login button on modal
     document.getElementById('loginButton').addEventListener('click', submitPass);
-    
 });
 window.onload = function() {
     document.getElementById('loginModal').style.display = 'block';
@@ -51,12 +47,6 @@ async function submitPass() {
 // Get Reports
 let reportResponse = undefined;
 async function getReports() {
-    // if(userSuffix == null || userSuffix == undefined){ 
-    //     console.error("user has no suffix!"); 
-    //     setNoReportHTML();
-    //     return;
-    // }
-
     const inPass = document.getElementById('password').value;
     const response = await fetch(`/reporting/reports/highpoint.edu`, {
         method: 'GET',
@@ -128,9 +118,7 @@ function filterReports(startDate, endDate) {
     });
 
     console.log("Reports matching date range: ", reportsMatchingDate);
-
     
-
     if (reportsMatchingDate.length <= 0) {
         setNoReportHTML();
     } else {
