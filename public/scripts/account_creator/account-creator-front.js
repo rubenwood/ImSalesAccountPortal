@@ -1,9 +1,9 @@
 import { initializeDarkMode } from '../themes/dark-mode.js';
-import { Login, RegisterUserEmailAddress, UpdateUserDataServer, getPlayerEmailAddr } from '../PlayFabManager.js';
-import { formatTimeToHHMMSS, formatActivityData, generatePass, fetchS3JSONFile } from '../utils.js';
-import { waitForJWT, imAPIGet, getTopicBrondons } from '../immersifyapi/immersify-api.js';
+import { Login, RegisterUserEmailAddress, UpdateUserDataServer } from '../PlayFabManager.js';
+import { generatePass, fetchS3JSONFile } from '../utils.js';
+import { waitForJWT, imAPIGet } from '../immersifyapi/immersify-api.js';
 
-const doConfetti = () => { confetti({particleCount: 100, spread: 70, origin: { y: 0.6 }}); }
+//const doConfetti = () => { confetti({particleCount: 100, spread: 70, origin: { y: 0.6 }}); }
 
 document.addEventListener('DOMContentLoaded', async () => {
     // setup dark mode toggle
@@ -62,9 +62,7 @@ async function initAcademicAreaDD(selectElement) {
 async function initLangStudyDD(selectElement) {
     try {
         const languageResp = await fetchS3JSONFile("TestFiles/OtherData/LanguageStudyData.json");
-        //console.log(languageResp);
         const languages = languageResp.languages;
-        //console.log(languages);
         if (languages) {            
             languages.forEach(item => {
                 const option = document.createElement('option');

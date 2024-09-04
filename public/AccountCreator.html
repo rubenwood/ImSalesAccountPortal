@@ -4,7 +4,6 @@
     <meta charset="utf-8">
     <title>Immersify Portal</title>
     <script type="text/javascript" src="https://download.playfab.com/PlayFabClientApi.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.16.2/xlsx.full.min.js"></script>
     <link rel="stylesheet" type="text/css" href="styles.css">
 </head>
 <body>
@@ -33,48 +32,48 @@
         <input type="radio" id="modifyFormRadio" name="formType" value="modifyExisting">
         <label for="modifyFormRadio">Update Existing</label>
     </div>
-    <br/><br/>
+    <br><br>
     <div id="signup-container" class="container">
-        Email Address <input type="text" id="emailSignUpAddress" value="example@test.com"><br />
+        Email Address <input type="text" id="emailSignUpAddress" value="example@test.com"><br>
         Password <span class="small-text">(Min. 8 characters, must include at least 1 number)</span>
         <input type="text" id="emailSignUpPassword" value="">
-        <input type="button" id="generatePassword" class="reveal-button" value="Generate Password"><br />
+        <input type="button" id="generatePassword" class="reveal-button" value="Generate Password"><br>
 
-        Display name <input type="text" id="displayName" value=""><br />
+        Display name <input type="text" id="displayName" value=""><br>
         Academic Area
         <select name="academicAreaSelection" id="academicArea"></select>
-        <br/>
+        <br>
         Language Of Study
         <select name="languageSelection" id="language"></select>
-        <br />
-        Expiry<br />
-        <input type="date" id="expiry"><br /><br /><br />
-        Created By<br />
-        <input type="text" id="createdBy"><br />
-        Reason<br />
-        <input type="text" id="createdReason"><br />
-        <br />
-        <input type="button" id="registerButton" value="Register"><br /><br />
-        Result<br /><br />
-        <textarea id="resultOutput" cols="60" rows="5"></textarea><br />    
+        <br>
+        Expiry<br>
+        <input type="date" id="expiry"><br><br><br>
+        Created By<br>
+        <input type="text" id="createdBy"><br>
+        Reason<br>
+        <input type="text" id="createdReason"><br>
+        <br>
+        <input type="button" id="registerButton" value="Register"><br><br>
+        Result<br><br>
+        <textarea id="resultOutput" cols="60" rows="5"></textarea><br>    
     </div>
     <div id="modify-existing-container" class="container">
-        Email Address <input type="text" id="emailAddressUpdate" value="salestest@test.com"><br />
+        Email Address <input type="text" id="emailAddressUpdate" value="salestest@test.com"><br>
         Academic Area
         <select name="academicAreaSelection" id="academicAreaUpdate"></select>
-        <br/>
+        <br>
         Language Of Study
         <select name="languageSelection" id="languageUpdate"></select>
-        <br />
-        Expiry<br />
-        <input type="date" id="expiryUpdate"><br /><br /><br />
-        Updated By<br />
-        <input type="text" id="updatedBy"><br />
-        Reason<br />
-        <input type="text" id="updatedReason"><br />
-        <input type="button" id="updateButton" value="Update"><br /><br />
-        Result<br /><br />
-        <textarea id="updateResultOutput" cols="60" rows="5"></textarea><br />    
+        <br>
+        Expiry
+        <input type="date" id="expiryUpdate"><br><br><br>
+        Updated By<br>
+        <input type="text" id="updatedBy"><br>
+        Reason<br>
+        <input type="text" id="updatedReason"><br>
+        <input type="button" id="updateButton" value="Update"><br><br>
+        Result<br><br>
+        <textarea id="updateResultOutput" cols="60" rows="5"></textarea><br>    
     </div>
 </div>
 <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.1/dist/confetti.browser.js"></script>
