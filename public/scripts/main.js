@@ -205,7 +205,7 @@ export async function generateReportByTopicDB() {
     const hasAccess = await canAccess();
     if (!hasAccess) { return; }
 
-    document.getElementById('generateReportByTopicButton').value = `Generating Report By Email List...`;  
+    document.getElementById('generateReportByTopicButton').value = `Generating Report By Topic...`;  
 
     const inputTopics = document.getElementById("emailList").value.split('\n').filter(Boolean);
     if (inputTopics.length < 1) { return; }

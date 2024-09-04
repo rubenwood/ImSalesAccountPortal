@@ -1,4 +1,7 @@
+const userSuffix = localStorage.getItem("suffix");
+
 document.addEventListener('DOMContentLoaded', async() => {
+    console.log(userSuffix);
     // login button on modal
     document.getElementById('loginButton').addEventListener('click', submitPass);
     
@@ -47,8 +50,14 @@ async function submitPass() {
 // Get Reports
 let reportResponse = undefined;
 async function getReports() {
+    if(userSuffix == null || userSuffix == undefined){ 
+        console.error("user has no suffix!"); 
+        setNoReportHTML();
+        return;
+    }
+
     const inPass = document.getElementById('password').value;
-    const response = await fetch('/reporting/reports/highpoint.edu', {
+    const response = await fetch(`/reporting/reports/${userSuffix}`, {
         method: 'GET',
         headers: {
             'Content-Type': 'application/json',
@@ -119,16 +128,21 @@ function filterReports(startDate, endDate) {
 
     console.log("Reports matching date range: ", reportsMatchingDate);
 
-    // Set "No Reports HTML here" if no reports match
-    const noReportHTML = "<h1>No Reports</h1>";
+    
 
     if (reportsMatchingDate.length <= 0) {
-        document.getElementById('login').innerHTML = noReportHTML;
-        document.getElementById('insights').innerHTML = noReportHTML;
-        document.getElementById('progress').innerHTML = noReportHTML;
-        document.getElementById('usage').innerHTML = noReportHTML;
-        document.getElementById('combined').innerHTML = noReportHTML;
+        setNoReportHTML();
     } else {
         formatHTMLOutput(reportsMatchingDate);
     }
+}
+
+function setNoReportHTML(){
+    // Set "No Reports HTML here" if no reports match
+    const noReportHTML = "<h1>No Reports</h1>";
+    document.getElementById('login').innerHTML = noReportHTML;
+    document.getElementById('insights').innerHTML = noReportHTML;
+    document.getElementById('progress').innerHTML = noReportHTML;
+    document.getElementById('usage').innerHTML = noReportHTML;
+    document.getElementById('combined').innerHTML = noReportHTML;
 }
