@@ -25,13 +25,13 @@ document.addEventListener('DOMContentLoaded', async () => {
     document.getElementById('segment-toggle-btn').addEventListener('click', toggleSegmentSection)
 
     document.getElementById('loginButton').addEventListener('click', Login);
-    // Sign Up / Modify Form
-    document.getElementById('signUpFormRadio').addEventListener('change', toggleForms);
-    document.getElementById('modifyFormRadio').addEventListener('change', toggleForms);
-    toggleForms(); // set initial state
-    document.getElementById('registerButton').addEventListener('click', RegisterUserEmailAddress);
-    document.getElementById('updateButton').addEventListener('click', UpdateUserDataServer);
-    document.getElementById('generatePassword').addEventListener('click', generatePass);
+    // // Sign Up / Modify Form
+    // document.getElementById('signUpFormRadio').addEventListener('change', toggleForms);
+    // document.getElementById('modifyFormRadio').addEventListener('change', toggleForms);
+    // toggleForms(); // set initial state
+    // document.getElementById('registerButton').addEventListener('click', RegisterUserEmailAddress);
+    // document.getElementById('updateButton').addEventListener('click', UpdateUserDataServer);
+    // document.getElementById('generatePassword').addEventListener('click', generatePass);
 
     // segments
     document.getElementById('getSegmentsButton').addEventListener('click', ()=>getSegmentsClicked(document.getElementById('segmentSelection')));
@@ -62,8 +62,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     await waitForJWT();
     emailBlacklist = await fetchS3JSONFile("Analytics/EmailBlackList.json");
     console.log(emailBlacklist);
-    initAcademicAreaDD(document.getElementById('academicArea'));
-    initAcademicAreaDD(document.getElementById('academicAreaUpdate'));
+    // initAcademicAreaDD(document.getElementById('academicArea'));
+    // initAcademicAreaDD(document.getElementById('academicAreaUpdate'));
 });
 window.onload = function() {
     document.getElementById('loginModal').style.display = 'block';
@@ -122,8 +122,8 @@ async function initLangStudyDD(selectElement) {
         console.error('Error:', error);
     }
 }
-initLangStudyDD(document.getElementById('language'));
-initLangStudyDD(document.getElementById('languageUpdate'));
+// initLangStudyDD(document.getElementById('language'));
+// initLangStudyDD(document.getElementById('languageUpdate'));
 
 // TOGGLE SEGMENT SECTION
 function toggleSegmentSection(){
@@ -675,7 +675,7 @@ export function resetButtonTexts() {
     generateReportByClickIDButton ? generateReportByClickIDButton.value = "Generate Report By Click ID" : null;
 
     const generateReportByTopicButton= document.getElementById('generateReportByTopicButton');
-    generateReportByTopicButton ? generateReportByTopicButton.value = `Generating Report By Topic` : null;  
+    generateReportByTopicButton ? generateReportByTopicButton.value = `Generate Report By Topic` : null;  
 }
 // UPDATE ID LIST
 export function updateIDList(playerIdList){
