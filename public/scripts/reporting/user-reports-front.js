@@ -50,14 +50,14 @@ async function submitPass() {
 // Get Reports
 let reportResponse = undefined;
 async function getReports() {
-    if(userSuffix == null || userSuffix == undefined){ 
-        console.error("user has no suffix!"); 
-        setNoReportHTML();
-        return;
-    }
+    // if(userSuffix == null || userSuffix == undefined){ 
+    //     console.error("user has no suffix!"); 
+    //     setNoReportHTML();
+    //     return;
+    // }
 
     const inPass = document.getElementById('password').value;
-    const response = await fetch(`/reporting/reports/${userSuffix}`, {
+    const response = await fetch(`/reporting/reports/highpoint.edu`, {
         method: 'GET',
         headers: {
             'Content-Type': 'application/json',
