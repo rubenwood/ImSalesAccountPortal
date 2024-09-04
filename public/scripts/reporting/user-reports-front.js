@@ -1,6 +1,7 @@
-const userSuffix = localStorage.getItem("suffix");
 
+let userSuffix;
 document.addEventListener('DOMContentLoaded', async() => {
+    userSuffix = localStorage.getItem("suffix");
     console.log(userSuffix);
     // login button on modal
     document.getElementById('loginButton').addEventListener('click', submitPass);
