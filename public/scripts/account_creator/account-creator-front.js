@@ -1,7 +1,7 @@
 import { initializeDarkMode } from '../themes/dark-mode.js';
 import { Login, RegisterUserEmailAddress, UpdateUserDataServer } from '../PlayFabManager.js';
 import { generatePass, fetchS3JSONFile } from '../utils.js';
-import { waitForJWT, imAPIGet } from '../immersifyapi/immersify-api.js';
+import { waitForJWT, imAPIGet, getAreaBrondons } from '../immersifyapi/immersify-api.js';
 
 //const doConfetti = () => { confetti({particleCount: 100, spread: 70, origin: { y: 0.6 }}); }
 
@@ -45,9 +45,12 @@ function toggleForms() {
 async function initAcademicAreaDD(selectElement) {
     try {
         const academicAreaCMS = await imAPIGet("areas");
-        // const academicAreas = await getAcademicAreas();
+        console.log(academicAreaCMS);
+
+        //
         if (academicAreaCMS) {            
             academicAreaCMS.forEach(item => {
+                if(item.slug == "nursing"){ return; } // TODO: change this (eventually)
                 const option = document.createElement('option');
                 option.value = item.id;
                 option.textContent = item.slug;

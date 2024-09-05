@@ -40,6 +40,30 @@ async function getS3JSONFile(filepath) {
   }
 }
 
+/*s3Router.post('/s3upload', async (req, res) => {
+  const file = req.file;
+  const path = req.path;
+  const key = `${path}/${file.originalname}`;
+  const contentType = req.contentType;
+  const acl = req.body.acl;
+  const bucketName = process.env.AWS_BUCKET;
+
+  try {
+    //uploadToS3(workbook, filename, 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', process.env.AWS_BUCKET)
+    const result = await uploadToS3(file, key, contentType, bucketName, acl);
+
+    // Clean up the uploaded file
+    fs.unlinkSync(file.path);
+
+    res.json({
+      message: 'Image uploaded successfully',
+      data: result
+    });
+  } catch (error) {
+    console.error('Error uploading image:', error);
+    res.status(500).send('Error uploading image.');
+  }
+});*/
 async function uploadToS3(buffer, filename, contentType, bucketName, acl = undefined) {
   const params = {
       Bucket: bucketName,
@@ -64,7 +88,6 @@ function formatSize(size) {
       return size + ' Bytes';
   }
 }
-
 function listS3Files(bucketName, folderNames) {
   if (!bucketName) {
       console.error('Bucket name is required.');
