@@ -1,7 +1,7 @@
 import { initializeDarkMode } from '../themes/dark-mode.js';
 import { Login, RegisterUserEmailAddress, UpdateUserDataServer } from '../PlayFabManager.js';
 import { generatePass, fetchS3JSONFile } from '../utils.js';
-import { waitForJWT, imAPIGet, getAreaBrondons } from '../immersifyapi/immersify-api.js';
+import { waitForJWT, imAPIGet } from '../immersifyapi/immersify-api.js';
 
 //const doConfetti = () => { confetti({particleCount: 100, spread: 70, origin: { y: 0.6 }}); }
 
