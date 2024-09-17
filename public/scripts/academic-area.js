@@ -59,7 +59,6 @@ export async function fetchAllUsersByArea() {
 
 // Combines the usage and account data
 export function sortAndCombineData(results) {
-    //console.log(results);
     return results.reduce((acc, curr) => {
         curr.usageData.forEach(ud => {
             const accountDataMatch = curr.accountData.find(ad => ad.PlayFabId === ud.PlayFabId);
@@ -95,16 +94,15 @@ export function populateForm(data){
 
     const tableBody = document.getElementById("reportTableBody");
     tableBody.innerHTML = '';
-    // TODO: update this to account for new cms-style data
-    data.forEach(element =>{
+    data.forEach(element => {
         let playFabId = element.accountData.PlayFabId;
         let email = getUserEmailFromAccData(element.accountData.AccountDataJSON);
         let createdDate = new Date(element.accountData.AccountDataJSON.Created);
         let lastLoginDate = new Date(element.accountData.AccountDataJSON.LastLogin);
-        let daysSinceLastLogin = calcDaysSince(lastLoginDate);    
+        let daysSinceLastLogin = calcDaysSince(lastLoginDate);
         let daysSinceCreation = calcDaysSince(createdDate);
-        let userData = element.usageData.UsageDataJSON.Data;
-        let accountExpiryDate = userData.TestAccountExpiryDate !== undefined ? new Date(userData.TestAccountExpiryDate.Value) : undefined;
+        let usageData = element.usageData.UsageDataJSON.Data;
+        let accountExpiryDate = usageData.TestAccountExpiryDate !== undefined ? new Date(usageData.TestAccountExpiryDate.Value) : undefined;
         let accountExpiryDateString = accountExpiryDate !== undefined ? accountExpiryDate.toDateString() : "N/A";
         
         try{
@@ -116,10 +114,9 @@ export function populateForm(data){
 
             populateAccDataRow(row, email, createdDate, lastLoginDate, daysSinceLastLogin, daysSinceCreation, 
                 accountExpiryDateString, "", "", "", linkedAccounts);
-            let loginData = populateLoginData(userData);
-            // TODO: add playerDataNewLauncher here
-            let playerDataNew = userData.PlayerDataNewLauncher !== undefined ? JSON.parse(userData.PlayerDataNewLauncher.Value) : undefined;
-            let playerData = userData.PlayerData !== undefined ? JSON.parse(userData.PlayerData.Value) : undefined;
+            let loginData = populateLoginData(usageData);
+            let playerDataNew = usageData.PlayerDataNewLauncher !== undefined ? JSON.parse(usageData.PlayerDataNewLauncher.Value) : undefined;
+            let playerData = usageData.PlayerData !== undefined ? JSON.parse(usageData.PlayerData.Value) : undefined;
             let playerDataState = {
                 totalActivitiesPlayed:0,
                 averageTimePerPlay: 0,
@@ -127,7 +124,6 @@ export function populateForm(data){
                 totalPlayTime: 0,
                 activityDataForReport: []
             };
-            // TODO: test this!
             let newDataState = populateUsageData([playerDataNew, playerData], loginData, playerDataState, row);
             let activityDataForReport = newDataState.activityDataForReport;
             let averageTimePerPlay = newDataState.averageTimePerPlay;

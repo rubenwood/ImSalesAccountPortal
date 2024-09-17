@@ -575,7 +575,7 @@ function exportToExcel(suffixes, exportData){
     // write to server
     //XLSX.writeFile(workbook, `Report-${suffixes.join('-')}-${formatDate(new Date())}.xlsx`);
     // write to s3
-    const workbookOut = XLSX.write(workbook, { bookType: 'xlsx', type: 'buffer' });
+    const workbookCombinedOut = XLSX.write(workbook, { bookType: 'xlsx', type: 'buffer' });
     const workbookInsightsOut = XLSX.write(workbookInsights, { bookType: 'xlsx', type: 'buffer' });
     const workbookProgressOut = XLSX.write(workbookProgress, { bookType: 'xlsx', type: 'buffer' });
     const workbookUsageOut = XLSX.write(workbookUsage, { bookType: 'xlsx', type: 'buffer' });
@@ -585,7 +585,7 @@ function exportToExcel(suffixes, exportData){
     let todayUTC = new Date().toISOString().split('T')[0];
     console.log(`Today in UTC: ${todayUTC}`);
     // Combined
-    uploadWorkbookToS3(workbookOut, 'Report-Combined', suffixesJoined, todayUTC);
+    uploadWorkbookToS3(workbookCombinedOut, 'Report-Combined', suffixesJoined, todayUTC);
     // Insights
     uploadWorkbookToS3(workbookInsightsOut, 'Report-Insights', suffixesJoined, todayUTC);
     // Progress
