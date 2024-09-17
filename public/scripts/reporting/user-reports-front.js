@@ -25,6 +25,14 @@ async function submitPass() {
             document.getElementById('error-txt').innerHTML = 'Incorrect password. Please try again.';
             return;
         }
+
+        // get query param
+        const queryString = window.location.search;
+        console.log(queryString);
+        const urlParams = new URLSearchParams(queryString);
+        const reportParam = urlParams.get('report');
+        console.log(reportParam);
+        //
         
         document.getElementById('loginModal').style.display = 'none';
         getReports();
@@ -58,7 +66,7 @@ async function getReports() {
 
     const result = await response.json();
     reportResponse = result;
-    console.log(result);
+    //console.log(result);
     formatHTMLOutput(reportResponse);
 }
 
@@ -71,6 +79,8 @@ function formatHTMLOutput(reports) {
         usage: '<ul>',
         combined: '<ul>'
     };
+
+    reports = SortByDate(reports, "newest");
     
     reports.forEach(file => {
         const listItem = `<li><a href="${file.url}" download="${file.filename}">${file.filename}<i class="fa fa-download" aria-hidden="true"></i></a></li>`;
@@ -95,6 +105,21 @@ function formatHTMLOutput(reports) {
     document.getElementById('progress').innerHTML = sectionHtml.progress;
     document.getElementById('usage').innerHTML = sectionHtml.usage;
     document.getElementById('combined').innerHTML = sectionHtml.combined;
+}
+
+// Sort reports, newest to oldest (or vice versa)
+function SortByDate(reports, order = 'newest') {
+    return reports.sort((a, b) => {
+        let dateA = new Date(a.filename.match(/\d{4}-\d{2}-\d{2}/)[0]);
+        let dateB = new Date(b.filename.match(/\d{4}-\d{2}-\d{2}/)[0]);
+
+        // Sort based on the provided order
+        if (order === 'newest') {
+            return dateB - dateA; // Newest to oldest
+        } else if (order === 'oldest') {
+            return dateA - dateB; // Oldest to newest
+        }
+    });
 }
 
 // Filter Reports
