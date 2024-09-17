@@ -102,7 +102,7 @@ qrCodeRouter.post('/upload-files', uploadQRCode.array('files'), async (req, res)
         // Use addDeepLinkQRCode to update the database with the file URLs
         const dbUpdatePromises = uploadResults.map(async (result) => {
             const qrCodeUrl = result.Location;
-            const deeplink = await decodeQRCode({ url: qrCodeUrl }); //"https://example.com/deeplink"
+            const deeplink = await decodeQRCode({ url: qrCodeUrl });
             return await addDeepLinkQRCode(deeplink, qrCodeUrl);
         });
 

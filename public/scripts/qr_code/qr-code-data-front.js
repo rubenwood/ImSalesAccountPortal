@@ -14,15 +14,6 @@ document.addEventListener('DOMContentLoaded', () => {
     // event listener for login modal
     document.getElementById('loginButton').addEventListener('click', Login);
 
-    // add event listener for uploading qr codes
-    document.getElementById('upload-form').addEventListener('submit', async (event) => {
-        event.preventDefault();
-        const files = document.getElementById('file-input').files;
-        if (files.length > 0) {
-            await uploadQRCodeFiles(files);
-        }
-    });
-
     // Search listeners
     document.getElementById('search-btn').addEventListener('click', searchClicked);
     document.getElementById('search-input').addEventListener('keypress', (event) => {
@@ -36,31 +27,6 @@ window.onload = function() {
     document.getElementById('loginModal').style.display = 'block';
 };
 
-async function uploadQRCodeFiles(files) {
-    const formData = new FormData();
-    for (const file of files) {
-        formData.append('files', file);
-    }
-
-    try {
-        const response = await fetch('/qr/upload-files', {
-            method: 'POST',
-            body: formData
-        });
-
-        if (response.ok) {
-            const result = await response.json();
-            alert('Files uploaded successfully');
-            fetchQRDLData(); // Refresh the data after upload
-        } else {
-            alert('Error uploading files');
-        }
-    } catch (error) {
-        console.error('Error uploading files:', error);
-        alert('Error uploading files');
-    }
-}
-
 // SEARCHING
 async function searchClicked() {
     // database call to find qr codes matching by:
@@ -69,7 +35,7 @@ async function searchClicked() {
     const searchQuery = document.getElementById('search-input').value.trim();
     if (searchQuery.length > 0) {
         const searchResults = await searchQRCode(searchQuery);
-        generateReport(searchResults);
+        generateQRCodeTable(searchResults);
     } else {
         setupPage();
     }  
@@ -103,13 +69,13 @@ async function setupPage(){
     
     // get data from database
     let dbData = await fetchQRDLData();
-    generateReport(dbData);
+    generateQRCodeTable(dbData);
 
     doConfetti();
 }
 
 // Generate the report / html
-function generateReport(data) {
+function generateQRCodeTable(data) {
     const totalHTML = document.getElementById('total-report');
     totalHTML.innerHTML = `<b>Total:</b> ${data.length}`;
     
