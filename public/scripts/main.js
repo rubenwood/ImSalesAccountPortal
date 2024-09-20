@@ -1,7 +1,9 @@
 import { canAccess } from './access-check.js';
-import { closePlayerDataModal } from './user-report-formatting.js';
+import { closePlayerDataModal, formatSessionsForExport } from './user-report-formatting.js';
 import { Login, RegisterUserEmailAddress, UpdateUserDataServer, getPlayerEmailAddr } from './PlayFabManager.js';
-import { showInsightsModal, closeInsightsModal, getTotalPlayTime, findPlayersWithMostPlayTime, findPlayersWithMostPlays, findPlayersWithMostUniqueActivitiesPlayed, findMostPlayedActivities, getUserAccessPerPlatform } from './insights.js';
+import { showInsightsModal, closeInsightsModal, getTotalPlayTime, 
+    findPlayersWithMostPlayTime, findPlayersWithMostPlays, findPlayersWithMostUniqueActivitiesPlayed,
+     findMostPlayedActivities, getUserAccessPerPlatform, getTotalLogins, getTotalLoginsPerMonth } from './insights.js';
 import { formatTimeToHHMMSS, formatActivityData, generatePass, fetchS3JSONFile } from './utils.js';
 import { playerProfiles, getSegmentsClicked, getPlayersInSegmentClicked } from './segments.js';
 import { fetchPlayersBySuffixList } from './suffix-front.js';
@@ -21,18 +23,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     // setup dark mode toggle
     initializeDarkMode('darkModeSwitch');
 
+    document.getElementById('loginButton').addEventListener('click', Login);
+
     // setup segment section toggle
     document.getElementById('segment-toggle-btn').addEventListener('click', toggleSegmentSection)
-
-    document.getElementById('loginButton').addEventListener('click', Login);
-    // // Sign Up / Modify Form
-    // document.getElementById('signUpFormRadio').addEventListener('change', toggleForms);
-    // document.getElementById('modifyFormRadio').addEventListener('change', toggleForms);
-    // toggleForms(); // set initial state
-    // document.getElementById('registerButton').addEventListener('click', RegisterUserEmailAddress);
-    // document.getElementById('updateButton').addEventListener('click', UpdateUserDataServer);
-    // document.getElementById('generatePassword').addEventListener('click', generatePass);
-
     // segments
     document.getElementById('getSegmentsButton').addEventListener('click', ()=>getSegmentsClicked(document.getElementById('segmentSelection')));
     document.getElementById('getSegmentPlayersButton').addEventListener('click', async ()=>
@@ -61,9 +55,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     // wait for login
     await waitForJWT();
     emailBlacklist = await fetchS3JSONFile("Analytics/EmailBlackList.json");
-    console.log(emailBlacklist);
-    // initAcademicAreaDD(document.getElementById('academicArea'));
-    // initAcademicAreaDD(document.getElementById('academicAreaUpdate'));
+    //console.log(emailBlacklist);
 });
 window.onload = function() {
     document.getElementById('loginModal').style.display = 'block';
@@ -71,63 +63,8 @@ window.onload = function() {
     document.getElementById('segments-section').style.display = 'none';
 };
 
-// Function to toggle between sign up and modify existing forms
-function toggleForms() {
-    const isSignUpSelected = document.getElementById('signUpFormRadio').checked;
-    const signUpForm = document.getElementById('signup-container');
-    const modifyForm = document.getElementById('modify-existing-container');
-
-    if (isSignUpSelected) {
-        signUpForm.style.display = 'flex';
-        modifyForm.style.display = 'none';
-    } else {
-        signUpForm.style.display = 'none';
-        modifyForm.style.display = 'flex';
-    }
-}
-
-// POPULATE DROP DOWN (ACADEMIC AREA)
-async function initAcademicAreaDD(selectElement) {
-    try {
-        const academicAreaCMS = await imAPIGet("areas");
-        // const academicAreas = await getAcademicAreas();
-        if (academicAreaCMS) {            
-            academicAreaCMS.forEach(item => {
-                const option = document.createElement('option');
-                option.value = item.id;
-                option.textContent = item.slug;
-                selectElement.appendChild(option);
-            });
-        }
-    } catch (error) {
-        console.error('Error:', error);
-    }
-}
-// POPULATE DROP DOWN (LANGUAGE OF STUDY)
-async function initLangStudyDD(selectElement) {
-    try {
-        const languageResp = await fetchS3JSONFile("TestFiles/OtherData/LanguageStudyData.json");
-        //console.log(languageResp);
-        const languages = languageResp.languages;
-        //console.log(languages);
-        if (languages) {            
-            languages.forEach(item => {
-                const option = document.createElement('option');
-                option.value = item.languageId;
-                option.textContent = item.languageId;
-                selectElement.appendChild(option);
-            });
-        }
-    } catch (error) {
-        console.error('Error:', error);
-    }
-}
-// initLangStudyDD(document.getElementById('language'));
-// initLangStudyDD(document.getElementById('languageUpdate'));
-
 // TOGGLE SEGMENT SECTION
 function toggleSegmentSection(){
-    console.log("toggling segment section");
     const segmentSection = document.getElementById('segments-section');
     if(segmentSection.style.display == 'block'){
         segmentSection.style.display = 'none';
@@ -413,15 +350,25 @@ function createLoginRow(dataToExport) {
         daysSinceLastLogin: dataToExport.daysSinceLastLogin,
         daysSinceCreation: dataToExport.daysSinceCreation,
         accountExpiryDate: dataToExport.accountExpiryDate,
-        daysToExpire: dataToExport.daysToExpire, // TODO: hide this
+        daysToExpire: dataToExport.daysToExpire,
         linkedAccounts: dataToExport.linkedAccounts,
         lastLoginAndroid: dataToExport.loginData.lastLoginAndr,
         lastLoginIOS: dataToExport.loginData.lastLoginIOS,
         lastLoginWeb: dataToExport.loginData.lastLoginWeb,
         totalPlays: dataToExport.totalPlays,
         totalPlayTime: formatTimeToHHMMSS(dataToExport.totalPlayTime),
-        averageTimePerPlay: formatTimeToHHMMSS(dataToExport.averageTimePerPlay)
+        averageTimePerPlay: formatTimeToHHMMSS(dataToExport.averageTimePerPlay),
+        // new login data
+        totalLogins: dataToExport.loginData.totalLogins,
     };
+
+    // add logins per month
+    dataToExport.loginData.loginsPerMonth.forEach(entry => {
+        userRow[`${entry.month}Logins`] = entry.logins;
+    });
+    // session data
+    //userRow['sessionData'] = formatSessionsForExport(dataToExport.loginData.sessionsString);
+
     return userRow;
 }
 function createUsageRow(dataToExport, activity, isFirstActivity){
@@ -433,6 +380,8 @@ function createUsageRow(dataToExport, activity, isFirstActivity){
 function exportToExcel() {
     // add any relevant insights data
     const totalPlayTimeAcrossAllUsersSeconds = getTotalPlayTime(exportData);
+    const totalLogins = getTotalLogins(exportData);
+    const totalLoginsPerMonth = getTotalLoginsPerMonth(exportData);
     const playersWithMostPlayTime = findPlayersWithMostPlayTime(exportData, 1, 3);
     const playersWithMostPlays = findPlayersWithMostPlays(exportData, 1, 3);
     const playersWithMostUniqueActivities = findPlayersWithMostUniqueActivitiesPlayed(reportData, 1, 3);
@@ -440,60 +389,78 @@ function exportToExcel() {
     //const userAccessPerPlatform = getUserAccessPerPlatform(exportData);
 
     let insightsExportData = [
-        { insight: 'Total Users In Report', value: exportData.length },
-        { insight: 'Total Play Time Across All Users', value: formatTimeToHHMMSS(totalPlayTimeAcrossAllUsersSeconds) }
+        { insight: 'Total Users In Report', value1: exportData.length },
+        { insight: 'Total Logins', value1: totalLogins },
+        
+        { insight: 'Total Play Time Across All Users', value1: formatTimeToHHMMSS(totalPlayTimeAcrossAllUsersSeconds) }
     ];
     playersWithMostPlayTime.forEach(player => {
-        insightsExportData.push({ insight: 'Player With Most Play Time', value: player.email, value2: formatTimeToHHMMSS(player.totalPlayTime) });
+        insightsExportData.push({ insight: 'Player With Most Play Time', value1: player.email, value2: formatTimeToHHMMSS(player.totalPlayTime) });
     });
     playersWithMostPlays.forEach(player => {
-        insightsExportData.push({ insight: 'Player With Most Total Plays', value: player.email, value2: player.totalPlays });
+        insightsExportData.push({ insight: 'Player With Most Total Plays', value1: player.email, value2: player.totalPlays });
     });
     playersWithMostUniqueActivities.forEach(player => {
-        insightsExportData.push({ insight: 'Player With Most Unique Activities', value: player.email, value2: player.uniqueActivitiesCount });
+        insightsExportData.push({ insight: 'Player With Most Unique Activities', value1: player.email, value2: player.uniqueActivitiesCount });
     });
     mostPlayedActivities.forEach(activity => {
-        insightsExportData.push({ insight: 'Most Played Activities', value: activity.activityTitle, value2: activity.playCount });
+        insightsExportData.push({ insight: 'Most Played Activities', value1: activity.activityTitle, value2: activity.playCount });
     });
     //insightsExportData.push({insight: 'User Access Android', value: userAccessPerPlatform.totalAndroid});
     //insightsExportData.push({insight: 'User Access iOS', value: userAccessPerPlatform.totalIOS});
     //insightsExportData.push({insight: 'User Access Web', value: userAccessPerPlatform.totalWeb});
 
+    // Login insights
+    let loginInsightsData = [
+        {
+            insight: '',
+            value1: 'Jan', value2: 'Feb', value3: 'Mar', value4: 'Apr', value5: 'May', value6: 'Jun',
+            value7: 'Jul', value8: 'Aug', value9: 'Sep', value10: 'Oct', value11: 'Nov', value12: 'Dec',
+        }
+    ];
+    let loginDataRow = { insight: 'Total Logins Per Month' };
+    totalLoginsPerMonth.forEach((monthData, index) => {
+        loginDataRow[`value${index + 1}`] = monthData.logins;  // index + 1 because 'value' starts at 1
+    })
+    loginInsightsData.push(loginDataRow);
+
     // Lesson insights
     const lessonStats = getLessonStats(reportData);
     let lessonInsightsData = [
-        { insight: 'Total Lesson Play Time', value: formatTimeToHHMMSS(lessonStats.totalLessonPlayTime) },
-        { insight: 'Total Lessons Attempted', value: lessonStats.totalLessonsAttempted },
-        { insight: 'Total Lesson Plays', value: lessonStats.totalLessonPlays }
+        { insight: 'Total Lesson Play Time', value1: formatTimeToHHMMSS(lessonStats.totalLessonPlayTime) },
+        { insight: 'Total Lessons Attempted', value1: lessonStats.totalLessonsAttempted },
+        { insight: 'Total Lesson Plays', value1: lessonStats.totalLessonPlays }
     ];
     lessonStats.mostPlayedLessons.forEach(lesson => {
-        lessonInsightsData.push({ insight: 'Most Played Lessons', value: lesson.activityTitle, value2: lesson.playCount });
+        lessonInsightsData.push({ insight: 'Most Played Lessons', value1: lesson.activityTitle, value2: lesson.playCount });
     });
     lessonStats.highestPlayTimeLessons.forEach(lesson => {
-        lessonInsightsData.push({ insight: 'Most Played Lessons (Play Time)', value: lesson.activityTitle, value2: formatTimeToHHMMSS(lesson.totalTime) });
+        lessonInsightsData.push({ insight: 'Most Played Lessons (Play Time)', value1: lesson.activityTitle, value2: formatTimeToHHMMSS(lesson.totalTime) });
     });
     // Sim insights
     const simStats = getSimStats(reportData);
     let simInsightsData = [
-        { insight: 'Total Simulation Play Time', value: formatTimeToHHMMSS(simStats.totalSimPlayTime) },
-        { insight: 'Total Simulations Attempted', value: simStats.totalSimsAttempted },
-        { insight: 'Total Simulations Plays', value: simStats.totalSimPlays }        
+        { insight: 'Total Simulation Play Time', value1: formatTimeToHHMMSS(simStats.totalSimPlayTime) },
+        { insight: 'Total Simulations Attempted', value1: simStats.totalSimsAttempted },
+        { insight: 'Total Simulations Plays', value1: simStats.totalSimPlays }        
     ];
     simStats.mostPlayedSims.forEach(sim => {
-       simInsightsData.push({ insight: 'Most Played Simulations', value: sim.activityTitle, value2: sim.playCount });
+       simInsightsData.push({ insight: 'Most Played Simulations', value1: sim.activityTitle, value2: sim.playCount });
     });
     simStats.highestPlayTimeSims.forEach(sim => {
-        simInsightsData.push({ insight: 'Most Played Simulations (Play Time)', value: sim.activityTitle, value2: formatTimeToHHMMSS(sim.totalTime) });
+        simInsightsData.push({ insight: 'Most Played Simulations (Play Time)', value1: sim.activityTitle, value2: formatTimeToHHMMSS(sim.totalTime) });
     });
     
     // Combine insights data with empty rows between sections
     let combinedInsightsData = [
         ...insightsExportData,
         {}, // empty row
-        { insight: 'Lesson Insights', value: '' },
+        ...loginInsightsData,
+        {},
+        { insight: 'Lesson Insights', value1: '' },
         ...lessonInsightsData,
-        {}, // empty row
-        { insight: 'Simulation Insights', value: '' },
+        {},
+        { insight: 'Simulation Insights', value1: '' },
         ...simInsightsData
     ];
 
@@ -512,7 +479,6 @@ function exportToExcel() {
         let isFirstActivity = true;
         dataToExport.activityDataFormatted.forEach(activity => {
             let activityRow = {
-                //activityID: activity.activityID,
                 activityTitle: activity.activityTitle,
                 playDate: activity.playDate,
                 score: Math.round(activity.score * 100) + '%',
@@ -531,9 +497,9 @@ function exportToExcel() {
         progressData.push(emailRow);
         dataToExport.activityData.forEach(activity =>{
             let dataRow = {
-                topic:activity.topicTitle, // TODO: implementing in app
+                topic:activity.topicTitle,
                 activity: activity.activityTitle,
-                activityType:activity.activityType, // TODO: implementing in app
+                activityType:activity.activityType,
                 bestScore:getBestScore(activity),
                 totalTime:getTotalSessionTime(activity)
             };
@@ -553,6 +519,8 @@ function exportToExcel() {
     const progressWorksheet = XLSX.utils.json_to_sheet(progressData);
     const usageWorksheet = XLSX.utils.json_to_sheet(usageData);
     const loginDataWorksheet = XLSX.utils.json_to_sheet(loginData);
+
+    removeSpecificHeaders(insightsWorksheet, ["value3","value4","value5","value6","value7","value8","value9","value10","value11","value12"]);
     
     const insightsMessages = [
         'Welcome to the Immersify Usage and Progress Report. Each tab contains data, analytics and insights.',
@@ -630,6 +598,29 @@ function addMessages(worksheet, messages) {
     });
 
     worksheet['!ref'] = newRange;
+}
+function removeSpecificHeaders(worksheet, columnsToRemove) {
+    const range = XLSX.utils.decode_range(worksheet['!ref']);
+    
+    columnsToRemove.forEach(column => {
+        // Check if it's a column name (like 'Jan') or a specific cell (like 'A1')
+        if (typeof column === 'string') {
+            // If it's a specific cell like 'A1', remove that
+            if (column.match(/^[A-Z]+\d+$/)) {
+                if (worksheet[column]) {
+                    delete worksheet[column];  // Delete specific cell content
+                }
+            } else {
+                // If it's a column header (e.g., 'Jan', 'Feb'), find the corresponding cell in the first row
+                for (let C = range.s.c; C <= range.e.c; ++C) {
+                    const cellAddress = XLSX.utils.encode_cell({ r: 0, c: C });  // First row (r = 0)
+                    if (worksheet[cellAddress] && worksheet[cellAddress].v === column) {
+                        delete worksheet[cellAddress];  // Delete the header content
+                    }
+                }
+            }
+        }
+    });
 }
 
 

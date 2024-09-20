@@ -4,22 +4,26 @@ import {showSimInsights} from './sim-insights.js';
 
 // INSIGHT DATA MODAL
 export function showInsightsModal(reportData) {
-    let totalUsersInReport = getTotalUsersInReportHTML(reportData);
-    let userAccessPerPlatform = getUserAccessPerPlatformHTML(reportData);
-    let totalPlayTimeAcrossAllUsers = getTotalPlayTimeHTML(reportData);
-    let playersWithMostPlayTime = findPlayersWithMostPlayTimeHTML(reportData, 1, 3);
-    let playersWithLeastPlayTime = findPlayersWithLeastPlayTimeHTML(reportData, 1, 3);
-    let playersWithMostPlays = findPlayersWithMostPlaysHTML(reportData, 1, 3);
-    let playersWithLeastPlays = findPlayersWithLeastPlaysHTML(reportData, 1, 3);
-    let playersWithMostUniqueActivities = findPlayersWithMostUniqueActivitiesPlayedHTML(reportData, 1, 3);
-    let mostPlayedActivities = findMostPlayedActivitiesHTML(reportData, 1, 10);
-    let highestPlayTimeActivities = findHighestPlayTimeActivitiesHTML(reportData, 1, 10);
+    const totalUsersInReport = getTotalUsersInReportHTML(reportData);
+    const totalLogins = getTotalLoginsHTML(reportData);
+    const totalLoginsPerMonth = getTotalLoginsPerMonthHTML(reportData);
+    const userAccessPerPlatform = getUserAccessPerPlatformHTML(reportData);
+    const totalPlayTimeAcrossAllUsers = getTotalPlayTimeHTML(reportData);
+    const playersWithMostPlayTime = findPlayersWithMostPlayTimeHTML(reportData, 1, 3);
+    const playersWithLeastPlayTime = findPlayersWithLeastPlayTimeHTML(reportData, 1, 3);
+    const playersWithMostPlays = findPlayersWithMostPlaysHTML(reportData, 1, 3);
+    const playersWithLeastPlays = findPlayersWithLeastPlaysHTML(reportData, 1, 3);
+    const playersWithMostUniqueActivities = findPlayersWithMostUniqueActivitiesPlayedHTML(reportData, 1, 3);
+    const mostPlayedActivities = findMostPlayedActivitiesHTML(reportData, 1, 10);
+    const highestPlayTimeActivities = findHighestPlayTimeActivitiesHTML(reportData, 1, 10);
     //let playsBetweenDates = findPlaysBetweenDatesHTML(reportData, '01/01/2024 00:00:00', '31/01/2024 23:59:59');
     //let totalPlayTimeBetweenDates = totalPlayTimeBetweenDatesHTML(reportData, '01/01/2024 00:00:00', '31/01/2024 23:59:59');
 
     let content = "";
     content += setupTabsHTML();
     content += totalUsersInReport;
+    content += totalLogins;
+    content += totalLoginsPerMonth;
     content += userAccessPerPlatform;
     content += totalPlayTimeAcrossAllUsers;
     content += playersWithMostPlayTime;
@@ -68,12 +72,68 @@ export function setupInsightTabs(reportData){
     });
 }
 
+
+function getTotalUsersInReportHTML(reportData){
+    return `<h2>Total Users in Report</h2><br/>${reportData.length}`;
+}
+
+export function getTotalLogins(reportData){
+    let totalLogins = 0;
+    reportData.forEach(data => {
+        totalLogins += data.loginData.totalLogins;
+    });
+    return totalLogins;
+}
+function getTotalLoginsHTML(reportData){
+    return `<h2>Total Logins</h2><br/>${getTotalLogins(reportData)}`;
+}
+
+export function getTotalLoginsPerMonth(reportData) {
+    let totalLoginsPerMonth = [
+        { month: "Jan", logins: 0 },
+        { month: "Feb", logins: 0 },
+        { month: "Mar", logins: 0 },
+        { month: "Apr", logins: 0 },
+        { month: "May", logins: 0 },
+        { month: "Jun", logins: 0 },
+        { month: "Jul", logins: 0 },
+        { month: "Aug", logins: 0 },
+        { month: "Sep", logins: 0 },
+        { month: "Oct", logins: 0 },
+        { month: "Nov", logins: 0 },
+        { month: "Dec", logins: 0 }
+    ];
+
+    reportData.forEach(data => {
+        if (!data.loginData || !data.loginData.loginsPerMonth) return;
+
+        data.loginData.loginsPerMonth.forEach(entry => {
+            // Find the corresponding month in totalLoginsPerMonth
+            const monthEntry = totalLoginsPerMonth.find(monthObj => monthObj.month === entry.month);
+            if (monthEntry) {
+                monthEntry.logins += entry.logins;
+            }
+        });
+    });
+
+    return totalLoginsPerMonth;
+}
+function getTotalLoginsPerMonthHTML(reportData){
+    const totalLoginsPerMonth = getTotalLoginsPerMonth(reportData);
+    let output =  "";
+    totalLoginsPerMonth.forEach(entry => {
+        output += `<b>${entry.month}</b> ${entry.logins}<br/>`;
+    });
+    return `<h2>Total Logins Per Month</h2><br/>${output}`;
+}
+
+
 export function getUserAccessPerPlatform(reportData){
     let totalAndroid = 0;
     let totalIOS = 0;
     let totalWeb = 0;
 
-    reportData.forEach((data) => {
+    reportData.forEach(data => {
         if(data.loginData !== undefined && data.loginData.lastLoginAndr !== undefined){
             totalAndroid++;
         }
@@ -85,13 +145,7 @@ export function getUserAccessPerPlatform(reportData){
         }
     });
     return {totalAndroid, totalIOS, totalWeb};
-    
 }
-
-function getTotalUsersInReportHTML(reportData){
-    return `<h2>Total Users in Report</h2><br/>${reportData.length}`;
-}
-
 function getUserAccessPerPlatformHTML(reportData){
     let userAccPerPlat = getUserAccessPerPlatform(reportData);
     return `<h2>User Access per platform</h2>
@@ -203,7 +257,7 @@ export function findPlayersWithMostUniqueActivitiesPlayed(reportData, start, end
     // Map each player to an object with email and count of unique activity IDs
     const playersWithUniqueActivityCount = reportData.map(data => {        
         if (data === undefined || !data.activityData || !Array.isArray(data.activityData)) {
-            console.log(`No activities found for ${data.email}`);
+            //console.log(`No activities found for ${data.email}`);
             return { email: data.email, uniqueActivitiesCount: 0 };
         }
         

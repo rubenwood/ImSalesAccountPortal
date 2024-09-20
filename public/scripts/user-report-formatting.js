@@ -216,7 +216,7 @@ export function populateLoginData(userData){
     const loginsPerDate = getLoginsPerDate(sessions);
     const sessionsString = sessions ? formatSessionsForModal(sessions, loginsPerDate) : "No Session Data";
 
-    const totalLogins = getTotalLogins(sessions);
+    const totalLogins = getTotalLoginsPerUser(sessions);
     const loginsPerMonth = getLoginsPerMonth(loginsPerDate);
 
     return { 
@@ -230,6 +230,8 @@ export function populateLoginData(userData){
     };
 }
 
+
+// SESSION DATA
 // format the sessions data
 // might need to check for TitleDataMetaData
 function formatSessionsForModal(sessions, loginsPerDate){
@@ -251,7 +253,8 @@ export function formatSessionsForExport(sessionsString){
     return formattedSessionsString;
 }
 
-// Get LOGINS PER DATE
+// LOGIN DATA
+// gets logins per each day on specific dates
 // returns { date: (date of login), logins: (number of logins) }
 function getLoginsPerDate(sessions) {
     if (!sessions || sessions.length === 0) {
@@ -318,7 +321,7 @@ function formatLoginsPerDate(loginsPerDate){
 }
 
 // GET TOTAL LOGINS
-function getTotalLogins(sessions){
+function getTotalLoginsPerUser(sessions){
     if(sessions == undefined){ return 0; }
     let totalLogins = 0;
     sessions.forEach(session =>{
@@ -390,7 +393,6 @@ function getLoginsPerMonth(loginsPerDate){
     return output;
 }
 function formatLoginsPerMonth(loginsPerMonth){
-    //console.log(loginsPerMonth);
     let output = "";
 
     loginsPerMonth.forEach(entry =>{
@@ -398,7 +400,6 @@ function formatLoginsPerMonth(loginsPerMonth){
     });
 
     return output;
-
 }
 
 function formatPlatform(platform){
