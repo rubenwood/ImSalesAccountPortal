@@ -42,7 +42,7 @@ export function getSimStats(reportData){
     reportData.forEach(data => {
         if (data.activityData && Array.isArray(data.activityData)) {
             data.activityData.forEach(activity => {
-                if(activity.activityID.includes('_prac')){ 
+                if(activity.activityID.includes('_prac') || activity.activityType == 'Simulation'){ 
                     activity.plays.forEach(play =>{
                         output.totalSimPlayTime += Math.round(Math.abs(play.sessionTime));
                     });
@@ -53,8 +53,8 @@ export function getSimStats(reportData){
         }
     });
 
-    output.mostPlayedSims = findMostPlayedActivities(reportData, 1, 10, '_prac');
-    output.highestPlayTimeSims = findHighestPlayTimeActivities(reportData, 1, 10, '_prac');
+    output.mostPlayedSims = findMostPlayedActivities(reportData, 1, 10, 'Simulation');
+    output.highestPlayTimeSims = findHighestPlayTimeActivities(reportData, 1, 10, 'Simulation');
     output.averageScores = calculateAverageScores(reportData);
 
     return output;
@@ -68,7 +68,7 @@ function calculateAverageScores(reportData) {
     reportData.forEach(data => {
         if (data.activityData && Array.isArray(data.activityData)) {
             data.activityData.forEach(activity => {
-                if(activity.activityID.includes('_prac')){ 
+                if(activity.activityID.includes('_prac') || activity.activityType == 'Simulation'){ 
                     if (!(activity.activityID in scoreSum)) {
                         scoreSum[activity.activityID] = 0;
                         playCount[activity.activityID] = 0;
@@ -97,7 +97,6 @@ function calculateAverageScores(reportData) {
 
     return averageScoresArray;
 }
-
 function generateAverageScoredHTML(averageScores){
     let output = "";
     averageScores.forEach((activity, index) => {

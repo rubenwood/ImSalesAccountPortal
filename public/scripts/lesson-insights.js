@@ -41,7 +41,7 @@ export function getLessonStats(reportData){
     reportData.forEach(data => {
         if (data.activityData && Array.isArray(data.activityData)) {
             data.activityData.forEach(activity => {
-                if(activity.activityID.includes('_lesson')){ 
+                if(activity.activityID.includes('_lesson') || activity.activityType == 'Lesson'){                    
                     activity.plays.forEach(play =>{
                         output.totalLessonPlayTime += Math.round(Math.abs(play.sessionTime));
                     });                    
@@ -55,8 +55,8 @@ export function getLessonStats(reportData){
         }
     });
 
-    output.mostPlayedLessons = findMostPlayedActivities(reportData, 1, 10, '_lesson');
-    output.highestPlayTimeLessons = findHighestPlayTimeActivities(reportData, 1, 10, '_lesson');
+    output.mostPlayedLessons = findMostPlayedActivities(reportData, 1, 10, 'Lesson');
+    output.highestPlayTimeLessons = findHighestPlayTimeActivities(reportData, 1, 10, 'Lesson');
 
     return output;
 }

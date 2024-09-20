@@ -348,6 +348,7 @@ function populateUsageData(playerDataList, state){
             let userActivityData = {
                 activityID:activity.activityID,
                 activityTitle: activity.activityTitle,
+                activityType: activity.activityType,
                 plays:activity.plays,
                 playCount:activity.plays.length,
                 totalSessionTime:totalSessionTime,
@@ -761,25 +762,22 @@ function findPlayersWithMostUniqueActivitiesPlayed(data, start, end) {
     const selectedPlayers = playersWithUniqueActivityCount.slice(start, end);
     return selectedPlayers;
 }
+// MOST PLAYED ACTIVITIES
 function findMostPlayedActivities(reportData, start, end, activityType = null) {
     let activityCounts = {};
+    let activityTypeSuffix = getActivityTypeSuffix(activityType);
 
     reportData.forEach(data => {
         // Ensure the player has valid activity data
         if (data.activityData && Array.isArray(data.activityData)) {
             data.activityData.forEach(activity => {
-                if (activityType === null || activity.activityID.includes(activityType)) {
-                    const activityKey = activity.activityID + ' - ' + activity.activityTitle;
-                    if (activityCounts[activityKey]) {
-                        activityCounts[activityKey].playCount += activity.playCount;
-                    } else {
-                        activityCounts[activityKey] = {
-                            activityID: activity.activityID,
-                            activityTitle: activity.activityTitle,
-                            playCount: activity.playCount
-                        };
+                if (activityType !== null){
+                    if(activity.activityType == activityType || activity.activityID.includes(activityTypeSuffix)) {
+                        updateActivityCount(activity, activityCounts);
                     }
-               }
+                }else{
+                    updateActivityCount(activity, activityCounts);
+                }
             });
         }
     });
@@ -794,25 +792,20 @@ function findMostPlayedActivities(reportData, start, end, activityType = null) {
     const mostPlayedActivities = sortedActivities.slice(start, end);
     return mostPlayedActivities;
 }
+// HIGHEST PLAY TIME ACTIVITIES
 function findHighestPlayTimeActivities(reportData, start, end, activityType = null) {
     let activityPlayTimeTotals = {};
+    let activityTypeSuffix = getActivityTypeSuffix(activityType);    
 
     reportData.forEach(data => {
         if (data.activityData && Array.isArray(data.activityData)) {
             data.activityData.forEach(activity => {
-                if (activityType === null || activity.activityID.includes(activityType)) {
-                    let activityKey = activity.activityID + ' - ' + activity.activityTitle;
-                    activity.plays.forEach(play => {
-                        if (activityPlayTimeTotals[activityKey]) {
-                            activityPlayTimeTotals[activityKey].totalTime += play.sessionTime;
-                        } else {
-                            activityPlayTimeTotals[activityKey] = {
-                                activityID: activity.activityID,
-                                activityTitle: activity.activityTitle,
-                                totalTime: play.sessionTime
-                            };
-                        }
-                    });
+                if(activityType !== null){
+                    if(activity.activityID.includes(activityTypeSuffix) || activity.activityType == activityType){
+                        updateActivityPlayTimeTotals(activity, activityPlayTimeTotals);
+                    }
+                }else{
+                    updateActivityPlayTimeTotals(activity, activityPlayTimeTotals);
                 }
             });
         }
@@ -923,7 +916,8 @@ function createUsageRow(dataToExport, activity, isFirstActivity){
     };
     return isFirstActivity ? { ...userRow, ...activity } : activity;
 }
-function getLessonStats(data){
+// GET LESSON STATS
+function getLessonStats(reportData){
     let output = {
         totalLessonPlayTime:0,
         totalLessonsAttempted:0,
@@ -933,15 +927,13 @@ function getLessonStats(data){
         highestPlayTimeLessons:[]
     };
 
-    data.forEach(element => {
-        // Ensure the player has valid activity data
-        if (element.activityData && Array.isArray(element.activityData)) {
-            element.activityData.forEach(activity => {
-                if(activity.activityID.includes('_lesson')){ 
+    reportData.forEach(data => {
+        if (data.activityData && Array.isArray(data.activityData)) {
+            data.activityData.forEach(activity => {
+                if(activity.activityID.includes('_lesson') || activity.activityType == 'Lesson'){                    
                     activity.plays.forEach(play =>{
                         output.totalLessonPlayTime += Math.round(Math.abs(play.sessionTime));
-                    });
-                    
+                    });                    
                     output.totalLessonsAttempted++
                     output.totalLessonPlays += activity.playCount;
                     if(activity.bestScore >= 100){
@@ -952,12 +944,13 @@ function getLessonStats(data){
         }
     });
 
-    output.mostPlayedLessons = findMostPlayedActivities(data, 1, 10, '_lesson');
-    output.highestPlayTimeLessons = findHighestPlayTimeActivities(data, 1, 10, '_lesson');
+    output.mostPlayedLessons = findMostPlayedActivities(reportData, 1, 10, 'Lesson');
+    output.highestPlayTimeLessons = findHighestPlayTimeActivities(reportData, 1, 10, 'Lesson');
 
     return output;
 }
-function getSimStats(data){
+// GET SIM STATS
+function getSimStats(reportData){
     let output = {
         totalSimPlayTime:0,
         totalSimsAttempted:0,
@@ -967,10 +960,10 @@ function getSimStats(data){
         highestPlayTimeSims:[],
         averageScores:[]
     };
-    data.forEach(element => {
-        if (element.activityData && Array.isArray(element.activityData)) {
-            element.activityData.forEach(activity => {
-                if(activity.activityID.includes('_prac')){ 
+    reportData.forEach(data => {
+        if (data.activityData && Array.isArray(data.activityData)) {
+            data.activityData.forEach(activity => {
+                if(activity.activityID.includes('_prac') || activity.activityType == 'Simulation'){ 
                     activity.plays.forEach(play =>{
                         output.totalSimPlayTime += Math.round(Math.abs(play.sessionTime));
                     });
@@ -981,12 +974,48 @@ function getSimStats(data){
         }
     });
 
-    output.mostPlayedSims = findMostPlayedActivities(data, 1, 10, '_prac');
-    output.highestPlayTimeSims = findHighestPlayTimeActivities(data, 1, 10, '_prac');
-    output.averageScores = calculateAverageScores(data);
+    output.mostPlayedSims = findMostPlayedActivities(reportData, 1, 10, 'Simulation');
+    output.highestPlayTimeSims = findHighestPlayTimeActivities(reportData, 1, 10, 'Simulation');
+    output.averageScores = calculateAverageScores(reportData);
 
     return output;
 }
+
+function updateActivityCount(activity, activityCounts) {
+    const activityKey = activity.activityID + ' - ' + activity.activityTitle;
+    if (activityCounts[activityKey]) {
+        activityCounts[activityKey].playCount += activity.playCount;
+    } else {
+        activityCounts[activityKey] = {
+            activityID: activity.activityID,
+            activityTitle: activity.activityTitle,
+            playCount: activity.playCount
+        };
+    }
+}
+function updateActivityPlayTimeTotals(activity, activityPlayTimeTotals) {
+    const activityKey = activity.activityID + ' - ' + activity.activityTitle;
+    activity.plays.forEach(play => {
+        if (activityPlayTimeTotals[activityKey]) {
+            activityPlayTimeTotals[activityKey].totalTime += play.sessionTime;
+        } else {
+            activityPlayTimeTotals[activityKey] = {
+                activityID: activity.activityID,
+                activityTitle: activity.activityTitle,
+                totalTime: play.sessionTime
+            };
+        }
+    });
+}
+function getActivityTypeSuffix(activityType){
+    switch(activityType){
+        case "Lesson":
+            return "_lesson";
+        case "Simulation":
+            return "_prac";
+    }
+}
+
 
 // Route that takes in an array of query param gen-suffix-rep?suffixes=suffix1,suffix2
 suffixRouter.get('/gen-suffix-rep', async (req, res) => {
