@@ -5,6 +5,7 @@ const { Pool } = require('pg');
 const XLSX = require('xlsx');
 
 const { getS3JSONFile, uploadToS3, anyFileModifiedSince, checkFileLastModified } = require('./s3-utils');
+const { listItems } = require('./s3-utils'); 
 
 AWS.config.update({
     region: process.env.AWS_REGION,
@@ -54,6 +55,11 @@ async function getSuffixMappings() {
         throw err;
     }
 }
+suffixRouter.get('/get-suffix-mappings', async (req, res) => {
+    const mappings = await getSuffixMappings();
+    console.log(mappings);
+    res.json(mappings);
+});
 
 const pool = new Pool({
     user: process.env.PGUSER,
@@ -677,6 +683,17 @@ suffixRouter.get('/reports/:folder', async (req, res) => {
         res.status(500).send(`Error generating pre-signed URLs: ${err.message}`);
     }
 });
+suffixRouter.get('/get-report-folders', async (req, res) => {
+    const files = await listItems(process.env.AWS_BUCKET, "Analytics/");
+    let folders = files.filter(item => item.endsWith('/'));
+
+    let formattedFolders = [];
+    folders.forEach(item => formattedFolders.push(item.replace("Analytics/", "")));
+    formattedFolders = formattedFolders.splice(1);
+    
+    console.log(formattedFolders);
+    res.json(formattedFolders);
+});
 
 suffixRouter.post('/auth', async (req, res) => {
     try {
@@ -1064,4 +1081,4 @@ suffixRouter.get('/get-connection-ids', async (req, res) => {
     }
 });
 
-module.exports = { suffixRouter, generateReportByEmailSuffixDB };
+module.exports = { suffixRouter, generateReportByEmailSuffixDB, getSuffixMappings };

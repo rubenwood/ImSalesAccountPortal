@@ -1,6 +1,7 @@
 const express = require('express');
 const AWS = require('aws-sdk');
 const fs = require('fs');
+//const { resolve } = require('path');
 const s3Router = express.Router();
 
 AWS.config.update({
@@ -40,30 +41,6 @@ async function getS3JSONFile(filepath) {
   }
 }
 
-/*s3Router.post('/s3upload', async (req, res) => {
-  const file = req.file;
-  const path = req.path;
-  const key = `${path}/${file.originalname}`;
-  const contentType = req.contentType;
-  const acl = req.body.acl;
-  const bucketName = process.env.AWS_BUCKET;
-
-  try {
-    //uploadToS3(workbook, filename, 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', process.env.AWS_BUCKET)
-    const result = await uploadToS3(file, key, contentType, bucketName, acl);
-
-    // Clean up the uploaded file
-    fs.unlinkSync(file.path);
-
-    res.json({
-      message: 'Image uploaded successfully',
-      data: result
-    });
-  } catch (error) {
-    console.error('Error uploading image:', error);
-    res.status(500).send('Error uploading image.');
-  }
-});*/
 async function uploadToS3(buffer, filename, contentType, bucketName, acl = undefined) {
   const params = {
       Bucket: bucketName,
@@ -139,6 +116,25 @@ function listS3Files(bucketName, folderNames) {
 }
 //listS3Files("com.immersifyeducation.cms", ["ImageData/", "ModelData/"]);
 
+// LIST ALL ITEMS IN FOLDER
+function listItems(bucketName, folderName){
+  console.log("listing items...");
+  return new Promise((resolve, reject) => {
+    const params = {
+      Bucket: bucketName,
+      Prefix: folderName
+    };
+    s3.listObjectsV2(params, (err, data) =>{
+      if(err){
+        console.error('Error listing objects:' , err);
+      }else{
+        const items = data.Contents.map(item => item.Key);
+        resolve(items)
+      }
+    });
+  });
+}
+
 function anyFileModifiedSince(fileTimestamps, date) {
     // must compare 2 Date objects
     return fileTimestamps.some(file => new Date(file.LastModified) > date);
@@ -182,4 +178,4 @@ async function checkFileLastModified(bucket, fileKey) {
     }
 }
 
-module.exports = { s3Router, getS3JSONFile, uploadToS3, anyFileModifiedSince, checkFileLastModified, checkFilesLastModifiedList  };
+module.exports = { s3Router, getS3JSONFile, uploadToS3, anyFileModifiedSince, checkFileLastModified, checkFilesLastModifiedList, listItems  };

@@ -89,28 +89,17 @@ function getTotalLoginsHTML(reportData){
 }
 
 export function getTotalLoginsPerMonth(reportData) {
-    let totalLoginsPerMonth = [
-        { month: "Jan", logins: 0 },
-        { month: "Feb", logins: 0 },
-        { month: "Mar", logins: 0 },
-        { month: "Apr", logins: 0 },
-        { month: "May", logins: 0 },
-        { month: "Jun", logins: 0 },
-        { month: "Jul", logins: 0 },
-        { month: "Aug", logins: 0 },
-        { month: "Sep", logins: 0 },
-        { month: "Oct", logins: 0 },
-        { month: "Nov", logins: 0 },
-        { month: "Dec", logins: 0 }
-    ];
+    let totalLoginsPerMonth = [];
 
     reportData.forEach(data => {
         if (!data.loginData || !data.loginData.loginsPerMonth) return;
-
+        
         data.loginData.loginsPerMonth.forEach(entry => {
-            // Find the corresponding month in totalLoginsPerMonth
-            const monthEntry = totalLoginsPerMonth.find(monthObj => monthObj.month === entry.month);
-            if (monthEntry) {
+            let monthEntry = totalLoginsPerMonth.find(element => element.year === entry.year && element.month === entry.month);
+
+            if (!monthEntry) {
+                totalLoginsPerMonth.push({ year: entry.year, month: entry.month, logins: entry.logins });
+            } else {
                 monthEntry.logins += entry.logins;
             }
         });
@@ -122,7 +111,7 @@ function getTotalLoginsPerMonthHTML(reportData){
     const totalLoginsPerMonth = getTotalLoginsPerMonth(reportData);
     let output =  "";
     totalLoginsPerMonth.forEach(entry => {
-        output += `<b>${entry.month}</b> ${entry.logins}<br/>`;
+        output += `<b>${entry.month} ${entry.year}</b> ${entry.logins}<br/>`;
     });
     return `<h2>Total Logins Per Month</h2><br/>${output}`;
 }

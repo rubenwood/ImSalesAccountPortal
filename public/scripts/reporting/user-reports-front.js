@@ -1,13 +1,23 @@
+import { authenticateSessionTicket } from "../PlayFabManager.js";
+import { fetchUsersByID } from "../db/db-front.js";
 
 document.addEventListener('DOMContentLoaded', async() => {
-    // login button on modal
-    document.getElementById('loginButton').addEventListener('click', submitPass);
+    await getSuffixMappings();
+    await getReportFolders();
+    const params = Object.fromEntries(new URLSearchParams(window.location.search));
+    console.log("QP: ", params);
+    if(params == undefined){ return; }
+    if(params.SessionTicket == undefined){ return; }
+
+    let userSuffixFolderName = await getUserFolderName(params.SessionTicket);
+    //console.log("USER FOLDER / SUFFIX: ", userSuffixFolderName);
+    document.getElementById('loginButton').addEventListener('click', () => submitPass(userSuffixFolderName));
 });
 window.onload = function() {
     document.getElementById('loginModal').style.display = 'block';
 };
 
-async function submitPass() {
+async function submitPass(userSuffix) {
     let inPass = document.getElementById('password').value;
     
     try {
@@ -25,17 +35,9 @@ async function submitPass() {
             document.getElementById('error-txt').innerHTML = 'Incorrect password. Please try again.';
             return;
         }
-
-        // get query param
-        const queryString = window.location.search;
-        console.log(queryString);
-        const urlParams = new URLSearchParams(queryString);
-        const reportParam = urlParams.get('report');
-        console.log(reportParam);
-        //
         
         document.getElementById('loginModal').style.display = 'none';
-        getReports();
+        getReports(userSuffix);
 
         const startDateInput = document.getElementById('startDateInput');
         const endDateInput = document.getElementById('endDateInput');
@@ -52,11 +54,72 @@ async function submitPass() {
     }
 }
 
+let suffixMap = [];
+async function getSuffixMappings(){
+    const suffixMappingResp = await fetch('/reporting/get-suffix-mappings');
+    suffixMap = await suffixMappingResp.json();
+    //console.log(suffixMap);
+}
+
+let reportFolderNames = [];
+async function getReportFolders(){
+    const folderResp = await fetch('/reporting/get-report-folders');
+    reportFolderNames = await folderResp.json();
+    //console.log(reportFolderNames);
+}
+
+async function getUserFolderName(sessionTicket){
+    let userFolderName;
+    const authData = await authenticateSessionTicket(sessionTicket);
+    
+    if(authData == undefined || authData == null){ 
+        console.log("Invalid session");
+        return;
+    }
+
+    const playFabId = authData.data.UserInfo.PlayFabId;
+    const rowData = await fetchUsersByID([playFabId]);
+    const combinedData = { accountData: rowData.accountData[0].AccountDataJSON, usageData: rowData.usageData[0].UsageDataJSON };
+    //console.log(combinedData);
+    const linkedAccounts = combinedData.accountData.LinkedAccounts;
+    //console.log(linkedAccounts);
+    for(let linkedAcc of linkedAccounts){
+        //console.log(linkedAcc);
+        if(linkedAcc.Platform == "PlayFab"){
+            userFolderName = isValidEmail(linkedAcc.Email);
+        }else if(linkedAcc.Platform == "OpenIdConnect"){
+            userFolderName = isValidPlatform(linkedAcc.PlatformUserId);
+        }
+    }
+
+    return userFolderName;
+}
+
+function isValidEmail(linkedAccEmail){
+    for(let folderName of reportFolderNames){
+        let suffix = folderName.replace("/","");
+        if(linkedAccEmail.includes(suffix)){
+            return suffix;
+        }
+    }
+    return "";
+}
+function isValidPlatform(linkedAccPlatformId){
+    for(let folderName of reportFolderNames){
+        let suffix = folderName.replace("/","");
+        let platformId = suffix[suffix];
+        if(linkedAccPlatformId.includes(platformId)){
+            return suffix;
+        }
+    }
+    return "";
+}
+
 // Get Reports
 let reportResponse = undefined;
-async function getReports() {
+async function getReports(suffix) {
     const inPass = document.getElementById('password').value;
-    const response = await fetch(`/reporting/reports/highpoint.edu`, {
+    const response = await fetch(`/reporting/reports/${suffix}`, {
         method: 'GET',
         headers: {
             'Content-Type': 'application/json',

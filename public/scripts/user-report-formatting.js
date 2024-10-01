@@ -376,27 +376,43 @@ function getLoginsPerPeriod(periodInDays, sessions){
     return totalLoginsPerPeriod;
 }
 // GET LOGINS PER MONTH
-function getLoginsPerMonth(loginsPerDate){
-    // map each element in loginsPerDate onto a specific month
-    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-    let output = [];
-    months.forEach(month => {
-        output.push({ month: month, logins: 0 });
-    });
+function getLoginsPerMonth(loginsPerDate) {
+    // Determine the range of years in the data
+    const years = loginsPerDate.map(login => Number(login.date.split("/")[2]));
+    const minYear = Math.min(...years);
+    const maxYear = Math.max(...years);
 
-    // Iterate over the loginsPerDate array
+    // Create a baseline of months for each year in the range
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const output = [];
+
+    for (let year = minYear; year <= maxYear; year++) {
+        months.forEach((month, index) => {
+            output.push({
+                year: year,
+                month: month,
+                logins: 0
+            });
+        });
+    }
+
     loginsPerDate.forEach(login => {
         const [day, month, year] = login.date.split("/").map(Number);
-        const monthIndex = month - 1;
-        output[monthIndex].logins += login.logins;
+        const monthName = months[month - 1];
+        // Find the corresponding month-year entry in the output and update its logins
+        const entry = output.find(element => element.year === year && element.month === monthName);
+        if (entry) {
+            entry.logins += login.logins;
+        }
     });
+
     return output;
 }
 function formatLoginsPerMonth(loginsPerMonth){
     let output = "";
 
     loginsPerMonth.forEach(entry =>{
-        output += `<b>${entry.month}</b> ${entry.logins}<br/>`
+        output += `<b>${entry.month} ${entry.year}</b> ${entry.logins}<br/>`
     });
 
     return output;

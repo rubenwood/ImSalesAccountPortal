@@ -35,12 +35,10 @@ export async function Login(){
         if (error) {
             console.error("Error logging in:", error);
         } else {
-            //console.log(response);
             localStorage.setItem("PlayFabId", response.data.PlayFabId);
             localStorage.setItem("PlayFabSessionTicket", response.data.SessionTicket);
             const [accessLevel, userPrefs] = await Promise.all([getUserData(["AccessLevel"]), getUserData(["UserPreferenceData"])]);
             const userPrefsJson = JSON.parse(userPrefs.UserPreferenceData);
-            console.log(userPrefsJson.theme);
             localStorage.setItem("theme", userPrefsJson.theme);
             handleThemeChange();           
 
@@ -313,4 +311,21 @@ async function getPlayerContactEmailAddr(playFabId){
     contactEmailAddr = playerProfile.ContactEmailAddresses[0]?.EmailAddress;
     return contactEmailAddr;
 
+}
+
+// AUTH TICKET
+export async function authenticateSessionTicket(inSessionTicket){
+    const authResp = await fetch('/playfab/auth-ticket', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ sessionTicket: inSessionTicket }),
+    });
+    
+    const output = await authResp.json();
+    if (!authResp.ok) {
+        throw new Error('Failed to auth ticket');
+    }
+    return output;
 }

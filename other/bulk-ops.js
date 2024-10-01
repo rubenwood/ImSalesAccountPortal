@@ -276,29 +276,6 @@ async function extractAndSetJsonValue(tableName, jsonColumnName, keyName, subKey
 }
 
 // CONVERT LEGACY SUB
-async function updateUserPlayFabData(playFabId, newSubData) {
-    const apiUrl = `https://${process.env.PLAYFAB_TITLE_ID}.playfabapi.com/Admin/UpdateUserData`;
-
-    try {
-        const response = await axios.post(apiUrl, {
-            PlayFabId: playFabId,
-            Data: {
-                OtherSubData: JSON.stringify(newSubData)
-            },
-            Permission: "Public"
-        }, {
-            headers: {
-                'Content-Type': 'application/json',
-                'X-SecretKey': process.env.PLAYFAB_SECRET_KEY
-            }
-        });
-
-        console.log(`Successfully updated data for user ${playFabId}:`, response.data);
-    } catch (error) {
-        console.error(`Error updating data for user ${playFabId}:`, error.response ? error.response.data : error.message);
-    }
-}
-
 async function convertLegacySubData() {
     const stripeDataQuery = `
     SELECT *
@@ -398,14 +375,94 @@ async function convertLegacySubData() {
 }
 //convertLegacySubData();
 
-async function updateUserPlayFabData(playFabId, newSubData) {
+// CONVERT SUB DATE FORMAT
+async function convertStripeSubDateFormat()
+{
+    const stripeDataQuery = `
+    SELECT *
+    FROM public."UsageData"
+    WHERE
+        ("UsageDataJSON"->'Data'->'StripeSubData'->>'Value') IS NOT NULL
+    `;
+
+    console.log("Getting existing stripe subs...");
+    const [stripeRes, ] = await Promise.all([
+        pool.query(stripeDataQuery),
+    ]);
+
+    const stripeSubUsers = stripeRes.rows;
+    for (const user of stripeSubUsers)
+    {
+        const playFabId = user.UsageDataJSON.PlayFabId;
+        console.log(playFabId);
+        const stripeSubData = user.UsageDataJSON.Data.StripeSubData.Value;
+        const stripeSubDataJSON = JSON.parse(stripeSubData);
+        //console.log(stripeSubDataJSON);
+        
+        const stripePurchaseDateString = stripeSubDataJSON.PurchaseDate;
+        const stripeSubExpireDateString = stripeSubDataJSON.SubExpire;
+
+        const stripePurchaseDateConverted = convertToISOFormat(stripePurchaseDateString);
+        const stripeSubExpireDateStringConverted = convertToISOFormat(stripeSubExpireDateString);
+
+        //console.log("Purchase Date:", stripePurchaseDateString, " ", stripePurchaseDateConverted);
+        //console.log("Expire Date:", stripeSubExpireDateString, " ", stripeSubExpireDateStringConverted);
+
+        const updatedSubData = {
+            Platform: stripeSubDataJSON.Platform,
+            StripeSubscriptionID: stripeSubDataJSON.StripeSubscriptionID,
+            Product: stripeSubDataJSON.Product,
+            PurchaseDate: stripePurchaseDateConverted,
+            SubStatus: stripeSubDataJSON.Status,
+            SubExpire: stripeSubExpireDateStringConverted, 
+            SubscriptionTier: stripeSubDataJSON.SubscriptionTier,
+            SubscriptionPeriod: stripeSubDataJSON.SubscriptionPeriod
+        }
+
+        console.log(updatedSubData);
+        await updateUserPlayFabData(playFabId, updatedSubData, 'StripeSubData');
+
+    }
+}
+//convertStripeSubDateFormat();
+function convertToISOFormat(dateStr) {
+    //console.log(dateStr);
+    const isoFormatRegex = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/;
+    if (isoFormatRegex.test(dateStr)) {
+        console.log(dateStr, " already in ISO format!");
+        return dateStr;
+    }
+
+    const [datePart, timePart] = dateStr.split(' ');    
+    const [day, month, year] = datePart.split('/');
+    const [hours, minutes, seconds] = timePart.split(':');
+    // Month is 0-indexed
+    const dateObj = new Date(Date.UTC(year, month - 1, day, hours, minutes, seconds));
+    return dateObj.toISOString();
+}
+function convertToCustomFormat(isoDateStr) {
+    const dateObj = new Date(isoDateStr);
+
+    const day = String(dateObj.getUTCDate()).padStart(2, '0');
+    const month = String(dateObj.getUTCMonth() + 1).padStart(2, '0'); // Month is 0-indexed, so add 1
+    const year = dateObj.getUTCFullYear();
+
+    const hours = String(dateObj.getUTCHours()).padStart(2, '0');
+    const minutes = String(dateObj.getUTCMinutes()).padStart(2, '0');
+    const seconds = String(dateObj.getUTCSeconds()).padStart(2, '0');
+
+    // Format the date and time as DD/MM/YYYY HH:MM:SS
+    return `${day}/${month}/${year} ${hours}:${minutes}:${seconds}`;
+}
+
+async function updateUserPlayFabData(playFabId, newSubData, subDataKey) {
     const apiUrl = `https://${process.env.PLAYFAB_TITLE_ID}.playfabapi.com/Admin/UpdateUserData`;
 
     try {
         const response = await axios.post(apiUrl, {
             PlayFabId: playFabId,
             Data: {
-                OtherSubData: JSON.stringify(newSubData)
+                [subDataKey]: JSON.stringify(newSubData)
             },
             Permission: "Public"
         }, {
@@ -431,8 +488,7 @@ let newSubData = {
     SubscriptionPeriod: "yearly"
 };
 //testing
-//updateUserPlayFabData('AB9587E5252E5A90', newSubData);
-
+//updateUserPlayFabData('AB9587E5252E5A90', newSubData, 'OtherSubData');
 
 module.exports = {
     bulkRouter,
