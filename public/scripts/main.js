@@ -359,13 +359,13 @@ function createLoginRow(dataToExport) {
         totalPlayTime: formatTimeToHHMMSS(dataToExport.totalPlayTime),
         averageTimePerPlay: formatTimeToHHMMSS(dataToExport.averageTimePerPlay),
         // new login data
-        totalLogins: dataToExport.loginData.totalLogins,
+        //totalLogins: dataToExport.loginData.totalLogins,
     };
 
     // add logins per month
-    dataToExport.loginData.loginsPerMonth.forEach(entry => {
-        userRow[`${entry.month}Logins`] = entry.logins;
-    });
+    // dataToExport.loginData.loginsPerMonth.forEach(entry => {
+    //     userRow[`${entry.month}Logins`] = entry.logins;
+    // });
     // session data
     //userRow['sessionData'] = formatSessionsForExport(dataToExport.loginData.sessionsString);
 
@@ -418,10 +418,22 @@ function exportToExcel() {
             value7: 'Jul', value8: 'Aug', value9: 'Sep', value10: 'Oct', value11: 'Nov', value12: 'Dec',
         }
     ];
-    let loginDataRow = { insight: 'Total Logins Per Month' };
+    console.log(totalLoginsPerMonth);
+    let currentYear = null;
+    let loginDataRow = null;
     totalLoginsPerMonth.forEach((monthData, index) => {
-        loginDataRow[`value${index + 1}`] = monthData.logins;  // index + 1 because 'value' starts at 1
-    })
+        if (monthData.year !== currentYear) {
+            if (loginDataRow) {
+                loginInsightsData.push(loginDataRow);
+            }
+            // Create a new row for the new year
+            loginDataRow = { insight: `Total Logins Per Month (${monthData.year})` };
+            currentYear = monthData.year;
+        }
+
+        // Assign the login data to the appropriate value property
+        loginDataRow[`value${(index % 12) + 1}`] = monthData.logins;
+    });
     loginInsightsData.push(loginDataRow);
 
     // Lesson insights
