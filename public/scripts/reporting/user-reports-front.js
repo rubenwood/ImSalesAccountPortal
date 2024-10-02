@@ -4,13 +4,17 @@ import { fetchUsersByID } from "../db/db-front.js";
 document.addEventListener('DOMContentLoaded', async() => {
     await getSuffixMappings();
     await getReportFolders();
-    const params = Object.fromEntries(new URLSearchParams(window.location.search));
+    console.log(window.location.search);
+    const params = Object.fromEntries(new URLSearchParams(window.location.search));    
+    if (params.SessionTicket) {
+        const decodedSessionTicket = decodeURIComponent(params.SessionTicket);
+        console.log("Decoded Session Ticket: ", decodedSessionTicket);
+    }
     console.log("QP: ", params);
     if(params == undefined){ return; }
     if(params.SessionTicket == undefined){ return; }
 
     let userSuffixFolderName = await getUserFolderName(params.SessionTicket);
-    //console.log("USER FOLDER / SUFFIX: ", userSuffixFolderName);
     document.getElementById('loginButton').addEventListener('click', () => submitPass(userSuffixFolderName));
 });
 window.onload = function() {
@@ -80,11 +84,9 @@ async function getUserFolderName(sessionTicket){
     const playFabId = authData.data.UserInfo.PlayFabId;
     const rowData = await fetchUsersByID([playFabId]);
     const combinedData = { accountData: rowData.accountData[0].AccountDataJSON, usageData: rowData.usageData[0].UsageDataJSON };
-    //console.log(combinedData);
     const linkedAccounts = combinedData.accountData.LinkedAccounts;
-    //console.log(linkedAccounts);
     for(let linkedAcc of linkedAccounts){
-        //console.log(linkedAcc);
+
         if(linkedAcc.Platform == "PlayFab"){
             userFolderName = isValidEmail(linkedAcc.Email);
         }else if(linkedAcc.Platform == "OpenIdConnect"){
@@ -129,7 +131,6 @@ async function getReports(suffix) {
 
     const result = await response.json();
     reportResponse = result;
-    //console.log(result);
     formatHTMLOutput(reportResponse);
 }
 
