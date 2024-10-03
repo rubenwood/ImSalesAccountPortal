@@ -94,6 +94,7 @@ export function populateForm(data){
 
     const tableBody = document.getElementById("reportTableBody");
     tableBody.innerHTML = '';
+
     data.forEach(element => {
         let playFabId = element.accountData.PlayFabId;
         let email = getUserEmailFromAccData(element.accountData.AccountDataJSON);
@@ -104,7 +105,13 @@ export function populateForm(data){
         let usageData = element.usageData.UsageDataJSON.Data;
         let accountExpiryDate = usageData.TestAccountExpiryDate !== undefined ? new Date(usageData.TestAccountExpiryDate.Value) : undefined;
         let accountExpiryDateString = accountExpiryDate !== undefined ? accountExpiryDate.toDateString() : "N/A";
-        
+
+        //3914A10453A4BFEE -TP
+        let nclData;
+        if(usageData.NclNhsOnboardingData != undefined){
+            nclData = JSON.parse(usageData.NclNhsOnboardingData.Value);
+        }
+
         try{
             const row = tableBody.insertRow();
             row.className = 'report-row';
@@ -124,7 +131,7 @@ export function populateForm(data){
                 totalPlayTime: 0,
                 activityDataForReport: []
             };
-            let newDataState = populateUsageData([playerDataNew, playerData], loginData, playerDataState, row);
+            let newDataState = populateUsageData([playerDataNew, playerData], loginData, nclData, playerDataState, row);
             let activityDataForReport = newDataState.activityDataForReport;
             let averageTimePerPlay = newDataState.averageTimePerPlay;
             let totalPlays = newDataState.totalPlays;
@@ -133,7 +140,7 @@ export function populateForm(data){
             // write the data for the insights & export data
             writeDataForReport(playFabId, email, createdDate, lastLoginDate, daysSinceLastLogin, daysSinceCreation,
                 accountExpiryDate, 0, "", "", linkedAccounts, activityDataForReport, totalPlays, totalPlayTime,
-                averageTimePerPlay, loginData);
+                averageTimePerPlay, nclData, loginData);
         }catch(error){
             console.error('Error:', error);
             const row = tableBody.insertRow();

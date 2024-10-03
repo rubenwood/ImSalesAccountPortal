@@ -268,6 +268,12 @@ async function setupDataForExport(sortedData){
         let totalPlays = newDataState.totalPlays;
         let totalPlayTime = newDataState.totalPlayTime;
 
+        let nclData;
+        //console.log("USAGE DATA: " + JSON.stringify(userData))
+        if(userData.NclNhsOnboardingData != undefined){
+            nclData = JSON.parse(userData.NclNhsOnboardingData.Value);
+        }
+
         let userExportData = {
             email,
             createdDate: createdDate.toDateString(),
@@ -282,7 +288,8 @@ async function setupDataForExport(sortedData){
             totalPlays,
             totalPlayTime,
             averageTimePerPlay,
-            loginData
+            loginData,
+            nclData
         }
         // remove certain emails from the report data
         let blacklistedEmails = emailBlacklistResp.blacklistedEmails;
@@ -328,12 +335,126 @@ function calcDaysSince(inputDate){
     let daysSince = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
     return daysSince;
 }
+
+// SETUP LOGIN DATA
 function populateLoginData(userData){
-    let lastLoginAndr = userData.LastLoginDateAndroid !== undefined ? userData.LastLoginDateAndroid.Value : undefined;
-    let lastLoginIOS = userData.LastLoginDateiOS !== undefined ? userData.LastLoginDateiOS.Value : undefined;
-    let lastLoginWeb = userData.LastLoginDateWeb !== undefined ? userData.LastLoginDateWeb.Value : undefined;
-    return {lastLoginAndr,lastLoginIOS,lastLoginWeb};    
+    const lastLoginAndr = userData.LastLoginDateAndroid?.Value;
+    const lastLoginIOS = userData.LastLoginDateiOS?.Value;
+    const lastLoginWeb = userData.LastLoginDateWeb?.Value;
+
+    const sessionData = userData.SessionDebugData?.Value;
+    const sessionDataJSON = sessionData ? JSON.parse(sessionData) : undefined;
+    const sessions = sessionDataJSON ?  sessionDataJSON.sessions : undefined;
+    const loginsPerDate = getLoginsPerDate(sessions);
+    //const sessionsString = sessions ? formatSessionsForModal(sessions, loginsPerDate) : "No Session Data";
+
+    const totalLogins = getTotalLoginsPerUser(sessions);
+    const loginsPerMonth = getLoginsPerMonth(loginsPerDate);
+
+    return { 
+        lastLoginAndr, 
+        lastLoginIOS, 
+        lastLoginWeb,
+        loginsPerDate,
+        totalLogins,
+        loginsPerMonth,
+        //sessionsString
+    };
 }
+function getLoginsPerDate(sessions) {
+    if (!sessions || sessions.length === 0) {
+        return [];
+    }
+
+    let loginHistoryDates = [];
+
+    // Iterate over each session and process its loginHistory
+    sessions.forEach(session => {
+        const loginHistory = session.loginHistory;
+
+        // Check if the session has a valid loginHistory, skip if undefined or empty
+        if (!loginHistory || loginHistory.length === 0) {
+            return; // Skip this session if no loginHistory
+        }
+
+        // Iterate through each login entry in the loginHistory
+        loginHistory.forEach(entry => {
+            const [datePart, timePart] = entry.split(" ");
+            const [day, month, year] = datePart.split("/").map(Number);
+            const loginDate = new Date(year, month - 1, day); // Create a Date object
+
+            // Push the login date to the list of dates
+            loginHistoryDates.push(loginDate);
+        });
+    });
+
+    // Count logins by date
+    let loginCountByDate = {};
+
+    loginHistoryDates.forEach(date => {
+        // Format the date as DD/MM/YYYY
+        let formattedDate = date.toLocaleDateString('en-GB'); // DD/MM/YYYY format
+
+        // Increment the count for this date
+        if (loginCountByDate[formattedDate]) {
+            loginCountByDate[formattedDate]++;
+        } else {
+            loginCountByDate[formattedDate] = 1;
+        }
+    });
+
+    // Format the output
+    let loginsByDate = Object.keys(loginCountByDate).map(date => {
+        return {
+            date: date,
+            logins: loginCountByDate[date]
+        };
+    });
+
+    return loginsByDate;
+}
+function getTotalLoginsPerUser(sessions){
+    if(sessions == undefined){ return 0; }
+    let totalLogins = 0;
+    sessions.forEach(session =>{
+        totalLogins += session.loginHistory != undefined ? session.loginHistory.length : 0;
+    });
+    return totalLogins;
+}
+function getLoginsPerMonth(loginsPerDate) {
+    // Determine the range of years in the data
+    const years = loginsPerDate.map(login => Number(login.date.split("/")[2]));
+    const minYear = Math.min(...years);
+    const maxYear = Math.max(...years);
+
+    // Create a baseline of months for each year in the range
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const output = [];
+
+    for (let year = minYear; year <= maxYear; year++) {
+        months.forEach((month, index) => {
+            output.push({
+                year: year,
+                month: month,
+                logins: 0
+            });
+        });
+    }
+
+    loginsPerDate.forEach(login => {
+        const [day, month, year] = login.date.split("/").map(Number);
+        const monthName = months[month - 1];
+        // Find the corresponding month-year entry in the output and update its logins
+        const entry = output.find(element => element.year === year && element.month === monthName);
+        if (entry) {
+            entry.logins += login.logins;
+        }
+    });
+
+    return output;
+}
+
+// SETUP USAGE DATA
 function populateUsageData(playerDataList, state){
     playerDataList.forEach(playerData =>{
         if(playerData == undefined){ return; }
@@ -387,126 +508,52 @@ function formatActivityData(activityData) {
 function exportToExcel(suffixes, exportData){
     // add any relevant insights data
     const totalPlayTimeAcrossAllUsersSeconds = getTotalPlayTime(exportData);
+    const totalLogins = getTotalLogins(exportData);
+    const totalLoginsPerMonth = getTotalLoginsPerMonth(exportData);
     const playersWithMostPlayTime = findPlayersWithMostPlayTime(exportData, 1, 3);
     const playersWithMostPlays = findPlayersWithMostPlays(exportData, 1, 3);
     const playersWithMostUniqueActivities = findPlayersWithMostUniqueActivitiesPlayed(exportData, 1, 3);
     const mostPlayedActivities = findMostPlayedActivities(exportData, 1, 10);
     //const userAccessPerPlatform = getUserAccessPerPlatform(exportData);
 
-    let insightsExportData = [
-        { insight: 'Total Users In Report', value: exportData.length },
-        { insight: 'Total Play Time Across All Users', value: formatTimeToHHMMSS(totalPlayTimeAcrossAllUsersSeconds) }
-    ];
-    playersWithMostPlayTime.forEach(player => {
-        insightsExportData.push({ insight: 'Player With Most Play Time', value: player.email, value2: formatTimeToHHMMSS(player.totalPlayTime) });
-    });
-    playersWithMostPlays.forEach(player => {
-        insightsExportData.push({ insight: 'Player With Most Total Plays', value: player.email, value2: player.totalPlays });
-    });
-    playersWithMostUniqueActivities.forEach(player => {
-        insightsExportData.push({ insight: 'Player With Most Unique Activities', value: player.email, value2: player.uniqueActivitiesCount });
-    });
-    mostPlayedActivities.forEach(activity => {
-        insightsExportData.push({ insight: 'Most Played Activities', value: activity.activityTitle, value2: activity.playCount });
-    });
-    //insightsExportData.push({insight: 'User Access Android', value: userAccessPerPlatform.totalAndroid});
-    //insightsExportData.push({insight: 'User Access iOS', value: userAccessPerPlatform.totalIOS});
-    //insightsExportData.push({insight: 'User Access Web', value: userAccessPerPlatform.totalWeb});
-
-    // Lesson insights
+    // General, Login, Lesson & Sim insights
+    const insightsExportData = setupGeneralInsights(exportData, totalPlayTimeAcrossAllUsersSeconds, totalLogins, playersWithMostPlayTime, playersWithMostPlays, playersWithMostUniqueActivities, mostPlayedActivities);
+    const loginInsightsData = setupLoginInsights(totalLoginsPerMonth);
     const lessonStats = getLessonStats(exportData);
-    let lessonInsightsData = [
-        { insight: 'Total Lesson Play Time', value: formatTimeToHHMMSS(lessonStats.totalLessonPlayTime) },
-        { insight: 'Total Lessons Attempted', value: lessonStats.totalLessonsAttempted },
-        { insight: 'Total Lesson Plays', value: lessonStats.totalLessonPlays }
-    ];
-    lessonStats.mostPlayedLessons.forEach(lesson => {
-        lessonInsightsData.push({ insight: 'Most Played Lessons', value: lesson.activityTitle, value2: lesson.playCount });
-    });
-    lessonStats.highestPlayTimeLessons.forEach(lesson => {
-        lessonInsightsData.push({ insight: 'Most Played Lessons (Play Time)', value: lesson.activityTitle, value2: formatTimeToHHMMSS(lesson.totalTime) });
-    });
-    // Sim insights
+    const lessonInsightsData = setupLessonInsights(lessonStats);
     const simStats = getSimStats(exportData);
-    let simInsightsData = [
-        { insight: 'Total Simulation Play Time', value: formatTimeToHHMMSS(simStats.totalSimPlayTime) },
-        { insight: 'Total Simulations Attempted', value: simStats.totalSimsAttempted },
-        { insight: 'Total Simulations Plays', value: simStats.totalSimPlays }        
-    ];
-    simStats.mostPlayedSims.forEach(sim => {
-       simInsightsData.push({ insight: 'Most Played Simulations', value: sim.activityTitle, value2: sim.playCount });
-    });
-    simStats.highestPlayTimeSims.forEach(sim => {
-        simInsightsData.push({ insight: 'Most Played Simulations (Play Time)', value: sim.activityTitle, value2: formatTimeToHHMMSS(sim.totalTime) });
-    });
+    const simInsightsData = setupSimInsights(simStats);
     
     // Combine insights data with empty rows between sections
     let combinedInsightsData = [
-        ...insightsExportData,
+        ...insightsExportData,        
         {}, // empty row
-        { insight: 'Lesson Insights', value: '' },
+        ...loginInsightsData, // error
+        {},
+        { insight: 'Lesson Insights', value1: '' },
         ...lessonInsightsData,
-        {}, // empty row
-        { insight: 'Simulation Insights', value: '' },
+        {},
+        { insight: 'Simulation Insights', value1: '' },
         ...simInsightsData
     ];
 
-    // add user data
-    let loginData = [];
-    let usageData = [];
-    
-    exportData.forEach(dataToExport => {
-        loginData.push(createLoginRow(dataToExport));
-
-        if(dataToExport.activityDataFormatted == undefined || dataToExport.activityDataFormatted.length <= 0){
-            usageData.push(createUsageRow(dataToExport, {}, true));
-            usageData.push({});
-            return;
-        }
-        let isFirstActivity = true;
-        dataToExport.activityDataFormatted.forEach(activity => {
-            let activityRow = {
-                //activityID: activity.activityID,
-                activityTitle: activity.activityTitle,
-                playDate: activity.playDate,
-                score: Math.round(activity.score * 100) + '%',
-                sessionTime: formatTimeToHHMMSS(Math.abs(activity.sessionTime))
-            };
-            usageData.push(createUsageRow(dataToExport, activityRow, isFirstActivity));
-            isFirstActivity = false;
-        });        
-        usageData.push({});        
-    });
-    
-    // Progress report
-    let progressData = [];
-    exportData.forEach(dataToExport => {
-        let emailRow = { email:dataToExport.email };
-        progressData.push(emailRow);
-        dataToExport.activityData.forEach(activity =>{
-            let dataRow = {
-                topic:activity.topicTitle, // TODO: implementing in app
-                activity: activity.activityTitle,
-                activityType:activity.activityType, // TODO: implementing in app
-                bestScore:getBestScore(activity),
-                totalTime:getTotalSessionTime(activity)
-            };
-            // Add attempt columns dynamically
-            activity.plays.forEach((play, index) => {
-                dataRow[`Attempt ${index + 1}`] = Math.round(play.normalisedScore * 100) + '%';
-            });
-            progressData.push(dataRow);
-        });        
-        progressData.push({});
-    });
+    // Login, Usage & Progress Reports
+    const loginData = setupLoginData(exportData);
+    const usageData = setupUsageData(exportData);
+    const progressData = setupProgressData(exportData);
 
     // Low Prio: Topic progress - user, topic %
+
+    // NCL DATA
+    let nclData = setupNCLData(exportData);
 
     const workbook = XLSX.utils.book_new();
     const insightsWorksheet = XLSX.utils.json_to_sheet(combinedInsightsData);
     const progressWorksheet = XLSX.utils.json_to_sheet(progressData);
     const usageWorksheet = XLSX.utils.json_to_sheet(usageData);
     const loginDataWorksheet = XLSX.utils.json_to_sheet(loginData);
+    
+    removeSpecificHeaders(insightsWorksheet, ["value3","value4","value5","value6","value7","value8","value9","value10","value11","value12"]);
 
     const insightsMessages = [
         'Welcome to the Immersify Usage and Progress Report. Each tab contains data, analytics and insights.',
@@ -537,9 +584,14 @@ function exportToExcel(suffixes, exportData){
     XLSX.utils.book_append_sheet(workbook, progressWorksheet, "Progress Report");
     XLSX.utils.book_append_sheet(workbook, usageWorksheet, "Usage Report");
     XLSX.utils.book_append_sheet(workbook, loginDataWorksheet, "Login Report");
+    // Add NCL data if it exists
+    if(nclData.length > 0 ){ 
+        const nclDataWorksheet = XLSX.utils.json_to_sheet(nclData);
+        // add to the combined report workbook
+        XLSX.utils.book_append_sheet(workbook, nclDataWorksheet, "NCL Report");
+    }
 
-    // Seperate workbooks and seperate work sheets
-    
+    // Seperate workbooks and seperate work sheets (with slightly different messages)
     const insightsMessages2 = [
         'This report shows some general insights, lesson specific insights and simulation specific insights.',
         ''
@@ -563,11 +615,14 @@ function exportToExcel(suffixes, exportData){
     const workbookProgress = XLSX.utils.book_new();
     const workbookUsage = XLSX.utils.book_new();
     const workbookLogin = XLSX.utils.book_new();
+    const workbookNCL = XLSX.utils.book_new();
 
     const insightsWorksheet2 = XLSX.utils.json_to_sheet(combinedInsightsData);
     const progressWorksheet2 = XLSX.utils.json_to_sheet(progressData);
     const usageWorksheet2 = XLSX.utils.json_to_sheet(usageData);
     const loginDataWorksheet2 = XLSX.utils.json_to_sheet(loginData);
+
+    removeSpecificHeaders(insightsWorksheet2, ["value3","value4","value5","value6","value7","value8","value9","value10","value11","value12"]);
 
     addMessages(insightsWorksheet2, insightsMessages2);
     addMessages(progressWorksheet2, progressMessages2);
@@ -601,6 +656,14 @@ function exportToExcel(suffixes, exportData){
     uploadWorkbookToS3(workbookUsageOut, 'Report-Usage', suffixesJoined, todayUTC);
     // Login
     uploadWorkbookToS3(workbookLoginOut, 'Report-Login', suffixesJoined, todayUTC);
+    // Add NCL data if it exists
+    if(nclData.length > 0 ){ 
+        const nclDataWorksheet = XLSX.utils.json_to_sheet(nclData);
+        // add to the NCL specific workbook
+        XLSX.utils.book_append_sheet(workbookNCL, nclDataWorksheet, "NCL Report");
+        uploadWorkbookToS3(workbookNCL, 'Report-NCL', suffixesJoined, todayUTC);
+    }
+
 }
 
 function uploadWorkbookToS3(workbook, reportType, suffixesJoined, todayUTC){
@@ -614,37 +677,6 @@ function uploadWorkbookToS3(workbook, reportType, suffixesJoined, todayUTC){
         });
 }
 
-// Adds arbitrary text to a worksheet
-function addMessages(worksheet, messages) {
-    const range = XLSX.utils.decode_range(worksheet['!ref']);
-    const newRange = XLSX.utils.encode_range({ s: { c: range.s.c, r: 0 }, e: { c: range.e.c, r: range.e.r + messages.length } });
-
-    // Shift all rows down by the number of messages
-    for (let R = range.e.r; R >= range.s.r; --R) {
-        for (let C = range.s.c; C <= range.e.c; ++C) {
-            const cellRef = XLSX.utils.encode_cell({ r: R + messages.length, c: C });
-            const prevCellRef = XLSX.utils.encode_cell({ r: R, c: C });
-            if (worksheet[prevCellRef]) {
-                worksheet[cellRef] = worksheet[prevCellRef];
-            } else {
-                delete worksheet[cellRef];
-            }
-        }
-    }
-
-    // Insert the messages
-    messages.forEach((message, index) => {
-        const messageCellRef = XLSX.utils.encode_cell({ r: index, c: 0 });
-        worksheet[messageCellRef] = { t: 's', v: message };
-        // Clear the rest of the cells in the message row
-        for (let C = range.s.c + 1; C <= range.e.c; ++C) {
-            const cellRef = XLSX.utils.encode_cell({ r: index, c: C });
-            delete worksheet[cellRef];
-        }
-    });
-
-    worksheet['!ref'] = newRange;
-}
 
 async function generatePresignedUrlsForFolder(folder) {
     const params = {
@@ -665,7 +697,6 @@ async function generatePresignedUrlsForFolder(folder) {
 
     return urls;
 }
-
 suffixRouter.get('/reports/:folder', async (req, res) => {
     const folder = req.params.folder;
     console.log(`getting reports for ${folder}`);
@@ -694,7 +725,6 @@ suffixRouter.get('/get-report-folders', async (req, res) => {
     console.log(formattedFolders);
     res.json(formattedFolders);
 });
-
 suffixRouter.post('/auth', async (req, res) => {
     try {
         if(req.body.pass == process.env.REPORT_PASS)
@@ -711,22 +741,6 @@ suffixRouter.post('/auth', async (req, res) => {
 });
 
 // EXPORT HELPER FUNCTIONS (SETUP ES MODULES AND RE-USE THESE)
-function getBestScore(activity){
-    let highestScore = 0;
-    activity.plays.forEach(play => {
-        if(play.normalisedScore > highestScore){
-            highestScore = play.normalisedScore;
-        }
-    });
-    return Math.round(highestScore * 100) + '%';    
-}
-function getTotalSessionTime(activity){
-    let totalTime = 0;
-    activity.plays.forEach(play => {
-        totalTime += play.sessionTime;
-    });
-    return formatTimeToHHMMSS(totalTime);  
-}
 function getTotalPlayTime(data){
     let totalPlayTimeAcrossAllUsers = 0;
     data.forEach((element) => {
@@ -734,6 +748,35 @@ function getTotalPlayTime(data){
     });
 
     return totalPlayTimeAcrossAllUsers;
+}
+function getTotalLogins(data){
+    let totalLogins = 0;
+    data.forEach(element => {
+        totalLogins += element.loginData.totalLogins;
+    });
+    return totalLogins;
+}
+function getTotalLoginsPerMonth(data) {
+    let totalLoginsPerMonth = [];
+
+    data.forEach(dataElement => {
+        if (!dataElement.loginData || !dataElement.loginData.loginsPerMonth){ 
+            console.log("NO LOGIN DATA: " + JSON.stringify(dataElement));
+            return;
+        }
+        
+        dataElement.loginData.loginsPerMonth.forEach(entry => {
+            let monthEntry = totalLoginsPerMonth.find(element => element.year === entry.year && element.month === entry.month);
+
+            if (!monthEntry) {
+                totalLoginsPerMonth.push({ year: entry.year, month: entry.month, logins: entry.logins });
+            } else {
+                monthEntry.logins += entry.logins;
+            }
+        });
+    });
+
+    return totalLoginsPerMonth;
 }
 function findPlayersWithMostPlayTime(data, start, end) {
     // Sort the data by totalPlayTime in descending order
@@ -779,7 +822,6 @@ function findPlayersWithMostUniqueActivitiesPlayed(data, start, end) {
     const selectedPlayers = playersWithUniqueActivityCount.slice(start, end);
     return selectedPlayers;
 }
-// MOST PLAYED ACTIVITIES
 function findMostPlayedActivities(reportData, start, end, activityType = null) {
     let activityCounts = {};
     let activityTypeSuffix = getActivityTypeSuffix(activityType);
@@ -809,7 +851,6 @@ function findMostPlayedActivities(reportData, start, end, activityType = null) {
     const mostPlayedActivities = sortedActivities.slice(start, end);
     return mostPlayedActivities;
 }
-// HIGHEST PLAY TIME ACTIVITIES
 function findHighestPlayTimeActivities(reportData, start, end, activityType = null) {
     let activityPlayTimeTotals = {};
     let activityTypeSuffix = getActivityTypeSuffix(activityType);    
@@ -908,6 +949,117 @@ function formatTimeToHHMMSS(seconds) {
 
     return `${paddedHours}:${paddedMinutes}:${paddedSeconds}`;
 }
+
+// EXPORT HELPERS
+function setupGeneralInsights(exportData, totalPlayTimeAcrossAllUsersSeconds, totalLogins, playersWithMostPlayTime, playersWithMostPlays, playersWithMostUniqueActivities, mostPlayedActivities){
+    let output = [];
+    output.push(
+        { insight: 'Total Users In Report', value1: exportData.length }, 
+        { insight: 'Total Logins', value1: totalLogins },
+        { insight: 'Total Play Time Across All Users', value1: formatTimeToHHMMSS(totalPlayTimeAcrossAllUsersSeconds)
+    });
+    playersWithMostPlayTime.forEach(player => {
+        output.push({ insight: 'Player With Most Play Time', value1: player.email, value2: formatTimeToHHMMSS(player.totalPlayTime) });
+    });
+    playersWithMostPlays.forEach(player => {
+        output.push({ insight: 'Player With Most Total Plays', value1: player.email, value2: player.totalPlays });
+    });
+    playersWithMostUniqueActivities.forEach(player => {
+        output.push({ insight: 'Player With Most Unique Activities', value1: player.email, value2: player.uniqueActivitiesCount });
+    });
+    mostPlayedActivities.forEach(activity => {
+        output.push({ insight: 'Most Played Activities', value1: activity.activityTitle, value2: activity.playCount });
+    });
+    return output;
+}
+function setupLoginInsights(totalLoginsPerMonth){
+    let output = [];
+    output.push({
+        insight: '',
+        value1: 'Jan', value2: 'Feb', value3: 'Mar', value4: 'Apr', value5: 'May', value6: 'Jun',
+        value7: 'Jul', value8: 'Aug', value9: 'Sep', value10: 'Oct', value11: 'Nov', value12: 'Dec',
+    });
+    let currentYear = null;
+    let loginDataRow = null;
+    totalLoginsPerMonth.forEach((monthData, index) => {
+        if (monthData.year !== currentYear) {
+            if (loginDataRow != null) {
+                output.push(loginDataRow);
+            }
+            // Create a new row for the new year
+            loginDataRow = { insight: `Total Logins Per Month (${monthData.year})` };
+            currentYear = monthData.year;
+        }
+
+        // Assign the login data to the appropriate value property
+        loginDataRow[`value${(index % 12) + 1}`] = monthData.logins;
+    });
+    output.push(loginDataRow);
+
+    return output;
+}
+function setupLessonInsights(lessonStats){
+    let output = [];
+    output.push(
+        { insight: 'Total Lesson Play Time', value1: formatTimeToHHMMSS(lessonStats.totalLessonPlayTime) },
+        { insight: 'Total Lessons Attempted', value1: lessonStats.totalLessonsAttempted },
+        { insight: 'Total Lesson Plays', value1: lessonStats.totalLessonPlays }
+    );
+    lessonStats.mostPlayedLessons.forEach(lesson => {
+        output.push({ insight: 'Most Played Lessons', value1: lesson.activityTitle, value2: lesson.playCount });
+    });
+    lessonStats.highestPlayTimeLessons.forEach(lesson => {
+        output.push({ insight: 'Most Played Lessons (Play Time)', value1: lesson.activityTitle, value2: formatTimeToHHMMSS(lesson.totalTime) });
+    });
+
+    return output;
+}
+function setupSimInsights(simStats){
+    let output = [];
+    output.push(
+        { insight: 'Total Simulation Play Time', value1: formatTimeToHHMMSS(simStats.totalSimPlayTime) },
+        { insight: 'Total Simulations Attempted', value1: simStats.totalSimsAttempted },
+        { insight: 'Total Simulations Plays', value1: simStats.totalSimPlays }      
+    );
+    simStats.mostPlayedSims.forEach(sim => {
+        output.push({ insight: 'Most Played Simulations', value1: sim.activityTitle, value2: sim.playCount });
+    });
+    simStats.highestPlayTimeSims.forEach(sim => {
+        output.push({ insight: 'Most Played Simulations (Play Time)', value1: sim.activityTitle, value2: formatTimeToHHMMSS(sim.totalTime) });
+    });
+
+    return output;
+}
+function setupProgressData(exportData){
+    let output = [];
+    exportData.forEach(dataToExport => {
+        let emailRow = { email:dataToExport.email };
+        output.push(emailRow);
+        dataToExport.activityData.forEach(activity =>{
+            let dataRow = {
+                topic:activity.topicTitle,
+                activity: activity.activityTitle,
+                activityType:activity.activityType,
+                bestScore:getBestScore(activity),
+                totalTime:getTotalSessionTime(activity)
+            };
+            // Add attempt columns dynamically
+            activity.plays.forEach((play, index) => {
+                dataRow[`Attempt ${index + 1}`] = Math.round(play.normalisedScore * 100) + '%';
+            });
+            output.push(dataRow);
+        });        
+        output.push({});
+    });
+    return output;
+}
+function setupLoginData(exportData){
+    let output = [];
+    exportData.forEach(dataToExport => {
+        output.push(createLoginRow(dataToExport));
+    });
+    return output;
+}
 function createLoginRow(dataToExport) {
     let userRow = {
         email: dataToExport.email,
@@ -915,17 +1067,48 @@ function createLoginRow(dataToExport) {
         lastLoginDate: dataToExport.lastLoginDate,
         daysSinceLastLogin: dataToExport.daysSinceLastLogin,
         daysSinceCreation: dataToExport.daysSinceCreation,
-        //accountExpiryDate: dataToExport.accountExpiryDate,
-        daysToExpire: dataToExport.daysToExpire, // TODO: hide this
+        accountExpiryDate: dataToExport.accountExpiryDate,
+        daysToExpire: dataToExport.daysToExpire,
         linkedAccounts: dataToExport.linkedAccounts,
-        lastLoginAndroid: dataToExport.loginData.lastLoginAndr,
-        lastLoginIOS: dataToExport.loginData.lastLoginIOS,
-        lastLoginWeb: dataToExport.loginData.lastLoginWeb,
         totalPlays: dataToExport.totalPlays,
         totalPlayTime: formatTimeToHHMMSS(dataToExport.totalPlayTime),
-        averageTimePerPlay: formatTimeToHHMMSS(dataToExport.averageTimePerPlay)
+        averageTimePerPlay: formatTimeToHHMMSS(dataToExport.averageTimePerPlay),
+        // new login data
+        //totalLogins: dataToExport.loginData.totalLogins,
     };
+
+    // add logins per month
+    // dataToExport.loginData.loginsPerMonth.forEach(entry => {
+    //     userRow[`${entry.month}Logins`] = entry.logins;
+    // });
+    // session data
+    //userRow['sessionData'] = formatSessionsForExport(dataToExport.loginData.sessionsString);
+
     return userRow;
+}
+function setupUsageData(exportData){
+    let output = [];
+    exportData.forEach(dataToExport => {
+        if(dataToExport.activityDataFormatted == undefined || dataToExport.activityDataFormatted.length <= 0){
+            output.push(createUsageRow(dataToExport, {}, true));
+            output.push({});
+            return;
+        }
+        let isFirstActivity = true;
+        dataToExport.activityDataFormatted.forEach(activity => {
+            let activityRow = {
+                activityTitle: activity.activityTitle,
+                playDate: activity.playDate,
+                score: Math.round(activity.score * 100) + '%',
+                sessionTime: formatTimeToHHMMSS(Math.abs(activity.sessionTime))
+            };
+            output.push(createUsageRow(dataToExport, activityRow, isFirstActivity));
+            isFirstActivity = false;
+        });        
+        output.push({});        
+    });
+
+    return output;
 }
 function createUsageRow(dataToExport, activity, isFirstActivity){
     let userRow = {
@@ -933,7 +1116,95 @@ function createUsageRow(dataToExport, activity, isFirstActivity){
     };
     return isFirstActivity ? { ...userRow, ...activity } : activity;
 }
-// GET LESSON STATS
+function setupNCLData(exportData){
+    let output = [];
+    exportData.forEach(dataToExport => {
+        if(dataToExport.nclData == undefined){ return; }
+
+        let nclRow = {}
+        nclRow["email"] = dataToExport.email;
+        dataToExport.nclData.additionalDataFields.forEach(field =>{
+            // replace ~ with ,
+            let tempField = field;
+            tempField.value = tempField.value.replaceAll("~",", ");
+            nclRow[tempField.fieldId] = tempField.value;
+        });
+        output.push(nclRow);
+    });
+    return output;
+}
+function getBestScore(activity){
+    let highestScore = 0;
+    activity.plays.forEach(play => {
+        if(play.normalisedScore > highestScore){
+            highestScore = play.normalisedScore;
+        }
+    });
+    return Math.round(highestScore * 100) + '%';    
+}
+function getTotalSessionTime(activity){
+    let totalTime = 0;
+    activity.plays.forEach(play => {
+        totalTime += play.sessionTime;
+    });
+    return formatTimeToHHMMSS(totalTime);  
+}
+// Adds arbitrary text to a worksheet
+function addMessages(worksheet, messages) {
+    const range = XLSX.utils.decode_range(worksheet['!ref']);
+    const newRange = XLSX.utils.encode_range({ s: { c: range.s.c, r: 0 }, e: { c: range.e.c, r: range.e.r + messages.length } });
+
+    // Shift all rows down by the number of messages
+    for (let R = range.e.r; R >= range.s.r; --R) {
+        for (let C = range.s.c; C <= range.e.c; ++C) {
+            const cellRef = XLSX.utils.encode_cell({ r: R + messages.length, c: C });
+            const prevCellRef = XLSX.utils.encode_cell({ r: R, c: C });
+            if (worksheet[prevCellRef]) {
+                worksheet[cellRef] = worksheet[prevCellRef];
+            } else {
+                delete worksheet[cellRef];
+            }
+        }
+    }
+
+    // Insert the messages
+    messages.forEach((message, index) => {
+        const messageCellRef = XLSX.utils.encode_cell({ r: index, c: 0 });
+        worksheet[messageCellRef] = { t: 's', v: message };
+        // Clear the rest of the cells in the message row
+        for (let C = range.s.c + 1; C <= range.e.c; ++C) {
+            const cellRef = XLSX.utils.encode_cell({ r: index, c: C });
+            delete worksheet[cellRef];
+        }
+    });
+
+    worksheet['!ref'] = newRange;
+}
+function removeSpecificHeaders(worksheet, columnsToRemove) {
+    const range = XLSX.utils.decode_range(worksheet['!ref']);
+    
+    columnsToRemove.forEach(column => {
+        // Check if it's a column name (like 'Jan') or a specific cell (like 'A1')
+        if (typeof column === 'string') {
+            // If it's a specific cell like 'A1', remove that
+            if (column.match(/^[A-Z]+\d+$/)) {
+                if (worksheet[column]) {
+                    delete worksheet[column];  // Delete specific cell content
+                }
+            } else {
+                // If it's a column header (e.g., 'Jan', 'Feb'), find the corresponding cell in the first row
+                for (let C = range.s.c; C <= range.e.c; ++C) {
+                    const cellAddress = XLSX.utils.encode_cell({ r: 0, c: C });  // First row (r = 0)
+                    if (worksheet[cellAddress] && worksheet[cellAddress].v === column) {
+                        delete worksheet[cellAddress];  // Delete the header content
+                    }
+                }
+            }
+        }
+    });
+}
+
+
 function getLessonStats(reportData){
     let output = {
         totalLessonPlayTime:0,
@@ -966,7 +1237,6 @@ function getLessonStats(reportData){
 
     return output;
 }
-// GET SIM STATS
 function getSimStats(reportData){
     let output = {
         totalSimPlayTime:0,

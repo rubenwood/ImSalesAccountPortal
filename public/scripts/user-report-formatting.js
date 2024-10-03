@@ -138,7 +138,7 @@ export function checkForContactEmailAddrSuffix(input, suffixes){
 }
 
 // populates the expanded usage data modal
-export function populateUsageData(playerDataList, loginData, state, row){
+export function populateUsageData(playerDataList, loginData, nclData, state, row){
     // if every playerDataList element is undefined, there is no playerdata
     if(playerDataList.every((element) => { return element === undefined})){ 
         addCellToRow(row, 'No Usage Data', false); 
@@ -191,9 +191,11 @@ export function populateUsageData(playerDataList, loginData, state, row){
                 bestScore:bestScore
             };
             state.activityDataForReport.push(userActivityData);
-        });
-        
+        });        
     });
+
+    // NCL data
+    playerDataContent += `${formatNCLDataHTML(formatNCLData(nclData))}`;
 
     playerDataContent += `<h1>Total Plays: ${state.totalPlays}</h1>`;
     playerDataContent += `<h1>Total Activities Played: ${state.totalActivitiesPlayed}</h1>`;
@@ -204,6 +206,7 @@ export function populateUsageData(playerDataList, loginData, state, row){
 
     return state;
 }
+
 
 export function populateLoginData(userData){
     const lastLoginAndr = userData.LastLoginDateAndroid?.Value;
@@ -319,7 +322,6 @@ function formatLoginsPerDate(loginsPerDate){
 
     return loginsPerDateString;
 }
-
 // GET TOTAL LOGINS
 function getTotalLoginsPerUser(sessions){
     if(sessions == undefined){ return 0; }
@@ -418,6 +420,7 @@ function formatLoginsPerMonth(loginsPerMonth){
     return output;
 }
 
+// PLATFORM
 function formatPlatform(platform){
     switch(platform) {
         case "IPhonePlayer":
@@ -430,4 +433,25 @@ function formatPlatform(platform){
             return "Windows";
     }
     return "unknown";
+}
+
+// FORMAT NCL DAT
+function formatNCLData(nclData){
+    if(nclData == undefined){ return; }
+    let output = [];
+    for(let field of nclData.additionalDataFields){
+        let tempField = field;
+        tempField.value = tempField.value.replaceAll("~",", ");
+        output.push(tempField);
+    }
+    return output;
+}
+function formatNCLDataHTML(nclDataJSON){
+    if(nclDataJSON == undefined){ return; }
+    let output = '';
+    nclDataJSON.forEach(element => {
+        output += `<b>${element.fieldId}</b> ${element.value}\n`;
+    });
+    
+    return output;
 }
