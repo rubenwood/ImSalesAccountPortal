@@ -125,10 +125,9 @@ acaAreaRouter.get('/gen-area-rep-exp', async (req, res) => {
 
     let usageData = [];
     let accountData = [];
-
     results.forEach(result => {
-        usageData.push(...result.usageData);
-        accountData.push(...result.accountData);
+        usageData = usageData.concat(result.usageData);
+        accountData = accountData.concat(result.accountData);
     });
 
     output = {
