@@ -654,6 +654,7 @@ function exportToExcel(folderName, exportData){
     }
 }
 
+// UPLOAD TO S3
 function uploadWorkbookToS3(workbook, reportType, folderName, todayUTC){
     let filename = `Analytics/${folderName}/${reportType}-${folderName}-${todayUTC}-UTC.xlsx`;
     uploadToS3(workbook, filename, 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', process.env.AWS_BUCKET)
@@ -664,8 +665,6 @@ function uploadWorkbookToS3(workbook, reportType, folderName, todayUTC){
             console.error(`Error uploading file: ${err.message}`);
         });
 }
-
-// UPLOAD TO S3
 async function generatePresignedUrlsForFolder(folder) {
     const params = {
         Bucket: process.env.AWS_BUCKET,

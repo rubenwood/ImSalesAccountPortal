@@ -105,8 +105,7 @@ export function populateForm(data){
         let usageData = element.usageData.UsageDataJSON.Data;
         let accountExpiryDate = usageData.TestAccountExpiryDate !== undefined ? new Date(usageData.TestAccountExpiryDate.Value) : undefined;
         let accountExpiryDateString = accountExpiryDate !== undefined ? accountExpiryDate.toDateString() : "N/A";
-
-        //3914A10453A4BFEE -TP
+        
         let nclData;
         if(usageData.NclNhsOnboardingData != undefined){
             nclData = JSON.parse(usageData.NclNhsOnboardingData.Value);
@@ -122,7 +121,6 @@ export function populateForm(data){
             populateAccDataRow(row, email, createdDate, lastLoginDate, daysSinceLastLogin, daysSinceCreation, 
                 accountExpiryDateString, "", "", "", linkedAccounts);
             let loginData = populateLoginData(usageData);
-            console.log("LOGIN DATA: ", loginData);
             let playerDataNew = usageData.PlayerDataNewLauncher !== undefined ? JSON.parse(usageData.PlayerDataNewLauncher.Value) : undefined;
             let playerData = usageData.PlayerData !== undefined ? JSON.parse(usageData.PlayerData.Value) : undefined;
             let playerDataState = {

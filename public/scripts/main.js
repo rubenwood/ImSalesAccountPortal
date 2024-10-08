@@ -385,7 +385,6 @@ function exportToExcel() {
     let nclData = setupNCLData(exportData);
 
     const workbook = XLSX.utils.book_new();
-    console.log(combinedInsightsData);
     const insightsWorksheet = XLSX.utils.json_to_sheet(combinedInsightsData);
     const progressWorksheet = XLSX.utils.json_to_sheet(progressData);
     const usageWorksheet = XLSX.utils.json_to_sheet(usageData);
