@@ -2,6 +2,7 @@ import { authenticateSessionTicket } from "../PlayFabManager.js";
 import { fetchUsersByID } from "../db/db-front.js";
 
 document.addEventListener('DOMContentLoaded', async() => {
+    // TODO: do these in parallel?
     await getSuffixMappings();
     await getReportFolders();
     console.log(window.location.search);
@@ -14,14 +15,16 @@ document.addEventListener('DOMContentLoaded', async() => {
     if(params == undefined){ return; }
     if(params.SessionTicket == undefined){ return; }
 
-    let userSuffixFolderName = await getUserFolderName(params.SessionTicket);
-    document.getElementById('loginButton').addEventListener('click', () => submitPass(userSuffixFolderName));
+    let userReportFolderNames = await getUserReports(params.SessionTicket);
+    populateReportsDropdown(userReportFolderNames);
+    document.getElementById('loginButton').addEventListener('click', () => submitPass(userReportFolderNames[0]));
+    document.getElementById('reportSelect').addEventListener('change', (event) => populateReports(event.target.value));
 });
 window.onload = function() {
     document.getElementById('loginModal').style.display = 'block';
 };
 
-async function submitPass(userSuffix) {
+async function submitPass(reportFolderName) {
     let inPass = document.getElementById('password').value;
     
     try {
@@ -41,21 +44,23 @@ async function submitPass(userSuffix) {
         }
         
         document.getElementById('loginModal').style.display = 'none';
-        getReports(userSuffix);
-
-        const startDateInput = document.getElementById('startDateInput');
-        const endDateInput = document.getElementById('endDateInput');
-        startDateInput.addEventListener('change', function () {
-            filterReports(startDateInput.value, endDateInput.value);
-        });
-        endDateInput.addEventListener('change', function () {
-            filterReports(startDateInput.value, endDateInput.value);
-        });
-    
+        populateReports(reportFolderName);
     } catch (err) {
         console.error("Error during authentication", err);
         document.getElementById('error-loading').innerHTML = 'Oops! An error occurred. Please try again later.';
     }
+}
+
+function populateReports(reportFolderName){
+    getReports(reportFolderName);
+    const startDateInput = document.getElementById('startDateInput');
+    const endDateInput = document.getElementById('endDateInput');
+    startDateInput.addEventListener('change', function () {
+        filterReports(startDateInput.value, endDateInput.value);
+    });
+    endDateInput.addEventListener('change', function () {
+        filterReports(startDateInput.value, endDateInput.value);
+    });  
 }
 
 let suffixMap = [];
@@ -64,7 +69,6 @@ async function getSuffixMappings(){
     suffixMap = await suffixMappingResp.json();
     //console.log(suffixMap);
 }
-
 let reportFolderNames = [];
 async function getReportFolders(){
     const folderResp = await fetch('/reporting/get-report-folders');
@@ -86,7 +90,6 @@ async function getUserFolderName(sessionTicket){
     const combinedData = { accountData: rowData.accountData[0].AccountDataJSON, usageData: rowData.usageData[0].UsageDataJSON };
     const linkedAccounts = combinedData.accountData.LinkedAccounts;
     for(let linkedAcc of linkedAccounts){
-
         if(linkedAcc.Platform == "PlayFab"){
             userFolderName = isValidEmail(linkedAcc.Email);
         }else if(linkedAcc.Platform == "OpenIdConnect"){
@@ -95,6 +98,33 @@ async function getUserFolderName(sessionTicket){
     }
 
     return userFolderName;
+}
+async function getUserReports(sessionTicket){
+    const authData = await authenticateSessionTicket(sessionTicket);
+    
+    if(authData == undefined || authData == null){ 
+        console.log("Invalid session");
+        return;
+    }
+
+    const playFabId = authData.data.UserInfo.PlayFabId;
+    const rowData = await fetchUsersByID([playFabId]);
+    const combinedData = { accountData: rowData.accountData[0].AccountDataJSON, usageData: rowData.usageData[0].UsageDataJSON };
+    console.log(combinedData);
+    const userReports = JSON.parse(combinedData.usageData.Data.Reports.Value);
+    console.log(userReports);
+    return userReports.reports;
+}
+
+function populateReportsDropdown(reports){
+    let reportDropdown = document.getElementById('reportSelect');
+
+    reports.forEach(report => {
+        const option = document.createElement("option");
+        option.value = report;
+        option.textContent = report;
+        reportDropdown.appendChild(option);
+    }); 
 }
 
 function isValidEmail(linkedAccEmail){
@@ -119,9 +149,9 @@ function isValidPlatform(linkedAccPlatformId){
 
 // Get Reports
 let reportResponse = undefined;
-async function getReports(suffix) {
+async function getReports(reportFolderName) {
     const inPass = document.getElementById('password').value;
-    const response = await fetch(`/reporting/reports/${suffix}`, {
+    const response = await fetch(`/reporting/reports/${reportFolderName}`, {
         method: 'GET',
         headers: {
             'Content-Type': 'application/json',

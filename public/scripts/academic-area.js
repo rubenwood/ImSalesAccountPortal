@@ -122,6 +122,7 @@ export function populateForm(data){
             populateAccDataRow(row, email, createdDate, lastLoginDate, daysSinceLastLogin, daysSinceCreation, 
                 accountExpiryDateString, "", "", "", linkedAccounts);
             let loginData = populateLoginData(usageData);
+            console.log("LOGIN DATA: ", loginData);
             let playerDataNew = usageData.PlayerDataNewLauncher !== undefined ? JSON.parse(usageData.PlayerDataNewLauncher.Value) : undefined;
             let playerData = usageData.PlayerData !== undefined ? JSON.parse(usageData.PlayerData.Value) : undefined;
             let playerDataState = {

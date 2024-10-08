@@ -168,12 +168,11 @@ async function generateReportByEmailSuffixDB(suffixes, exportReport) {
     }
 
     if(exportReport == true){
-        genExcelReport(suffixes, output);
+        genExcelReport(suffixes.join('-'), output);
     }
 
     return output;
 }
-
 function isValidSuffix(email, suffix) {
     const parts = email.split('@');
     if (parts.length !== 2) return false; // Ensure there's only one '@'
@@ -196,11 +195,10 @@ function isValidPlatformUserId(platformUserId, suffix) {
 
 // function to generate out a report (excel sheet)
 // add a url param to end point to notify report generation
-async function genExcelReport(suffixes, data){
-    console.log("exporting report");
+async function genExcelReport(folderName, data){
     let sortedData = sortAndCombineDataForReport(data);
     let exportData = await setupDataForExport(sortedData);
-    exportToExcel(suffixes, exportData);
+    exportToExcel(folderName, exportData);
 }
 function sortAndCombineDataForReport(data) {
     const { accountData, usageData } = data;
@@ -335,7 +333,6 @@ function calcDaysSince(inputDate){
     let daysSince = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
     return daysSince;
 }
-
 // SETUP LOGIN DATA
 function populateLoginData(userData){
     const lastLoginAndr = userData.LastLoginDateAndroid?.Value;
@@ -453,7 +450,6 @@ function getLoginsPerMonth(loginsPerDate) {
 
     return output;
 }
-
 // SETUP USAGE DATA
 function populateUsageData(playerDataList, state){
     playerDataList.forEach(playerData =>{
@@ -505,7 +501,8 @@ function formatActivityData(activityData) {
     return formattedData;
 }
 
-function exportToExcel(suffixes, exportData){
+// EXPORT
+function exportToExcel(folderName, exportData){
     // add any relevant insights data
     const totalPlayTimeAcrossAllUsersSeconds = getTotalPlayTime(exportData);
     const totalLogins = getTotalLogins(exportData);
@@ -528,7 +525,7 @@ function exportToExcel(suffixes, exportData){
     let combinedInsightsData = [
         ...insightsExportData,        
         {}, // empty row
-        ...loginInsightsData, // error
+        ...loginInsightsData,
         {},
         { insight: 'Lesson Insights', value1: '' },
         ...lessonInsightsData,
@@ -634,8 +631,6 @@ function exportToExcel(suffixes, exportData){
     XLSX.utils.book_append_sheet(workbookUsage, usageWorksheet2, "Usage Report");
     XLSX.utils.book_append_sheet(workbookLogin, loginDataWorksheet2, "Login Report");
 
-    // write to server
-    //XLSX.writeFile(workbook, `Report-${suffixes.join('-')}-${formatDate(new Date())}.xlsx`);
     // write to s3
     const workbookCombinedOut = XLSX.write(workbook, { bookType: 'xlsx', type: 'buffer' });
     const workbookInsightsOut = XLSX.write(workbookInsights, { bookType: 'xlsx', type: 'buffer' });
@@ -643,31 +638,24 @@ function exportToExcel(suffixes, exportData){
     const workbookUsageOut = XLSX.write(workbookUsage, { bookType: 'xlsx', type: 'buffer' });
     const workbookLoginOut = XLSX.write(workbookLogin, { bookType: 'xlsx', type: 'buffer' });
 
-    const suffixesJoined = suffixes.join('-');
     let todayUTC = new Date().toISOString().split('T')[0];
     console.log(`Today in UTC: ${todayUTC}`);
-    // Combined
-    uploadWorkbookToS3(workbookCombinedOut, 'Report-Combined', suffixesJoined, todayUTC);
-    // Insights
-    uploadWorkbookToS3(workbookInsightsOut, 'Report-Insights', suffixesJoined, todayUTC);
-    // Progress
-    uploadWorkbookToS3(workbookProgressOut, 'Report-Progress', suffixesJoined, todayUTC);
-    // Usage
-    uploadWorkbookToS3(workbookUsageOut, 'Report-Usage', suffixesJoined, todayUTC);
-    // Login
-    uploadWorkbookToS3(workbookLoginOut, 'Report-Login', suffixesJoined, todayUTC);
+    uploadWorkbookToS3(workbookCombinedOut, 'Report-Combined', folderName, todayUTC);
+    uploadWorkbookToS3(workbookInsightsOut, 'Report-Insights', folderName, todayUTC);
+    uploadWorkbookToS3(workbookProgressOut, 'Report-Progress', folderName, todayUTC);
+    uploadWorkbookToS3(workbookUsageOut, 'Report-Usage', folderName, todayUTC);
+    uploadWorkbookToS3(workbookLoginOut, 'Report-Login', folderName, todayUTC);
     // Add NCL data if it exists
     if(nclData.length > 0 ){ 
         const nclDataWorksheet = XLSX.utils.json_to_sheet(nclData);
         // add to the NCL specific workbook
         XLSX.utils.book_append_sheet(workbookNCL, nclDataWorksheet, "NCL Report");
-        uploadWorkbookToS3(workbookNCL, 'Report-NCL', suffixesJoined, todayUTC);
+        uploadWorkbookToS3(workbookNCL, 'Report-NCL', folderName, todayUTC);
     }
-
 }
 
-function uploadWorkbookToS3(workbook, reportType, suffixesJoined, todayUTC){
-    let filename = `Analytics/${suffixesJoined}/${reportType}-${suffixesJoined}-${todayUTC}-UTC.xlsx`;
+function uploadWorkbookToS3(workbook, reportType, folderName, todayUTC){
+    let filename = `Analytics/${folderName}/${reportType}-${folderName}-${todayUTC}-UTC.xlsx`;
     uploadToS3(workbook, filename, 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', process.env.AWS_BUCKET)
         .then((data) => {
             console.log(`File uploaded successfully at ${filename}`);
@@ -677,7 +665,7 @@ function uploadWorkbookToS3(workbook, reportType, suffixesJoined, todayUTC){
         });
 }
 
-
+// UPLOAD TO S3
 async function generatePresignedUrlsForFolder(folder) {
     const params = {
         Bucket: process.env.AWS_BUCKET,
@@ -725,6 +713,7 @@ suffixRouter.get('/get-report-folders', async (req, res) => {
     console.log(formattedFolders);
     res.json(formattedFolders);
 });
+// AUTH USER FOR REPORT
 suffixRouter.post('/auth', async (req, res) => {
     try {
         if(req.body.pass == process.env.REPORT_PASS)
@@ -994,6 +983,10 @@ function setupLoginInsights(totalLoginsPerMonth){
         // Assign the login data to the appropriate value property
         loginDataRow[`value${(index % 12) + 1}`] = monthData.logins;
     });
+    // cant have null values in output
+    if(loginDataRow == null){
+        loginDataRow = { insight: `Total Logins Per Month` };
+    }
     output.push(loginDataRow);
 
     return output;
@@ -1203,8 +1196,7 @@ function removeSpecificHeaders(worksheet, columnsToRemove) {
         }
     });
 }
-
-
+// LESSON & SIM STATS
 function getLessonStats(reportData){
     let output = {
         totalLessonPlayTime:0,
@@ -1267,7 +1259,7 @@ function getSimStats(reportData){
 
     return output;
 }
-
+// ACTIVITY
 function updateActivityCount(activity, activityCounts) {
     const activityKey = activity.activityID + ' - ' + activity.activityTitle;
     if (activityCounts[activityKey]) {
@@ -1302,7 +1294,6 @@ function getActivityTypeSuffix(activityType){
             return "_prac";
     }
 }
-
 
 // Route that takes in an array of query param gen-suffix-rep?suffixes=suffix1,suffix2
 suffixRouter.get('/gen-suffix-rep', async (req, res) => {
@@ -1351,4 +1342,4 @@ suffixRouter.get('/get-connection-ids', async (req, res) => {
     }
 });
 
-module.exports = { suffixRouter, generateReportByEmailSuffixDB, getSuffixMappings };
+module.exports = { suffixRouter, generateReportByEmailSuffixDB, getSuffixMappings, genExcelReport, sortAndCombineDataForReport };

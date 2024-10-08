@@ -39,6 +39,15 @@ export async function getAreas() {
     const data = await areasResponse.json();
     return data;
 }
+export async function getAreaBrondons(areas){
+    const brondonPromises = areas.map(async (area) => {
+        const imResp = await imAPIGet(`areas/${area.id}`);
+        return { areaId: area.id, brondon: imResp.brondons[0] };
+    });
+
+    const brondons = await Promise.all(brondonPromises);
+    return brondons;
+}
 
 export async function getTopics() {
     const topicsUrl = `${baseURL}/topics`;
@@ -52,13 +61,27 @@ export async function getTopics() {
     const data = await topicsResponse.json();
     return data;
 }
-export async function getTopicBrondons(topics){
-    const brondonPromises = topics.map(async (topic) => {
-        const imResp = await imAPIGet(`topics/${topic.id}`);
-        return { topicId: topic.id, brondon: imResp.brondons[0] };
-    });
+export async function getTopicBrondons(topics, limit = 10){
+    const brondons = [];
+    
+    const processBatch = async (batch) => {
+        const brondonPromises = batch.map(async (topic) => {
+            const imResp = await imAPIGet(`topics/${topic.id}`);
+            console.log(imResp);
+            //let outuput;
+            if(imResp.error == undefined){
+                return { topicId: topic.id, brondon: imResp.brondons[0] };
+            }
+        });
+        return await Promise.all(brondonPromises);
+    };
 
-    const brondons = await Promise.all(brondonPromises);
+    for (let i = 0; i < topics.length; i += limit) {
+        const batch = topics.slice(i, i + limit);
+        const batchResults = await processBatch(batch);
+        brondons.push(...batchResults);
+    }
+
     return brondons;
 }
 

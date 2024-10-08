@@ -26,13 +26,12 @@
   </div>
   <div id="reports-content" class="form-container-report">
     <div class="tabset">
-      <!-- Tab 1 -->
       <input type="radio" name="tabset" id="tab1" aria-controls="login" checked>
       <label for="tab1">Login</label>
-      <!-- Tab 2 -->
+
       <input type="radio" name="tabset" id="tab2" aria-controls="insights">
       <label for="tab2">Insights</label>
-      <!-- Tab 3 -->
+
       <input type="radio" name="tabset" id="tab3" aria-controls="progress">
       <label for="tab3">Progress</label>
 
@@ -48,21 +47,25 @@
       End Date
       <input id="endDateInput" type="date">
 
+      <!-- Report Selection -->
+      <select id="reportSelect" style="width: auto; font-size: 12px;">
+      </select>
+
+      <!-- Tabs & Sections -->
       <div class="tab-panels">
-        <section id="login" class="tab-panel">
-         
+        <section id="login" class="tab-panel">         
         </section>
-        <section id="insights" class="tab-panel">
-         
+
+        <section id="insights" class="tab-panel">         
         </section>
-        <section id="progress" class="tab-panel">
-          
+
+        <section id="progress" class="tab-panel">          
          </section>
-        <section id="usage" class="tab-panel">
-          
+
+        <section id="usage" class="tab-panel">          
         </section>
-        <section id="combined" class="tab-panel">
-          
+
+        <section id="combined" class="tab-panel">          
         </section>
       </div>
       <span id="error-loading"></span>

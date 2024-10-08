@@ -167,7 +167,7 @@ async function searchByAssignedTopic(inputTopics) {
     const topicBrondons = await getTopicBrondons(topicIds);
     // Find matching entries based on externalTitle
     const matchingEntries = topicBrondons.filter(entry =>
-        inputTopics.some(topic => topic.trim().toLowerCase() === entry.brondon?.externalTitle.trim().toLowerCase())
+        inputTopics.some(topic => topic.trim().toLowerCase() === entry?.brondon?.externalTitle.trim().toLowerCase())
     );
     console.log("Matching Entries:", matchingEntries);
 
@@ -178,7 +178,6 @@ async function searchByAssignedTopic(inputTopics) {
     const playFabIdsAssigned = await imAPIGet(`structure/${matchingEntries[0].topicId}/assigned/playFabUser`);
     return playFabIdsAssigned;
 }
-
 
 // Generate report by ID (Database)
 export async function generateReportByIdDB() {
@@ -348,6 +347,7 @@ function exportToExcel() {
     const totalPlayTimeAcrossAllUsersSeconds = getTotalPlayTime(exportData);
     const totalLogins = getTotalLogins(exportData);
     const totalLoginsPerMonth = getTotalLoginsPerMonth(exportData);
+    console.log("TLPM: ", totalLoginsPerMonth);
     const playersWithMostPlayTime = findPlayersWithMostPlayTime(exportData, 1, 3);
     const playersWithMostPlays = findPlayersWithMostPlays(exportData, 1, 3);
     const playersWithMostUniqueActivities = findPlayersWithMostUniqueActivitiesPlayed(reportData, 1, 3);
@@ -355,6 +355,7 @@ function exportToExcel() {
     // General, Login, Lesson & Sim insights
     let insightsExportData = setupGeneralInsights(totalPlayTimeAcrossAllUsersSeconds, totalLogins, playersWithMostPlayTime, playersWithMostPlays, playersWithMostUniqueActivities, mostPlayedActivities);
     let loginInsightsData = setupLoginInsights(totalLoginsPerMonth);
+    console.log("LOGIN INSIGHT: ", loginInsightsData);
     const lessonStats = getLessonStats(reportData);
     let lessonInsightsData = setupLessonInsights(lessonStats);
     const simStats = getSimStats(reportData);
@@ -384,6 +385,7 @@ function exportToExcel() {
     let nclData = setupNCLData(exportData);
 
     const workbook = XLSX.utils.book_new();
+    console.log(combinedInsightsData);
     const insightsWorksheet = XLSX.utils.json_to_sheet(combinedInsightsData);
     const progressWorksheet = XLSX.utils.json_to_sheet(progressData);
     const usageWorksheet = XLSX.utils.json_to_sheet(usageData);
@@ -457,11 +459,12 @@ function setupLoginInsights(totalLoginsPerMonth){
         value1: 'Jan', value2: 'Feb', value3: 'Mar', value4: 'Apr', value5: 'May', value6: 'Jun',
         value7: 'Jul', value8: 'Aug', value9: 'Sep', value10: 'Oct', value11: 'Nov', value12: 'Dec',
     });
+
     let currentYear = null;
     let loginDataRow = null;
     totalLoginsPerMonth.forEach((monthData, index) => {
-        if (monthData.year !== currentYear) {
-            if (loginDataRow) {
+        if (monthData.year !== currentYear){
+            if (loginDataRow){
                 output.push(loginDataRow);
             }
             // Create a new row for the new year
@@ -472,6 +475,10 @@ function setupLoginInsights(totalLoginsPerMonth){
         // Assign the login data to the appropriate value property
         loginDataRow[`value${(index % 12) + 1}`] = monthData.logins;
     });
+    // cant have null values in output
+    if(loginDataRow == null){
+        loginDataRow = { insight: `Total Logins Per Month` };
+    }
     output.push(loginDataRow);
 
     return output;
@@ -597,7 +604,7 @@ function createUsageRow(dataToExport, activity, isFirstActivity){
 function setupNCLData(exportData){
     let output = [];
     exportData.forEach(dataToExport => {
-        if(dataToExport.nclData == undefined){ return; }
+        if(dataToExport.nclData == undefined){ return output; }
 
         let nclRow = {}
         nclRow["email"] = dataToExport.email;

@@ -92,7 +92,7 @@ export function getTotalLoginsPerMonth(reportData) {
     let totalLoginsPerMonth = [];
 
     reportData.forEach(data => {
-        if (!data.loginData || !data.loginData.loginsPerMonth) return;
+        if (!data.loginData || !data.loginData.loginsPerMonth){ console.log("NO LOGIN DATA"); return totalLoginsPerMonth };
         
         data.loginData.loginsPerMonth.forEach(entry => {
             let monthEntry = totalLoginsPerMonth.find(element => element.year === entry.year && element.month === entry.month);
@@ -104,7 +104,6 @@ export function getTotalLoginsPerMonth(reportData) {
             }
         });
     });
-
     return totalLoginsPerMonth;
 }
 function getTotalLoginsPerMonthHTML(reportData){

@@ -209,6 +209,7 @@ export function populateUsageData(playerDataList, loginData, nclData, state, row
 
 
 export function populateLoginData(userData){
+    
     const lastLoginAndr = userData.LastLoginDateAndroid?.Value;
     const lastLoginIOS = userData.LastLoginDateiOS?.Value;
     const lastLoginWeb = userData.LastLoginDateWeb?.Value;
@@ -220,7 +221,9 @@ export function populateLoginData(userData){
     const sessionsString = sessions ? formatSessionsForModal(sessions, loginsPerDate) : "No Session Data";
 
     const totalLogins = getTotalLoginsPerUser(sessions);
+    console.log("USER DATA TOTAL LOGINS: ", totalLogins);
     const loginsPerMonth = getLoginsPerMonth(loginsPerDate);
+    console.log("USER DATA LOGINS PER MONTH: ", loginsPerMonth);
 
     return { 
         lastLoginAndr, 
