@@ -57,7 +57,6 @@ async function getSuffixMappings() {
 }
 suffixRouter.get('/get-suffix-mappings', async (req, res) => {
     const mappings = await getSuffixMappings();
-    console.log(mappings);
     res.json(mappings);
 });
 
