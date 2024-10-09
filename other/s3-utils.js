@@ -1,7 +1,6 @@
 const express = require('express');
 const AWS = require('aws-sdk');
 const fs = require('fs');
-//const { resolve } = require('path');
 const s3Router = express.Router();
 
 AWS.config.update({
@@ -178,4 +177,47 @@ async function checkFileLastModified(bucket, fileKey) {
     }
 }
 
-module.exports = { s3Router, getS3JSONFile, uploadToS3, anyFileModifiedSince, checkFileLastModified, checkFilesLastModifiedList, listItems  };
+// GET REPORTS FOLDERS (in Analytics/)
+async function getReportFolders(){
+  const files = await listItems(process.env.AWS_BUCKET, "Analytics/");
+    let folders = files.filter(item => item.endsWith('/'));
+
+    let formattedFolders = [];
+    folders.forEach(item => formattedFolders.push(item.replace("Analytics/", "")));
+    formattedFolders = formattedFolders.splice(1);
+    
+    console.log(formattedFolders);
+    return formattedFolders;
+}
+
+async function generatePresignedUrlsForFolder(folder) {
+  const params = {
+      Bucket: process.env.AWS_BUCKET,
+      Prefix: `Analytics/${folder}/`
+  };
+
+  const data = await s3.listObjectsV2(params).promise();
+  const urls = data.Contents.map(item => {
+      const urlParams = {
+          Bucket: process.env.AWS_BUCKET,
+          Key: item.Key,
+          Expires: 60 * 60 * 24 // 1 day
+      };
+      const url = s3.getSignedUrl('getObject', urlParams);
+      return { filename: item.Key.split('/').pop(), url };
+  });
+
+  return urls;
+}
+
+module.exports = { 
+  s3Router,
+  getS3JSONFile, 
+  uploadToS3, 
+  anyFileModifiedSince, 
+  checkFileLastModified, 
+  checkFilesLastModifiedList, 
+  listItems,
+  getReportFolders,
+  generatePresignedUrlsForFolder
+};

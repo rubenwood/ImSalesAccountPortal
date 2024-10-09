@@ -5,7 +5,8 @@ const { Pool } = require('pg');
 const XLSX = require('xlsx');
 
 const { getS3JSONFile, uploadToS3, anyFileModifiedSince, checkFileLastModified } = require('./s3-utils');
-const { listItems } = require('./s3-utils'); 
+const { listItems, getReportFolders, generatePresignedUrlsForFolder } = require('./s3-utils'); 
+const { addMessages, removeSpecificHeaders } = require('./export'); 
 
 AWS.config.update({
     region: process.env.AWS_REGION,
@@ -664,25 +665,7 @@ function uploadWorkbookToS3(workbook, reportType, folderName, todayUTC){
             console.error(`Error uploading file: ${err.message}`);
         });
 }
-async function generatePresignedUrlsForFolder(folder) {
-    const params = {
-        Bucket: process.env.AWS_BUCKET,
-        Prefix: `Analytics/${folder}/`
-    };
-
-    const data = await s3.listObjectsV2(params).promise();
-    const urls = data.Contents.map(item => {
-        const urlParams = {
-            Bucket: process.env.AWS_BUCKET,
-            Key: item.Key,
-            Expires: 60 * 60 * 24 // 1 day
-        };
-        const url = s3.getSignedUrl('getObject', urlParams);
-        return { filename: item.Key.split('/').pop(), url };
-    });
-
-    return urls;
-}
+// GET REPORT FOLDERS
 suffixRouter.get('/reports/:folder', async (req, res) => {
     const folder = req.params.folder;
     console.log(`getting reports for ${folder}`);
@@ -701,14 +684,7 @@ suffixRouter.get('/reports/:folder', async (req, res) => {
     }
 });
 suffixRouter.get('/get-report-folders', async (req, res) => {
-    const files = await listItems(process.env.AWS_BUCKET, "Analytics/");
-    let folders = files.filter(item => item.endsWith('/'));
-
-    let formattedFolders = [];
-    folders.forEach(item => formattedFolders.push(item.replace("Analytics/", "")));
-    formattedFolders = formattedFolders.splice(1);
-    
-    console.log(formattedFolders);
+    let formattedFolders = await getReportFolders();
     res.json(formattedFolders);
 });
 // AUTH USER FOR REPORT
@@ -1140,60 +1116,6 @@ function getTotalSessionTime(activity){
     });
     return formatTimeToHHMMSS(totalTime);  
 }
-// Adds arbitrary text to a worksheet
-function addMessages(worksheet, messages) {
-    const range = XLSX.utils.decode_range(worksheet['!ref']);
-    const newRange = XLSX.utils.encode_range({ s: { c: range.s.c, r: 0 }, e: { c: range.e.c, r: range.e.r + messages.length } });
-
-    // Shift all rows down by the number of messages
-    for (let R = range.e.r; R >= range.s.r; --R) {
-        for (let C = range.s.c; C <= range.e.c; ++C) {
-            const cellRef = XLSX.utils.encode_cell({ r: R + messages.length, c: C });
-            const prevCellRef = XLSX.utils.encode_cell({ r: R, c: C });
-            if (worksheet[prevCellRef]) {
-                worksheet[cellRef] = worksheet[prevCellRef];
-            } else {
-                delete worksheet[cellRef];
-            }
-        }
-    }
-
-    // Insert the messages
-    messages.forEach((message, index) => {
-        const messageCellRef = XLSX.utils.encode_cell({ r: index, c: 0 });
-        worksheet[messageCellRef] = { t: 's', v: message };
-        // Clear the rest of the cells in the message row
-        for (let C = range.s.c + 1; C <= range.e.c; ++C) {
-            const cellRef = XLSX.utils.encode_cell({ r: index, c: C });
-            delete worksheet[cellRef];
-        }
-    });
-
-    worksheet['!ref'] = newRange;
-}
-function removeSpecificHeaders(worksheet, columnsToRemove) {
-    const range = XLSX.utils.decode_range(worksheet['!ref']);
-    
-    columnsToRemove.forEach(column => {
-        // Check if it's a column name (like 'Jan') or a specific cell (like 'A1')
-        if (typeof column === 'string') {
-            // If it's a specific cell like 'A1', remove that
-            if (column.match(/^[A-Z]+\d+$/)) {
-                if (worksheet[column]) {
-                    delete worksheet[column];  // Delete specific cell content
-                }
-            } else {
-                // If it's a column header (e.g., 'Jan', 'Feb'), find the corresponding cell in the first row
-                for (let C = range.s.c; C <= range.e.c; ++C) {
-                    const cellAddress = XLSX.utils.encode_cell({ r: 0, c: C });  // First row (r = 0)
-                    if (worksheet[cellAddress] && worksheet[cellAddress].v === column) {
-                        delete worksheet[cellAddress];  // Delete the header content
-                    }
-                }
-            }
-        }
-    });
-}
 // LESSON & SIM STATS
 function getLessonStats(reportData){
     let output = {
@@ -1308,8 +1230,7 @@ suffixRouter.get('/gen-suffix-rep', async (req, res) => {
 });
 // Used to auto get reports (scheduled call)
 suffixRouter.get('/gen-suffix-rep-exp', async (req, res) => {
-    try {
-        
+    try {        
         console.log('exporting report');
         let suffixes = req.query.suffixes.split(',');
         let outMessage = `Began generating report for ${suffixes}, files will be delivered to S3 shortly...`;
