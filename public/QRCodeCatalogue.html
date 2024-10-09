@@ -7,6 +7,7 @@
   <script type="text/javascript" src="https://download.playfab.com/PlayFabClientApi.js"></script>
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600&display=swap" rel="stylesheet">
   <link rel="stylesheet" type="text/css" href="styles.css">
+  <link rel="stylesheet" type="text/css" href="tab_style.css">
   <style>
     table {
       width: auto;
@@ -59,15 +60,17 @@
     <h1>QR Code & Deeplink Catalogue</h1>
     <br/><br/>
     <div>
-      <label for="search-input">Search (NYI):</label>
+      <label for="search-input">Search Current Tab:</label>
       <input type="text" id="search-input" />
       <input type="button" id="search-btn" value="search"/>
     </div>
     <br/><br/>
     <!-- QR Code Type Tabs -->
-    <input type="button" id="areasTabBtn" value="Areas"/>
-    <input type="button" id="topicsTabBtn" value="Topics"/>
-    <input type="button" id="activitiesTabBtn" value="Activities"/>
+    <div id="modalTabs">
+      <input type="button" id="areasTabBtn" class="qr-tab-button" value="Areas"/>
+      <input type="button" id="topicsTabBtn" class="qr-tab-button" value="Topics"/>
+      <input type="button" id="activitiesTabBtn" class="qr-tab-button" value="Activities"/>
+    </div>
 
     <table id="reportTable">
         <p id="total-report"><b>Total:</b></p>

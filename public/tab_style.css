@@ -1,0 +1,15 @@
+/* Default styling for tab buttons */
+input[type=button].qr-tab-button {
+    border: none;
+    padding: 10px 20px;
+    margin-right: 5px;
+    cursor: pointer;
+}
+
+/* Styling for the selected/active tab */
+input[type=button].qr-tab-button.active {
+    border: 4px solid #0088EE;
+    background-color: #0088EE;
+    color: white;
+    font-weight: bold;
+}

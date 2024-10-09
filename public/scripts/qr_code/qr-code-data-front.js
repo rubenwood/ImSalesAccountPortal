@@ -5,6 +5,15 @@ import { initializeDarkMode } from '../themes/dark-mode.js';
 
 const doConfetti = () => { confetti({particleCount: 100, spread: 70, origin: { y: 0.6 }}); }
 
+let areas, topics, activities;
+let areaBrondons, topicBrondons, activityBrondons;
+const Tab = {
+    AREAS: Symbol("AREA"),
+    TOPICS: Symbol("TOPIC"),
+    ACTIVITIES: Symbol("ACTIVITY")
+}
+let selectedTab;
+
 document.addEventListener('DOMContentLoaded', async () => {
     // setup dark mode toggle
     initializeDarkMode('darkModeSwitch');
@@ -17,93 +26,72 @@ document.addEventListener('DOMContentLoaded', async () => {
     document.getElementById('topicsTabBtn').addEventListener('click', topicsTabClicked);
     document.getElementById('activitiesTabBtn').addEventListener('click', activitiesTabClicked);
 
-    // setupPage();
     // Search listeners
     document.getElementById('search-btn').addEventListener('click', searchClicked);
-    /*document.getElementById('search-input').addEventListener('keypress', (event) => {
-        if (event.key === 'Enter') {
-            event.preventDefault();
-            searchClicked();
-        }
-    });*/
 });
 window.onload = function() {
     document.getElementById('loginModal').style.display = 'block';
 };
 
 // SEARCHING
-async function searchClicked() {
+async function searchClicked(){
     // database call to find qr codes matching by:
     // area, module, topic, activity or type
-    console.log("SEARCH 1");
     const searchQuery = document.getElementById('search-input').value.trim();
-    if (searchQuery.length > 0) {
+    if(searchQuery.length > 0){
         console.log("searching for, ", searchQuery);
-    } else {
+        setupSearchResult(searchBrondons(searchQuery));
+    }else{
         setupSelectedTab();
     }  
 }
-// TODO: make search stricter
-// need to handle cases like; "sso" (should return list of sso QR codes, not le"sso"ns)
-/*async function searchQRCode(query) {
-    console.log("SEARCH");
-    try {
-        const response = await fetch(`/qrdb/search?q=${encodeURIComponent(query)}`);
-        if (!response.ok) {
-            throw new Error('Network response was not ok ' + response.statusText);
+function setupSearchResult(searchResult){
+    const tableBody = document.getElementById('reportTableBody');
+    tableBody.innerHTML = ''; // Clear existing rows
+
+    if(selectedTab == Tab.AREAS){
+        for(let entry of searchResult){
+            setupAreaEntry(tableBody, entry);
         }
-        return await response.json();
-    } catch (error) {
-        console.error('There has been a problem with your fetch operation:', error);
     }
-}*/
-
-// SETUP INITIAL PAGE (SHOW ALL RESULTS)
-// get all relevant info from DB
-let areas, topics, activities;
-let areaBrondons, topicBrondons, activityBrondons;
-const Tab = {
-    AREAS: Symbol("AREA"),
-    TOPICS: Symbol("TOPIC"),
-    ACTIVITIES: Symbol("ACTIVITY")
+    if(selectedTab == Tab.TOPICS){
+        for(let entry of searchResult){
+            setupTopicEntry(tableBody, entry);
+        }
+    }
+    if(selectedTab == Tab.ACTIVITIES){
+        for(let entry of searchResult){
+            setupActivityEntry(tableBody, entry);
+        }
+    }  
 }
-let selectedTab;
+function searchBrondons(query){
+    let searchResults = [];
 
+    let brondons;
+    switch(selectedTab){
+        case Tab.AREAS:
+            brondons = areaBrondons;
+            break;
+        case Tab.TOPICS:
+            brondons = topicBrondons;
+            break;
+        case Tab.ACTIVITIES:
+            brondons = activityBrondons;
+            break;
+    }
 
-/*async function setupPage(){    
-    const [areasResult, topicsResult, activitiesResult] = await Promise.all([getAreas(), getTopics(), getActivities()]);
-    areas = areasResult;
-    topics = topicsResult;
-    activities = activitiesResult;
-    
-    console.log(topics);
-    console.log(activities);
-    console.log("-----------");
+    for(let entry of brondons){
+        let brondon = entry?.brondon;
+        if(brondon == undefined){ continue; }          
+        if(brondon.internalTitle.includes(query) || brondon.externalTitle.includes(query)){
+            console.log("FOUND MATCH: ", entry);
+            searchResults.push(entry);
+        }
+    }
 
-    let allBrondonData = [];
-    areaBrondons = [];
-    topicBrondons = [];
-    activityBrondons = [];
-
-    //areaBrondons = await getAreaBrondons(areas);
-    //console.log(areaBrondons);    
-    
-    topicBrondons = await getTopicBrondons(topics);
-    console.log(topicBrondons);
-    
-    //activityBrondons = await getActivityBrondons(activities);
-    //console.log(activityBrondons);
-    
-    allBrondonData = [...areaBrondons, ...topicBrondons, ...activityBrondons];
-    generateTableByBrondons(allBrondonData, areaBrondons, topicBrondons, activityBrondons);
-
-    // get data from database
-    //let dbData = await fetchQRDLData();
-    // TODO: update this to use the brondon data
-    //generateQRCodeTable(dbData);    
-
-    doConfetti();
-}*/
+    return searchResults;
+}
 
 function setupSelectedTab(){
     switch(selectedTab){
@@ -118,16 +106,24 @@ function setupSelectedTab(){
             break;
     }
 }
+function setSelectedTab(tab, tabBtn){
+    const allTabBtns = document.querySelectorAll('.qr-tab-button');
+    allTabBtns.forEach(btn => btn.classList.remove('active'));
+    tabBtn.classList.add('active');
+
+    selectedTab = tab;
+}
 
 async function areasTabClicked(){
-    selectedTab = Tab.AREAS;
+    const tabBtn = document.getElementById('areasTabBtn');
+    setSelectedTab(Tab.AREAS, tabBtn);
 
     if(areas == undefined || areaBrondons == undefined){
-        document.getElementById('areasTabBtn').value = "Areas...";
+        tabBtn.value = "Areas...";
         areas = await getAreas();
         areaBrondons = [];
         areaBrondons = await getAreaBrondons(areas);
-        document.getElementById('areasTabBtn').value = "Areas";
+        tabBtn.value = "Areas";
         doConfetti();
     }
     //console.log(areaBrondons);
@@ -143,14 +139,15 @@ async function areasTabClicked(){
     }
 }
 async function topicsTabClicked(){
-    selectedTab = Tab.TOPICS;
+    const tabBtn = document.getElementById('topicsTabBtn');
+    setSelectedTab(Tab.TOPICS, tabBtn);
 
     if(topics == undefined || topicBrondons == undefined){
-        document.getElementById('topicsTabBtn').value = "Topics...";
+        tabBtn.value = "Topics...";
         topics = await getTopics();
         topicBrondons = [];
         topicBrondons = await getTopicBrondons(topics);
-        document.getElementById('topicsTabBtn').value = "Topics";
+        tabBtn.value = "Topics";
         doConfetti();
     }
     //console.log(topicBrondons);
@@ -166,14 +163,15 @@ async function topicsTabClicked(){
     }
 }
 async function activitiesTabClicked(){
-    selectedTab = Tab.ACTIVITIES;
+    const tabBtn = document.getElementById('activitiesTabBtn');
+    setSelectedTab(Tab.ACTIVITIES, tabBtn);
 
     if(activities == undefined || activityBrondons == undefined){
-        document.getElementById('activitiesTabBtn').value = "Activities...";
+        tabBtn.value = "Activities...";
         activities = await getActivities();
         activityBrondons = [];
         activityBrondons = await getActivityBrondons(activities);
-        document.getElementById('activitiesTabBtn').value = "Activities";
+        tabBtn.value = "Activities";
         doConfetti();
     }
     //console.log(activityBrondons);
@@ -188,27 +186,6 @@ async function activitiesTabClicked(){
         setupActivityEntry(tableBody, entry);
     }    
 }
-
-/*function generateTableByBrondons(allBrondonData, areaBrondons, topicBrondons, activityBrondons){
-    const totalHTML = document.getElementById('total-report');
-    totalHTML.innerHTML = `<b>Total:</b> ${allBrondonData.length}<br/>
-    <b>Area Entries:</b> ${areaBrondons.length}<br/>
-    <b>Topic Entries:</b> ${topicBrondons.length}<br/>
-    <b>Activity Entries:</b> ${activityBrondons.length}`;
-
-    const tableBody = document.getElementById('reportTableBody');
-    tableBody.innerHTML = ''; // Clear existing rows
-
-    for(let entry of areaBrondons){
-        setupAreaEntry(tableBody, entry);
-    }
-    for(let entry of topicBrondons){
-        setupTopicEntry(tableBody, entry);
-    }
-    for(let entry of activityBrondons){
-        setupActivityEntry(tableBody, entry);
-    }
-}*/
 
 function setupCommonElements(tableBody, brondon){
     const brondonData = brondon.brondon;
@@ -371,111 +348,6 @@ function addEmptyRow(tableBody){
     const emptyRow = document.createElement('tr');
     emptyRow.innerHTML = `<td colspan="3">&nbsp;</td>`;
     tableBody.appendChild(emptyRow);
-}
-
-// Generate the report / html
-function generateQRCodeTable(data) {
-    const totalHTML = document.getElementById('total-report');
-    totalHTML.innerHTML = `<b>Total:</b> ${data.length}`;
-    
-    const tableBody = document.getElementById('reportTableBody');
-    tableBody.innerHTML = ''; // Clear existing rows
-
-    data.forEach(item => {
-        // Add Deeplink, QR Code, Decode row
-        const mainHeaderRow = document.createElement('tr');
-        mainHeaderRow.innerHTML = `
-            <td><b>Deeplink</b></td>
-            <td><b>QR Code</b></td>
-            <td><b>Decode</b></td>
-        `;
-        tableBody.appendChild(mainHeaderRow);
-
-        // Add main row
-        const mainRow = document.createElement('tr');
-        const resultSpan = document.createElement('span');
-        resultSpan.classList.add('decode-result');
-        
-        const decodeButton = document.createElement('button');
-        decodeButton.textContent = 'Decode';
-        decodeButton.onclick = () => decodeQRCodeFromTable(item.qr_code_url, item.deeplink, resultSpan);
-
-        mainRow.innerHTML = `
-            <td><a href="${item.deeplink}" target="_blank">${item.deeplink}</a></td>
-            <td><img src="${item.qr_code_url}" alt="QR Code" width="256" height="256"></td>
-            <td></td>
-        `;        
-        mainRow.children[2].appendChild(decodeButton);
-        mainRow.children[2].appendChild(resultSpan);
-        tableBody.appendChild(mainRow);
-
-        // Add Area row
-        const areaRow = document.createElement('tr');
-        areaRow.innerHTML = `
-            <td><b>Area Name</b></td>
-            <td colspan="2">${item.area_name}</td>
-        `;
-        tableBody.appendChild(areaRow);
-
-        // Add Module row
-        const moduleRow = document.createElement('tr');
-        moduleRow.innerHTML = `
-            <td><b>Module</b></td>
-            <td colspan="2">${item.module}</td>
-        `;
-        tableBody.appendChild(moduleRow);
-
-        // Add Topic row
-        const topicRow = document.createElement('tr');
-        topicRow.innerHTML = `
-            <td><b>Topic Name</b></td>
-            <td colspan="2">${item.topic_name}</td>
-        `;
-        tableBody.appendChild(topicRow);
-
-        // Add Activity row
-        const activityRow = document.createElement('tr');
-        activityRow.innerHTML = `
-            <td><b>Activity Name</b></td>
-            <td colspan="2">${item.activity_name}</td>
-        `;
-        tableBody.appendChild(activityRow);
-
-        // Add type row
-        const typeRow = document.createElement('tr');
-        typeRow.innerHTML = `
-            <td><b>Type</b></td>
-            <td colspan="2">${item.type}</td>
-        `;
-        tableBody.appendChild(typeRow);
-
-        // Add stakeholder row
-        const stakeHolderRow = document.createElement('tr');
-        stakeHolderRow.innerHTML = `
-            <td><b>Stakeholder</b></td>
-            <td colspan="2">${item.stakeholder}</td>
-        `;
-        tableBody.appendChild(stakeHolderRow);
-
-        // Add empty row for spacing
-        const emptyRow = document.createElement('tr');
-        emptyRow.innerHTML = `<td colspan="3">&nbsp;</td>`;
-        tableBody.appendChild(emptyRow);
-    });
-}
-// Get all deeplinks & qr codes from db
-async function fetchQRDLData() {
-    try {
-        const response = await fetch('/qrdb/get-all-dl-qr');
-        if (!response.ok) {
-            throw new Error('Network response was not ok ' + response.statusText);
-        }
-        const data = await response.json();
-        //console.log(data);
-        return data;
-    } catch (error) {
-        console.error('There has been a problem with your fetch operation:', error);
-    }
 }
 
 async function decodeQRCodeFromTable(imageSrc, deeplink, resultSpan) {
