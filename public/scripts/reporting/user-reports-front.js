@@ -2,16 +2,15 @@ import { authenticateSessionTicket } from "../PlayFabManager.js";
 import { fetchUsersByID } from "../db/db-front.js";
 
 document.addEventListener('DOMContentLoaded', async() => {
-    // TODO: do these in parallel?
-    await getSuffixMappings();
+    // await getSuffixMappings();
     await getReportFolders();
     console.log(window.location.search);
     const params = Object.fromEntries(new URLSearchParams(window.location.search));    
     if (params.SessionTicket) {
         const decodedSessionTicket = decodeURIComponent(params.SessionTicket);
-        console.log("Decoded Session Ticket: ", decodedSessionTicket);
+        //console.log("Decoded Session Ticket: ", decodedSessionTicket);
     }
-    console.log("QP: ", params);
+    //console.log("QP: ", params);
     if(params == undefined){ return; }
     if(params.SessionTicket == undefined){ return; }
 
@@ -51,8 +50,8 @@ async function submitPass(reportFolderName) {
     }
 }
 
-function populateReports(reportFolderName){
-    getReports(reportFolderName);
+async function populateReports(reportFolderName){
+    await getReports(reportFolderName);
     const startDateInput = document.getElementById('startDateInput');
     const endDateInput = document.getElementById('endDateInput');
     startDateInput.addEventListener('change', function () {
@@ -63,41 +62,10 @@ function populateReports(reportFolderName){
     });  
 }
 
-let suffixMap = [];
-async function getSuffixMappings(){
-    const suffixMappingResp = await fetch('/reporting/get-suffix-mappings');
-    suffixMap = await suffixMappingResp.json();
-    //console.log(suffixMap);
-}
 let reportFolderNames = [];
 async function getReportFolders(){
     const folderResp = await fetch('/reporting/get-report-folders');
     reportFolderNames = await folderResp.json();
-    //console.log(reportFolderNames);
-}
-
-async function getUserFolderName(sessionTicket){
-    let userFolderName;
-    const authData = await authenticateSessionTicket(sessionTicket);
-    
-    if(authData == undefined || authData == null){ 
-        console.log("Invalid session");
-        return;
-    }
-
-    const playFabId = authData.data.UserInfo.PlayFabId;
-    const rowData = await fetchUsersByID([playFabId]);
-    const combinedData = { accountData: rowData.accountData[0].AccountDataJSON, usageData: rowData.usageData[0].UsageDataJSON };
-    const linkedAccounts = combinedData.accountData.LinkedAccounts;
-    for(let linkedAcc of linkedAccounts){
-        if(linkedAcc.Platform == "PlayFab"){
-            userFolderName = isValidEmail(linkedAcc.Email);
-        }else if(linkedAcc.Platform == "OpenIdConnect"){
-            userFolderName = isValidPlatform(linkedAcc.PlatformUserId);
-        }
-    }
-
-    return userFolderName;
 }
 async function getUserReports(sessionTicket){
     const authData = await authenticateSessionTicket(sessionTicket);
@@ -110,9 +78,7 @@ async function getUserReports(sessionTicket){
     const playFabId = authData.data.UserInfo.PlayFabId;
     const rowData = await fetchUsersByID([playFabId]);
     const combinedData = { accountData: rowData.accountData[0].AccountDataJSON, usageData: rowData.usageData[0].UsageDataJSON };
-    console.log(combinedData);
     const userReports = JSON.parse(combinedData.usageData.Data.Reports.Value);
-    console.log(userReports);
     return userReports.reports;
 }
 
@@ -125,26 +91,11 @@ function populateReportsDropdown(reports){
         option.textContent = report;
         reportDropdown.appendChild(option);
     }); 
-}
 
-function isValidEmail(linkedAccEmail){
-    for(let folderName of reportFolderNames){
-        let suffix = folderName.replace("/","");
-        if(linkedAccEmail.includes(suffix)){
-            return suffix;
-        }
+    if(reports.length <= 1)
+    {
+        reportDropdown.style.display = "none";
     }
-    return "";
-}
-function isValidPlatform(linkedAccPlatformId){
-    for(let folderName of reportFolderNames){
-        let suffix = folderName.replace("/","");
-        let platformId = suffix[suffix];
-        if(linkedAccPlatformId.includes(platformId)){
-            return suffix;
-        }
-    }
-    return "";
 }
 
 // Get Reports
