@@ -11,10 +11,26 @@ require('dotenv').config();
 const qrCodeRouter = express.Router();
 const { qrCodeDBRouter, addDeepLinkQRCode } = require('../database/qr-code-db');
 
-AWS.config.update({
+// const s3Unity = new AWS.S3({
+//     accessKeyId: process.env.AWS_OTHER_ACCESS_KEY_ID,
+//     secretAccessKey: process.env.AWS_OTHER_SECRET_ACCESS_KEY,
+//     region: process.env.AWS_OTHER_REGION
+// });
+// const s3Cms = new AWS.S3({
+//     accessKeyId: process.env.AWS_CMS_ACCESS_KEY_ID,
+//     secretAccessKey: process.env.AWS_CMS_SECRET_ACCESS_KEY,
+//     region: process.env.AWS_CMS_REGION
+// });
+
+/*AWS.config.update({
     accessKeyId: process.env.AWS_ACCESS_KEY_ID,
     secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
     region: process.env.AWS_REGION
+});*/
+AWS.config.update({
+    accessKeyId: process.env.AWS_CMS_ACCESS_KEY_ID,
+    secretAccessKey: process.env.AWS_CMS_SECRET_ACCESS_KEY,
+    region: process.env.AWS_CMS_REGION
 });
 
 const s3 = new AWS.S3();
@@ -52,6 +68,7 @@ async function decodeQRCode(input) {
         const url = new URL(input.url);
         const bucketName = url.pathname.split('/')[1];
         const key = url.pathname.split('/').slice(2).join('/');
+        console.log(bucketName + " " + key);
         const signedUrl = getSignedUrl(bucketName, key);
 
         try {
