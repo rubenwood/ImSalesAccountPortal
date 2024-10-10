@@ -315,7 +315,6 @@ section.qr_code_sec {
 .report-selector {
     display: flex;
     align-items: center;
-    margin-left: 10px;
 }
 
 .date-report-container input[type="date"], 
