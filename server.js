@@ -28,6 +28,7 @@ const { qrCodeDBRouter } = require('./database/qr-code-db.js');
 const { cmsRouter } = require('./database/cms-api-db.js');
 const { s3Router } = require('./other/s3-utils.js');
 const { playfabRouter } = require('./playfab/playfab-utils.js');
+const { dlRouter } = require('./other/downloads.js');
 const { getAllPlayerAccDataAndWriteToDB } = require('./other/bulk-ops');
 
 app.use(express.json());
@@ -459,6 +460,7 @@ app.use('/qrdb', qrCodeDBRouter);
 app.use('/cms', cmsRouter);
 app.use('/S3', s3Router);
 app.use('/playfab', playfabRouter);
+app.use('/downloads', dlRouter);
 const PORT = process.env.PORT;
 
 app.listen(PORT, () => {
