@@ -67,8 +67,6 @@ export async function getTopicBrondons(topics, limit = 10){
     const processBatch = async (batch) => {
         const brondonPromises = batch.map(async (topic) => {
             const imResp = await imAPIGet(`topics/${topic.id}`);
-            console.log(imResp);
-            //let outuput;
             if(imResp.error == undefined){
                 return { topicId: topic.id, brondon: imResp.brondons[0] };
             }

@@ -2,11 +2,10 @@ import { authenticateSessionTicket } from "../PlayFabManager.js";
 import { fetchUsersByID } from "../db/db-front.js";
 
 document.addEventListener('DOMContentLoaded', async() => {
-    // await getSuffixMappings();
     await getReportFolders();
     console.log(window.location.search);
     const params = Object.fromEntries(new URLSearchParams(window.location.search));    
-    if (params.SessionTicket){
+    if(params.SessionTicket){
         const decodedSessionTicket = decodeURIComponent(params.SessionTicket);
         //console.log("Decoded Session Ticket: ", decodedSessionTicket);
     }
