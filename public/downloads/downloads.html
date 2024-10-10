@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Downloads</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css" rel="stylesheet" />
+  <link rel="stylesheet" type="text/css" href="../styles.css">
+  <link rel="stylesheet" type="text/css" href="../theme_style.css">
+</head>
+<body>
+  <!-- Login Modal -->
+  <div id="loginModal" class="modal custom_modal">
+    <div class="modal-content">
+      <div class="login_sec">
+        <img src="/immersify_logo.e141b23db21f4b78051561bc464eace7.svg" alt="Immersify Logo" class="login-logo">
+        <h2>Enter Password to Download</h2>
+        <input type="password" id="password" placeholder="Password">
+        <p id="error-txt"></p>
+        <input type="button" id="loginButton" value="Submit">
+      </div>
+    </div>
+  </div>
+
+  <div id="report-container" class="container">
+    <input id="download-btn" type="button" value="Click here to download" />
+  </div>
+    
+
+  <script type="module" src="../scripts/downloads/downloads-front.js"></script> 
+</body>
+</html>
