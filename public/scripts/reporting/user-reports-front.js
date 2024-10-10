@@ -6,7 +6,7 @@ document.addEventListener('DOMContentLoaded', async() => {
     await getReportFolders();
     console.log(window.location.search);
     const params = Object.fromEntries(new URLSearchParams(window.location.search));    
-    if (params.SessionTicket) {
+    if (params.SessionTicket){
         const decodedSessionTicket = decodeURIComponent(params.SessionTicket);
         //console.log("Decoded Session Ticket: ", decodedSessionTicket);
     }
@@ -36,7 +36,7 @@ async function submitPass(reportFolderName) {
         });
         let result = await response.json();
         
-        if (result != true) {
+        if(result != true){
             console.log("Access denied");
             document.getElementById('error-txt').innerHTML = 'Incorrect password. Please try again.';
             return;
@@ -69,8 +69,8 @@ async function getReportFolders(){
 }
 async function getUserReports(sessionTicket){
     const authData = await authenticateSessionTicket(sessionTicket);
-    
-    if(authData == undefined || authData == null){ 
+
+    if(authData == undefined || authData == null || authData.data.IsSessionTicketExpired){ 
         console.log("Invalid session");
         return;
     }
@@ -92,8 +92,7 @@ function populateReportsDropdown(reports){
         reportDropdown.appendChild(option);
     }); 
 
-    if(reports.length <= 1)
-    {
+    if(reports.length <= 1){
         reportDropdown.style.display = "none";
     }
 }
@@ -177,21 +176,21 @@ function filterReports(startDate, endDate) {
         let filename = report.filename;
         let dateMatch = filename.match(/\d{4}-\d{2}-\d{2}/); // Regex to match the date part
 
-        if (dateMatch) {
+        if(dateMatch){
             let reportDate = new Date(dateMatch[0]);
 
-            if ((start === null || reportDate >= start) && (end === null || reportDate <= end)) {
+            if((start === null || reportDate >= start) && (end === null || reportDate <= end)){
                 return true;
             }
         }
         return false;
     });
 
-    console.log("Reports matching date range: ", reportsMatchingDate);
+    //console.log("Reports matching date range: ", reportsMatchingDate);
     
-    if (reportsMatchingDate.length <= 0) {
+    if(reportsMatchingDate.length <= 0){
         setNoReportHTML();
-    } else {
+    }else{
         formatHTMLOutput(reportsMatchingDate);
     }
 }

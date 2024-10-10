@@ -7,7 +7,7 @@ const doConfetti = () => { confetti({particleCount: 100, spread: 70, origin: { y
 
 let areas, topics, activities;
 let areaBrondons, topicBrondons, activityBrondons;
-const Tab = {
+const Tab = { // enum
     AREAS: Symbol("AREA"),
     TOPICS: Symbol("TOPIC"),
     ACTIVITIES: Symbol("ACTIVITY")
@@ -28,6 +28,12 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // Search listeners
     document.getElementById('search-btn').addEventListener('click', searchClicked);
+    document.getElementById('search-input').addEventListener('keydown', function(event) {
+        if (event.key === 'Enter') {
+            searchClicked();
+            event.preventDefault();
+        }
+    });
 });
 window.onload = function() {
     document.getElementById('loginModal').style.display = 'block';
@@ -118,10 +124,9 @@ async function areasTabClicked(){
     const tabBtn = document.getElementById('areasTabBtn');
     setSelectedTab(Tab.AREAS, tabBtn);
 
-    if(areas == undefined || areaBrondons == undefined){
+    if(areas == undefined || areaBrondons == undefined || areas.length <= 0 || areaBrondons.length <= 0){
         tabBtn.value = "Areas...";
         areas = await getAreas();
-        areaBrondons = [];
         areaBrondons = await getAreaBrondons(areas);
         tabBtn.value = "Areas";
         doConfetti();
@@ -142,10 +147,9 @@ async function topicsTabClicked(){
     const tabBtn = document.getElementById('topicsTabBtn');
     setSelectedTab(Tab.TOPICS, tabBtn);
 
-    if(topics == undefined || topicBrondons == undefined){
+    if(topics == undefined || topicBrondons == undefined || topics.length <= 0 || topicBrondons.length <= 0){
         tabBtn.value = "Topics...";
         topics = await getTopics();
-        topicBrondons = [];
         topicBrondons = await getTopicBrondons(topics);
         tabBtn.value = "Topics";
         doConfetti();
@@ -166,10 +170,9 @@ async function activitiesTabClicked(){
     const tabBtn = document.getElementById('activitiesTabBtn');
     setSelectedTab(Tab.ACTIVITIES, tabBtn);
 
-    if(activities == undefined || activityBrondons == undefined){
+    if(activities == undefined || activityBrondons == undefined || activities.length <= 0 || activityBrondons.length <= 0){
         tabBtn.value = "Activities...";
         activities = await getActivities();
-        activityBrondons = [];
         activityBrondons = await getActivityBrondons(activities);
         tabBtn.value = "Activities";
         doConfetti();
@@ -219,6 +222,14 @@ function setupCommonElements(tableBody, brondon){
     mainRow.children[2].appendChild(decodeButton);
     mainRow.children[2].appendChild(resultSpan);
     tableBody.appendChild(mainRow);
+
+    const statusRow = document.createElement('tr');
+    statusRow.innerHTML = `
+        <td><b>Status</b></td>
+        <td colspan="2">${brondonData.status}</td>
+    `;
+    tableBody.appendChild(statusRow);
+
 }
 // SETUP ENTRIES
 function setupAreaEntry(tableBody, brondon){
@@ -234,13 +245,29 @@ function setupAreaEntry(tableBody, brondon){
         <td colspan="2">Area</td>
     `;
     tableBody.appendChild(typeRow);
-    // Add Area row
-    const areaRow = document.createElement('tr');
-    areaRow.innerHTML = `
+
+    console.log(brondonData);
+    // Add Area Flag row
+    const areaFlagRow = document.createElement('tr');
+    areaFlagRow.innerHTML = `
         <td><b>Area Name</b></td>
+        <td colspan="2">${brondonData.areaFlag}</td>
+    `;
+    tableBody.appendChild(areaFlagRow);
+    // Add Area Internal title row
+    const areaIntTitleRow = document.createElement('tr');
+    areaIntTitleRow.innerHTML = `
+        <td><b>Area Internal Title</b></td>
         <td colspan="2">${brondonData.internalTitle}</td>
     `;
-    tableBody.appendChild(areaRow);
+    tableBody.appendChild(areaIntTitleRow);
+    // Add Area External title row
+    const areaExtTitleRow = document.createElement('tr');
+    areaExtTitleRow.innerHTML = `
+        <td><b>Area External Title</b></td>
+        <td colspan="2">${brondonData.externalTitle}</td>
+    `;
+    tableBody.appendChild(areaExtTitleRow);
 
     addEmptyRow(tableBody);
 }
@@ -257,20 +284,13 @@ function setupTopicEntry(tableBody, brondon){
         <td colspan="2">Topic</td>
     `;
     tableBody.appendChild(typeRow);
-    // Add Area row
+    // Add Area Flag row
     const areaRow = document.createElement('tr');
     areaRow.innerHTML = `
         <td><b>Area Name</b></td>
         <td colspan="2">${brondonData.areaFlag}</td>
     `;
     tableBody.appendChild(areaRow);
-    // Add Module row
-    // const moduleRow = document.createElement('tr');
-    // moduleRow.innerHTML = `
-    //     <td><b>Module</b></td>
-    //     <td colspan="2">${item.module}</td>
-    // `;
-    // tableBody.appendChild(moduleRow);
     // Add Topic row
     const internalTitleRow = document.createElement('tr');
     internalTitleRow.innerHTML = `
@@ -302,20 +322,13 @@ function setupActivityEntry(tableBody, brondon){
         <td colspan="2">Activity</td>
     `;
     tableBody.appendChild(typeRow);
-    // Add Area row
+    // Add Area Flag row
     const areaRow = document.createElement('tr');
     areaRow.innerHTML = `
         <td><b>Area Name</b></td>
         <td colspan="2">${brondonData.areaFlag}</td>
     `;
     tableBody.appendChild(areaRow);
-    // Add Module row
-    // const moduleRow = document.createElement('tr');
-    // moduleRow.innerHTML = `
-    //     <td><b>Module</b></td>
-    //     <td colspan="2">${item.module}</td>
-    // `;
-    // tableBody.appendChild(moduleRow);
     // Add Topic row
     // const topicRow = document.createElement('tr');
     // topicRow.innerHTML = `
@@ -349,10 +362,10 @@ function addEmptyRow(tableBody){
     emptyRow.innerHTML = `<td colspan="3">&nbsp;</td>`;
     tableBody.appendChild(emptyRow);
 }
-
+// DECODE
 async function decodeQRCodeFromTable(imageSrc, deeplink, resultSpan) {
     const decodedText = await decodeQRCode(imageSrc);
-    console.log(decodedText);
+    //console.log(decodedText);
     if (decodedText !== null) {
         compareDecodeToDL(decodedText, deeplink, resultSpan);
     }

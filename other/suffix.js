@@ -668,7 +668,7 @@ function uploadWorkbookToS3(workbook, reportType, folderName, todayUTC){
 // GET REPORT FOLDERS
 suffixRouter.get('/reports/:folder', async (req, res) => {
     const folder = req.params.folder;
-    console.log(`getting reports for ${folder}`);
+    //console.log(`getting reports for ${folder}`);
     const key = req.headers['x-secret-key'];
     if(key != process.env.REPORT_PASS){ console.log("invalid key"); res.status(403).send('Forbidden: Invalid secret key'); return;}
 
