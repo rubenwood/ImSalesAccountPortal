@@ -25,6 +25,25 @@
     </div>
   </div>
   <div id="reports-content" class="form-container-report">
+    <div id="date-report-selection" class="date-report-container">
+      <div>
+        <label>Start Date</label>
+        <input id="startDateInput" type="date">
+      </div>
+      
+      <div>
+        <label>End Date</label>
+        <input id="endDateInput" type="date">
+      </div>
+      
+      <!-- Report Selection -->
+      <div id="reports-selection" class="report-selector">
+        <label>Reports: </label>
+        <select id="reportSelect" style="width: auto; font-size: 12px;">
+        </select>
+      </div>
+    </div>
+
     <div class="tabset">
       <input type="radio" name="tabset" id="tab1" aria-controls="login" checked>
       <label for="tab1">Login</label>
@@ -40,16 +59,6 @@
 
       <input type="radio" name="tabset" id="tab5" aria-controls="combined">
       <label for="tab5">Combined</label>
-
-      <!-- Date Input -->
-      Start Date
-      <input id="startDateInput" type="date">
-      End Date
-      <input id="endDateInput" type="date">
-
-      <!-- Report Selection -->
-      <select id="reportSelect" style="width: auto; font-size: 12px;">
-      </select>
 
       <!-- Tabs & Sections -->
       <div class="tab-panels">

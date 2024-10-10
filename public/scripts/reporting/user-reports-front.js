@@ -82,6 +82,7 @@ async function getUserReports(sessionTicket){
 }
 
 function populateReportsDropdown(reports){
+    let reportDiv = document.getElementById('reports-selection');
     let reportDropdown = document.getElementById('reportSelect');
 
     reports.forEach(report => {
@@ -92,7 +93,7 @@ function populateReportsDropdown(reports){
     }); 
 
     if(reports.length <= 1){
-        reportDropdown.style.display = "none";
+        reportDiv.style.display = "none";
     }
 }
 
