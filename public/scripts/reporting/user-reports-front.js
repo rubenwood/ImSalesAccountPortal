@@ -1,5 +1,6 @@
 import { authenticateSessionTicket } from "../PlayFabManager.js";
 import { fetchUsersByID } from "../db/db-front.js";
+import { fetchUserData } from "../utils.js";
 
 document.addEventListener('DOMContentLoaded', async() => {
     await getReportFolders();
@@ -14,6 +15,7 @@ document.addEventListener('DOMContentLoaded', async() => {
     if(params.SessionTicket == undefined){ return; }
 
     let userReportFolderNames = await getUserReports(params.SessionTicket);
+    console.log("UR: ", userReportFolderNames);
     populateReportsDropdown(userReportFolderNames);
     document.getElementById('loginButton').addEventListener('click', () => submitPass(userReportFolderNames[0]));
     document.getElementById('reportSelect').addEventListener('change', (event) => populateReports(event.target.value));
@@ -75,10 +77,16 @@ async function getUserReports(sessionTicket){
     }
 
     const playFabId = authData.data.UserInfo.PlayFabId;
-    const rowData = await fetchUsersByID([playFabId]);
-    const combinedData = { accountData: rowData.accountData[0].AccountDataJSON, usageData: rowData.usageData[0].UsageDataJSON };
-    const userReports = JSON.parse(combinedData.usageData.Data.Reports.Value);
-    return userReports.reports;
+    const pfUserData = await fetchUserData(playFabId);
+    const pfUserReports = JSON.parse(pfUserData.data.Data.Reports.Value);
+    console.log(pfUserReports);
+    return pfUserReports.reports;
+
+    // const rowData = await fetchUsersByID([playFabId]);
+    // const combinedData = { accountData: rowData.accountData[0].AccountDataJSON, usageData: rowData.usageData[0].UsageDataJSON };
+    // const userReports = JSON.parse(combinedData.usageData.Data.Reports.Value);
+    // console.log(userReports);
+    // return userReports.reports;
 }
 
 function populateReportsDropdown(reports){
