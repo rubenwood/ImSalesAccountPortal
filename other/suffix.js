@@ -673,7 +673,7 @@ suffixRouter.get('/reports/:folder', async (req, res) => {
     if(key != process.env.REPORT_PASS){ console.log("invalid key"); res.status(403).send('Forbidden: Invalid secret key'); return;}
 
     try {
-        const urls = await generatePresignedUrlsForFolder(folder);
+        const urls = await generatePresignedUrlsForFolder(process.env.AWS_BUCKET, `Analytics/${folder}`);
         let outURLs = [];
         urls.forEach(url =>{
             if(url.filename !== ''){ outURLs.push(url); }

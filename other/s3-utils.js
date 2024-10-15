@@ -190,16 +190,17 @@ async function getReportFolders(){
     return formattedFolders;
 }
 
-async function generatePresignedUrlsForFolder(folder) {
+// Generate presigned urls for items in a specified folder
+async function generatePresignedUrlsForFolder(bucket, folder) {
   const params = {
-      Bucket: process.env.AWS_BUCKET,
-      Prefix: `Analytics/${folder}/`
+      Bucket: bucket, //process.env.AWS_BUCKET,
+      Prefix: `${folder}/`
   };
 
   const data = await s3.listObjectsV2(params).promise();
   const urls = data.Contents.map(item => {
       const urlParams = {
-          Bucket: process.env.AWS_BUCKET,
+          Bucket: bucket,//process.env.AWS_BUCKET,
           Key: item.Key,
           Expires: 60 * 60 * 24 // 1 day
       };
@@ -209,6 +210,17 @@ async function generatePresignedUrlsForFolder(folder) {
 
   return urls;
 }
+// TODO: make this secure
+/*s3Router.post('/s3GetPresignedAssetURLs', async (req, res) => {
+  try {
+    const URLs = await generatePresignedUrlsForFolder(process.env.AWS_CMS_BUCKET, "Models");
+    console.log(URLs);
+    res.send(URLs);
+  } catch (error) {
+    console.error('Error:', error);
+    res.status(500).send('Error fetching data from S3');
+  }
+});*/
 
 module.exports = { 
   s3Router,
