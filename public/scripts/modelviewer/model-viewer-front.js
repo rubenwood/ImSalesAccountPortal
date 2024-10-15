@@ -1,7 +1,7 @@
 document.addEventListener('DOMContentLoaded', async() => {
 
     const models = [
-        "https://s3.eu-west-1.amazonaws.com/com.immersifyeducation.cms/Models/Debug/public/MusclesOfTheNeck_S1.glb",
+        "https://s3.eu-west-1.amazonaws.com/com.immersifyeducation.cms/Models/Debug/public/MusclesOfTheNeck_SH01.glb",
         "https://s3.eu-west-1.amazonaws.com/com.immersifyeducation.cms/Models/Debug/public/Muscles_of_mastication_I.glb"
     ];
 
