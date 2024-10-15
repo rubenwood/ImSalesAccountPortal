@@ -228,7 +228,6 @@ async function generatePresignedUrlsForFolder(bucket, folder) {
 s3Router.get('/s3GetPresignedQRCodeURLs', async (req, res) => {
   try {
     const URLs = await generatePresignedUrlsForFolder(process.env.AWS_CMS_BUCKET, "QRCodes");
-    console.log(URLs);
     res.send(URLs);
   } catch (error) {
     console.error('Error:', error);
