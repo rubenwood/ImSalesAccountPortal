@@ -13,11 +13,12 @@ const Tab = { // enum
     ACTIVITIES: Symbol("ACTIVITY")
 }
 let selectedTab;
+let qrCodeURLs;
 
 document.addEventListener('DOMContentLoaded', async () => {
     // setup dark mode toggle
     initializeDarkMode('darkModeSwitch');
-
+    qrCodeURLs = await getPresignedQRCodeURLs();
     // event listener for login modal
     document.getElementById('loginButton').addEventListener('click', Login);
     await waitForJWT();
@@ -131,8 +132,6 @@ async function areasTabClicked(){
         tabBtn.value = "Areas";
         doConfetti();
     }
-    //console.log(areaBrondons);
-
     const totalHTML = document.getElementById('total-report');
     totalHTML.innerHTML = `<b>Total:</b> ${areaBrondons.length}<br/>`
 
@@ -154,7 +153,6 @@ async function topicsTabClicked(){
         tabBtn.value = "Topics";
         doConfetti();
     }
-    //console.log(topicBrondons);
     
     const totalHTML = document.getElementById('total-report');
     totalHTML.innerHTML = `<b>Total:</b> ${topicBrondons.length}<br/>`
@@ -177,7 +175,6 @@ async function activitiesTabClicked(){
         tabBtn.value = "Activities";
         doConfetti();
     }
-    //console.log(activityBrondons);
 
     const totalHTML = document.getElementById('total-report');
     totalHTML.innerHTML = `<b>Total:</b> ${activityBrondons.length}<br/>`
@@ -192,9 +189,7 @@ async function activitiesTabClicked(){
 
 function setupCommonElements(tableBody, brondon){
     const brondonData = brondon.brondon;
-
-    const cmsBucket = 'https://s3.eu-west-1.amazonaws.com/com.immersifyeducation.cms/';
-    const qrCodeFullUrl = cmsBucket+brondonData.qrCode;
+    const qrCodeFullUrl = getPresignedURLForFile(brondonData.qrCode);
 
     // Add Header row
     const mainHeaderRow = document.createElement('tr');
@@ -353,6 +348,17 @@ function setupActivityEntry(tableBody, brondon){
 
     // Add empty row for spacing
     addEmptyRow(tableBody);
+}
+
+
+async function getPresignedQRCodeURLs(){
+    const presignedURLResp = await fetch('/S3/s3GetPresignedQRCodeURLs');
+    const presignedURLs = await presignedURLResp.json();
+    return presignedURLs;
+}
+function getPresignedURLForFile(filename){
+    const file = qrCodeURLs.find(item => item.filename === filename.replace("QRCodes/", ""));
+    return file ? file.url : null;  // Return the URL or null if not found
 }
 
 // ROW HELPERS

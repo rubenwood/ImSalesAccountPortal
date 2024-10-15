@@ -192,24 +192,49 @@ async function getReportFolders(){
 
 // Generate presigned urls for items in a specified folder
 async function generatePresignedUrlsForFolder(bucket, folder) {
-  const params = {
-      Bucket: bucket, //process.env.AWS_BUCKET,
-      Prefix: `${folder}/`
-  };
+  let urls = [];
+  let isTruncated = true;
+  let continuationToken = null;
 
-  const data = await s3.listObjectsV2(params).promise();
-  const urls = data.Contents.map(item => {
-      const urlParams = {
-          Bucket: bucket,//process.env.AWS_BUCKET,
+  while (isTruncated) {
+    const params = {
+      Bucket: bucket,
+      Prefix: `${folder}/`,
+      ContinuationToken: continuationToken // handle pagination
+    };
+
+    const data = await s3.listObjectsV2(params).promise();
+
+    // Filter out "folders" or "subfolder" objects based on the key structure
+    const presignedUrls = data.Contents
+      .filter(item => !item.Key.endsWith('/') && item.Key.split('/').length === 2) // Exclude folders and subfolders
+      .map(item => {
+        const urlParams = {
+          Bucket: bucket,
           Key: item.Key,
           Expires: 60 * 60 * 24 // 1 day
-      };
-      const url = s3.getSignedUrl('getObject', urlParams);
-      return { filename: item.Key.split('/').pop(), url };
-  });
+        };
+        const url = s3.getSignedUrl('getObject', urlParams);
+        return { filename: item.Key.split('/').pop(), url };
+      });
+
+    urls = urls.concat(presignedUrls); // Add to the list of URLs
+    isTruncated = data.IsTruncated; // Check if more pages are available
+    continuationToken = data.NextContinuationToken; // Get the token for the next batch
+  }
 
   return urls;
 }
+s3Router.get('/s3GetPresignedQRCodeURLs', async (req, res) => {
+  try {
+    const URLs = await generatePresignedUrlsForFolder(process.env.AWS_CMS_BUCKET, "QRCodes");
+    console.log(URLs);
+    res.send(URLs);
+  } catch (error) {
+    console.error('Error:', error);
+    res.status(500).send('Error fetching data from S3');
+  }
+});
 // TODO: make this secure
 /*s3Router.post('/s3GetPresignedAssetURLs', async (req, res) => {
   try {
