@@ -93,7 +93,8 @@ function searchBrondons(query){
     for(let entry of brondons){
         let brondon = entry?.brondon;
         if(brondon == undefined){ continue; }          
-        if(brondon.internalTitle.toLowerCase().includes(queryLower) || brondon.externalTitle.toLowerCase().includes(queryLower)){
+        if(brondon.internalTitle.toLowerCase().includes(queryLower) || 
+            brondon.externalTitle.toLowerCase().includes(queryLower)){
             console.log("FOUND MATCH: ", entry);
             searchResults.push(entry);
         }
@@ -212,10 +213,10 @@ function setupCommonElements(tableBody, brondon){
     decodeButton.onclick = () => decodeQRCodeFromTable(qrCodeFullUrl, brondonData.deepLink, resultSpan);
 
     mainRow.innerHTML = `
-            <td><a href="${brondonData.deepLink}" target="_blank">${brondonData.deepLink}</a></td>
-            <td><img src="${qrCodeFullUrl}" alt="QR Code" width="256" height="256"></td>
-            <td></td>
-        `;
+        <td><a href="${brondonData.deepLink}" target="_blank">${brondonData.deepLink}</a></td>
+        <td><img src="${qrCodeFullUrl}" alt="QR Code" width="256" height="256"></td>
+        <td></td>
+    `;
     mainRow.children[2].appendChild(decodeButton);
     mainRow.children[2].appendChild(resultSpan);
     tableBody.appendChild(mainRow);
@@ -226,7 +227,6 @@ function setupCommonElements(tableBody, brondon){
         <td colspan="2">${brondonData.status}</td>
     `;
     tableBody.appendChild(statusRow);
-
 }
 // SETUP ENTRIES
 function setupAreaEntry(tableBody, brondon){
@@ -242,8 +242,13 @@ function setupAreaEntry(tableBody, brondon){
         <td colspan="2">Area</td>
     `;
     tableBody.appendChild(typeRow);
-
-    console.log(brondonData);
+    // Add Area Id
+    const IDRow = document.createElement('tr');
+    IDRow.innerHTML = `
+        <td><b>ID</b></td>
+        <td colspan="2">${brondon.areaId}</td>
+    `;
+    tableBody.appendChild(IDRow);
     // Add Area Flag row
     const areaFlagRow = document.createElement('tr');
     areaFlagRow.innerHTML = `
@@ -281,6 +286,13 @@ function setupTopicEntry(tableBody, brondon){
         <td colspan="2">Topic</td>
     `;
     tableBody.appendChild(typeRow);
+    // Add Topic Id
+    const IDRow = document.createElement('tr');
+    IDRow.innerHTML = `
+        <td><b>ID</b></td>
+        <td colspan="2">${brondon.topicId}</td>
+    `;
+    tableBody.appendChild(IDRow);
     // Add Area Flag row
     const areaRow = document.createElement('tr');
     areaRow.innerHTML = `
@@ -309,7 +321,6 @@ function setupActivityEntry(tableBody, brondon){
     if(brondon == undefined){ return; }
     const brondonData = brondon.brondon;
     if(brondonData == undefined){ console.log("no brondon data: ", brondon); return; }
-
     setupCommonElements(tableBody, brondon);
 
     // Add type row
@@ -319,6 +330,13 @@ function setupActivityEntry(tableBody, brondon){
         <td colspan="2">Activity</td>
     `;
     tableBody.appendChild(typeRow);
+    // Add Id Row
+    const IDRow = document.createElement('tr');
+    IDRow.innerHTML = `
+        <td><b>ID</b></td>
+        <td colspan="2">${brondon.activityId}</td>
+    `;
+    tableBody.appendChild(IDRow);
     // Add Area Flag row
     const areaRow = document.createElement('tr');
     areaRow.innerHTML = `
