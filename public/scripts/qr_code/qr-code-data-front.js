@@ -73,6 +73,8 @@ function setupSearchResult(searchResult){
     }  
 }
 function searchBrondons(query){
+    console.log(query);
+    let queryLower = query.toLowerCase();
     let searchResults = [];
 
     let brondons;
@@ -91,7 +93,7 @@ function searchBrondons(query){
     for(let entry of brondons){
         let brondon = entry?.brondon;
         if(brondon == undefined){ continue; }          
-        if(brondon.internalTitle.includes(query) || brondon.externalTitle.includes(query)){
+        if(brondon.internalTitle.toLowerCase().includes(queryLower) || brondon.externalTitle.toLowerCase().includes(queryLower)){
             console.log("FOUND MATCH: ", entry);
             searchResults.push(entry);
         }
