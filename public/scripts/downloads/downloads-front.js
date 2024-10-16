@@ -47,8 +47,6 @@ async function signUpBtnClicked(){
 }
 function registerCallback(response, error){
     if(error){ console.log("ERROR"); console.log(error); return; }
-    console.log("SIGNED UP!");
-    console.log(response);
     ticket = response.data.SessionTicket;
 
     let AcademicArea = "838134a6-1399-4ede-a54c-569c308ebd09";
@@ -85,7 +83,6 @@ function loginCallback(response, error){
         document.getElementById('login-err-msg').innerHTML = error.errorMessage;
         return;
     }
-    console.log(response);
     ticket = response.data.SessionTicket;
     
     let AcademicArea = "838134a6-1399-4ede-a54c-569c308ebd09";
@@ -96,7 +93,6 @@ function loginCallback(response, error){
 }
 
 function updatedUserDataCallback(){
-    console.log("UPDATED USER DATA");
     document.getElementById('download-container').style.display = 'block';
 }
 
@@ -135,7 +131,6 @@ async function download(){
         }
     });
     const respURLs = await resp.json();
-    console.log(respURLs);
 
     const downloadLink = document.createElement('a');
     //TODO: download link
