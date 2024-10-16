@@ -1,4 +1,4 @@
-import { RegisterUserEmailAddressGeneric, LoginGeneric, UpdateUserDataGeneric, authenticateSessionTicket } from "../PlayFabManager.js";
+import { RegisterUserEmailAddressGeneric, LoginGeneric, UpdateUserDataGeneric } from "../PlayFabManager.js";
 
 document.addEventListener('DOMContentLoaded', async() => {    
     // pword field
