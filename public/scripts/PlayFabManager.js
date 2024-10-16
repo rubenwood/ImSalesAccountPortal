@@ -19,6 +19,15 @@ function isValidExpiryDate(expiry){
 }
 
 // LOGIN
+export async function LoginGeneric(email, password, callback){
+    PlayFab.settings.titleId = titleId;
+    var loginRequest = {
+        Email: email,
+        Password: password,
+        TitleId: PlayFab.settings.titleId
+    };
+    PlayFabClientSDK.LoginWithEmailAddress(loginRequest, callback);
+}  
 export async function Login(){  
     PlayFab.settings.titleId = titleId;
 
@@ -52,6 +61,20 @@ export async function Login(){
     });
 }
 // REGISTER USER
+export async function RegisterUserEmailAddressGeneric(email, password, displayName, callback){
+    PlayFab.settings.titleId = titleId;
+
+    var registerRequest = {
+        TitleId: titleId,
+        Email: email,
+        Password: password,
+        DisplayName: displayName,
+        RequireBothUsernameAndEmail: false
+    };
+
+    PlayFabClientSDK.RegisterPlayFabUser(registerRequest, callback);
+}
+
 export async function RegisterUserEmailAddress(){
     let hasAccess = await canAccess();
     if(!hasAccess){ return; }
@@ -162,6 +185,15 @@ var RegisterCallback = async function (result, error){
     callUpdateConfluencePage(email,pass,AcademicArea,TestAccountExpiryDate,CreatedBy,CreatedUpdatedReason);   
 }
 // UPDATE USER DATA
+export function UpdateUserDataGeneric(updateData, callback){
+    PlayFab.settings.titleId = titleId;
+
+    var updateUserDataRequest = {
+        TitleId: titleId,
+        Data: updateData
+    };
+    PlayFabClientSDK.UpdateUserData(updateUserDataRequest, callback);
+}
 let doneUpdatingUserData = false;
 function UpdateUserData(updateData){
     doneUpdatingUserData = false;

@@ -133,6 +133,10 @@ label {
     color: white;
 }
 
+.error{
+    color: red;
+}
+
 .tooltip {
     display: none;
     position: fixed;
