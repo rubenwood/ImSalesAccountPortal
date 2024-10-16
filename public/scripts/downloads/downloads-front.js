@@ -14,7 +14,7 @@ document.addEventListener('DOMContentLoaded', async() => {
 window.onload = function() {
     hideForms();
     document.getElementById('download-container').style.display = 'none';
-    //document.getElementById('pwordModal').style.display = 'block';
+    document.getElementById('pwordModal').style.display = 'block';
 };
 
 //#region HIDE / SHOW FORMS
