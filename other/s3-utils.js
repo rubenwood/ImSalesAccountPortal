@@ -1,7 +1,9 @@
 const express = require('express');
+const axios = require('axios');
 const AWS = require('aws-sdk');
 const fs = require('fs');
 const s3Router = express.Router();
+const {authenticateSessionTicket} = require('../playfab/playfab-utils');
 
 AWS.config.update({
     region: process.env.AWS_REGION,
@@ -228,6 +230,22 @@ async function generatePresignedUrlsForFolder(bucket, folder) {
 s3Router.get('/s3GetPresignedQRCodeURLs', async (req, res) => {
   try {
     const URLs = await generatePresignedUrlsForFolder(process.env.AWS_CMS_BUCKET, "QRCodes");
+    res.send(URLs);
+  } catch (error) {
+    console.error('Error:', error);
+    res.status(500).send('Error fetching data from S3');
+  }
+});
+
+s3Router.get('/s3GetDownloadURLs', async (req, res) => {
+  const ticket = req.headers['ticket'];
+  if (!ticket) { return res.status(401).send('Unauthorized'); }
+  
+  const authResponse = await authenticateSessionTicket(ticket);
+  if(authResponse.data.IsSessionTicketExpired){ return res.status(401).send('Unauthorized'); }
+
+  try {
+    const URLs = await generatePresignedUrlsForFolder(process.env.AWS_BUCKET, "Downloads");
     res.send(URLs);
   } catch (error) {
     console.error('Error:', error);

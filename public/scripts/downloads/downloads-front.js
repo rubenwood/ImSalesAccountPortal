@@ -1,7 +1,7 @@
-import { RegisterUserEmailAddressGeneric, LoginGeneric, UpdateUserDataGeneric } from "../PlayFabManager.js";
+import { RegisterUserEmailAddressGeneric, LoginGeneric, UpdateUserDataGeneric, authenticateSessionTicket } from "../PlayFabManager.js";
 
 document.addEventListener('DOMContentLoaded', async() => {    
-    // pwrod field
+    // pword field
     document.getElementById('loginButton').addEventListener('click', () => submitPass());
     // form
     document.getElementById('existing-btn-yes').addEventListener('click', () => showLoginForm());
@@ -36,6 +36,8 @@ function showLoginForm(){
 }
 //#endregion
 
+let ticket;
+
 // SIGN UP
 async function signUpBtnClicked(){
     const email = document.getElementById('signup-email').value;
@@ -46,7 +48,8 @@ async function signUpBtnClicked(){
 function registerCallback(response, error){
     if(error){ console.log("ERROR"); console.log(error); return; }
     console.log("SIGNED UP!");
-    //console.log(response);
+    console.log(response);
+    ticket = response.data.SessionTicket;
 
     let AcademicArea = "838134a6-1399-4ede-a54c-569c308ebd09";
     let LastWriteDevice = "";
@@ -82,7 +85,8 @@ function loginCallback(response, error){
         document.getElementById('login-err-msg').innerHTML = error.errorMessage;
         return;
     }
-    //console.log(response);
+    console.log(response);
+    ticket = response.data.SessionTicket;
     
     let AcademicArea = "838134a6-1399-4ede-a54c-569c308ebd09";
     const data = {
@@ -123,9 +127,18 @@ async function submitPass(){
 }
 
 // DOWNLOAD
-function download(){
+async function download(){
+    const resp = await fetch('/S3/s3GetDownloadURLs', {
+        method: 'GET',
+        headers: {
+            'ticket': `${ticket}`
+        }
+    });
+    const respURLs = await resp.json();
+    console.log(respURLs);
+
     const downloadLink = document.createElement('a');
     //TODO: download link
-    downloadLink.href = 'https://s3.eu-west-1.amazonaws.com/com.immersifyeducation.cms/Models/Debug/DanCringeSphere003.glb';
+    downloadLink.href = respURLs[0].url;
     downloadLink.click();
 }
