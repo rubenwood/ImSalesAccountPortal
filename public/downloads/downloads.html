@@ -13,8 +13,8 @@
   <script type="text/javascript" src="https://download.playfab.com/PlayFabClientApi.js"></script>
 </head>
 <body>
-  <!-- Login Modal -->
-  <div id="pwordModal" class="modal custom_modal">
+  <!-- Pword Modal -->
+  <!-- <div id="pwordModal" class="modal">
     <div class="modal-content">
       <div class="login_sec">
         <img src="/immersify_logo.e141b23db21f4b78051561bc464eace7.svg" alt="Immersify Logo" class="login-logo">
@@ -24,43 +24,83 @@
         <input type="button" id="loginButton" value="Submit">
       </div>
     </div>
-  </div>
-  <div class="form-general">
-    <div id="signup-container" class="form-container">
-      <h2>Are you an existing Immersify user?</h2>
-      <input id="existing-btn-yes" type="button" value="YES" />
-      <input id="existing-btn-no" type="button" value="NO" />
-      <br/>
-      <div id="signup-form" class="form-container">
-        <h3>Sign Up</h3><br/>
-        <p id="signup-err-msg" class="error"></p>
-        <p id="signup-err-msg"></p>
-        Email Address
-        <input id="signup-email" type="text" value="" placeholder="Email*" />
-        Display Name
-        <input id="signup-display-name" type="text" value="" placeholder="Display Name*" />
-        Password
-        <input id="signup-password" type="password" value="" placeholder="Password*" />
-        Confirm Password
-        <input id="signup-confirm-password" type="password" value="" placeholder="Confirm Password*" />
-        <input id="signup-btn" type="button" value="Sign Up" />
-      </div>
-      <div id="login-form" class="form-container">
-        <h3>Log in</h3><br/>
-        <p id="login-err-msg" class="error"></p>
-        Email Address
-        <input id="login-email" type="text" value="" placeholder="Email*" />
-        Password
-        <input id="login-password" type="password" value="" placeholder="Password*" />
-        <input id="login-btn" type="button" value="Login" />
-      </div>
-      <br/>
-      <div id="download-container" class="form-container">
-        <input id="download-btn" type="button" value="Click here to download" />
-      </div>
-    </div>
-  </div>
+  </div> -->
 
+  <div class="body-wrap">
+    <section class="header">
+      <div class="logo">
+        <img src="/immersify_logo.e141b23db21f4b78051561bc464eace7.svg" alt="Immersify Logo" class="login-logo">
+      </div>
+    </section>
+<div class="login_wrap" id="login-area">
+    
+  
+  <div class="login_container">
+    <div>
+    <div id="login-txt"><h3>Login or Signup to <span>Download</span></h3></div>
+    <div id="password-txt"><h3>Enter the given<br/><span>Password</span></h3></div>
+    <div id="success-txt"><h3>Authentication<br/><span>Successful<img src="../images/success.svg"></span></h3></div>
+    <section class="login-signup-wrap" id="login-wrapper">
+      <div class="form-general-block">
+        <div id="signup-container">
+
+          <div id="download-container">
+            <p>Download ready. Click the button below to get your file.</p>
+            <button id="download-btn" class="btn-download" type="button"><img src="../images/download.svg" />Download for Windows</button>
+          </div>
+          
+          <div id="password-form">
+            
+            <input type="password" id="password" placeholder="Password">
+            <span id="error-txt" class="error"></span>
+            <div class="button-block"><input type="button" class="cd-button" id="loginButton" value="Submit"> <span id="loginButton-spinner" class="loading-spinner"></span></div>
+          </div>
+    
+          <div class="tabbed" id="login-signup-forms">
+            <input type="radio" id="tab1" name="css-tabs" checked>
+            <input type="radio" id="tab2" name="css-tabs">
+            
+            <ul class="tabs">
+              <li class="tab"><label for="tab1">Login</label></li>
+              <li class="tab"><label for="tab2">Signup</label></li>
+            </ul>
+            
+            <div class="tab-content">
+              <!-- <p>Use your existing Immersify account to login</p> -->
+              <div id="login-form">
+                
+                <input id="login-email" type="text" value="" placeholder="Email*" />
+                <input id="login-password" type="password" value="" placeholder="Password*" />
+                <span id="login-err-msg" class="error"></span>
+                <div class="button-block"><input id="login-btn" class="cd-button" type="button" value="Login" /><span id="login-btn-spinner" class="loading-spinner"></span></div>
+              </div>
+            </div>
+            
+            <div class="tab-content">
+              <!-- <p>Are you a new user, signup using your Email</p> -->
+              <div id="signup-form">
+                <p id="signup-err-msg" class="error"></p>
+                <input id="signup-email" type="text" value="" placeholder="Email*" />
+                <input id="signup-display-name" type="text" value="" placeholder="Display Name*" />
+                <input id="signup-password" type="password" value="" placeholder="Password*" />
+                <input id="signup-confirm-password" type="password" value="" placeholder="Confirm Password*" />
+                <div class="button-block"><input id="signup-btn" type="button" class="cd-button" value="Sign Up" /><span id="signup-btn-spinner" class="loading-spinner"></span></div>
+              </div>
+            </div>
+          </div>          
+        </div>
+      </div>
+     
+    </section>
+  </div>
+  </div>
+  
+  <section class="desktop-img">
+    <img src="../images/desktop.png" />
+  </section>
+</div>
+
+</div>
   <script type="module" src="../scripts/downloads/downloads-front.js"></script> 
 </body>
 </html>
