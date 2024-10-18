@@ -4,12 +4,11 @@ document.addEventListener('DOMContentLoaded', async() => {
     // pword field
     document.getElementById('loginButton').addEventListener('click', () => submitPass());
     // form
-    // document.getElementById('existing-btn-yes').addEventListener('click', () => showLoginForm());
-    // document.getElementById('existing-btn-no').addEventListener('click', () => showSignUpForm());
     document.getElementById('signup-btn').addEventListener('click', () => signUpBtnClicked());
     document.getElementById('login-btn').addEventListener('click', () => loginBtnClicked());
     // download
     document.getElementById('download-btn').addEventListener('click', () => download());
+    document.getElementById('forgot-password').addEventListener('click', () => resetPasswordClicked());
 });
 window.onload = function() {
     displayForms();
@@ -149,7 +148,7 @@ function loginCallback(response, error){
 
 // RESET PASSWORD
 async function resetPasswordClicked(){
-    let email = ''; // email address input field here
+    let email = document.getElementById('fp-email').value; // email address input field here
     ResetPassword(email, resetPasswordCallback);
 }
 function resetPasswordCallback(response, error){
@@ -157,10 +156,12 @@ function resetPasswordCallback(response, error){
 
     if(error){ 
         console.log(error);
-        // display error message here (error.errorMessage)
+        document.getElementById('fp-error-txt').innerHTML = error.errorMessage;
         return;
     }
     // if no error display confirmation here
+    console.log(response);
+    document.getElementById('fp-error-txt').innerHTML = 'Password reset email sent!';
 }
 
 // UPDATE USER DATA
