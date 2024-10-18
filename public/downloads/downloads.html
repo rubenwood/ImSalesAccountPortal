@@ -14,17 +14,18 @@
 </head>
 <body>
   <!-- Pword Modal -->
-  <!-- <div id="pwordModal" class="modal">
+  <div id="forgotpwd" class="modal f-p">
     <div class="modal-content">
       <div class="login_sec">
-        <img src="/immersify_logo.e141b23db21f4b78051561bc464eace7.svg" alt="Immersify Logo" class="login-logo">
-        <h2>Enter Password to Download</h2>
-        <input type="password" id="password" placeholder="Password">
+        <div id="close_btn"></div>
+        <h2>Forgot your password?</h2>
+        <p>Enter your account email. We'll send password reset instructions. </p>
+        <input type="text" id="fp-email" placeholder="Email">
         <p id="error-txt"></p>
-        <input type="button" id="loginButton" value="Submit">
+        <input type="button" id="forgot-password" value="Submit">
       </div>
     </div>
-  </div> -->
+  </div>
 
   <div class="body-wrap">
     <section class="header">
@@ -73,6 +74,7 @@
                 <input id="login-password" type="password" value="" placeholder="Password*" />
                 <span id="login-err-msg" class="error"></span>
                 <div class="button-block"><input id="login-btn" class="cd-button" type="button" value="Login" /><span id="login-btn-spinner" class="loading-spinner"></span></div>
+                <div class="forgot-pwd"><a href="#" id="f-p">Forgot password?</a></div>
               </div>
             </div>
             

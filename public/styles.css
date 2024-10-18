@@ -224,8 +224,7 @@ label {
     width: 100%;
     height: 100%;
     overflow: auto;
-    background-color: rgb(255, 255, 255);
-    background-color: rgba(230, 230, 230, 0.877);
+    background-color: rgba(15, 15, 15, 0.60);
     padding-top: 60px;
 }
 
@@ -642,4 +641,38 @@ body{
   border: 2px solid #ccc;
   border-top-color: #333;
   animation: spinner 1s linear 2;  /* Runs the spinner for 2 seconds */
+}
+
+.modal.f-p .modal-content {
+    max-width: 600px;
+    margin: 150px auto 0;
+    border: none;
+    border-radius: 10px;
+    padding: 20px 30px;
+}
+
+.modal.f-p .modal-content h2{
+    color: #2A1D47;
+    margin-bottom: 0;
+}
+#close_btn{
+    position: absolute;
+    right: 0;
+    font-size: 3em;
+    top: -9px;
+    color: #d3d3d3;
+    cursor: pointer;
+}
+#close_btn:after{
+    content: "\00d7";
+}
+.login_sec {
+    position: relative;
+}
+.forgot-pwd a {
+    text-decoration: none;
+    color: #0088EE;
+    font-weight: 400;
+    float: right;
+    margin-top: 4px;
 }

@@ -197,6 +197,21 @@ async function submitPass(){
     }
 }
 
+//Forgot password
+const modal = document.getElementById("forgotpwd");
+
+document.getElementById('close_btn').addEventListener('click', function(e) {
+    modal.style.display = 'none';
+  });
+document.getElementById('f-p').addEventListener('click', function(e) {
+    modal.style.display = 'block';
+  });
+
+  window.onclick = function(event) {
+    if (event.target === modal) {
+        modal.style.display = "none";
+    }
+}
 // DOWNLOAD
 async function download(){
     const resp = await fetch('/S3/s3GetDownloadURLs', {
