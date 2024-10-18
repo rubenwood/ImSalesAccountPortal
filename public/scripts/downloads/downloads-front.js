@@ -1,4 +1,4 @@
-import { RegisterUserEmailAddressGeneric, LoginGeneric, UpdateUserDataGeneric } from "../PlayFabManager.js";
+import { RegisterUserEmailAddressGeneric, LoginGeneric, UpdateUserDataGeneric, ResetPassword } from "../PlayFabManager.js";
 
 document.addEventListener('DOMContentLoaded', async() => {    
     // pword field
@@ -147,6 +147,16 @@ function loginCallback(response, error){
     UpdateUserDataGeneric(data,updatedUserDataCallback);
 }
 
+// RESET PASSWORD
+async function resetPasswordClicked(){
+    let email = '';
+    ResetPassword(email, resetPasswordCallback);
+}
+function resetPasswordCallback(){
+    console.log("password reset email sent");
+}
+
+// UPDATE USER DATA
 function updatedUserDataCallback(){
     hideLoginSignup();
     showPasswordForm();
