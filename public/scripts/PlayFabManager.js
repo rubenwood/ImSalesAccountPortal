@@ -317,6 +317,19 @@ function getUserData(keys){
     });
 }
 
+// RESET PASSWORD
+export function ResetPassword(email, callback){
+    PlayFab.settings.titleId = titleId;
+
+    var resetPasswordRequest = {
+        Email: email,
+        TitleId: PlayFab.settings.titleId
+    };
+
+    PlayFabClientSDK.SendAccountRecoveryEmail(resetPasswordRequest, callback);    
+}
+
+
 // GET PLAYER EMAIL ADDR
 export async function getPlayerEmailAddr(playFabId){
     try{

@@ -13,7 +13,7 @@
   <script type="text/javascript" src="https://download.playfab.com/PlayFabClientApi.js"></script>
 </head>
 <body>
-  <!-- Login Modal -->
+  <!-- Pword Modal -->
   <!-- <div id="pwordModal" class="modal">
     <div class="modal-content">
       <div class="login_sec">
@@ -25,7 +25,6 @@
       </div>
     </div>
   </div> -->
-
 
   <div class="body-wrap">
     <section class="header">
@@ -40,14 +39,14 @@
     <div>
     <div id="login-txt"><h3>Login or Signup to <span>Download</span></h3></div>
     <div id="password-txt"><h3>Enter the given<br/><span>Password</span></h3></div>
-    <div id="success-txt"><h3>Authentication<br/><span>Successful<img src="/success.svg"></span></h3></div>
+    <div id="success-txt"><h3>Authentication<br/><span>Successful<img src="../images/success.svg"></span></h3></div>
     <section class="login-signup-wrap" id="login-wrapper">
       <div class="form-general-block">
         <div id="signup-container">
 
           <div id="download-container">
             <p>Download ready. Click the button below to get your file.</p>
-            <button id="download-btn" class="btn-download" type="button"><img src="/download.svg" />Download for Windows</button>
+            <button id="download-btn" class="btn-download" type="button"><img src="../images/download.svg" />Download for Windows</button>
           </div>
           
           <div id="password-form">
@@ -81,7 +80,6 @@
               <!-- <p>Are you a new user, signup using your Email</p> -->
               <div id="signup-form">
                 <p id="signup-err-msg" class="error"></p>
-                <p id="signup-err-msg"></p>
                 <input id="signup-email" type="text" value="" placeholder="Email*" />
                 <input id="signup-display-name" type="text" value="" placeholder="Display Name*" />
                 <input id="signup-password" type="password" value="" placeholder="Password*" />
@@ -89,13 +87,7 @@
                 <div class="button-block"><input id="signup-btn" type="button" class="cd-button" value="Sign Up" /><span id="signup-btn-spinner" class="loading-spinner"></span></div>
               </div>
             </div>
-          </div>
-    
-          <!-- <h2>Are you an existing Immersify user?</h2>
-          <input id="existing-btn-yes" type="button" value="YES" />
-          <input id="existing-btn-no" type="button" value="NO" />
-          <br/> -->
-          
+          </div>          
         </div>
       </div>
      
@@ -104,11 +96,11 @@
   </div>
   
   <section class="desktop-img">
-    <img src="/desktop.png" />
+    <img src="../images/desktop.png" />
   </section>
 </div>
 
 </div>
-  <script type="module" src="../scripts/downloads/mainJs.js"></script> 
+  <script type="module" src="../scripts/downloads/downloads-front.js"></script> 
 </body>
 </html>

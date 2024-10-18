@@ -1,24 +1,52 @@
-import { RegisterUserEmailAddressGeneric, LoginGeneric, UpdateUserDataGeneric } from "../PlayFabManager.js";
+import { RegisterUserEmailAddressGeneric, LoginGeneric, UpdateUserDataGeneric, ResetPassword } from "../PlayFabManager.js";
 
 document.addEventListener('DOMContentLoaded', async() => {    
     // pword field
     document.getElementById('loginButton').addEventListener('click', () => submitPass());
     // form
-    document.getElementById('existing-btn-yes').addEventListener('click', () => showLoginForm());
-    document.getElementById('existing-btn-no').addEventListener('click', () => showSignUpForm());
+    // document.getElementById('existing-btn-yes').addEventListener('click', () => showLoginForm());
+    // document.getElementById('existing-btn-no').addEventListener('click', () => showSignUpForm());
     document.getElementById('signup-btn').addEventListener('click', () => signUpBtnClicked());
     document.getElementById('login-btn').addEventListener('click', () => loginBtnClicked());
     // download
     document.getElementById('download-btn').addEventListener('click', () => download());
 });
 window.onload = function() {
-    hideForms();
+    displayForms();
     document.getElementById('download-container').style.display = 'none';
-    document.getElementById('pwordModal').style.display = 'block';
+    // document.getElementById('pwordModal').style.display = 'none';
 };
 
+
+var cdButtons = [].slice.call(document.getElementsByClassName("cd-button"));
+if (cdButtons.length > 0) {
+
+		cdButtons.forEach(function (button){
+		  button.addEventListener("click", function(e){
+
+		  e.preventDefault();
+			button.disabled = true;
+      var bspinner = document.getElementById(button.id + "-spinner");
+      bspinner.classList.add("spinner");
+      
+      setTimeout(function () {
+      	bspinner.classList.remove("spinner");
+        button.disabled = false;
+    	}, 4000);
+   
+		  },false);
+
+		});
+}
+
+
 //#region HIDE / SHOW FORMS
+function displayForms(){
+    document.getElementById('signup-form').style.display = 'block';
+    document.getElementById('login-form').style.display = 'block';
+}
 function hideForms(){
+    document.getElementById('login-area').style.display = 'none';
     document.getElementById('signup-err-msg').style.display = 'none';
     document.getElementById('login-err-msg').style.display = 'none';
     
@@ -26,13 +54,31 @@ function hideForms(){
     document.getElementById('login-form').style.display = 'none';
 }
 function showSignUpForm(){
-    hideForms();
+    // hideForms();
+    displayForms();
     document.getElementById('signup-form').style.display = 'block';
 }
 function showLoginForm(){
-    hideForms();
+    // hideForms();
+    displayForms();
     document.getElementById('login-form').style.display = 'block';
 
+}
+function hideLoginSignup(){
+    document.getElementById('login-signup-forms').style.display = 'none';
+    document.getElementById('login-txt').style.display = 'none';
+}
+function showPasswordForm(){
+    document.getElementById('password-txt').style.display = 'block';
+    document.getElementById('password-form').style.display = 'block';
+}
+function hidePasswordForm(){
+    document.getElementById('password-txt').style.display = 'none';
+    document.getElementById('password-form').style.display = 'none';
+}
+function hideErrorMessages(){
+    document.getElementById('login-err-msg').style.display = 'none';
+    document.getElementById('signup-err-msg').style.display = 'none';
 }
 //#endregion
 
@@ -40,13 +86,20 @@ let ticket;
 
 // SIGN UP
 async function signUpBtnClicked(){
+    hideErrorMessages();
+    
     const email = document.getElementById('signup-email').value;
     const displayName = document.getElementById('signup-display-name').value;
     const password = document.getElementById('signup-password').value;
     await RegisterUserEmailAddressGeneric(email,password,displayName,registerCallback);
 }
 function registerCallback(response, error){
-    if(error){ console.log("ERROR"); console.log(error); return; }
+    if(error){ 
+        console.log(error); 
+        document.getElementById('signup-err-msg').style.display = 'block';
+        document.getElementById('signup-err-msg').innerHTML = error.errorMessage;
+        return; 
+    }
     ticket = response.data.SessionTicket;
 
     let AcademicArea = "838134a6-1399-4ede-a54c-569c308ebd09";
@@ -72,6 +125,8 @@ function registerCallback(response, error){
 
 // LOGIN
 async function loginBtnClicked(){
+    hideErrorMessages();
+    
     const email = document.getElementById('login-email').value;
     const password = document.getElementById('login-password').value;
     LoginGeneric(email, password, loginCallback);
@@ -92,8 +147,19 @@ function loginCallback(response, error){
     UpdateUserDataGeneric(data,updatedUserDataCallback);
 }
 
+// RESET PASSWORD
+async function resetPasswordClicked(){
+    let email = '';
+    ResetPassword(email, resetPasswordCallback);
+}
+function resetPasswordCallback(){
+    console.log("password reset email sent");
+}
+
+// UPDATE USER DATA
 function updatedUserDataCallback(){
-    document.getElementById('download-container').style.display = 'block';
+    hideLoginSignup();
+    showPasswordForm();
 }
 
 async function submitPass(){
@@ -115,7 +181,9 @@ async function submitPass(){
             return;
         }
         
-        document.getElementById('pwordModal').style.display = 'none';
+        document.getElementById('download-container').style.display = 'block';
+        document.getElementById('success-txt').style.display = 'block';
+        hidePasswordForm();
     }catch(err){
         console.error("Error during authentication", err);
         document.getElementById('error-loading').innerHTML = 'Oops! An error occurred. Please try again later.';
