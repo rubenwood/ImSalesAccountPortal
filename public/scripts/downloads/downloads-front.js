@@ -149,11 +149,18 @@ function loginCallback(response, error){
 
 // RESET PASSWORD
 async function resetPasswordClicked(){
-    let email = '';
+    let email = ''; // email address input field here
     ResetPassword(email, resetPasswordCallback);
 }
-function resetPasswordCallback(){
+function resetPasswordCallback(response, error){
     console.log("password reset email sent");
+
+    if(error){ 
+        console.log(error);
+        // display error message here (error.errorMessage)
+        return;
+    }
+    // if no error display confirmation here
 }
 
 // UPDATE USER DATA
