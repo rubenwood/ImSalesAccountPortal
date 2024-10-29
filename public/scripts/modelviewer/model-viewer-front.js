@@ -15,12 +15,16 @@ document.addEventListener('DOMContentLoaded', async() => {
     
     const modelViewer = document.getElementById('model-viewer');
 
-    let index = 0;
-    index = params.model;
-    if(params.model >= models.length){ index = models.length; }
-    if(params.model < 0){ index = 0; }
+    //let index = 0;
+    //index = params.model;
 
-    modelViewer.src = models[index];
+    let modelName = params.model;
+
+    //if(params.model >= models.length){ index = models.length; }
+    //if(params.model < 0){ index = 0; }
+
+    //modelViewer.src = models[index];
+    modelViewer.src = `https://s3.eu-west-1.amazonaws.com/com.immersifyeducation.cms/Models/Debug/public/${modelName}`;
 });
 window.onload = function() {
     //document.getElementById('loginModal').style.display = 'block';
