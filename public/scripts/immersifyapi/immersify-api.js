@@ -49,6 +49,19 @@ export async function getAreaBrondons(areas){
     return brondons;
 }
 
+export async function getModules() {
+    const modulesUrl = `${baseURL}/modules`;
+    const modulesResponse = await fetch(modulesUrl, {
+        method: 'GET',
+        headers: { 
+            'Authorization': `Bearer ${jwtoken}`,
+            'Content-Type': 'application/json' 
+        }
+    });
+    const data = await modulesResponse.json();
+    return data;
+}
+
 export async function getTopics() {
     const topicsUrl = `${baseURL}/topics`;
     const topicsResponse = await fetch(topicsUrl, {
