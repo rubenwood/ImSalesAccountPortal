@@ -674,10 +674,12 @@ suffixRouter.get('/reports/:folder', async (req, res) => {
 
     try {
         const urls = await generatePresignedUrlsForFolder(process.env.AWS_BUCKET, `Analytics/${folder}`);
+        
         let outURLs = [];
         urls.forEach(url =>{
             if(url.filename !== ''){ outURLs.push(url); }
         })
+        console.log(outURLs);
         res.send(outURLs);
     } catch (err) {
         res.status(500).send(`Error generating pre-signed URLs: ${err.message}`);

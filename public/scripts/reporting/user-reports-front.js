@@ -6,48 +6,52 @@ document.addEventListener('DOMContentLoaded', async() => {
     await getReportFolders();
     console.log(window.location.search);
     const params = Object.fromEntries(new URLSearchParams(window.location.search));    
-    if(params.SessionTicket){
-        const decodedSessionTicket = decodeURIComponent(params.SessionTicket);
-        //console.log("Decoded Session Ticket: ", decodedSessionTicket);
-    }
-    //console.log("QP: ", params);
     if(params == undefined){ return; }
     if(params.SessionTicket == undefined){ return; }
-
     let userReportFolderNames = await getUserReports(params.SessionTicket);
     console.log("UR: ", userReportFolderNames);
-    populateReportsDropdown(userReportFolderNames);
-    document.getElementById('loginButton').addEventListener('click', () => submitPass(userReportFolderNames[0]));
-    document.getElementById('reportSelect').addEventListener('change', (event) => populateReports(event.target.value));
+
+     // Add click event to login button, but defer report population
+     document.getElementById('loginButton').addEventListener('click', async () => {
+        const isAuthenticated = await submitPass();
+        if (isAuthenticated) {
+            populateReportsAndSetupListeners(userReportFolderNames);
+        }
+    });
 });
 window.onload = function() {
     document.getElementById('loginModal').style.display = 'block';
 };
 
-async function submitPass(reportFolderName) {
-    let inPass = document.getElementById('password').value;
+function populateReportsAndSetupListeners(userReportFolderNames) {
+    populateReportsDropdown(userReportFolderNames);
+    populateReports(userReportFolderNames[0]);
+    document.getElementById('reportSelect').addEventListener('change', (event) => populateReports(event.target.value));
+}
+
+async function submitPass() {
+    inPass = document.getElementById('password').value;
     
     try {
-        let response = await fetch('/reporting/auth', {
+        const response = await fetch('/reporting/auth', {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ pass: inPass })
         });
-        let result = await response.json();
+        const result = await response.json();
         
-        if(result != true){
+        if (result !== true) {
             console.log("Access denied");
             document.getElementById('error-txt').innerHTML = 'Incorrect password. Please try again.';
-            return;
+            return false;
         }
         
         document.getElementById('loginModal').style.display = 'none';
-        populateReports(reportFolderName);
+        return true;
     } catch (err) {
         console.error("Error during authentication", err);
         document.getElementById('error-loading').innerHTML = 'Oops! An error occurred. Please try again later.';
+        return false;
     }
 }
 
@@ -81,12 +85,6 @@ async function getUserReports(sessionTicket){
     const pfUserReports = JSON.parse(pfUserData.data.Data.Reports.Value);
     console.log(pfUserReports);
     return pfUserReports.reports;
-
-    // const rowData = await fetchUsersByID([playFabId]);
-    // const combinedData = { accountData: rowData.accountData[0].AccountDataJSON, usageData: rowData.usageData[0].UsageDataJSON };
-    // const userReports = JSON.parse(combinedData.usageData.Data.Reports.Value);
-    // console.log(userReports);
-    // return userReports.reports;
 }
 
 function populateReportsDropdown(reports){
@@ -107,8 +105,8 @@ function populateReportsDropdown(reports){
 
 // Get Reports
 let reportResponse = undefined;
+let inPass;
 async function getReports(reportFolderName) {
-    const inPass = document.getElementById('password').value;
     const response = await fetch(`/reporting/reports/${reportFolderName}`, {
         method: 'GET',
         headers: {

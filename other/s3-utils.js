@@ -206,10 +206,11 @@ async function generatePresignedUrlsForFolder(bucket, folder) {
     };
 
     const data = await s3.listObjectsV2(params).promise();
+    //console.log(data);
 
     // Filter out "folders" or "subfolder" objects based on the key structure
     const presignedUrls = data.Contents
-      .filter(item => !item.Key.endsWith('/') && item.Key.split('/').length === 2) // Exclude folders and subfolders
+      .filter(item => !item.Key.endsWith('/')) // Exclude folders and subfolders
       .map(item => {
         const urlParams = {
           Bucket: bucket,
