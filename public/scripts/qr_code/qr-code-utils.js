@@ -103,3 +103,13 @@ async function limitedConcurrentPromises(tasks, limit) {
 
     return Promise.all(results);
 }
+
+export async function getPresignedQRCodeURLs(){
+    const presignedURLResp = await fetch('/S3/s3GetPresignedQRCodeURLs');
+    const presignedURLs = await presignedURLResp.json();
+    return presignedURLs;
+}
+export function getPresignedURLForFile(qrCodeURLs, filename){
+    const file = qrCodeURLs.find(item => item.filename === filename.replace("QRCodes/", ""));
+    return file ? file.url : null;  // Return the URL or null if not found
+}

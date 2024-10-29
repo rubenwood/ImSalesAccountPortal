@@ -1,6 +1,6 @@
-import { decodeQRCode } from './qr-code-utils.js';
+import { decodeQRCode, getPresignedQRCodeURLs, getPresignedURLForFile } from './qr-code-utils.js';
 import { Login } from '../PlayFabManager.js';
-import { getAreas, getTopics, getActivities, getAreaBrondons, getTopicBrondons, getActivityBrondons, waitForJWT} from '../immersifyapi/immersify-api.js';
+import { getAreas, getModules, getTopics, getActivities, getAreaBrondons, getTopicBrondons, getActivityBrondons, waitForJWT, imAPIGet} from '../immersifyapi/immersify-api.js';
 import { initializeDarkMode } from '../themes/dark-mode.js';
 
 const doConfetti = () => { confetti({particleCount: 100, spread: 70, origin: { y: 0.6 }}); }
@@ -22,6 +22,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     // event listener for login modal
     document.getElementById('loginButton').addEventListener('click', Login);
     await waitForJWT();
+
+    //const moduleResp = await getModules();
+    //const test = await imAPIGet(`modules/${moduleResp[0].id}`);
 
     document.getElementById('areasTabBtn').addEventListener('click', areasTabClicked);
     document.getElementById('topicsTabBtn').addEventListener('click', topicsTabClicked);
@@ -192,7 +195,7 @@ async function activitiesTabClicked(){
 
 function setupCommonElements(tableBody, brondon){
     const brondonData = brondon.brondon;
-    const qrCodeFullUrl = getPresignedURLForFile(brondonData.qrCode);
+    const qrCodeFullUrl = getPresignedURLForFile(qrCodeURLs, brondonData.qrCode);
 
     // Add Header row
     const mainHeaderRow = document.createElement('tr');
@@ -368,17 +371,6 @@ function setupActivityEntry(tableBody, brondon){
 
     // Add empty row for spacing
     addEmptyRow(tableBody);
-}
-
-
-async function getPresignedQRCodeURLs(){
-    const presignedURLResp = await fetch('/S3/s3GetPresignedQRCodeURLs');
-    const presignedURLs = await presignedURLResp.json();
-    return presignedURLs;
-}
-function getPresignedURLForFile(filename){
-    const file = qrCodeURLs.find(item => item.filename === filename.replace("QRCodes/", ""));
-    return file ? file.url : null;  // Return the URL or null if not found
 }
 
 // ROW HELPERS
