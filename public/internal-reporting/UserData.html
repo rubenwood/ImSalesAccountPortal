@@ -2,10 +2,10 @@
 <html>
 <head>
     <meta charset="utf-8">
-    <title>Immersify Portal</title>
+    <title>Internal User Data Reports</title>
     <script type="text/javascript" src="https://download.playfab.com/PlayFabClientApi.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.16.2/xlsx.full.min.js"></script>
-    <link rel="stylesheet" type="text/css" href="styles.css">
+    <link rel="stylesheet" type="text/css" href="../styles.css">
 </head>
 <body>
 <!-- Dark Mode Toggle Switch -->
@@ -25,14 +25,20 @@
         <input type="button" id="loginButton" value="Login">
     </div>
 </div>
+<!-- COMPONENTS -->
 <div id="report-container" class="form-container">
-
+    <div>
+        <h2>New vs. Returning</h2>
+        Start Date <input id="new-ret-start-date" type="date">
+        End Date <input id="new-ret-end-date" type="date">
+        <input id="new-ret-btn" type="button" value="submit">
+    </div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.1/dist/confetti.browser.js"></script>
-<script type="module" src="scripts/userdata/user-data-front.js"></script>
-<script type="module" src="scripts/PlayFabManager.js"></script>
-<script type="module" src="scripts/utils.js"></script>
-<script type="module" src="scripts/asyncTools.js"></script>
+<script type="module" src="../scripts/userdata/user-data-front.js"></script>
+<script type="module" src="../scripts/PlayFabManager.js"></script>
+<script type="module" src="../scripts/utils.js"></script>
+<script type="module" src="../scripts/asyncTools.js"></script>
 </body>
 </html>
