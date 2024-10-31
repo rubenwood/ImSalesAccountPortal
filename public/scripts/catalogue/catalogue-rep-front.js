@@ -22,18 +22,19 @@ window.onload = function() {
     document.getElementById('loginModal').style.display = 'block';
 };
 
+let TreeStructure;
 async function getCatalogueReport(){
     document.getElementById('get-rep-btn').value = "Getting Report...";
     //const [areas, modules, topics, activities] = await Promise.all([getAreas(), getModules(), getTopics(), getActivities()]);
     //console.log("got all areas:\n", areas, "\nmodules:\n", modules, "\ntopics:\n" , topics, "\nactivities:\n", activities);
 
-    const treeStructure = await getTreeStructure();
-    console.log(treeStructure);
-    const areaBrondons = treeStructure.inAreas;
+    TreeStructure = await getTreeStructure();
+    console.log(TreeStructure);
+    const areaBrondons = TreeStructure.inAreas;
     const moduleBrondons = getModulesFromAreas(areaBrondons);
     const topicBrondons = getTopicsFromModules(moduleBrondons);
-    const floatingTopicBrondons = treeStructure.inFloatingTopics;
-    const testTopicBrondons = treeStructure.inTestTopics;
+    const floatingTopicBrondons = TreeStructure.inFloatingTopics;
+    const testTopicBrondons = TreeStructure.inTestTopics;
 
     const activityBrondons = getActivitiesFromTopics(topicBrondons);
     console.log(activityBrondons);
@@ -47,7 +48,8 @@ async function getCatalogueReport(){
     document.getElementById('get-rep-btn').value = "Get Report";
     
     doConfetti();
-    renderForceDirectedTree(data);
+    renderForceDirectedTree(TreeStructure.inAreas);
+    //renderZoomableSunburst(TreeStructure.inAreas);
 }
 
 function getModulesFromAreas(areas){
@@ -96,7 +98,6 @@ function setActivities(activities){
     document.getElementById('activities-count').innerHTML = `<b>Activities:</b>${activities.length}`;
 }
 
-
 function populateTotalsTable(areaStructure){
     const totalsTable = document.getElementById('totals-table');
     areaStructure.forEach(area => {
@@ -121,6 +122,9 @@ function populateTotalsTable(areaStructure){
         let lessonCell = row.insertCell();
         lessonCell.innerHTML = lessons.length;
 
+        let subheadingsCell = row.insertCell();
+        subheadingsCell.innerHTML = 0;
+
         let topicQuizzes = getTopicQuizzesFromActivities(activityBrondons);
         let quizCell = row.insertCell();
         quizCell.innerHTML = topicQuizzes.length;
@@ -134,131 +138,54 @@ function populateTotalsTable(areaStructure){
         simsCell.innerHTML = experiences.length;
     });
 }
+  
 
-// TEST DATA
-const data = {
-    Areas: [
-        {
-            AreaId: 123456,
-            AreaName: "Dentistry",
-            Modules: [
-                {
-                    ModuleId: "123345asd",
-                    ModuleName: "Oral Anatomy & Biology",
-                    Topics: [
-                        {
-                            TopicId: "123abcedf",
-                            TopicName: "Tooth Morphology",
-                            Activities: [
-                                { ActivityId: "abcedasd123", ActivityType: "Simulation", ActivityName: "DentalId" },
-                                { ActivityId: "nkjhyuay1212", ActivityType: "Lesson", ActivityName: "Maxillary Central Incisor" },
-                                { ActivityId: "nkjh5551216", ActivityType: "Lesson", ActivityName: "Maxillary Lateral Incisor" },
-                                { ActivityId: "nkjh55512188", ActivityType: "Lesson", ActivityName: "Maxillary Canine" },
-                                { ActivityId: "nkjh5551210101", ActivityType: "Lesson", ActivityName: "Maxillary 1st Premolar" },
-                                { ActivityId: "llolkokiasd123", ActivityType: "Lesson", ActivityName: "Maxillary 2nd Premolar" },
-                                { ActivityId: "555asdasd987", ActivityType: "Lesson", ActivityName: "Maxillary 1st Molar" },
-                            ]
-                        }
-                    ]
-                },
-                {
-                    ModuleId: "ajskl111333",
-                    ModuleName: "Endodontics",
-                    Topics: [
-                        {
-                            TopicId: "ahdjdkj182",
-                            TopicName: "Endo T1",
-                            Activities: [
-                                { ActivityId: "91823oklklklk", ActivityType: "Simulation", ActivityName: "Endo L1" },
-                                { ActivityId: "lkjlkj", ActivityType: "Lesson", ActivityName: "Endo S1" }
-                            ]
-                        }
-                    ]
-                },
-                {
-                    ModuleId: "999897sad9sahsajkfh",
-                    ModuleName: "Local Analgesia",
-                    Topics: [
-                        {
-                            TopicId: "1932898hshdkljas",
-                            TopicName: "Local Analgesia T1",
-                            Activities: [
-                                { ActivityId: "00009090dasdasd", ActivityType: "Simulation", ActivityName: "Local Analgesia L1" },
-                                { ActivityId: "uioiiuop12i3po", ActivityType: "Lesson", ActivityName: "Local Analgesia S1" }
-                            ]
-                        }
-                    ]
-                }
-            ]
-        },
-        {
-            AreaId: 789012,
-            AreaName: "Nursing",
-            Modules: [
-                {
-                    ModuleId: "456789xyz",
-                    ModuleName: "Anatomy & Physiology",
-                    Topics: [
-                        {
-                            TopicId: "456abcedg",
-                            TopicName: "Bones",
-                            Activities: [
-                                { ActivityId: "a1b2c3d4", ActivityType: "Lesson", ActivityName: "Bone Care" },
-                                { ActivityId: "e5f6g7h8", ActivityType: "Simulation", ActivityName: "Bone Health" }
-                            ]
-                        },
-                        {
-                            TopicId: "456abcedh",
-                            TopicName: "Muscles",
-                            Activities: [
-                                { ActivityId: "i9j0k1l2", ActivityType: "Lesson", ActivityName: "Facial Muscles" }
-                            ]
-                        }
-                    ]
-                }
-            ]
-        }
-    ]
-};
-      
-function createZoomableSunburst(data) {
-    // Specify the chart’s dimensions.
-    const width = 928;
-    const height = width;
-    const radius = width / 6;    
-    // Transform the input data into a hierarchical format
+function renderZoomableSunburst(data) {
+    // Transform data into a hierarchical structure for D3
     const hierarchyData = {
-        name: "Areas",
-        children: data.Areas.map(area => ({
-            name: area.AreaName,
-            children: area.Modules.map(module => ({
-                name: module.ModuleName,
-                children: module.Topics.map(topic => ({
-                    name: topic.TopicName,
-                    children: topic.Activities.map(activity => ({
-                        name: activity.ActivityName,
-                        value: 1  // Assign a value of 1 to each activity for size
-                    })),
-                    value: topic.Activities.length  // Assign the number of activities to the topic
-                })),
-                value: module.Topics.reduce((sum, topic) => sum + topic.Activities.length, 0) // Total activities in the module
-            })),
-            value: area.Modules.reduce((sum, module) => sum + module.Topics.reduce((tSum, topic) => tSum + topic.Activities.length, 0), 0) // Total activities in the area
+        name: "Root",
+        children: data.map(area => ({
+            name: area.externalTitle || "Unnamed Area",
+            children: area.children.map(module => ({
+                name: module.externalTitle || "Unnamed Module",
+                children: module.children.map(topic => ({
+                    name: topic.externalTitle || "Unnamed Topic",
+                    children: topic.children.map(activity => ({
+                        name: activity.externalTitle || "Unnamed Activity",
+                        value: 1
+                    }))
+                }))
+            }))
         }))
     };
-    // Create the color scale.
-    const color = d3.scaleOrdinal(d3.quantize(d3.interpolateRainbow, hierarchyData.children.length + 1));
 
-    // Compute the layout.
-    const hierarchy = d3.hierarchy(hierarchyData)
-        .sum(d => d.value || 0)
+    // Set up chart dimensions
+    const width = 1000;
+    const height = width;
+    const radius = width / 6;
+
+    // Create the color scale for each level in the hierarchy
+    const colorByDepth = d3.scaleOrdinal()
+        .domain([1, 2, 3, 4])
+        .range(["#ADD8E6", "#00008B", "#800080", "#008000"]);
+
+    // Compute the layout
+    const root = d3.hierarchy(hierarchyData)
+        .sum(d => d.value || 1)
         .sort((a, b) => b.value - a.value);
-    const root = d3.partition()
-        .size([2 * Math.PI, hierarchy.height + 1])
-        (hierarchy);
+
+    d3.partition().size([2 * Math.PI, root.height + 1])(root);
+
+    // Set each node's current position
     root.each(d => d.current = d);
 
-    // Create the arc generator.
+    // Set up the SVG container
+    const svg = d3.select("#platcon-graph-container")
+        .append("svg")
+        .attr("viewBox", [-width / 2, -width / 2, width, width])
+        .style("font", "10px sans-serif");
+
+    // Create an arc generator
     const arc = d3.arc()
         .startAngle(d => d.x0)
         .endAngle(d => d.x1)
@@ -267,31 +194,25 @@ function createZoomableSunburst(data) {
         .innerRadius(d => d.y0 * radius)
         .outerRadius(d => Math.max(d.y0 * radius, d.y1 * radius - 1));
 
-    // Create the SVG container.
-    const svg = d3.create("svg")
-        .attr("viewBox", [-width / 2, -height / 2, width, width])
-        .style("font", "10px sans-serif");
-
-    // Append the arcs.
+    // Append arcs for each node
     const path = svg.append("g")
         .selectAll("path")
         .data(root.descendants().slice(1))
         .join("path")
-        .attr("class", "arc")
-        .attr("fill", d => { while (d.depth > 1) d = d.parent; return color(d.data.name); })
-        .attr("fill-opacity", d => arcVisible(d.current) ? (d.children ? 0.6 : 0.4) : 0)
-        .attr("pointer-events", d => arcVisible(d.current) ? "auto" : "none")
+        .attr("fill", d => colorByDepth(d.depth)) // Color based on depth
+        .attr("fill-opacity", d => d.children ? 0.6 : 0.4)
+        .attr("pointer-events", d => d.children ? "auto" : "none")
         .attr("d", d => arc(d.current));
 
-    // Make them clickable if they have children.
+    // Make nodes clickable if they have children
     path.filter(d => d.children)
         .style("cursor", "pointer")
         .on("click", clicked);
 
-    const format = d3.format(",d");
     path.append("title")
-        .text(d => `${d.ancestors().map(d => d.data.name).reverse().join("/")}\n${format(d.value)}`);
+        .text(d => `${d.ancestors().map(d => d.data.name).reverse().join(" > ")}\n${d.value}`);
 
+    // Add labels to the arcs
     const label = svg.append("g")
         .attr("pointer-events", "none")
         .attr("text-anchor", "middle")
@@ -304,6 +225,7 @@ function createZoomableSunburst(data) {
         .attr("transform", d => labelTransform(d.current))
         .text(d => d.data.name);
 
+    // Circle in the center for zoom-out functionality
     const parent = svg.append("circle")
         .datum(root)
         .attr("r", radius)
@@ -311,19 +233,7 @@ function createZoomableSunburst(data) {
         .attr("pointer-events", "all")
         .on("click", clicked);
 
-    // Immediately render all child nodes of the top level
-    root.each(d => {
-        if (d.depth === 1) {  // For top-level nodes
-            d.target = {
-                x0: d.x0,
-                x1: d.x1,
-                y0: d.y0,
-                y1: d.y1
-            };
-        }
-    });
-
-    // Handle zoom on click.
+    // Click event handler for zooming
     function clicked(event, p) {
         parent.datum(p.parent || root);
 
@@ -336,6 +246,7 @@ function createZoomableSunburst(data) {
 
         const t = svg.transition().duration(750);
 
+        // Transition for arcs
         path.transition(t)
             .tween("data", d => {
                 const i = d3.interpolate(d.current, d.target);
@@ -348,13 +259,15 @@ function createZoomableSunburst(data) {
             .attr("pointer-events", d => arcVisible(d.target) ? "auto" : "none")
             .attrTween("d", d => () => arc(d.current));
 
+        // Transition for labels
         label.filter(function(d) {
-            return +this.getAttribute("fill-opacity") || labelVisible(d.target);
-        }).transition(t)
+                return +this.getAttribute("fill-opacity") || labelVisible(d.target);
+            }).transition(t)
             .attr("fill-opacity", d => +labelVisible(d.target))
             .attrTween("transform", d => () => labelTransform(d.current));
     }
 
+    // Visibility functions for arcs and labels
     function arcVisible(d) {
         return d.y1 <= 3 && d.y0 >= 1 && d.x1 > d.x0;
     }
@@ -363,37 +276,39 @@ function createZoomableSunburst(data) {
         return d.y1 <= 3 && d.y0 >= 1 && (d.y1 - d.y0) * (d.x1 - d.x0) > 0.03;
     }
 
+    // Label transform for proper positioning
     function labelTransform(d) {
         const x = (d.x0 + d.x1) / 2 * 180 / Math.PI;
         const y = (d.y0 + d.y1) / 2 * radius;
         return `rotate(${x - 90}) translate(${y},0) rotate(${x < 180 ? 0 : 180})`;
     }
-    d3.select("#graph-container").append(() => svg.node());
-    //return svg.node();
 }
 
 function renderForceDirectedTree(data) {
-    // Convert data to a hierarchical format
-    const hierarchicalData = {
+    // Transform the flat structure into a hierarchical format for D3
+    const hierarchyData = {
         name: "Root",
-        children: data.Areas.map(area => ({
-            name: area.AreaName,
-            children: area.Modules.map(module => ({
-                name: module.ModuleName,
-                children: module.Topics.map(topic => ({
-                    name: topic.TopicName,
-                    children: topic.Activities.map(activity => ({
-                        name: activity.ActivityName
-                    }))
-                }))
-            }))
+        children: data.map(area => ({
+            name: area.externalTitle || "Unnamed Area",
+            children: area.children.map(module => ({
+                name: module.externalTitle || "Unnamed Module",
+                children: module.children.map(topic => ({
+                    name: topic.externalTitle || "Unnamed Topic",
+                    children: topic.children.map(activity => ({
+                        name: activity.externalTitle || "Unnamed Activity",
+                        value: 1
+                    })),
+                    value: topic.children.length
+                })),
+                value: module.children.reduce((sum, topic) => sum + topic.children.length, 0)
+            })),
+            value: area.children.reduce((sum, module) => sum + module.children.reduce((tSum, topic) => tSum + topic.children.length, 0), 0)
         }))
     };
 
-    // Set dimensions for the graph
-    const width = 960;
-    const height = 600;
-
+    // Set dimensions and create SVG container
+    const width = 1800;
+    const height = 1024;
     const svg = d3.select("#platcon-graph-container")
         .append("svg")
         .attr("width", width)
@@ -402,30 +317,36 @@ function renderForceDirectedTree(data) {
         .style("max-width", "100%")
         .style("height", "auto");
 
-    // Create a group for content (for zoom and pan)
     const g = svg.append("g");
 
-    // Set up zoom behavior
     const zoom = d3.zoom()
         .scaleExtent([0.1, 3])
-        .on("zoom", (event) => {
-            g.attr("transform", event.transform);
-        });
+        .on("zoom", (event) => g.attr("transform", event.transform));
 
     svg.call(zoom);
 
     // Create hierarchy and nodes
-    const root = d3.hierarchy(hierarchicalData);
-    root.count(); // Calculates number of descendants for each node and stores it in node.value
+    const root = d3.hierarchy(hierarchyData);
+    root.count();
 
     const nodes = root.descendants();
-    const links = root.links(); // This will create links based on hierarchy
+    const links = root.links();
 
-    // Simulation with forceLink to maintain hierarchical links
+    // Simulation with forces tailored for top-level node spacing
     const simulation = d3.forceSimulation(nodes)
-        .force("charge", d3.forceManyBody().strength(-100))
-        .force("link", d3.forceLink(links).distance(100).id(d => d.data.name))
-        .force("center", d3.forceCenter(width / 2, height / 2));
+        .force("link", d3.forceLink(links)
+            .id(d => d.id)
+            .distance(d => d.source.depth === 1 ? 300 : 100 + d.source.depth * 50)  // Increase distance for top-level nodes
+            .strength(1))
+        .force("charge", d3.forceManyBody().strength(-300))
+        .force("center", d3.forceCenter(width / 2, height / 2))
+        .force("collide", d3.forceCollide().radius(d => 10 + Math.sqrt(d.value) * 5))
+        .force("radial", d3.forceRadial(300, width / 2, height / 2).strength(d => d.depth === 1 ? 0.8 : 0)); // Radial force for top-level nodes
+
+    // Define color scale by depth
+    const colorByDepth = d3.scaleOrdinal()
+        .domain([1, 2, 3, 4])  // Depth levels
+        .range(["#ADD8E6", "#00008B", "#800080", "#008000"]);  // Light blue, dark blue, purple, green
 
     // Draw links (lines)
     const link = g.append("g")
@@ -452,16 +373,17 @@ function renderForceDirectedTree(data) {
             .on("end", dragended));
 
     node.append("circle")
-        .attr("r", d => Math.sqrt(d.value) * 5)  // Radius based on number of descendants
-        .attr("fill", d => d.children ? "lightblue" : "lightgreen");
+        .attr("r", d => 5 + Math.sqrt(d.value) * 3)  // Radius based on number of descendants
+        .attr("fill", d => colorByDepth(d.depth));  // Set color based on depth
 
+    // Adjust text positioning to account for node size and avoid overlap
     node.append("text")
         .attr("dy", ".35em")
-        .attr("x", d => d.children ? -13 : 13)
+        .attr("x", d => d.children ? -15 - Math.sqrt(d.value) * 3 : 15 + Math.sqrt(d.value) * 3)
         .style("text-anchor", d => d.children ? "end" : "start")
+        .style("font-size", d => `${10 + Math.sqrt(d.value)}px`)
         .text(d => d.data.name);
 
-    // Update link and node positions on each tick
     simulation.on("tick", () => {
         link
             .attr("x1", d => d.source.x)
@@ -472,7 +394,6 @@ function renderForceDirectedTree(data) {
         node.attr("transform", d => `translate(${d.x}, ${d.y})`);
     });
 
-    // Drag functions
     function dragstarted(event, d) {
         if (!event.active) simulation.alphaTarget(0.3).restart();
         d.fx = d.x;
