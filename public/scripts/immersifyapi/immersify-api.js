@@ -128,6 +128,20 @@ export async function getActivityBrondons(activities, limit = 10) {
     return brondons;
 }
 
+export async function getTreeStructure() {
+    const modulesUrl = `${baseURL}/brondon/allActivitiesWithStructureTree`;
+    const modulesResponse = await fetch(modulesUrl, {
+        method: 'GET',
+        headers: { 
+            'Authorization': `Bearer ${jwtoken}`,
+            'Content-Type': 'application/json' 
+        }
+    });
+    const data = await modulesResponse.json();
+    return data;
+}
+
+
 export async function imAPIGet(endpointURL) {
     const apiURL = `${baseURL}/${endpointURL}`;
     const apiResponse = await fetch(apiURL, {

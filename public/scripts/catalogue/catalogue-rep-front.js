@@ -1,7 +1,7 @@
 import { canAccess } from '../access-check.js';
 import { initializeDarkMode } from '../themes/dark-mode.js';
 import { Login, getPlayerEmailAddr } from '../PlayFabManager.js';
-import { waitForJWT, imAPIGet, getAreas, getModules, getTopics, getActivities, getTopicBrondons } from '../immersifyapi/immersify-api.js';
+import { waitForJWT, imAPIGet, getAreas, getModules, getTopics, getActivities, getTreeStructure, getTopicBrondons } from '../immersifyapi/immersify-api.js';
 
 // D3 for graphs :)
 import * as d3 from "https://cdn.jsdelivr.net/npm/d3@7/+esm";
@@ -24,20 +24,58 @@ window.onload = function() {
 
 async function getCatalogueReport(){
     document.getElementById('get-rep-btn').value = "Getting Report...";
-    const [areas, modules, topics, activities] = await Promise.all([getAreas(), getModules(), getTopics(), getActivities()]);
-    console.log("got all areas:\n", areas, "\nmodules:\n", modules, "\ntopics:\n" , topics, "\nactivities:\n", activities);
+    //const [areas, modules, topics, activities] = await Promise.all([getAreas(), getModules(), getTopics(), getActivities()]);
+    //console.log("got all areas:\n", areas, "\nmodules:\n", modules, "\ntopics:\n" , topics, "\nactivities:\n", activities);
 
-    setAreaCount(areas);
-    setModulesCount(modules);
-    setTopicsCount(topics);
-    setActivities(activities);
-    const totalsData = getTotalsData(areas, modules, topics, activities);
-    populateTotalsTable(totalsData);
+    const treeStructure = await getTreeStructure();
+    console.log(treeStructure);
+    const areaBrondons = treeStructure.inAreas;
+    const moduleBrondons = getModulesFromAreas(areaBrondons);
+    const topicBrondons = getTopicsFromModules(moduleBrondons);
+    const floatingTopicBrondons = treeStructure.inFloatingTopics;
+    const testTopicBrondons = treeStructure.inTestTopics;
+
+    const activityBrondons = getActivitiesFromTopics(topicBrondons);
+    console.log(activityBrondons);
+
+    setAreaCount(areaBrondons);
+    setModulesCount(moduleBrondons);
+    setTopicsCount(topicBrondons, floatingTopicBrondons, testTopicBrondons);
+    setActivities(activityBrondons);
+    populateTotalsTable(areaBrondons);
 
     document.getElementById('get-rep-btn').value = "Get Report";
     
     doConfetti();
     renderForceDirectedTree(data);
+}
+
+function getModulesFromAreas(areas){
+    let modules = [];
+    areas.forEach(area => modules.push(...area.children));
+    return modules;
+}
+function getTopicsFromModules(modules){
+    let topics = [];
+    modules.forEach(module => topics.push(...module.children));
+    return topics;
+}
+function getActivitiesFromTopics(topics){
+    let activities = [];
+    topics.forEach(topic => activities.push(...topic.children));
+    return activities;
+}
+function getLessonsFromActivities(activities){
+    return activities.filter(activity => activity.type == 'lesson');
+}
+function getExperiencesFromActivities(activities){
+    return activities.filter(activity => activity.type == 'experience');
+}
+function getTopicQuizzesFromActivities(activities){
+    return activities.filter(activity => activity.type == 'topicquiz');
+}
+function getFlashcardsFromActivities(activities){
+    return activities.filter(activity => activity.type == 'flashcarddeck');
 }
 
 function setAreaCount(areas){
@@ -46,58 +84,56 @@ function setAreaCount(areas){
 function setModulesCount(modules){
     document.getElementById('modules-count').innerHTML = `<b>Modules:</b>${modules.length}`;
 }
-function setTopicsCount(topics){
-    document.getElementById('topics-count').innerHTML = `<b>Topics:</b>${topics.length}`;
+function setTopicsCount(topics, floatingTopics, testTopics){
+    let totalTopics = topics.length+floatingTopics.length+testTopics.length;
+    document.getElementById('topics-count').innerHTML = `<b>Topics:</b><br/>
+    Normal topics: ${topics.length}<br/>
+    Floating topics: ${floatingTopics.length}<br/>
+    Test topics: ${testTopics.length}<br/>
+    Total: ${totalTopics}`;
 }
 function setActivities(activities){
     document.getElementById('activities-count').innerHTML = `<b>Activities:</b>${activities.length}`;
 }
 
 
-function getTotalsData(areas, modules, topics, activities) {
-    // Initialize the array to store results
-    let totalsData = [];
-
-    areas.forEach(area => {
-        // Filter modules and topics based on the areaFlag matching the area slug
-        let areaModules = modules.filter(moduleEntry =>
-            moduleEntry.brondons.some(brondon => brondon.areaFlag === area.slug)
-        );
-
-        let areaTopics = topics.filter(topicEntry =>
-            topicEntry.brondons.some(brondon => brondon.areaFlag === area.slug)
-        );
-
-        // Create the object for this area
-        let totalDataObject = {
-            area: area.slug,
-            modules: areaModules,
-            topics: areaTopics
-        };
-
-        // Push the result to the totalsData array
-        totalsData.push(totalDataObject);
-    });
-
-    return totalsData;
-}
-
-function populateTotalsTable(totalsData){
+function populateTotalsTable(areaStructure){
     const totalsTable = document.getElementById('totals-table');
-    totalsData.forEach(data =>{
+    areaStructure.forEach(area => {
         let row = totalsTable.insertRow();
 
         let areaCell = row.insertCell();
-        areaCell.innerHTML = data.area;
+        areaCell.innerHTML = area.externalTitle;
 
+        let moduleBrondons = area.children;
         let modulesCell = row.insertCell();
-        modulesCell.innerHTML = data.modules.length;
+        modulesCell.innerHTML = moduleBrondons.length;
 
+        let topicBrondons = getTopicsFromModules(moduleBrondons);
         let topicsCell = row.insertCell();
-        topicsCell.innerHTML = data.topics.length;
-    })
-}
+        topicsCell.innerHTML = topicBrondons.length;
 
+        let activityBrondons = getActivitiesFromTopics(topicBrondons);
+        let activityCell = row.insertCell();
+        activityCell.innerHTML = activityBrondons.length;
+
+        let lessons = getLessonsFromActivities(activityBrondons);
+        let lessonCell = row.insertCell();
+        lessonCell.innerHTML = lessons.length;
+
+        let topicQuizzes = getTopicQuizzesFromActivities(activityBrondons);
+        let quizCell = row.insertCell();
+        quizCell.innerHTML = topicQuizzes.length;
+
+        let flashcards = getFlashcardsFromActivities(activityBrondons);
+        let flashcardCell = row.insertCell();
+        flashcardCell.innerHTML = flashcards.length;
+
+        let experiences = getExperiencesFromActivities(activityBrondons);
+        let simsCell = row.insertCell();
+        simsCell.innerHTML = experiences.length;
+    });
+}
 
 // TEST DATA
 const data = {
@@ -108,14 +144,19 @@ const data = {
             Modules: [
                 {
                     ModuleId: "123345asd",
-                    ModuleName: "Morphology",
+                    ModuleName: "Oral Anatomy & Biology",
                     Topics: [
                         {
                             TopicId: "123abcedf",
-                            TopicName: "Molars",
+                            TopicName: "Tooth Morphology",
                             Activities: [
                                 { ActivityId: "abcedasd123", ActivityType: "Simulation", ActivityName: "DentalId" },
-                                { ActivityId: "nkjhyuay1212", ActivityType: "Lesson", ActivityName: "Dentition" }
+                                { ActivityId: "nkjhyuay1212", ActivityType: "Lesson", ActivityName: "Maxillary Central Incisor" },
+                                { ActivityId: "nkjh5551216", ActivityType: "Lesson", ActivityName: "Maxillary Lateral Incisor" },
+                                { ActivityId: "nkjh55512188", ActivityType: "Lesson", ActivityName: "Maxillary Canine" },
+                                { ActivityId: "nkjh5551210101", ActivityType: "Lesson", ActivityName: "Maxillary 1st Premolar" },
+                                { ActivityId: "llolkokiasd123", ActivityType: "Lesson", ActivityName: "Maxillary 2nd Premolar" },
+                                { ActivityId: "555asdasd987", ActivityType: "Lesson", ActivityName: "Maxillary 1st Molar" },
                             ]
                         }
                     ]
@@ -449,5 +490,3 @@ function renderForceDirectedTree(data) {
         d.fy = null;
     }
 }
-
-
