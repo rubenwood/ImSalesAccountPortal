@@ -50,7 +50,7 @@ async function initAcademicAreaDD(selectElement) {
         //
         if (academicAreaCMS) {            
             academicAreaCMS.forEach(item => {
-                if(item.slug != "dentistry"){ return; } // TODO: change this (eventually)
+                //if(item.slug != "dentistry"){ return; } // TODO: change this (eventually)
                 const option = document.createElement('option');
                 option.value = item.id;
                 option.textContent = item.slug;
