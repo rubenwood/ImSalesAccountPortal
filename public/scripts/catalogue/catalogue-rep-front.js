@@ -1,7 +1,7 @@
 import { canAccess } from '../access-check.js';
 import { initializeDarkMode } from '../themes/dark-mode.js';
 import { Login, getPlayerEmailAddr } from '../PlayFabManager.js';
-import { waitForJWT, imAPIGet, getAreas, getModules, getTopics, getActivities, getTreeStructure, getTopicBrondons } from '../immersifyapi/immersify-api.js';
+import { waitForJWT, imAPIGet, imAPIPost, getAreas, getModules, getTopics, getActivities, getTreeStructure, getTopicBrondons } from '../immersifyapi/immersify-api.js';
 
 // D3 for graphs :)
 import * as d3 from "https://cdn.jsdelivr.net/npm/d3@7/+esm";
@@ -45,11 +45,13 @@ async function getCatalogueReport(){
     setActivities(activityBrondons);
     populateTotalsTable(areaBrondons);
 
+    // need to store a snapshot of this data per month
+    
+
     document.getElementById('get-rep-btn').value = "Get Report";
     
     doConfetti();
     renderForceDirectedTree(TreeStructure.inAreas);
-    //renderZoomableSunburst(TreeStructure.inAreas);
 }
 
 function getModulesFromAreas(areas){
@@ -79,6 +81,19 @@ function getTopicQuizzesFromActivities(activities){
 function getFlashcardsFromActivities(activities){
     return activities.filter(activity => activity.type == 'flashcarddeck');
 }
+async function getPointsFromLessons(lessons){
+    // lesson id 4a494cd3-2d84-4351-8979-f39508ad6d07
+    let ids = lessons.map(lesson => lesson.structureId);
+    let lessonDataReqs = [];
+    ids.forEach(id => lessonDataReqs.push(imAPIPost(`lessons/${id}/allData`, { languageId:"english-us" })) );
+    const lessonDataRes = await Promise.all(lessonDataReqs);
+    let lessonJSONs = [];
+    lessonDataRes.forEach(res => lessonJSONs.push(JSON.parse(res)));
+
+    let points = [];
+    lessonJSONs.forEach(lesson => { if(lesson.points!=undefined && lesson.points.length>0){ console.log(lesson.points); } });
+    return points;
+}
 
 function setAreaCount(areas){
     document.getElementById('areas-count').innerHTML = `<b>Areas:</b>${areas.length}`;
@@ -98,9 +113,9 @@ function setActivities(activities){
     document.getElementById('activities-count').innerHTML = `<b>Activities:</b>${activities.length}`;
 }
 
-function populateTotalsTable(areaStructure){
+async function populateTotalsTable(areaStructure){
     const totalsTable = document.getElementById('totals-table');
-    areaStructure.forEach(area => {
+    for(const area of areaStructure) {
         let row = totalsTable.insertRow();
 
         let areaCell = row.insertCell();
@@ -122,6 +137,9 @@ function populateTotalsTable(areaStructure){
         let lessonCell = row.insertCell();
         lessonCell.innerHTML = lessons.length;
 
+        let points = await getPointsFromLessons(lessons);
+        console.log(points);
+
         let subheadingsCell = row.insertCell();
         subheadingsCell.innerHTML = 0;
 
@@ -136,7 +154,7 @@ function populateTotalsTable(areaStructure){
         let experiences = getExperiencesFromActivities(activityBrondons);
         let simsCell = row.insertCell();
         simsCell.innerHTML = experiences.length;
-    });
+    }
 }
   
 
@@ -319,6 +337,7 @@ function renderForceDirectedTree(data) {
 
     const g = svg.append("g");
 
+    // Set up zoom behavior
     const zoom = d3.zoom()
         .scaleExtent([0.1, 3])
         .on("zoom", (event) => g.attr("transform", event.transform));
@@ -336,17 +355,17 @@ function renderForceDirectedTree(data) {
     const simulation = d3.forceSimulation(nodes)
         .force("link", d3.forceLink(links)
             .id(d => d.id)
-            .distance(d => d.source.depth === 1 ? 300 : 100 + d.source.depth * 50)  // Increase distance for top-level nodes
+            .distance(d => d.source.depth === 1 ? 300 : 100 + d.source.depth * 50)
             .strength(1))
         .force("charge", d3.forceManyBody().strength(-300))
         .force("center", d3.forceCenter(width / 2, height / 2))
         .force("collide", d3.forceCollide().radius(d => 10 + Math.sqrt(d.value) * 5))
-        .force("radial", d3.forceRadial(300, width / 2, height / 2).strength(d => d.depth === 1 ? 0.8 : 0)); // Radial force for top-level nodes
+        .force("radial", d3.forceRadial(300, width / 2, height / 2).strength(d => d.depth === 1 ? 0.8 : 0));
 
     // Define color scale by depth
     const colorByDepth = d3.scaleOrdinal()
-        .domain([1, 2, 3, 4])  // Depth levels
-        .range(["#ADD8E6", "#00008B", "#800080", "#008000"]);  // Light blue, dark blue, purple, green
+        .domain([1, 2, 3, 4])
+        .range(["#ADD8E6", "#00008B", "#800080", "#008000"]);
 
     // Draw links (lines)
     const link = g.append("g")
@@ -370,13 +389,13 @@ function renderForceDirectedTree(data) {
         .call(d3.drag()
             .on("start", dragstarted)
             .on("drag", dragged)
-            .on("end", dragended));
+            .on("end", dragended))
+        .on("click", (event, d) => zoomToNode(d));  // Add click event to pan to node
 
     node.append("circle")
-        .attr("r", d => 5 + Math.sqrt(d.value) * 3)  // Radius based on number of descendants
-        .attr("fill", d => colorByDepth(d.depth));  // Set color based on depth
+        .attr("r", d => 5 + Math.sqrt(d.value) * 3)
+        .attr("fill", d => colorByDepth(d.depth));
 
-    // Adjust text positioning to account for node size and avoid overlap
     node.append("text")
         .attr("dy", ".35em")
         .attr("x", d => d.children ? -15 - Math.sqrt(d.value) * 3 : 15 + Math.sqrt(d.value) * 3)
@@ -393,6 +412,21 @@ function renderForceDirectedTree(data) {
 
         node.attr("transform", d => `translate(${d.x}, ${d.y})`);
     });
+
+    function zoomToNode(d) {
+        // Calculate the translate coordinates to center the clicked node
+        const scale = 1;  // You can adjust this for additional zoom if desired
+        const translateX = width / 2 - d.x * scale;
+        const translateY = height / 2 - d.y * scale;
+
+        // Apply the zoom transform with a smooth transition
+        svg.transition()
+            .duration(750)
+            .call(
+                zoom.transform,
+                d3.zoomIdentity.translate(translateX, translateY).scale(scale)
+            );
+    }
 
     function dragstarted(event, d) {
         if (!event.active) simulation.alphaTarget(0.3).restart();
