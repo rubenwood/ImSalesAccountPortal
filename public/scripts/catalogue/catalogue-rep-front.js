@@ -8,6 +8,7 @@ import * as d3 from "https://cdn.jsdelivr.net/npm/d3@7/+esm";
 
 const doConfetti = () => { confetti({particleCount: 100, spread: 70, origin: { y: 0.6 }}); }
 
+// ON PAGE LOAD
 document.addEventListener('DOMContentLoaded', async () => {
     // setup dark mode toggle
     initializeDarkMode('darkModeSwitch');
@@ -22,11 +23,16 @@ window.onload = function() {
     document.getElementById('loginModal').style.display = 'block';
 };
 
+
+// DATA
 let TreeStructure;
+let GeneralData = {
+    totalAreas:0
+}
+
+// POPULATION
 async function getCatalogueReport(){
     document.getElementById('get-rep-btn').value = "Getting Report...";
-    //const [areas, modules, topics, activities] = await Promise.all([getAreas(), getModules(), getTopics(), getActivities()]);
-    //console.log("got all areas:\n", areas, "\nmodules:\n", modules, "\ntopics:\n" , topics, "\nactivities:\n", activities);
 
     TreeStructure = await getTreeStructure();
     console.log(TreeStructure);
@@ -35,18 +41,14 @@ async function getCatalogueReport(){
     const topicBrondons = getTopicsFromModules(moduleBrondons);
     const floatingTopicBrondons = TreeStructure.inFloatingTopics;
     const testTopicBrondons = TreeStructure.inTestTopics;
-
     const activityBrondons = getActivitiesFromTopics(topicBrondons);
-    console.log(activityBrondons);
 
-    setAreaCount(areaBrondons);
-    setModulesCount(moduleBrondons);
     setTopicsCount(topicBrondons, floatingTopicBrondons, testTopicBrondons);
-    setActivities(activityBrondons);
+
+    setGeneralData(areaBrondons);
     populateTotalsTable(areaBrondons);
 
-    // need to store a snapshot of this data per month
-    
+    // need to store a snapshot of this data per month    
 
     document.getElementById('get-rep-btn').value = "Get Report";
     
@@ -95,12 +97,6 @@ async function getPointsFromLessons(lessons){
     return points;
 }
 
-function setAreaCount(areas){
-    document.getElementById('areas-count').innerHTML = `<b>Areas:</b>${areas.length}`;
-}
-function setModulesCount(modules){
-    document.getElementById('modules-count').innerHTML = `<b>Modules:</b>${modules.length}`;
-}
 function setTopicsCount(topics, floatingTopics, testTopics){
     let totalTopics = topics.length+floatingTopics.length+testTopics.length;
     document.getElementById('topics-count').innerHTML = `<b>Topics:</b><br/>
@@ -109,52 +105,131 @@ function setTopicsCount(topics, floatingTopics, testTopics){
     Test topics: ${testTopics.length}<br/>
     Total: ${totalTopics}`;
 }
-function setActivities(activities){
-    document.getElementById('activities-count').innerHTML = `<b>Activities:</b>${activities.length}`;
+
+function setGeneralData(areaBrondons){
+    GeneralData.PerAreaData = [];
+
+    GeneralData.totalAreas = areaBrondons.length;
+    GeneralData.totalModules = 0;
+    GeneralData.totalTopics = 0;
+    GeneralData.totalActivities = 0;
+    GeneralData.totalLessons = 0;
+    GeneralData.totalSubheadings = 0;
+    GeneralData.totalTopicQuizzes = 0;
+    GeneralData.totalFlashcards = 0;
+    GeneralData.totalExperiences = 0;
+
+    for(const area of areaBrondons) {
+        let moduleBrondons = area.children;
+        let topicBrondons = getTopicsFromModules(moduleBrondons);
+        let activityBrondons = getActivitiesFromTopics(topicBrondons);
+        let lessons = getLessonsFromActivities(activityBrondons);
+        let topicQuizzes = getTopicQuizzesFromActivities(activityBrondons);
+        let flashcards = getFlashcardsFromActivities(activityBrondons);
+        let experiences = getExperiencesFromActivities(activityBrondons);
+
+        // Per Area Data
+        let AreaData = {
+            structureId:area.structureId,
+            externalTitle:area.externalTitle,
+            totalModules:moduleBrondons.length,
+            totalTopics:topicBrondons.length,
+            totalActivities:activityBrondons.length,
+            totalLessons:lessons.length,
+            totalSubheadings:0,
+            totalTopicQuizzes:topicQuizzes.length,
+            totalFlashcards:flashcards.length,
+            totalExperiences:experiences.length
+        }
+        GeneralData.PerAreaData.push(AreaData);        
+        
+        // Overall Data
+        GeneralData.totalModules += moduleBrondons.length;
+        GeneralData.totalTopics += topicBrondons.length;
+        GeneralData.totalActivities += activityBrondons.length;
+        GeneralData.totalLessons += lessons.length;
+        GeneralData.totalSubheadings += 0;
+        GeneralData.totalTopicQuizzes += topicQuizzes.length;
+        GeneralData.totalFlashcards += flashcards.length;
+        GeneralData.totalExperiences += experiences.length;
+    }
 }
+
 
 async function populateTotalsTable(areaStructure){
     const totalsTable = document.getElementById('totals-table');
-    for(const area of areaStructure) {
+
+    for(const areaData of GeneralData.PerAreaData) {
         let row = totalsTable.insertRow();
+        row.insertCell();
 
         let areaCell = row.insertCell();
-        areaCell.innerHTML = area.externalTitle;
+        areaCell.innerHTML = areaData.externalTitle;
 
-        let moduleBrondons = area.children;
         let modulesCell = row.insertCell();
-        modulesCell.innerHTML = moduleBrondons.length;
+        modulesCell.innerHTML = areaData.totalModules;
 
-        let topicBrondons = getTopicsFromModules(moduleBrondons);
         let topicsCell = row.insertCell();
-        topicsCell.innerHTML = topicBrondons.length;
+        topicsCell.innerHTML = areaData.totalTopics;
 
-        let activityBrondons = getActivitiesFromTopics(topicBrondons);
         let activityCell = row.insertCell();
-        activityCell.innerHTML = activityBrondons.length;
+        activityCell.innerHTML = areaData.totalActivities;
 
-        let lessons = getLessonsFromActivities(activityBrondons);
         let lessonCell = row.insertCell();
-        lessonCell.innerHTML = lessons.length;
-
-        let points = await getPointsFromLessons(lessons);
-        console.log(points);
+        lessonCell.innerHTML = areaData.totalLessons;
+        
+        //
+        //let points = await getPointsFromLessons(lessons);
+        //console.log(points);
 
         let subheadingsCell = row.insertCell();
         subheadingsCell.innerHTML = 0;
 
-        let topicQuizzes = getTopicQuizzesFromActivities(activityBrondons);
         let quizCell = row.insertCell();
-        quizCell.innerHTML = topicQuizzes.length;
+        quizCell.innerHTML = areaData.totalTopicQuizzes
 
-        let flashcards = getFlashcardsFromActivities(activityBrondons);
         let flashcardCell = row.insertCell();
-        flashcardCell.innerHTML = flashcards.length;
+        flashcardCell.innerHTML = areaData.totalFlashcards;
 
-        let experiences = getExperiencesFromActivities(activityBrondons);
         let simsCell = row.insertCell();
-        simsCell.innerHTML = experiences.length;
+        simsCell.innerHTML = areaData.totalExperiences;
     }
+
+    // spacing row
+    let emptyRow = totalsTable.insertRow();
+    let spacingCell = emptyRow.insertCell();
+    spacingCell.innerHTML = `-----------`;
+
+    let totalRow = totalsTable.insertRow();
+    let totalCell = totalRow.insertCell();
+    totalCell.innerHTML = '<b>TOTALS</b>';    
+
+    let totalAreasCell = totalRow.insertCell();
+    totalAreasCell.innerHTML = GeneralData.totalAreas;
+
+    let totalModulesCell = totalRow.insertCell();
+    totalModulesCell.innerHTML = GeneralData.totalModules;
+
+    let totalTopicsCell = totalRow.insertCell();
+    totalTopicsCell.innerHTML = GeneralData.totalTopics;
+
+    let totalActivitiesCell = totalRow.insertCell();
+    totalActivitiesCell.innerHTML = GeneralData.totalActivities;
+
+    let totalLessonsCell = totalRow.insertCell();
+    totalLessonsCell.innerHTML = GeneralData.totalLessons;
+
+    let totalSubheadingsCell = totalRow.insertCell();
+    totalSubheadingsCell.innerHTML = GeneralData.totalSubheadings;
+
+    let totalTopicQuizzesCell = totalRow.insertCell();
+    totalTopicQuizzesCell.innerHTML = GeneralData.totalTopicQuizzes;
+
+    let totalFlashcardsCell = totalRow.insertCell();
+    totalFlashcardsCell.innerHTML = GeneralData.totalFlashcards;
+
+    let totalExperiencesCell = totalRow.insertCell();
+    totalExperiencesCell.innerHTML = GeneralData.totalExperiences;
 }
   
 
@@ -302,6 +377,7 @@ function renderZoomableSunburst(data) {
     }
 }
 
+// CONTENT MAP
 function renderForceDirectedTree(data) {
     // Transform the flat structure into a hierarchical format for D3
     const hierarchyData = {
