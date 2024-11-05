@@ -1,9 +1,6 @@
 const express = require('express');
 const multer = require('multer');
 const AWS = require('aws-sdk');
-//const { v4: uuidv4 } = require('uuid');
-//const path = require('path');
-//const bodyParser = require('body-parser');
 const jsQR = require('jsqr');
 const { createCanvas, loadImage } = require('canvas');
 require('dotenv').config();
