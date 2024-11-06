@@ -29,6 +29,7 @@ let TreeStructure;
 let GeneralData = {
     totalAreas:0
 }
+let LessonData = {}
 
 // POPULATION
 async function getCatalogueReport(){
@@ -42,10 +43,9 @@ async function getCatalogueReport(){
     const floatingTopicBrondons = TreeStructure.inFloatingTopics;
     const testTopicBrondons = TreeStructure.inTestTopics;
     const activityBrondons = getActivitiesFromTopics(topicBrondons);
-
     setTopicsCount(topicBrondons, floatingTopicBrondons, testTopicBrondons);
 
-    setGeneralData(areaBrondons);
+    await setGeneralData(areaBrondons);
     populateTotalsTable(areaBrondons);
 
     // need to store a snapshot of this data per month    
@@ -54,6 +54,7 @@ async function getCatalogueReport(){
     
     doConfetti();
     renderForceDirectedTree(TreeStructure.inAreas);
+    //setHierarchyData(TreeStructure.inAreas);
 }
 
 function getModulesFromAreas(areas){
@@ -93,9 +94,12 @@ async function getPointsFromLessons(lessons){
     lessonDataRes.forEach(res => lessonJSONs.push(JSON.parse(res)));
 
     let points = [];
-    lessonJSONs.forEach(lesson => { if(lesson.points!=undefined && lesson.points.length>0){ console.log(lesson.points); } });
+    lessonJSONs.forEach(lesson => { 
+        points.push(lesson.points); 
+    });
     return points;
 }
+
 
 function setTopicsCount(topics, floatingTopics, testTopics){
     let totalTopics = topics.length+floatingTopics.length+testTopics.length;
@@ -105,8 +109,7 @@ function setTopicsCount(topics, floatingTopics, testTopics){
     Test topics: ${testTopics.length}<br/>
     Total: ${totalTopics}`;
 }
-
-function setGeneralData(areaBrondons){
+async function setGeneralData(areaBrondons){
     GeneralData.PerAreaData = [];
 
     GeneralData.totalAreas = areaBrondons.length;
@@ -128,6 +131,12 @@ function setGeneralData(areaBrondons){
         let flashcards = getFlashcardsFromActivities(activityBrondons);
         let experiences = getExperiencesFromActivities(activityBrondons);
 
+        let pointsPerLesson = await getPointsFromLessons(lessons);
+        const totalSubheadingsCount = pointsPerLesson.reduce((sum, item) => {
+            return sum + (Array.isArray(item) ? item.length : 0);
+        }, 0);
+        console.log(totalSubheadingsCount);
+
         // Per Area Data
         let AreaData = {
             structureId:area.structureId,
@@ -136,7 +145,7 @@ function setGeneralData(areaBrondons){
             totalTopics:topicBrondons.length,
             totalActivities:activityBrondons.length,
             totalLessons:lessons.length,
-            totalSubheadings:0,
+            totalSubheadings:totalSubheadingsCount,
             totalTopicQuizzes:topicQuizzes.length,
             totalFlashcards:flashcards.length,
             totalExperiences:experiences.length
@@ -148,13 +157,12 @@ function setGeneralData(areaBrondons){
         GeneralData.totalTopics += topicBrondons.length;
         GeneralData.totalActivities += activityBrondons.length;
         GeneralData.totalLessons += lessons.length;
-        GeneralData.totalSubheadings += 0;
+        GeneralData.totalSubheadings += totalSubheadingsCount;
         GeneralData.totalTopicQuizzes += topicQuizzes.length;
         GeneralData.totalFlashcards += flashcards.length;
         GeneralData.totalExperiences += experiences.length;
     }
 }
-
 
 async function populateTotalsTable(areaStructure){
     const totalsTable = document.getElementById('totals-table');
@@ -177,13 +185,9 @@ async function populateTotalsTable(areaStructure){
 
         let lessonCell = row.insertCell();
         lessonCell.innerHTML = areaData.totalLessons;
-        
-        //
-        //let points = await getPointsFromLessons(lessons);
-        //console.log(points);
 
         let subheadingsCell = row.insertCell();
-        subheadingsCell.innerHTML = 0;
+        subheadingsCell.innerHTML = areaData.totalSubheadings;
 
         let quizCell = row.insertCell();
         quizCell.innerHTML = areaData.totalTopicQuizzes
