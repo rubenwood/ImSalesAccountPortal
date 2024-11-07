@@ -50,6 +50,7 @@ async function fetchDevKPIReport() {
             const year = targetDate.getFullYear();
             return getPlayFabDailyTotalsReport(day, month, year);
         });
+
         // Get 30 day retention report
         const playFab30DayReportPromise = getPlayFab30DayReport();
 
@@ -75,30 +76,30 @@ async function fetchDevKPIReport() {
             return response.json();
         });
 
-        // Execture promises (PlayFab & Google)
+        // Execute promises (PlayFab & Google)
         const [playFabDailyTotalsReport, playFab30DayReport, monthlyTotalsReports, googleKPIReport] = await Promise.all([
             Promise.all(playFabDailyTotalsPromises),
             playFab30DayReportPromise,
             Promise.all(playFabMonthlyTotalsPromises),
             googleKPIPromise
         ]);
-        //
         getPlayFabAverageSessionTime(allPlayersSeg.ProfilesInSegment, playFabDailyTotalsReport, monthlyTotalsReports);
 
         // Update retention data
         let retentionDataCell = table.querySelector("#userRetentionPlayfab");
-        let day1Perc = parseInt(playFab30DayReport[1]?.Percent_Retained);
-        let day2Perc = parseInt(playFab30DayReport[2]?.Percent_Retained);
-        let day30Perc = parseInt(playFab30DayReport[30]?.Percent_Retained);
-        let day1DropOff = (day2Perc/day1Perc * 100).toFixed(2); //TODO: check this
+        let day1Perc = parseFloat(playFab30DayReport[1]?.Percent_Retained);
+        let day2Perc = parseFloat(playFab30DayReport[2]?.Percent_Retained);
+        let day30Perc = parseFloat(playFab30DayReport[30]?.Percent_Retained);
+        //let day1DropOff = (day2Perc/day1Perc * 100).toFixed(2);
+
         if (retentionDataCell) {
-            retentionDataCell.innerText = `Day 1: ${playFab30DayReport[1]?.Percent_Retained ?? 'N/A'}%
-            Day 2: ${playFab30DayReport[2]?.Percent_Retained ?? 'N/A'}%
-            Day 30: ${playFab30DayReport[30]?.Percent_Retained ?? 'N/A'}%`;
+            retentionDataCell.innerText = `Day 1: ${day1Perc ?? 'N/A'}%
+            Day 2: ${day2Perc ?? 'N/A'}%
+            Day 30: ${day30Perc ?? 'N/A'}%`;
         }
 
         // Process Monthly Totals Report
-        console.log(monthlyTotalsReports);
+        //console.log(monthlyTotalsReports);
         let MAUs = monthlyTotalsReports.map((report, index) => {
             try{
                 return `<b>${report[0].Ts.replace("T00:00:00.0000000", "")}</b>: ${report[0].Unique_Logins}`;

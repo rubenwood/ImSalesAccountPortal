@@ -1,0 +1,6 @@
+#totals-table, th,td {
+    border: 2px solid;
+    padding: 5px;
+    border-collapse: collapse;
+    text-align: center;
+}

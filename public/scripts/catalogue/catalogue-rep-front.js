@@ -1,6 +1,7 @@
 import { canAccess } from '../access-check.js';
 import { initializeDarkMode } from '../themes/dark-mode.js';
 import { Login, getPlayerEmailAddr } from '../PlayFabManager.js';
+import { fetchUsersTopicsInFeed } from '../userdata/user-data-utils.js';
 import { waitForJWT, imAPIGet, imAPIPost, getAreas, getModules, getTopics, getActivities, getTreeStructure, getTopicBrondons } from '../immersifyapi/immersify-api.js';
 
 // D3 for graphs :)
@@ -47,6 +48,8 @@ async function getCatalogueReport(){
 
     await setGeneralData(areaBrondons);
     populateTotalsTable(areaBrondons);
+    populateActPerTopicsTable(areaBrondons);
+    await populateTopicUsageTable(topicBrondons);
 
     // need to store a snapshot of this data per month    
 
@@ -99,7 +102,6 @@ async function getPointsFromLessons(lessons){
     });
     return points;
 }
-
 
 function setTopicsCount(topics, floatingTopics, testTopics){
     let totalTopics = topics.length+floatingTopics.length+testTopics.length;
@@ -164,6 +166,8 @@ async function setGeneralData(areaBrondons){
     }
 }
 
+
+// TABLES
 async function populateTotalsTable(areaStructure){
     const totalsTable = document.getElementById('totals-table');
 
@@ -235,7 +239,64 @@ async function populateTotalsTable(areaStructure){
     let totalExperiencesCell = totalRow.insertCell();
     totalExperiencesCell.innerHTML = GeneralData.totalExperiences;
 }
-  
+async function populateActPerTopicsTable(areaBrondons){
+    const actPerTopicTable = document.getElementById('act-per-topic-table');
+    for(const areaBrondon of areaBrondons){
+        let dataRow = actPerTopicTable.insertRow();
+        
+        let areaCell = dataRow.insertCell();
+        areaCell.innerHTML = areaBrondon.externalTitle;
+
+        let moduleCell = dataRow.insertCell();
+
+
+    }
+
+}
+async function populateTopicUsageTable(topicBrondons) {
+    const topicIds = topicBrondons.map(brondon => brondon.structureId);
+    const usersTopicsInFeed = await fetchUsersTopicsInFeed(topicIds);
+    usersTopicsInFeed.sort((a, b) => b.users.length - a.users.length);
+
+    const userCounts = {};
+    usersTopicsInFeed.forEach(topicData => {
+        topicData.users.forEach(user => {
+            userCounts[user] = (userCounts[user] || 0) + 1;
+        });
+    });
+
+    const uniqueUsers = [];
+    usersTopicsInFeed.forEach(topicData => {
+        topicData.users.forEach(user => {
+            if (userCounts[user] === 1 && !uniqueUsers.includes(user)) {
+                uniqueUsers.push(user);
+            }
+        });
+    });
+    console.log(uniqueUsers); // For debugging
+    document.getElementById('unique-users-feed').innerHTML = `Total Unique Users with topic(s) in feed: ${uniqueUsers.length}`;
+
+    // Populate the table with the sorted data
+    const topicUsageTable = document.getElementById('topic-usage-table');
+    for (const topicData of usersTopicsInFeed) {
+        const brondon = topicBrondons.find(brondon => brondon.structureId === topicData.topicId);
+
+        let row = topicUsageTable.insertRow();
+
+        let areaFlagCell = row.insertCell();
+        areaFlagCell.innerHTML = brondon ? brondon.areaFlag : 'Unknown Area';
+
+        let topicIdCell = row.insertCell();
+        topicIdCell.innerHTML = topicData.topicId;
+
+        let topicNameCell = row.insertCell();
+        topicNameCell.innerHTML = brondon ? brondon.externalTitle : 'Unknown Topic';
+
+        let numUsersCell = row.insertCell();
+        numUsersCell.innerHTML = topicData.users.length;
+    }
+}
+
 
 function renderZoomableSunburst(data) {
     // Transform data into a hierarchical structure for D3

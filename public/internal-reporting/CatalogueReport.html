@@ -6,6 +6,7 @@
     <script type="text/javascript" src="https://download.playfab.com/PlayFabClientApi.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.16.2/xlsx.full.min.js"></script>
     <link rel="stylesheet" type="text/css" href="../styles.css">
+    <link rel="stylesheet" type="text/css" href="../catalogue-styles.css">
 </head>
 <body>
 <!-- Dark Mode Toggle Switch -->
@@ -35,7 +36,7 @@
       <p id="topics-count"><b>Topics:</b>0</p>
       <br/><br/>
       <!-- Totals Table-->
-       <table id="totals-table">
+        <table id="totals-table">
         <tr>
             <th></th>
             <th>Area</th>
@@ -44,12 +45,32 @@
             <th>Activities</th>
             <th>Lessons</th>
             <th>Subheadings</th>
-            <th>Quizzes</th>
-            <th>Flashcards</th>
-            <th>Sims</th>
+            <th>Quiz (A)</th>
+            <th>Flashcard (A)</th>
+            <th>Sims / Exp</th>
         </tr> 
-       </table>
+        </table>
        <br/><br/>
+       <h3>Activities per Topic</h3>
+       <table id="act-per-topic-table">
+        <tr>
+            <th>Area</th>
+            <th>Module</th>
+            <th>Topic</th>
+            <th># Activities</th>
+        </tr>
+        </table>
+       <br/><br/>
+       <h3>Topics in Feed</h3>
+       <p id="unique-users-feed">Total Unique Users with topic(s) in feed:</p>
+       <table id="topic-usage-table">
+        <tr>
+            <th>Area</th>
+            <th>Topic Id</th>
+            <th>Topic Name</th>
+            <th># Users</th>
+        </tr> 
+        </table>
       <!-- Platform Content Graph -->
       <div id="platcon-graph-container">
       </div>

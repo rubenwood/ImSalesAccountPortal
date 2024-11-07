@@ -13,12 +13,24 @@ document.addEventListener('DOMContentLoaded', async () => {
     // wait for login
     await waitForJWT();
     // Button events
+    document.getElementById('event-log-btn').addEventListener('click', eventLogBtnClicked);
     document.getElementById('new-ret-btn').addEventListener('click', newRetBtnClicked);
     
 });
 window.onload = function() {
     document.getElementById('loginModal').style.display = 'block';
 };
+
+
+async function eventLogBtnClicked(){
+    const startDateElement = document.getElementById('event-log-start-date');
+    const endDateElement = document.getElementById('event-log-end-date');
+    const startDate = new Date(startDateElement.value).toISOString();
+    const endDate = new Date(endDateElement.value).toISOString();
+
+    const eventLog = await fetchEventLog(startDate, endDate);
+    console.log(eventLog);
+}
 
 async function newRetBtnClicked(){
     const startDateElement = document.getElementById('new-ret-start-date');
