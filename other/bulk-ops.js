@@ -38,6 +38,11 @@ async function updateDatabase(){
     console.log("updating account data fields...");
     // extract out the PlayerId field and make that a separate column PlayFabId, also store the playfab data in AccountDataJSON
     await extractAndSetJsonValue('AccountData', 'AccountDataJSON', 'PlayerId', undefined, 'PlayFabId').catch(err => console.error(err));
+    
+    // handle event logs
+    console.log("updating user event logs...");
+    await getAllPlayerEventLogsWriteToDB();
+
     console.log("getting all usage data and writing to db...");
     // get usage data (Player Title Data) from playfab and write to DB
     await updateUsageDataInDB();
@@ -87,7 +92,83 @@ async function getLastUpdatedDate(){
 }
 getLastUpdatedDate();
 
+// EVENT LOG DATA
+async function getAllPlayerEventLogsWriteToDB() {
+    const client = await pool.connect();
+    console.log(`Getting all event logs ${new Date()}`);
 
+    try {
+        // Start transaction
+        await client.query('BEGIN');
+
+        // Get all PlayFabIds from AccountData
+        const { rows } = await client.query('SELECT "PlayFabId" FROM public."AccountData"');
+        const playerIds = rows.map(row => row.PlayFabId);
+        let maxConcurrentRequests = 20;
+
+        // Process players in batches
+        for (let i = 0; i < playerIds.length; i += maxConcurrentRequests) {
+            const currentBatch = playerIds.slice(i, i + maxConcurrentRequests);
+            const results = await processBatch(currentBatch);
+
+            for (const { playerId, data } of results) {
+                const eventLogs = {};
+
+                console.log("---start\n", data, "\nend---");
+                if (data?.Data == undefined) {
+                    console.log(`===== NO DATA ${playerId} =====`);
+                    continue;
+                }
+
+                // Extract EventLogs (any key with "EventLog" in its name)
+                for (const key in data.Data) {
+                    if (key.includes("EventLog")) {
+                        eventLogs[key] = data.Data[key];
+                    }
+                }
+
+                // Insert or update event logs in the database
+                for (const [eventLogKey, eventLogData] of Object.entries(eventLogs)) {
+                    console.log("\n~~~\n", playerId, "\n~Key~:\n ", eventLogKey, "\n~Data~:\n", eventLogData, "\n~~~\n");
+                    
+                    // Check if an entry with this PlayFabId and EventLogKey already exists
+                    const existingEntry = await client.query(
+                        `SELECT 1 FROM public."UserEventLogs" 
+                         WHERE "PlayFabId" = $1 AND "EventLogKey" = $2`,
+                        [playerId, eventLogKey]
+                    );
+
+                    if (existingEntry.rowCount > 0) {
+                        // Update if the entry exists
+                        await client.query(
+                            `UPDATE public."UserEventLogs" 
+                             SET "EventLogJSON" = $1
+                             WHERE "PlayFabId" = $2 AND "EventLogKey" = $3`,
+                            [eventLogData, playerId, eventLogKey]
+                        );
+                    } else {
+                        // Insert if no entry exists
+                        await client.query(
+                            `INSERT INTO public."UserEventLogs" ("PlayFabId", "EventLogKey", "EventLogJSON")
+                             VALUES ($1, $2, $3)`,
+                            [playerId, eventLogKey, eventLogData]
+                        );
+                    }
+                }
+            }
+        }
+
+        // Commit transaction
+        await client.query('COMMIT');
+    } catch (error) {
+        console.error("Error processing event logs:", error);
+        await client.query('ROLLBACK');
+    } finally {
+        client.release();
+    }
+}
+
+// ACCOUNT DATA
 let getPlayerAccDataJobInProgress = false;
 async function getAllPlayerAccDataAndWriteToDB() {
     let contToken = null;
@@ -161,6 +242,7 @@ function getAllS3PlayerData(){ return allS3PlayerData; }
 
 function getJobInProgress(){ return getPlayerAccDataJobInProgress }
 
+// USAGE DATA
 async function updateUsageDataInDB() {
     const client = await pool.connect();
 

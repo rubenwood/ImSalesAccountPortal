@@ -16,13 +16,23 @@ const pool = new Pool({
     },
 });
 
+// Event Log
 async function getUsersEventLog(startDate, endDate) {
-    const startDateStr = new Date(startDate).toISOString();
-    const endDateStr = new Date(endDate).toISOString();
+    const startDateStr = new Date(startDate).toISOString().slice(0, 10); // YYYY-MM-DD format
+    const endDateStr = new Date(endDate).toISOString().slice(0, 10);
 
-    const usersEventLogQuery = `SELECT * FROM public."UsageData" WHERE "UsageDataJSON"->>"SessionDebugData"`;
-    
-    const result = pool.query(usersEventLogQuery);
+    const usersEventLogQuery = `
+        SELECT * 
+        FROM public."UsageData"
+        WHERE EXISTS (
+            SELECT 1 
+            FROM json_array_elements("UsageDataJSON"->'EventLog'->'sessions') AS session
+            WHERE TO_DATE(session->>'date', 'DD/MM/YYYY') BETWEEN $1 AND $2
+        );
+    `;
+
+    const result = await pool.query(usersEventLogQuery, [startDateStr, endDateStr]);
+    return result.rows;
 }
 userDataRouter.post('/get-users-event-log', async (req, res) => {
     let startDate = req.body.startDate;
@@ -31,7 +41,7 @@ userDataRouter.post('/get-users-event-log', async (req, res) => {
     res.json(usersEventLog);
 });
 
-
+// Users Topics in Feed
 async function getUsersWithTopicInFeed(topicIds) {
     const usersWithTopicsQuery = `
         SELECT *, 
@@ -68,6 +78,7 @@ userDataRouter.post('/get-users-topic-feed', async (req, res) => {
     res.json(newRetUsers);
 });
 
+// New Vs. Returning
 async function getNewReturningUsers(startDate, endDate){
     const startDateStr = new Date(startDate).toISOString();
     const endDateStr = new Date(endDate).toISOString();
@@ -78,7 +89,7 @@ async function getNewReturningUsers(startDate, endDate){
 
     // get all users created on or after the start date (and before the end date)
 
-    // 
+    // created within time frame
     const newUsersQuery = `
     SELECT * FROM public."AccountData" 
     WHERE to_timestamp(REPLACE("AccountDataJSON"->>'Created', 'Z', ''), 'YYYY-MM-DD"T"HH24:MI:SS.MS') 
