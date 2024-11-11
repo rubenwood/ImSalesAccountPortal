@@ -2,7 +2,7 @@ import { canAccess } from '../access-check.js';
 import { initializeDarkMode } from '../themes/dark-mode.js';
 import { Login, getPlayerEmailAddr } from '../PlayFabManager.js';
 import { waitForJWT, imAPIGet, getTopicBrondons } from '../immersifyapi/immersify-api.js';
-import { fetchNewReturningUsers } from './user-data-utils.js';
+import { fetchNewReturningUsers, fetchUsersEventLog } from './user-data-utils.js';
 
 const doConfetti = () => { confetti({particleCount: 100, spread: 70, origin: { y: 0.6 }}); }
 
@@ -14,7 +14,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     await waitForJWT();
     // Button events
     document.getElementById('event-log-btn').addEventListener('click', eventLogBtnClicked);
-    document.getElementById('new-ret-btn').addEventListener('click', newRetBtnClicked);
+    //document.getElementById('new-ret-btn').addEventListener('click', newRetBtnClicked);
     
 });
 window.onload = function() {
@@ -28,7 +28,7 @@ async function eventLogBtnClicked(){
     const startDate = new Date(startDateElement.value).toISOString();
     const endDate = new Date(endDateElement.value).toISOString();
 
-    const eventLog = await fetchEventLog(startDate, endDate);
+    const eventLog = await fetchUsersEventLog(startDate, endDate);
     console.log(eventLog);
 }
 

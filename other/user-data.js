@@ -22,21 +22,37 @@ async function getUsersEventLog(startDate, endDate) {
     const endDateStr = new Date(endDate).toISOString().slice(0, 10);
 
     const usersEventLogQuery = `
-        SELECT * 
-        FROM public."UsageData"
-        WHERE EXISTS (
-            SELECT 1 
-            FROM json_array_elements("UsageDataJSON"->'EventLog'->'sessions') AS session
-            WHERE TO_DATE(session->>'date', 'DD/MM/YYYY') BETWEEN $1 AND $2
-        );
+        SELECT "PlayFabId", "EventLogKey", "EventLogJSON"
+        FROM public."UserEventLogs"
+        WHERE 
+            -- Check if EventLogKey matches the EventLog-DD/MM/YYYY pattern
+            "EventLogKey" ~ '^EventLog-\\d{2}/\\d{2}/\\d{4}$'
+            AND TO_DATE(SUBSTRING("EventLogKey" FROM 10 FOR 10), 'DD/MM/YYYY') 
+              BETWEEN $1 AND $2
+        ORDER BY "PlayFabId";
     `;
 
     const result = await pool.query(usersEventLogQuery, [startDateStr, endDateStr]);
-    return result.rows;
+
+    // Group results by PlayFabId and aggregate EventLogKeys
+    const usersEventLogs = result.rows.reduce((acc, row) => {
+        const { PlayFabId, EventLogKey, EventLogJSON } = row;
+        if (!acc[PlayFabId]) {
+            acc[PlayFabId] = [];
+        }
+        let EventLog = JSON.parse(EventLogJSON.Value);
+        acc[PlayFabId].push({ EventLogKey, EventLogJSON, EventLog });
+        return acc;
+    }, {});
+
+    return usersEventLogs;
 }
+
 userDataRouter.post('/get-users-event-log', async (req, res) => {
     let startDate = req.body.startDate;
     let endDate = req.body.endDate;
+    console.log(startDate);
+    console.log(endDate);
     const usersEventLog = await getUsersEventLog(startDate, endDate);
     res.json(usersEventLog);
 });

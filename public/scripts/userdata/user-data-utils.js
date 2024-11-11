@@ -17,7 +17,19 @@ export async function fetchUsersTopicsInFeed(topicIds) {
 
 // Users Event Log
 export async function fetchUsersEventLog(startDate, endDate){
+    const response = await fetch('/userdata/get-users-event-log', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ startDate, endDate })
+    });
 
+    if (!response.ok) {
+        throw new Error('Failed to fetch user event logs');
+    }
+
+    return await response.json();
 }
 
 
