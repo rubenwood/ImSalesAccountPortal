@@ -20,11 +20,9 @@ const pool = new Pool({
 async function getUsersEventLog(startDate, endDate) {
     const startDateStr = new Date(startDate).toISOString().slice(0, 10); // YYYY-MM-DD format
     const endDateStr = new Date(endDate).toISOString().slice(0, 10);
-    console.log(startDateStr);
-    console.log(endDateStr);
 
     const usersEventLogQuery = `
-        SELECT "PlayFabId", "EventLogKey", "EventLogJSON"
+        SELECT "PlayFabId", "EventLogKey", "EventLogJSON", "EventLogDate"
         FROM public."UserEventLogs"
         WHERE 
             "EventLogDate" BETWEEN $1 AND $2
@@ -35,11 +33,11 @@ async function getUsersEventLog(startDate, endDate) {
 
     // Group results by PlayFabId and aggregate EventLogKeys
     const usersEventLogs = result.rows.reduce((acc, row) => {
-        const { PlayFabId, EventLogKey, EventLogJSON } = row;
+        const { PlayFabId, EventLogKey, EventLogJSON, EventLogDate } = row;
         if (!acc[PlayFabId]) {
             acc[PlayFabId] = [];
         }
-        acc[PlayFabId].push({ EventLogKey, EventLogJSON });
+        acc[PlayFabId].push({ EventLogKey, EventLogJSON, EventLogDate });
         return acc;
     }, {});
 
@@ -48,8 +46,6 @@ async function getUsersEventLog(startDate, endDate) {
 userDataRouter.post('/get-users-event-log', async (req, res) => {
     let startDate = req.body.startDate;
     let endDate = req.body.endDate;
-    console.log(startDate);
-    console.log(endDate);
     const usersEventLog = await getUsersEventLog(startDate, endDate);
     res.json(usersEventLog);
 });
