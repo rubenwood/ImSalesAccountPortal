@@ -141,6 +141,31 @@ export async function getTreeStructure() {
     return data;
 }
 
+export async function getAreasWithModulesAndTopicsByStatus(status, publicView){
+    const url = `${baseURL}/areas/withModuleTopic/${status}/${publicView}`;
+    const response = await fetch(url, {
+        method: 'GET',
+        headers: { 
+            'Authorization': `Bearer ${jwtoken}`,
+            'Content-Type': 'application/json' 
+        }
+    });
+    const data = await response.json();
+    return data;
+}
+export async function getAreasWithStructures(status, publicView){
+    const url = `${baseURL}/areas/withStructures/${status}/${publicView}`;
+    const response = await fetch(url, {
+        method: 'GET',
+        headers: { 
+            'Authorization': `Bearer ${jwtoken}`,
+            'Content-Type': 'application/json' 
+        }
+    });
+    const data = await response.json();
+    return data;
+}
+
 
 export async function imAPIGet(endpointURL) {
     const apiURL = `${baseURL}/${endpointURL}`;

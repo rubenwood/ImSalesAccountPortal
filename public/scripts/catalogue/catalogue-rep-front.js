@@ -1,6 +1,7 @@
 import { canAccess } from '../access-check.js';
 import { initializeDarkMode } from '../themes/dark-mode.js';
 import { Login, getPlayerEmailAddr } from '../PlayFabManager.js';
+import { formatTimeToHHMMSS } from '../utils.js';
 import { fetchUsersTopicsInFeed } from '../userdata/user-data-utils.js';
 import { waitForJWT, imAPIGet, imAPIPost, getAreas, getModules, getTopics, getActivities, getTreeStructure, getTopicBrondons } from '../immersifyapi/immersify-api.js';
 
@@ -38,6 +39,7 @@ async function getCatalogueReport(){
 
     TreeStructure = await getTreeStructure();
     console.log(TreeStructure);
+    
     const areaBrondons = TreeStructure.inAreas;
     const moduleBrondons = getModulesFromAreas(areaBrondons);
     const topicBrondons = getTopicsFromModules(moduleBrondons);
@@ -49,6 +51,7 @@ async function getCatalogueReport(){
     await setGeneralData(areaBrondons);
     populateTotalsTable(areaBrondons);
     populateActPerTopicsTable(areaBrondons);
+    populateLessonDataTable(areaBrondons);
     await populateTopicUsageTable(topicBrondons);
 
     // need to store a snapshot of this data per month    
@@ -241,18 +244,69 @@ async function populateTotalsTable(areaStructure){
 }
 async function populateActPerTopicsTable(areaBrondons){
     const actPerTopicTable = document.getElementById('act-per-topic-table');
-    for(const areaBrondon of areaBrondons){
-        let dataRow = actPerTopicTable.insertRow();
-        
-        let areaCell = dataRow.insertCell();
-        areaCell.innerHTML = areaBrondon.externalTitle;
+    for(const areaBrondon of areaBrondons){        
 
-        let moduleCell = dataRow.insertCell();
+        for(const moduleBrondon of areaBrondon.children){
+            for(const topicBrondon of moduleBrondon.children){
+                let dataRow = actPerTopicTable.insertRow();        
+                let areaCell = dataRow.insertCell();
+                areaCell.innerHTML = areaBrondon.externalTitle;
 
+                let moduleCell = dataRow.insertCell();
+                moduleCell.innerHTML = moduleBrondon.externalTitle;
 
+                let topicCell = dataRow.insertCell();
+                topicCell.innerHTML = topicBrondon.externalTitle;
+
+                let activitiesCell = dataRow.insertCell();
+                activitiesCell.innerHTML = topicBrondon.children.length;
+            }
+        }
     }
-
 }
+async function populateLessonDataTable(areaBrondons) {
+    const lessonDataTable = document.getElementById('lesson-data-table');
+    
+    for (const areaBrondon of areaBrondons) {
+        for (const moduleBrondon of areaBrondon.children) {
+            for (const topicBrondon of moduleBrondon.children) {
+                
+                let topicTotalTime = 0;
+                for (const activityBrondon of topicBrondon.children) {
+                    if (activityBrondon.type === "lesson") {
+                        topicTotalTime += activityBrondon.timeEstimate;
+                    }
+                }
+
+                for (const activityBrondon of topicBrondon.children) {
+                    if (activityBrondon.type === "lesson") {
+                        let dataRow = lessonDataTable.insertRow();
+                        
+                        let areaCell = dataRow.insertCell();
+                        areaCell.innerHTML = areaBrondon.externalTitle;
+
+                        let moduleCell = dataRow.insertCell();
+                        moduleCell.innerHTML = moduleBrondon.externalTitle;
+
+                        let topicCell = dataRow.insertCell();
+                        topicCell.innerHTML = topicBrondon.externalTitle;
+
+                        let topicTimeEstCell = dataRow.insertCell();
+                        topicTimeEstCell.innerHTML = formatTimeToHHMMSS(topicTotalTime);
+
+                        let lessonTitleCell = dataRow.insertCell();
+                        lessonTitleCell.innerHTML = activityBrondon.externalTitle;
+
+                        let lessonTimeEstCell = dataRow.insertCell();
+                        lessonTimeEstCell.innerHTML = formatTimeToHHMMSS(activityBrondon.timeEstimate);
+                    }
+                }
+            }
+        }
+    }
+}
+
+
 async function populateTopicUsageTable(topicBrondons) {
     const topicIds = topicBrondons.map(brondon => brondon.structureId);
     const usersTopicsInFeed = await fetchUsersTopicsInFeed(topicIds);
@@ -273,7 +327,7 @@ async function populateTopicUsageTable(topicBrondons) {
             }
         });
     });
-    console.log(uniqueUsers); // For debugging
+    console.log(uniqueUsers);
     document.getElementById('unique-users-feed').innerHTML = `Total Unique Users with topic(s) in feed: ${uniqueUsers.length}`;
 
     // Populate the table with the sorted data
