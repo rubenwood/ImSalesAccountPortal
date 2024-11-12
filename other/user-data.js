@@ -34,12 +34,18 @@ async function getUsersEventLog(startDate, endDate) {
     // Group results by PlayFabId and aggregate EventLogKeys
     const usersEventLogs = result.rows.reduce((acc, row) => {
         const { PlayFabId, EventLogKey, EventLogJSON, EventLogDate } = row;
-        if (!acc[PlayFabId]) {
-            acc[PlayFabId] = [];
+        
+        // Find or create an entry for the PlayFabId
+        let userEntry = acc.find(entry => entry.PlayFabId === PlayFabId);
+        if (!userEntry) {
+            userEntry = { PlayFabId, EventLogs: [] };
+            acc.push(userEntry);
         }
-        acc[PlayFabId].push({ EventLogKey, EventLogJSON, EventLogDate });
+
+        // Add the current log data to the user's EventLogs array
+        userEntry.EventLogs.push({ EventLogKey, EventLogJSON, EventLogDate });
         return acc;
-    }, {});
+    }, []);
 
     return usersEventLogs;
 }

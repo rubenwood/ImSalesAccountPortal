@@ -6,6 +6,7 @@
     <script type="text/javascript" src="https://download.playfab.com/PlayFabClientApi.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.16.2/xlsx.full.min.js"></script>
     <link rel="stylesheet" type="text/css" href="../styles.css">
+    <link rel="stylesheet" type="text/css" href="../catalogue-styles.css">
 </head>
 <body>
 <!-- Dark Mode Toggle Switch -->
@@ -32,6 +33,10 @@
         Start Date <input id="event-log-start-date" type="date">
         End Date <input id="event-log-end-date" type="date">
         <input id="event-log-btn" type="button" value="submit">
+        <p id="total-users-p">Total users in report:</p>
+        <p id="total-distinct-logs-p">Total logs across users:</p>
+        <table id="logs-per-date-table">
+        </table>
     </div>
 </div>
 <br/><br/>
