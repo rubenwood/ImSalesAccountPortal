@@ -15,6 +15,13 @@ document.addEventListener('DOMContentLoaded', async () => {
     // setup dark mode toggle
     initializeDarkMode('darkModeSwitch');
     document.getElementById('loginButton').addEventListener('click', Login);
+
+    // toggle buttons
+    document.getElementById('toggle-totals-btn').addEventListener('click', ()=> toggleSection('totals-table'));
+    document.getElementById('toggle-act-per-topic-btn').addEventListener('click', ()=> toggleSection('act-per-topic-table'));
+    document.getElementById('toggle-time-est-btn').addEventListener('click', ()=> toggleSection('lesson-data-table'));
+    document.getElementById('toggle-topics-in-feed-btn').addEventListener('click', ()=> toggleSection('topic-usage-table'));
+
     // wait for login
     await waitForJWT();
     // Button events
@@ -24,6 +31,16 @@ document.addEventListener('DOMContentLoaded', async () => {
 window.onload = function() {
     document.getElementById('loginModal').style.display = 'block';
 };
+
+function toggleSection(elementId){
+    const element = document.getElementById(elementId);
+  
+    if(element){
+        element.style.display = (element.style.display === "none" || element.style.display === "") ? "block" : "none";
+    }else{
+        console.warn(`Element with ID "${elementId}" not found.`);
+    }
+}
 
 
 // DATA
