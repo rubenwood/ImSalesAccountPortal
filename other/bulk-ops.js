@@ -130,7 +130,16 @@ async function getAllPlayerEventLogsWriteToDB() {
                 // Insert or update event logs in the database
                 for (const [eventLogKey, eventLogData] of Object.entries(eventLogs)) {
                     console.log("\n~~~\n", playerId, "\n~Key~:\n ", eventLogKey, "\n~Data~:\n", eventLogData, "\n~~~\n");
-                    
+
+                    // Extract date from the eventLogKey (e.g., from "EventLog-11/11/2024_Part1" to "11/11/2024")
+                    const dateMatch = eventLogKey.match(/EventLog-(\d{2}\/\d{2}\/\d{4})/);
+                    const eventLogDate = dateMatch ? dateMatch[1] : null;
+
+                    if (!eventLogDate) {
+                        console.warn(`Invalid EventLogKey format: ${eventLogKey}`);
+                        continue;
+                    }
+
                     // Check if an entry with this PlayFabId and EventLogKey already exists
                     const existingEntry = await client.query(
                         `SELECT 1 FROM public."UserEventLogs" 
@@ -142,16 +151,16 @@ async function getAllPlayerEventLogsWriteToDB() {
                         // Update if the entry exists
                         await client.query(
                             `UPDATE public."UserEventLogs" 
-                             SET "EventLogJSON" = $1
-                             WHERE "PlayFabId" = $2 AND "EventLogKey" = $3`,
-                            [eventLogData, playerId, eventLogKey]
+                             SET "EventLogJSON" = $1, "EventLogDate" = TO_DATE($2, 'DD/MM/YYYY')
+                             WHERE "PlayFabId" = $3 AND "EventLogKey" = $4`,
+                            [eventLogData, eventLogDate, playerId, eventLogKey]
                         );
                     } else {
                         // Insert if no entry exists
                         await client.query(
-                            `INSERT INTO public."UserEventLogs" ("PlayFabId", "EventLogKey", "EventLogJSON")
-                             VALUES ($1, $2, $3)`,
-                            [playerId, eventLogKey, eventLogData]
+                            `INSERT INTO public."UserEventLogs" ("PlayFabId", "EventLogKey", "EventLogJSON", "EventLogDate")
+                             VALUES ($1, $2, $3, TO_DATE($4, 'DD/MM/YYYY'))`,
+                            [playerId, eventLogKey, eventLogData, eventLogDate]
                         );
                     }
                 }

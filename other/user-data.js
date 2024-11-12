@@ -20,15 +20,14 @@ const pool = new Pool({
 async function getUsersEventLog(startDate, endDate) {
     const startDateStr = new Date(startDate).toISOString().slice(0, 10); // YYYY-MM-DD format
     const endDateStr = new Date(endDate).toISOString().slice(0, 10);
+    console.log(startDateStr);
+    console.log(endDateStr);
 
     const usersEventLogQuery = `
         SELECT "PlayFabId", "EventLogKey", "EventLogJSON"
         FROM public."UserEventLogs"
         WHERE 
-            -- Check if EventLogKey matches the EventLog-DD/MM/YYYY pattern
-            "EventLogKey" ~ '^EventLog-\\d{2}/\\d{2}/\\d{4}$'
-            AND TO_DATE(SUBSTRING("EventLogKey" FROM 10 FOR 10), 'DD/MM/YYYY') 
-              BETWEEN $1 AND $2
+            "EventLogDate" BETWEEN $1 AND $2
         ORDER BY "PlayFabId";
     `;
 
@@ -40,14 +39,12 @@ async function getUsersEventLog(startDate, endDate) {
         if (!acc[PlayFabId]) {
             acc[PlayFabId] = [];
         }
-        let EventLog = JSON.parse(EventLogJSON.Value);
-        acc[PlayFabId].push({ EventLogKey, EventLogJSON, EventLog });
+        acc[PlayFabId].push({ EventLogKey, EventLogJSON });
         return acc;
     }, {});
 
     return usersEventLogs;
 }
-
 userDataRouter.post('/get-users-event-log', async (req, res) => {
     let startDate = req.body.startDate;
     let endDate = req.body.endDate;
