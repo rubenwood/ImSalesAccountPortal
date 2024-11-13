@@ -384,7 +384,7 @@ function graphEventsTimeOfDay() {
 }
 
 // User Funnel Graph
-const steps = ['app_open', 'login', 'launch_activity'];
+const steps = ['app_open', 'login', 'launch_activity', 'sign_out'];
 function countEventOccurrences(eventLogs, steps) {
     const userStepProgress = {};
   

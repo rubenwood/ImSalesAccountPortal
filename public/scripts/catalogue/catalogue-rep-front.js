@@ -286,6 +286,16 @@ async function populateLessonDataTable(areaBrondons) {
     
     for (const areaBrondon of areaBrondons) {
         for (const moduleBrondon of areaBrondon.children) {
+
+            let moduleTotalTime = 0;
+            for (const topicBrondon of moduleBrondon.children) {
+                for (const activityBrondon of topicBrondon.children) {
+                    if (activityBrondon.type === "lesson") {
+                        moduleTotalTime += activityBrondon.timeEstimate;
+                    }
+                }
+            }
+
             for (const topicBrondon of moduleBrondon.children) {
                 
                 let topicTotalTime = 0;
@@ -304,6 +314,8 @@ async function populateLessonDataTable(areaBrondons) {
 
                         let moduleCell = dataRow.insertCell();
                         moduleCell.innerHTML = moduleBrondon.externalTitle;
+                        let moduleTimeEstCell = dataRow.insertCell();
+                        moduleTimeEstCell.innerHTML = formatTimeToHHMMSS(moduleTotalTime);
 
                         let topicCell = dataRow.insertCell();
                         topicCell.innerHTML = topicBrondon.externalTitle;
@@ -608,11 +620,18 @@ function renderForceDirectedTree(data) {
         .attr("r", d => 5 + Math.sqrt(d.value) * 3)
         .attr("fill", d => colorByDepth(d.depth));
 
+    function calcTextSize(d){
+        let size = 10 * (Math.sqrt(d.value));
+        console.log(size)
+        return size;
+    }
+    //Math.min(Math.max(calcTextSize(d), 36), 74)
+
     node.append("text")
         .attr("dy", ".35em")
         .attr("x", d => d.children ? -15 - Math.sqrt(d.value) * 3 : 15 + Math.sqrt(d.value) * 3)
         .style("text-anchor", d => d.children ? "end" : "start")
-        .style("font-size", d => `${10 + Math.sqrt(d.value)}px`)
+        .style("font-size", d => `${14 + (Math.sqrt(d.value))}px`)
         .text(d => d.data.name);
 
     simulation.on("tick", () => {
