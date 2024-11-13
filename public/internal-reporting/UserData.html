@@ -7,6 +7,8 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.16.2/xlsx.full.min.js"></script>
     <link rel="stylesheet" type="text/css" href="../styles.css">
     <link rel="stylesheet" type="text/css" href="../catalogue-styles.css">
+    <link rel="stylesheet" type="text/css" href="../user-data-styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
 <!-- Dark Mode Toggle Switch -->
@@ -32,13 +34,24 @@
         <h2>Event Log</h2>
         Start Date <input id="event-log-start-date" type="date">
         End Date <input id="event-log-end-date" type="date">
-        <input id="event-log-btn" type="button" value="submit">
+        <input id="event-log-btn" type="button" value="Get Report">
         <p id="total-users-p">Total users in report:</p>
         <p id="total-distinct-logs-p">Total logs across users:</p>
         <table id="logs-per-date-table">
         </table>
+        <!--<div id="event-chart"></div>
+        <div id="event-chart-tooltip" class="graph-tooltip"></div>-->
+
+        <h3>Events by Date</h3>
+        <canvas id="chart-event-by-date" width="1200" height="600"></canvas>
+        <h3>Events by Time of Day</h3>
+        <canvas id="chart-event-by-date-time" width="1200" height="600"></canvas>
+
+        <div id="event-tod-char"></div>
+        
     </div>
 </div>
+
 <br/><br/>
 <!--<div id="report-container" class="form-container">
     <div>

@@ -1,0 +1,18 @@
+#event-log-container {
+    display: flex;
+    flex-direction: column; /* Stack children vertically */
+    gap: 20px; /* Add spacing between elements */
+}
+
+.graph-tooltip {
+    position: absolute;
+    background-color: white;
+    border: 1px solid #ddd;
+    padding: 5px;
+    border-radius: 4px;
+    pointer-events: none; /* Prevent tooltip from blocking mouse events */
+    font-size: 12px;
+    box-shadow: 0px 0px 5px rgba(0,0,0,0.3);
+    opacity: 0; /* Start invisible */
+    transition: opacity 0.2s ease;
+}
