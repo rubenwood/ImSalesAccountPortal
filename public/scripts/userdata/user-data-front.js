@@ -117,9 +117,24 @@ function getEventList(eventLogs){
     EventList.sort((a,b) => new Date(a.date) - new Date(b.date));
     console.log(EventList);
 }
+let EventIds = [];
+function getEventIds(eventLogs){
+    for(const entry of eventLogs){
+        for(const eventLog of entry.EventLogs){
+            for(const session of eventLog.EventLogParsed.sessions){
+                for(const event of session.events){
+                    if(!EventIds.includes(event.name)){
+                        EventIds.push(event.name);
+                    }
+                }
+            }
+        }
+    }
+}
 
 function processEventLogs(eventLogs) {
     getEventList(eventLogs);
+    getEventIds(eventLogs);
 
     document.getElementById('total-users-p').innerHTML = `Total users in report: ${eventLogs.length}`;
 
@@ -131,6 +146,7 @@ function processEventLogs(eventLogs) {
     //graphEventTypesPerDate();
     graphEventTypesPerDateChartJS();
     graphEventsTimeOfDay();
+    createUserFunnelGraph(eventLogs);
 }
 
 // Data processors
@@ -189,9 +205,9 @@ function getLogsPerDate(eventLogs) {
     }
 }
 
+// Type per date
 function graphEventTypesPerDateChartJS(){
     const chartElement = document.getElementById('chart-event-by-date').getContext('2d');
-
     // counts by date and event type
     const eventCounts = {};
     EventList.forEach(entry => {
@@ -263,13 +279,13 @@ function graphEventTypesPerDateChartJS(){
     });
 }
 
+// Regex to check if the time is in HH:MM:SS:SSS format
+const timeFormatRegex = /^([0-1]?[0-9]|2[0-3]):([0-5]?[0-9]):([0-5]?[0-9]):(\d{3})$/;
+// Time of day chart
 function graphEventsTimeOfDay() {
     const ctx = document.getElementById('chart-event-by-date-time').getContext('2d');
 
     const eventPoints = [];
-
-    // Regex to check if the time is in HH:MM:SS:SSS format
-    const timeFormatRegex = /^([0-1]?[0-9]|2[0-3]):([0-5]?[0-9]):([0-5]?[0-9]):(\d{3})$/;
 
     EventList.forEach(entry => {
         const date = entry.date;
@@ -352,8 +368,8 @@ function graphEventsTimeOfDay() {
                     },
                     ticks: {
                         min: 0,
-                        max: 24 * 60,  // 24 hours * 60 minutes in a day
-                        stepSize: 60,  // Every hour
+                        max: 24 * 60,
+                        stepSize: 60,
                         callback: function(value) {
                             const date = new Date(value * 60 * 1000);
                             const hours = date.getHours();
@@ -367,17 +383,119 @@ function graphEventsTimeOfDay() {
     });
 }
 
+// User Funnel Graph
+const steps = ['app_open', 'login', 'launch_activity'];
+function countEventOccurrences(eventLogs, steps) {
+    const userStepProgress = {};
+  
+    eventLogs.forEach(log => {
+      const playFabId = log.PlayFabId;
+      log.EventLogs.forEach(eventLog => {
+        eventLog.EventLogParsed.sessions.forEach(session => {
+          const events = session.events;
+  
+          let stepIndex = 0;
+  
+          events.forEach(event => {
+            // If the event is part of the steps we care about, then we can move to the next step
+            if (steps.includes(event.name)) {
+              const currentStep = steps[stepIndex];
+  
+              // If the event is the current step, count the user for that step and move to next step
+              if (event.name === currentStep) {
+                if (!userStepProgress[playFabId]) {
+                  userStepProgress[playFabId] = {};
+                }
+                userStepProgress[playFabId][currentStep] = true;
+                stepIndex++;
+              }
+            }
+          });
+        });
+      });
+    });
+  
+    const stepCounts = steps.map(step => ({
+      step,
+      count: Object.keys(userStepProgress).filter(playFabId => userStepProgress[playFabId][step]).length
+    }));
+  
+    return stepCounts;
+}
+// User Funnel
+function createUserFunnelGraph(eventLogs){
+    const stepCounts = countEventOccurrences(eventLogs, steps);
+
+    const labels = stepCounts.map(count => count.step);
+    const data = stepCounts.map(count => count.count);
+
+    const ctx = document.getElementById('chart-user-funnel').getContext('2d');
+    const funnelChart = new Chart(ctx, {
+    type: 'bar',
+    data: {
+        labels: labels,
+        datasets: [{
+            label: '# Users',
+            data: data,
+            backgroundColor: 'rgba(54, 162, 235, 0.2)',
+            borderColor: 'rgba(54, 162, 235, 1)',
+            borderWidth: 1
+        }]
+    },
+    options: {
+            scales: {
+                x: {
+                    title: {
+                    display: true,
+                    text: 'Event Steps'
+                    }
+                },
+                y: {
+                    title: {
+                    display: true,
+                    text: 'Number of Users'
+                    },
+                    beginAtZero: true
+                }
+            },
+            plugins: {
+                legend: {
+                    display: false
+                }
+            }
+        }
+    });
+}
+
+
 // Helper
 function getColour(eventType) {
-    const colorMap = {
-        "app_open": "#4e79a7",
-        "login": "#f28e2b",
-        "theme_changed": "#e15759",
-        "sign_out": "#76b7b2",
-        "popup_opened":"#eb4034",
-        "popup_closed":"#eba134"
-    };
-    return colorMap[eventType] || "#8c564b";
+
+    return stringToHexColor(eventType);
+    // const colorMap = {
+    //     "app_open": "#4e79a7",
+    //     "login": "#f28e2b",
+    //     "theme_changed": "#e15759",
+    //     "sign_out": "#76b7b2",
+    //     "avatar_changed":"#32a852",
+    //     "language_changed":"##6effec",
+    //     "popup_opened":"#eb4034",
+    //     "popup_closed":"#eba134"
+    // };
+    // return colorMap[eventType] || "#8c564b";
+}
+function stringToHexColor(str) {
+    let hash = 0;
+    for (let i = 0; i < str.length; i++) {
+        hash = str.charCodeAt(i) + ((hash << 5) - hash);
+    }
+
+    let color = '#';
+    for (let i = 0; i < 3; i++) {
+        const value = (hash >> (i * 8)) & 0xFF;
+        color += ('00' + value.toString(16)).slice(-2);
+    }
+    return color;
 }
 
 
