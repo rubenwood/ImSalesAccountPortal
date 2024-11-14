@@ -224,7 +224,7 @@ function graphEventTypesPerDateChartJS(){
     // Populate datasets for each event type
     const datasets = eventTypes.map(eventType => ({
         label: eventType,
-        backgroundColor: getColour(eventType),
+        backgroundColor: stringToHexColor(eventType),
         data: labels.map(date => eventCounts[date][eventType] || 0) 
     }));    
 
@@ -312,7 +312,7 @@ function graphEventsTimeOfDay() {
         return {
             label: eventType,
             data: data,
-            backgroundColor: getColour(eventType),
+            backgroundColor: stringToHexColor(eventType),
             pointRadius: 5,
         };
     });
@@ -435,10 +435,10 @@ function countEventOccurrences(eventLogs, steps) {
 }
 
 function addFunnelStepClicked(eventLogs, eventName) {
-    // Add the event name to the steps array and recreate the funnel chart
     steps.push(eventName);
     graphUserFunnel(eventLogs);
 }
+
 let funnelChart = null;
 // User Funnel
 function graphUserFunnel(eventLogs) {
@@ -591,25 +591,10 @@ function graphUserJourney(eventLog, width = 1200, height = 800) {
 }
 
 // Helper
-function getColour(eventType) {
-
-    return stringToHexColor(eventType);
-    // const colorMap = {
-    //     "app_open": "#4e79a7",
-    //     "login": "#f28e2b",
-    //     "theme_changed": "#e15759",
-    //     "sign_out": "#76b7b2",
-    //     "avatar_changed":"#32a852",
-    //     "language_changed":"##6effec",
-    //     "popup_opened":"#eb4034",
-    //     "popup_closed":"#eba134"
-    // };
-    // return colorMap[eventType] || "#8c564b";
-}
-function stringToHexColor(str) {
+function stringToHexColor(inString) {
     let hash = 0;
-    for (let i = 0; i < str.length; i++) {
-        hash = str.charCodeAt(i) + ((hash << 5) - hash);
+    for (let i = 0; i < inString.length; i++) {
+        hash = inString.charCodeAt(i) + ((hash << 5) - hash);
     }
 
     let color = '#';
