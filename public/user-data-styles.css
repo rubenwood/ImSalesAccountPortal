@@ -1,7 +1,7 @@
 #event-log-container {
     display: flex;
-    flex-direction: column; /* Stack children vertically */
-    gap: 20px; /* Add spacing between elements */
+    flex-direction: column;
+    gap: 20px;
 }
 
 .graph-tooltip {
@@ -10,9 +10,16 @@
     border: 1px solid #ddd;
     padding: 5px;
     border-radius: 4px;
-    pointer-events: none; /* Prevent tooltip from blocking mouse events */
+    pointer-events: none;
     font-size: 12px;
     box-shadow: 0px 0px 5px rgba(0,0,0,0.3);
     opacity: 0; /* Start invisible */
     transition: opacity 0.2s ease;
+}
+
+
+#funnel-steps{
+    display: flex;
+    flex-direction: row;
+    width: min-content;
 }

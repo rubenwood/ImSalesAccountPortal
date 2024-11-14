@@ -14,8 +14,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     await waitForJWT();
     // Button events
     document.getElementById('event-log-btn').addEventListener('click', eventLogBtnClicked);
-    //document.getElementById('new-ret-btn').addEventListener('click', newRetBtnClicked);
-    
+    //document.getElementById('new-ret-btn').addEventListener('click', newRetBtnClicked);    
 });
 window.onload = function() {
     document.getElementById('loginModal').style.display = 'block';
@@ -381,77 +380,106 @@ function graphEventsTimeOfDay() {
 }
 
 // User Funnel Graph
-//const steps = ['app_open', 'login', 'launch_activity', 'sign_out'];
-const steps = ['skin_tone_set', 'language_set', 'ability_set', 'activity_ranking_set'];
+const steps = ['app_open', 'login', 'launch_activity', 'sign_out'];
+// 3 3 3 1
+
+//const steps = ['app_open', 'login', 'launch_activity', 'sign_out', 'launch_activity'];
+// 3 3 3 1 0
+
+//const steps = ['sign_out', 'launch_activity'];
+// 4 0
+
+//const steps = ['skin_tone_set', 'language_set', 'ability_set', 'activity_ranking_set'];
 function countEventOccurrences(eventLogs, steps) {
     const userStepProgress = {};
-  
+
     eventLogs.forEach(log => {
-      const playFabId = log.PlayFabId;
-      log.EventLogs.forEach(eventLog => {
-        eventLog.EventLogParsed.sessions.forEach(session => {
-          const events = session.events;
-  
-          let stepIndex = 0;
-  
-          events.forEach(event => {
-            // If the event is part of the steps we care about, then we can move to the next step
-            if (steps.includes(event.name)) {
-              const currentStep = steps[stepIndex];
-  
-              // If the event is the current step, count the user for that step and move to next step
-              if (event.name === currentStep) {
-                if (!userStepProgress[playFabId]) {
-                  userStepProgress[playFabId] = {};
-                }
-                userStepProgress[playFabId][currentStep] = true;
-                stepIndex++;
-              }
-            }
-          });
+        const PlayFabId = log.PlayFabId;
+
+        log.EventLogs.forEach(eventLog => {
+            eventLog.EventLogParsed.sessions.forEach(session => {
+                const events = session.events;
+                let eventTriggered = [];
+
+                events.forEach((event, eventIndex) => {
+                    if (steps.includes(event.name)) {
+                        const currentStepIndex = steps.indexOf(event.name);
+
+                        // For each event, we check if the user has triggered the previous step
+                        if (currentStepIndex === 0 || eventTriggered.includes(steps[currentStepIndex - 1])) {
+                            if (!userStepProgress[PlayFabId]) {
+                                userStepProgress[PlayFabId] = [];
+                            }
+
+                            userStepProgress[PlayFabId][currentStepIndex] = true;
+                            eventTriggered.push(event.name);
+                        }
+                    }
+                });
+            });
         });
-      });
     });
-  
-    const stepCounts = steps.map(step => ({
-      step,
-      count: Object.keys(userStepProgress).filter(playFabId => userStepProgress[playFabId][step]).length
-    }));
-  
+
+    // Count how many users completed each step
+    const stepCounts = steps.map((step, index) => {
+        return {
+            step,
+            count: Object.keys(userStepProgress).filter(userId => {
+                // Check if the user completed the previous step and the current step
+                return (index === 0 || userStepProgress[userId][index - 1]) && userStepProgress[userId][index];
+            }).length
+        };
+    });
+
     return stepCounts;
 }
-// User Funnel
-function graphUserFunnel(eventLogs){
-    const stepCounts = countEventOccurrences(eventLogs, steps);
 
+function addFunnelStepClicked(eventLogs, eventName) {
+    // Add the event name to the steps array and recreate the funnel chart
+    steps.push(eventName);
+    graphUserFunnel(eventLogs);
+}
+let funnelChart = null;
+// User Funnel
+function graphUserFunnel(eventLogs) {
+    const inputField = document.getElementById('funnel-event-step-in');
+    document.getElementById('add-funnel-step-btn').addEventListener('click', () => {
+        addFunnelStepClicked(eventLogs, inputField.value);
+    });
+
+    const stepCounts = countEventOccurrences(eventLogs, steps);
     const labels = stepCounts.map(count => count.step);
     const data = stepCounts.map(count => count.count);
 
     const ctx = document.getElementById('chart-user-funnel').getContext('2d');
-    const funnelChart = new Chart(ctx, {
-    type: 'bar',
-    data: {
-        labels: labels,
-        datasets: [{
-            label: '# Users',
-            data: data,
-            backgroundColor: 'rgba(54, 162, 235, 0.2)',
-            borderColor: 'rgba(54, 162, 235, 1)',
-            borderWidth: 1
-        }]
-    },
-    options: {
+
+    // Destroy in order to refresh (when adding steps)
+    if (funnelChart) { funnelChart.destroy(); }
+    
+    funnelChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: '# Users',
+                data: data,
+                backgroundColor: 'rgba(54, 162, 235, 0.2)',
+                borderColor: 'rgba(54, 162, 235, 1)',
+                borderWidth: 1
+            }]
+        },
+        options: {
             scales: {
                 x: {
                     title: {
-                    display: true,
-                    text: 'Event Steps'
+                        display: true,
+                        text: 'Event Steps'
                     }
                 },
                 y: {
                     title: {
-                    display: true,
-                    text: 'Number of Users'
+                        display: true,
+                        text: 'Number of Users'
                     },
                     beginAtZero: true
                 }
@@ -487,17 +515,16 @@ function graphUserJourney(eventLog, width = 1200, height = 800) {
             log.EventLogParsed.sessions.map(session => ({
                 name: `Session: ${session.sessionId}`,
                 children: session.events
-                    .sort((a, b) => a.time.localeCompare(b.time))  // Sort events by time
+                    .sort((a, b) => a.time.localeCompare(b.time))
                     .reduceRight((nextEvent, event) => [{
                         name: `${event.name} (${event.time})`,
                         details: event.data.join(", "),
-                        children: nextEvent  // Link each event sequentially
+                        children: nextEvent
                     }], [])
             }))
         )
     };
 
-    // Clear existing SVG content
     d3.select("#dendrogram").html("");
 
     const svg = d3.select("#dendrogram")
@@ -508,12 +535,10 @@ function graphUserJourney(eventLog, width = 1200, height = 800) {
             svg.attr("transform", event.transform);
         }))
         .append("g")
-        .attr("transform", "translate(100, 50)");  // Initial offset for better spacing
+        .attr("transform", "translate(100, 50)");
 
-    // Adjust the tree layout for larger node spacing
-    const tree = d3.tree().nodeSize([80, 400]);  // Increase vertical and horizontal node separation
+    const tree = d3.tree().nodeSize([80, 400]);
 
-    // Convert data into a D3 hierarchy and compute positions
     const root = d3.hierarchy(transformedData);
     tree(root);
 
@@ -529,26 +554,22 @@ function graphUserJourney(eventLog, width = 1200, height = 800) {
         .style("stroke", "#ccc")
         .style("stroke-width", 1.5);
 
-    // Draw nodes (circles) and labels for each event
     const nodeGroup = svg.selectAll(".node")
         .data(root.descendants())
         .enter().append("g")
         .attr("class", "node")
         .attr("transform", d => `translate(${d.y},${d.x})`);
 
-    // Append circles for each node
     nodeGroup.append("circle")
         .attr("r", 5)
         .style("fill", "#66c2a5");
 
-    // Append text labels for each node
     nodeGroup.append("text")
         .attr("dy", 3)
         .attr("x", d => d.children ? -10 : 10)
         .style("text-anchor", d => d.children ? "end" : "start")
         .text(d => d.data.name);
 
-    // Tooltip setup for displaying event details on hover
     const tooltip = d3.select("body").append("div")
         .style("position", "absolute")
         .style("padding", "6px")
