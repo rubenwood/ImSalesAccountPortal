@@ -3,7 +3,7 @@ import { initializeDarkMode } from '../themes/dark-mode.js';
 import { Login, getPlayerEmailAddr } from '../PlayFabManager.js';
 import { waitForJWT, imAPIGet, getTopicBrondons } from '../immersifyapi/immersify-api.js';
 import { fetchNewReturningUsers, fetchUsersEventLog } from './user-data-utils.js';
-//import * as d3 from "https://cdn.jsdelivr.net/npm/d3@7/+esm";
+import * as d3 from "https://cdn.jsdelivr.net/npm/d3@7/+esm";
 
 const doConfetti = () => { confetti({particleCount: 100, spread: 70, origin: { y: 0.6 }}); }
 
@@ -20,7 +20,6 @@ document.addEventListener('DOMContentLoaded', async () => {
 window.onload = function() {
     document.getElementById('loginModal').style.display = 'block';
 };
-
 
 // join the parts of the logs
 function eventLogJoiner(eventLogs) {
@@ -44,15 +43,12 @@ function eventLogJoiner(eventLogs) {
 
         const eventLogsResult = [];
 
-        // For each baseKey (EventLog without PartX), we join the parts
         for (const baseKey in logsByKey) {
             const parts = logsByKey[baseKey];
 
-            // Separate logs into those with parts and those without
             const logsWithParts = parts.filter(log => log.EventLogKey.includes('_Part'));
             const logsWithoutParts = parts.filter(log => !log.EventLogKey.includes('_Part'));
 
-            // Sort the logs with parts based on the part number (e.g., Part1, Part2)
             logsWithParts.sort((a, b) => {
                 const partA = a.EventLogKey.split('_')[1];
                 const partB = b.EventLogKey.split('_')[1];
@@ -115,7 +111,7 @@ function getEventList(eventLogs){
         
     }
     EventList.sort((a,b) => new Date(a.date) - new Date(b.date));
-    console.log(EventList);
+    console.log("Event list", EventList);
 }
 let EventIds = [];
 function getEventIds(eventLogs){
@@ -130,11 +126,13 @@ function getEventIds(eventLogs){
             }
         }
     }
+    console.log("Event Ids", EventIds);
 }
 
 function processEventLogs(eventLogs) {
     getEventList(eventLogs);
     getEventIds(eventLogs);
+    populateUserJourneyButtons(eventLogs);
 
     document.getElementById('total-users-p').innerHTML = `Total users in report: ${eventLogs.length}`;
 
@@ -143,10 +141,10 @@ function processEventLogs(eventLogs) {
 
     getLogsPerDate(eventLogs);
 
-    //graphEventTypesPerDate();
     graphEventTypesPerDateChartJS();
     graphEventsTimeOfDay();
-    createUserFunnelGraph(eventLogs);
+    graphUserFunnel(eventLogs);
+    graphUserJourney(eventLogs);
 }
 
 // Data processors
@@ -305,7 +303,6 @@ function graphEventsTimeOfDay() {
             }
         });
     });
-    console.log(eventPoints);
 
     const labels = Array.from(new Set(eventPoints.map(p => p.x)));
     const eventTypes = Array.from(new Set(eventPoints.map(p => p.eventType)));
@@ -384,7 +381,8 @@ function graphEventsTimeOfDay() {
 }
 
 // User Funnel Graph
-const steps = ['app_open', 'login', 'launch_activity', 'sign_out'];
+//const steps = ['app_open', 'login', 'launch_activity', 'sign_out'];
+const steps = ['skin_tone_set', 'language_set', 'ability_set', 'activity_ranking_set'];
 function countEventOccurrences(eventLogs, steps) {
     const userStepProgress = {};
   
@@ -423,7 +421,7 @@ function countEventOccurrences(eventLogs, steps) {
     return stepCounts;
 }
 // User Funnel
-function createUserFunnelGraph(eventLogs){
+function graphUserFunnel(eventLogs){
     const stepCounts = countEventOccurrences(eventLogs, steps);
 
     const labels = stepCounts.map(count => count.step);
@@ -467,6 +465,109 @@ function createUserFunnelGraph(eventLogs){
     });
 }
 
+// User Journey
+function populateUserJourneyButtons(eventLogs){
+    const userJourneyDiv = document.getElementById('user-journey-div');
+    for(const eventLog of eventLogs){
+        let button = document.createElement('input');
+        button.setAttribute('type', 'button');
+        button.setAttribute('id', `user-journ-btn-${eventLog.PlayFabId}`);
+        button.setAttribute('value', `Inspect ${eventLog.PlayFabId}`);
+
+        userJourneyDiv.appendChild(button);
+        console.log(eventLog);
+        button.addEventListener('click', () =>{ graphUserJourney(eventLog) });
+    }    
+}
+function graphUserJourney(eventLog, width = 1200, height = 800) {
+    // Transform data for D3.js based on a single eventLog, sorting events by time and linking sequentially
+    const transformedData = {
+        name: `PlayFabId: ${eventLog.PlayFabId}`,
+        children: eventLog.EventLogs.flatMap(log => 
+            log.EventLogParsed.sessions.map(session => ({
+                name: `Session: ${session.sessionId}`,
+                children: session.events
+                    .sort((a, b) => a.time.localeCompare(b.time))  // Sort events by time
+                    .reduceRight((nextEvent, event) => [{
+                        name: `${event.name} (${event.time})`,
+                        details: event.data.join(", "),
+                        children: nextEvent  // Link each event sequentially
+                    }], [])
+            }))
+        )
+    };
+
+    // Clear existing SVG content
+    d3.select("#dendrogram").html("");
+
+    const svg = d3.select("#dendrogram")
+        .append("svg")
+        .attr("width", width)
+        .attr("height", height)
+        .call(d3.zoom().on("zoom", (event) => {
+            svg.attr("transform", event.transform);
+        }))
+        .append("g")
+        .attr("transform", "translate(100, 50)");  // Initial offset for better spacing
+
+    // Adjust the tree layout for larger node spacing
+    const tree = d3.tree().nodeSize([80, 400]);  // Increase vertical and horizontal node separation
+
+    // Convert data into a D3 hierarchy and compute positions
+    const root = d3.hierarchy(transformedData);
+    tree(root);
+
+    // Draw links between nodes
+    svg.selectAll(".link")
+        .data(root.links())
+        .enter().append("line")
+        .attr("class", "link")
+        .attr("x1", d => d.source.y)
+        .attr("y1", d => d.source.x)
+        .attr("x2", d => d.target.y)
+        .attr("y2", d => d.target.x)
+        .style("stroke", "#ccc")
+        .style("stroke-width", 1.5);
+
+    // Draw nodes (circles) and labels for each event
+    const nodeGroup = svg.selectAll(".node")
+        .data(root.descendants())
+        .enter().append("g")
+        .attr("class", "node")
+        .attr("transform", d => `translate(${d.y},${d.x})`);
+
+    // Append circles for each node
+    nodeGroup.append("circle")
+        .attr("r", 5)
+        .style("fill", "#66c2a5");
+
+    // Append text labels for each node
+    nodeGroup.append("text")
+        .attr("dy", 3)
+        .attr("x", d => d.children ? -10 : 10)
+        .style("text-anchor", d => d.children ? "end" : "start")
+        .text(d => d.data.name);
+
+    // Tooltip setup for displaying event details on hover
+    const tooltip = d3.select("body").append("div")
+        .style("position", "absolute")
+        .style("padding", "6px")
+        .style("background", "#ddd")
+        .style("border-radius", "4px")
+        .style("visibility", "hidden");
+
+    nodeGroup.on("mouseover", (event, d) => {
+            tooltip.html(d.data.details || "")
+                .style("visibility", "visible");
+        })
+        .on("mousemove", (event) => {
+            tooltip.style("top", (event.pageY - 10) + "px")
+                .style("left", (event.pageX + 10) + "px");
+        })
+        .on("mouseout", () => {
+            tooltip.style("visibility", "hidden");
+        });
+}
 
 // Helper
 function getColour(eventType) {
