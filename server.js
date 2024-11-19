@@ -30,7 +30,7 @@ const { s3Router } = require('./other/s3-utils.js');
 const { playfabRouter } = require('./playfab/playfab-utils.js');
 const { dlRouter } = require('./other/downloads.js');
 const { userDataRouter } = require('./other/user-data.js');
-const { getAllPlayerAccDataAndWriteToDB } = require('./other/bulk-ops');
+const { getAllPlayerAccDataAndWriteToDB, getAllPlayerEventLogsWriteToDB } = require('./other/bulk-ops');
 
 app.use(express.json());
 app.use(cors());
@@ -431,6 +431,18 @@ app.post('/s3upload', upload.single('image'), async (req, res) => {
   } catch (error) {
     console.error('Error uploading image:', error);
     res.status(500).send('Error uploading image.');
+  }
+});
+
+
+app.post('/process-event-logs', async (req, res) => {
+  try {
+      console.log('Starting event logs processing...');
+      await getAllPlayerEventLogsWriteToDB();
+      res.status(200).json({ message: 'Event logs processed successfully.' });
+  } catch (error) {
+      console.error('Error processing event logs:', error);
+      res.status(500).json({ error: 'Failed to process event logs.', details: error.message });
   }
 });
 

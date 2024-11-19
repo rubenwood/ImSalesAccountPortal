@@ -98,15 +98,12 @@ async function getAllPlayerEventLogsWriteToDB() {
     console.log(`Getting all event logs ${new Date()}`);
 
     try {
-        // Start transaction
         await client.query('BEGIN');
 
-        // Get all PlayFabIds from AccountData
         const { rows } = await client.query('SELECT "PlayFabId" FROM public."AccountData"');
         const playerIds = rows.map(row => row.PlayFabId);
         let maxConcurrentRequests = 20;
 
-        // Process players in batches
         for (let i = 0; i < playerIds.length; i += maxConcurrentRequests) {
             const currentBatch = playerIds.slice(i, i + maxConcurrentRequests);
             const results = await processBatch(currentBatch);
@@ -114,7 +111,6 @@ async function getAllPlayerEventLogsWriteToDB() {
             for (const { playerId, data } of results) {
                 const eventLogs = {};
 
-                console.log("---start\n", data, "\nend---");
                 if (data?.Data == undefined) {
                     console.log(`===== NO DATA ${playerId} =====`);
                     continue;
@@ -129,11 +125,12 @@ async function getAllPlayerEventLogsWriteToDB() {
 
                 // Insert or update event logs in the database
                 for (const [eventLogKey, eventLogData] of Object.entries(eventLogs)) {
-                    console.log("\n~~~\n", playerId, "\n~Key~:\n ", eventLogKey, "\n~Data~:\n", eventLogData, "\n~~~\n");
+                    //console.log("\n~~~\n", playerId, "\n~Key~:\n ", eventLogKey, "\n~Data~:\n", eventLogData, "\n~~~\n");
 
                     // Extract date from the eventLogKey (e.g., from "EventLog-11/11/2024_Part1" to "11/11/2024")
                     const dateMatch = eventLogKey.match(/EventLog-(\d{2}\/\d{2}\/\d{4})/);
                     const eventLogDate = dateMatch ? dateMatch[1] : null;
+                    console.log(eventLogDate);
 
                     if (!eventLogDate) {
                         console.warn(`Invalid EventLogKey format: ${eventLogKey}`);
@@ -167,7 +164,6 @@ async function getAllPlayerEventLogsWriteToDB() {
             }
         }
 
-        // Commit transaction
         await client.query('COMMIT');
     } catch (error) {
         console.error("Error processing event logs:", error);
@@ -589,5 +585,6 @@ module.exports = {
     getLastDateGotAllS3AccData,
     setLastDateGotAllS3AccData,
     getAllPlayerAccDataAndWriteToDB,
-    updateDatabase
+    updateDatabase,
+    getAllPlayerEventLogsWriteToDB
 };
