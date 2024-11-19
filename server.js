@@ -29,6 +29,7 @@ const { cmsRouter } = require('./database/cms-api-db.js');
 const { s3Router } = require('./other/s3-utils.js');
 const { playfabRouter } = require('./playfab/playfab-utils.js');
 const { dlRouter } = require('./other/downloads.js');
+const { appEventsRouter } = require('./app_events/app-events.js');
 const { userDataRouter } = require('./other/user-data.js');
 const { getAllPlayerAccDataAndWriteToDB, getAllPlayerEventLogsWriteToDB } = require('./other/bulk-ops');
 
@@ -462,6 +463,7 @@ app.use('/cms', cmsRouter);
 app.use('/S3', s3Router);
 app.use('/playfab', playfabRouter);
 app.use('/downloads', dlRouter);
+app.use('/appevents', appEventsRouter);
 app.use('/userdata', userDataRouter);
 const PORT = process.env.PORT;
 
