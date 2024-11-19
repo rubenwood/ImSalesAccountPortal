@@ -121,12 +121,14 @@ async function getAllPlayerEventLogsWriteToDB() {
                 // Extract EventLogs (any key with "EventLog" in its name)
                 for (const key in data.Data) {
                     if (key.includes("EventLog")) {
+                        console.log("Event log key found!");
                         eventLogs[key] = data.Data[key];
                     }
                 }
 
                 // Insert or update event logs in the database
-                console.log(`handling data...${ Object.entries(eventLogs)}`);
+                console.log(`handling data...${eventLogs}`);
+                console.log(`handling data...${Object.entries(eventLogs)}`);
                 for (const [eventLogKey, eventLogData] of Object.entries(eventLogs)) {
                     //console.log("\n~~~\n", playerId, "\n~Key~:\n ", eventLogKey, "\n~Data~:\n", eventLogData, "\n~~~\n");
 
