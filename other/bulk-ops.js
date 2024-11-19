@@ -38,11 +38,6 @@ async function updateDatabase(){
     console.log("updating account data fields...");
     // extract out the PlayerId field and make that a separate column PlayFabId, also store the playfab data in AccountDataJSON
     await extractAndSetJsonValue('AccountData', 'AccountDataJSON', 'PlayerId', undefined, 'PlayFabId').catch(err => console.error(err));
-    
-    // handle event logs
-    console.log("updating user event logs...");
-    getAllPlayerEventLogsWriteToDB();
-
     console.log("getting all usage data and writing to db...");
     // get usage data (Player Title Data) from playfab and write to DB
     await updateUsageDataInDB();
@@ -50,6 +45,11 @@ async function updateDatabase(){
     // extract out the PlayFabId field and make that a separate column PlayFabId, also store the playfab data in UsageDataJSON
     await extractAndSetJsonValue('UsageData', 'UsageDataJSON', 'PlayFabId', undefined, 'PlayFabId').catch(err => console.error(err));
     await extractAndSetJsonValue('UsageData', 'UsageDataJSON', 'Data', 'AcademicArea', 'AcademicArea').catch(err => console.error('Unhandled error:', err));
+    
+    // handle event logs
+    console.log("updating user event logs...");
+    getAllPlayerEventLogsWriteToDB();
+
     // set the last updated date (json file)
     OnUpdateCompletion(new Date());
 }
@@ -106,9 +106,8 @@ async function getAllPlayerEventLogsWriteToDB() {
 
         for (let i = 0; i < playerIds.length; i += maxConcurrentRequests) {
             const currentBatch = playerIds.slice(i, i + maxConcurrentRequests);
-            console.log("processing batch...");
+            console.log(`Processing batch ${(i / maxConcurrentRequests) + 1} of ${Math.ceil(playerIds.length / maxConcurrentRequests)}: Processing ${currentBatch.length} player IDs.`);
             const results = await processBatch(currentBatch);
-            console.log("batch processed...");
 
             for (const { playerId, data } of results) {
                 const eventLogs = {};
@@ -136,12 +135,15 @@ async function getAllPlayerEventLogsWriteToDB() {
                     // Extract date from the eventLogKey (e.g., from "EventLog-11/11/2024_Part1" to "11/11/2024")
                     const dateMatch = eventLogKey.match(/EventLog-(\d{2}\/\d{2}\/\d{4})/);
                     const eventLogDate = dateMatch ? dateMatch[1] : null;
-                    console.log("event log date:");
+                    console.log("event log date 1:");
                     console.log(eventLogDate);
 
-                    if (!eventLogDate) {
-                        console.warn(`Invalid EventLogKey format: ${eventLogKey}`);
-                        continue;
+                    if (eventLogDate == null) {
+                        if(eventLogKey.includes("MetaData")){
+                            console.warn(`EventLogKey is MetaData`);
+                        }else{
+                            console.warn(`Invalid EventLogKey format: ${eventLogKey}`);
+                        }
                     }
 
                     // Check if an entry with this PlayFabId and EventLogKey already exists
@@ -151,16 +153,18 @@ async function getAllPlayerEventLogsWriteToDB() {
                         [playerId, eventLogKey]
                     );
 
+                    console.log("-------------event log date 2:----------");
+                    console.log(eventLogDate);
+
                     if (existingEntry.rowCount > 0) {
                         // Update if the entry exists
-                        // dont do anything with existing entries...
-
-                        // await client.query(
-                        //     `UPDATE public."UserEventLogs" 
-                        //      SET "EventLogJSON" = $1, "EventLogDate" = TO_DATE($2, 'DD/MM/YYYY')
-                        //      WHERE "PlayFabId" = $3 AND "EventLogKey" = $4`,
-                        //     [eventLogData, eventLogDate, playerId, eventLogKey]
-                        // );
+                        // dont really need to do this, but just to be safe...
+                        await client.query(
+                            `UPDATE public."UserEventLogs" 
+                             SET "EventLogJSON" = $1, "EventLogDate" = TO_DATE($2, 'DD/MM/YYYY')
+                             WHERE "PlayFabId" = $3 AND "EventLogKey" = $4`,
+                            [eventLogData, eventLogDate, playerId, eventLogKey]
+                        );
                     } else {
                         // Insert if no entry exists
                         console.log("inserting data...");
@@ -173,7 +177,7 @@ async function getAllPlayerEventLogsWriteToDB() {
                 }
             }
         }
-
+        console.log("EVENT DATA DONE");
         await client.query('COMMIT');
     } catch (error) {
         console.error("Error processing event logs:", error);
@@ -595,6 +599,5 @@ module.exports = {
     getLastDateGotAllS3AccData,
     setLastDateGotAllS3AccData,
     getAllPlayerAccDataAndWriteToDB,
-    updateDatabase,
-    getAllPlayerEventLogsWriteToDB
+    updateDatabase
 };

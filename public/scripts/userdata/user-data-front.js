@@ -28,6 +28,7 @@ function eventLogJoiner(eventLogs) {
         const { PlayFabId, EventLogs } = entry;
         const logsByKey = {};
 
+        // Group logs by base key
         EventLogs.forEach(log => {
             const { EventLogKey, EventLogJSON, EventLogDate } = log;
 
@@ -39,29 +40,38 @@ function eventLogJoiner(eventLogs) {
 
             logsByKey[baseKey].push({ EventLogKey, EventLogJSON, EventLogDate });
         });
-
         const eventLogsResult = [];
 
         for (const baseKey in logsByKey) {
             const parts = logsByKey[baseKey];
 
+            // Separate logs with "_Part" and those without
             const logsWithParts = parts.filter(log => log.EventLogKey.includes('_Part'));
             const logsWithoutParts = parts.filter(log => !log.EventLogKey.includes('_Part'));
-
+            // Sort logs with parts by their part number
             logsWithParts.sort((a, b) => {
-                const partA = a.EventLogKey.split('_')[1];
-                const partB = b.EventLogKey.split('_')[1];
-                return partA.localeCompare(partB);
+                const partA = parseInt(a.EventLogKey.split('_Part')[1], 10);
+                const partB = parseInt(b.EventLogKey.split('_Part')[1], 10);
+                return partA - partB;
             });
 
-            const allLogs = [...logsWithoutParts, ...logsWithParts];
+            // Concatenate the values of logs with parts
+            const joinedLog = logsWithParts.map(part => part.EventLogJSON.Value).join('');
 
-            let joinedLog = allLogs.map(part => part.EventLogJSON.Value).join('');
-            eventLogsResult.push({
-                EventLogDate: allLogs[0].EventLogDate,
-                EventLogKey: baseKey,
-                EventLogParsed: JSON.parse(joinedLog)
-            });
+            // Add logs without parts and concatenate with joined ones
+            const finalLog = logsWithoutParts.length > 0 
+                ? logsWithoutParts[0].EventLogJSON.Value + joinedLog 
+                : joinedLog;
+
+            //console.log(finalLog);
+            //console.log(PlayFabId);
+            if (finalLog) {
+                eventLogsResult.push({
+                    EventLogDate: logsWithParts[0]?.EventLogDate || logsWithoutParts[0]?.EventLogDate,
+                    EventLogKey: baseKey,
+                    EventLogParsed: JSON.parse(finalLog)
+                });
+            }
         }
 
         joinedLogs.push({
@@ -514,7 +524,6 @@ function populateUserJourneyButtons(eventLogs){
         button.setAttribute('value', `Inspect ${eventLog.PlayFabId}`);
 
         userJourneyDiv.appendChild(button);
-        console.log(eventLog);
         button.addEventListener('click', () =>{ graphUserJourney(eventLog) });
     }    
 }
