@@ -41,7 +41,7 @@ async function updateDatabase(){
     
     // handle event logs
     console.log("updating user event logs...");
-    await getAllPlayerEventLogsWriteToDB();
+    getAllPlayerEventLogsWriteToDB();
 
     console.log("getting all usage data and writing to db...");
     // get usage data (Player Title Data) from playfab and write to DB
@@ -106,7 +106,9 @@ async function getAllPlayerEventLogsWriteToDB() {
 
         for (let i = 0; i < playerIds.length; i += maxConcurrentRequests) {
             const currentBatch = playerIds.slice(i, i + maxConcurrentRequests);
+            console.log("processing batch...");
             const results = await processBatch(currentBatch);
+            console.log("batch processed...");
 
             for (const { playerId, data } of results) {
                 const eventLogs = {};
@@ -146,12 +148,14 @@ async function getAllPlayerEventLogsWriteToDB() {
 
                     if (existingEntry.rowCount > 0) {
                         // Update if the entry exists
-                        await client.query(
-                            `UPDATE public."UserEventLogs" 
-                             SET "EventLogJSON" = $1, "EventLogDate" = TO_DATE($2, 'DD/MM/YYYY')
-                             WHERE "PlayFabId" = $3 AND "EventLogKey" = $4`,
-                            [eventLogData, eventLogDate, playerId, eventLogKey]
-                        );
+                        // dont do anything with existing entries...
+
+                        // await client.query(
+                        //     `UPDATE public."UserEventLogs" 
+                        //      SET "EventLogJSON" = $1, "EventLogDate" = TO_DATE($2, 'DD/MM/YYYY')
+                        //      WHERE "PlayFabId" = $3 AND "EventLogKey" = $4`,
+                        //     [eventLogData, eventLogDate, playerId, eventLogKey]
+                        // );
                     } else {
                         // Insert if no entry exists
                         await client.query(
