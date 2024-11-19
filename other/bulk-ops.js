@@ -126,13 +126,14 @@ async function getAllPlayerEventLogsWriteToDB() {
                 }
 
                 // Insert or update event logs in the database
-                console.log("handling data...");
+                console.log(`handling data...${ Object.entries(eventLogs)}`);
                 for (const [eventLogKey, eventLogData] of Object.entries(eventLogs)) {
                     //console.log("\n~~~\n", playerId, "\n~Key~:\n ", eventLogKey, "\n~Data~:\n", eventLogData, "\n~~~\n");
 
                     // Extract date from the eventLogKey (e.g., from "EventLog-11/11/2024_Part1" to "11/11/2024")
                     const dateMatch = eventLogKey.match(/EventLog-(\d{2}\/\d{2}\/\d{4})/);
                     const eventLogDate = dateMatch ? dateMatch[1] : null;
+                    console.log("event log date:");
                     console.log(eventLogDate);
 
                     if (!eventLogDate) {
