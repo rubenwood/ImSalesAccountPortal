@@ -126,6 +126,7 @@ async function getAllPlayerEventLogsWriteToDB() {
                 }
 
                 // Insert or update event logs in the database
+                console.log("handling data...");
                 for (const [eventLogKey, eventLogData] of Object.entries(eventLogs)) {
                     //console.log("\n~~~\n", playerId, "\n~Key~:\n ", eventLogKey, "\n~Data~:\n", eventLogData, "\n~~~\n");
 
@@ -158,6 +159,7 @@ async function getAllPlayerEventLogsWriteToDB() {
                         // );
                     } else {
                         // Insert if no entry exists
+                        console.log("inserting data...");
                         await client.query(
                             `INSERT INTO public."UserEventLogs" ("PlayFabId", "EventLogKey", "EventLogJSON", "EventLogDate")
                              VALUES ($1, $2, $3, TO_DATE($4, 'DD/MM/YYYY'))`,
