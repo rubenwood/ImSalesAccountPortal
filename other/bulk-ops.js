@@ -117,7 +117,7 @@ async function getAllPlayerEventLogsWriteToDB() {
                     continue;
                 }
 
-                // Extract EventLogs (any key with "EventLog" in its name)
+                // Extract EventLogs
                 for (const key in data.Data) {
                     if (key.includes("EventLog")) {
                         console.log("Event log key found!");
@@ -132,7 +132,7 @@ async function getAllPlayerEventLogsWriteToDB() {
                 for (const [eventLogKey, eventLogData] of logEntries) {
                     //console.log("\n~~~\n", playerId, "\n~Key~:\n ", eventLogKey, "\n~Data~:\n", eventLogData, "\n~~~\n");
 
-                    // Extract date from the eventLogKey (e.g., from "EventLog-11/11/2024_Part1" to "11/11/2024")
+                    // Extract date from the eventLogKey (from "EventLog-11/11/2024_Part1" to "11/11/2024")
                     const dateMatch = eventLogKey.match(/EventLog-(\d{2}\/\d{2}\/\d{4})/);
                     const eventLogDate = dateMatch ? dateMatch[1] : null;
                     console.log("event log date 1:");
@@ -146,7 +146,6 @@ async function getAllPlayerEventLogsWriteToDB() {
                         }
                     }
 
-                    // Check if an entry with this PlayFabId and EventLogKey already exists
                     const existingEntry = await client.query(
                         `SELECT 1 FROM public."UserEventLogs" 
                          WHERE "PlayFabId" = $1 AND "EventLogKey" = $2`,
@@ -157,7 +156,6 @@ async function getAllPlayerEventLogsWriteToDB() {
                     console.log(eventLogDate);
 
                     if (existingEntry.rowCount > 0) {
-                        // Update if the entry exists
                         // dont really need to do this, but just to be safe...
                         await client.query(
                             `UPDATE public."UserEventLogs" 
@@ -166,7 +164,6 @@ async function getAllPlayerEventLogsWriteToDB() {
                             [eventLogData, eventLogDate, playerId, eventLogKey]
                         );
                     } else {
-                        // Insert if no entry exists
                         console.log("inserting data...");
                         await client.query(
                             `INSERT INTO public."UserEventLogs" ("PlayFabId", "EventLogKey", "EventLogJSON", "EventLogDate")
@@ -177,7 +174,7 @@ async function getAllPlayerEventLogsWriteToDB() {
                 }
             }
         }
-        console.log("EVENT DATA DONE");
+        console.log("~~~ event data updated");
         await client.query('COMMIT');
     } catch (error) {
         console.error("Error processing event logs:", error);
