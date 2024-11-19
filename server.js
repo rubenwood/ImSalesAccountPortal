@@ -438,8 +438,8 @@ app.post('/s3upload', upload.single('image'), async (req, res) => {
 app.post('/process-event-logs', async (req, res) => {
   try {
       console.log('Starting event logs processing...');
-      await getAllPlayerEventLogsWriteToDB();
-      res.status(200).json({ message: 'Event logs processed successfully.' });
+      getAllPlayerEventLogsWriteToDB();
+      res.status(200).json({ message: 'event logs processing...' });
   } catch (error) {
       console.error('Error processing event logs:', error);
       res.status(500).json({ error: 'Failed to process event logs.', details: error.message });
