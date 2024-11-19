@@ -2,11 +2,12 @@ import { canAccess } from '../access-check.js';
 import { initializeDarkMode } from '../themes/dark-mode.js';
 import { Login, getPlayerEmailAddr } from '../PlayFabManager.js';
 import { waitForJWT, imAPIGet, getTopicBrondons } from '../immersifyapi/immersify-api.js';
-import { fetchNewReturningUsers, fetchUsersEventLog } from './user-data-utils.js';
+import { fetchNewReturningUsers, fetchUsersEventLog, fetchEventDetails } from './user-data-utils.js';
 import * as d3 from "https://cdn.jsdelivr.net/npm/d3@7/+esm";
 
 const doConfetti = () => { confetti({particleCount: 100, spread: 70, origin: { y: 0.6 }}); }
 
+let eventDetails = "";
 
 document.addEventListener('DOMContentLoaded', async () => {
     initializeDarkMode('darkModeSwitch');
@@ -14,13 +15,16 @@ document.addEventListener('DOMContentLoaded', async () => {
     await waitForJWT();
     // Button events
     document.getElementById('event-log-btn').addEventListener('click', eventLogBtnClicked);
-    //document.getElementById('new-ret-btn').addEventListener('click', newRetBtnClicked);    
+    //document.getElementById('new-ret-btn').addEventListener('click', newRetBtnClicked);
+
+    eventDetails = await fetchEventDetails();
+    console.log(eventDetails);
 });
 window.onload = function() {
     document.getElementById('loginModal').style.display = 'block';
 };
 
-// join the parts of the logs
+// join the "_Parts" of the logs
 function eventLogJoiner(eventLogs) {
     const joinedLogs = [];
 
