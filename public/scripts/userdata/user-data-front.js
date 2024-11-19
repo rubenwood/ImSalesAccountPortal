@@ -142,6 +142,7 @@ function processEventLogs(eventLogs) {
 
     graphEventTypesPerDateChartJS();
     graphEventsTimeOfDay();
+
     graphUserFunnel(eventLogs);
     graphUserJourney(eventLogs);
 }
@@ -231,8 +232,8 @@ function graphEventTypesPerDateChartJS(){
     const eventChart = new Chart(chartElement, {
         type: 'bar',
         data: {
-            labels: labels,  // Dates
-            datasets: datasets  // Event types and counts
+            labels: labels,
+            datasets: datasets
         },
         options: {
             responsive: true,
@@ -389,7 +390,6 @@ const steps = ['app_open', 'login', 'launch_activity', 'sign_out'];
 //const steps = ['sign_out', 'launch_activity'];
 // 4 0
 
-//const steps = ['skin_tone_set', 'language_set', 'ability_set', 'activity_ranking_set'];
 function countEventOccurrences(eventLogs, steps) {
     const userStepProgress = {};
 
@@ -438,14 +438,25 @@ function addFunnelStepClicked(eventLogs, eventName) {
     steps.push(eventName);
     graphUserFunnel(eventLogs);
 }
+function removeLastStepClicked(eventLogs){
+    steps.pop();
+    graphUserFunnel(eventLogs);
+}
 
 let funnelChart = null;
+let listenersInitialized = false;
 // User Funnel
 function graphUserFunnel(eventLogs) {
-    const inputField = document.getElementById('funnel-event-step-in');
-    document.getElementById('add-funnel-step-btn').addEventListener('click', () => {
-        addFunnelStepClicked(eventLogs, inputField.value);
-    });
+    if(!listenersInitialized){
+        const inputField = document.getElementById('funnel-event-step-in');
+        document.getElementById('add-funnel-step-btn').addEventListener('click', () => {
+            addFunnelStepClicked(eventLogs, inputField.value);
+        });    
+        document.getElementById('remove-funnel-step-btn').addEventListener('click', () => {
+            removeLastStepClicked(eventLogs);
+        });
+        listenersInitialized = true;
+    }
 
     const stepCounts = countEventOccurrences(eventLogs, steps);
     const labels = stepCounts.map(count => count.step);
