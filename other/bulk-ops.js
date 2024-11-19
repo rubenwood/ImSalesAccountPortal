@@ -127,9 +127,9 @@ async function getAllPlayerEventLogsWriteToDB() {
                 }
 
                 // Insert or update event logs in the database
-                console.log(`handling data 1...${eventLogs}`);
+                console.log("handling data 1...", JSON.stringify(eventLogs, null, 2));
                 const logEntries = Object.entries(eventLogs);
-                console.log(`handling data 2...${logEntries}}`);
+                console.log("Log entries:", JSON.stringify(logEntries, null, 2));
                 for (const [eventLogKey, eventLogData] of logEntries) {
                     //console.log("\n~~~\n", playerId, "\n~Key~:\n ", eventLogKey, "\n~Data~:\n", eventLogData, "\n~~~\n");
 
