@@ -4,6 +4,7 @@ import { Login, getPlayerEmailAddr } from '../PlayFabManager.js';
 import { formatTimeToHHMMSS } from '../utils.js';
 import { fetchUsersTopicsInFeed } from '../userdata/user-data-utils.js';
 import { waitForJWT, imAPIGet, imAPIPost, getAreas, getModules, getTopics, getActivities, getTreeStructure, getTopicBrondons } from '../immersifyapi/immersify-api.js';
+import {delay } from '../asyncTools.js';
 
 // D3 for graphs :)
 import * as d3 from "https://cdn.jsdelivr.net/npm/d3@7/+esm";
@@ -109,17 +110,28 @@ function getFlashcardsFromActivities(activities){
 }
 async function getPointsFromLessons(lessons){
     // lesson id 4a494cd3-2d84-4351-8979-f39508ad6d07
-    let ids = lessons.map(lesson => lesson.structureId);
-    let lessonDataReqs = [];
-    ids.forEach(id => lessonDataReqs.push(imAPIPost(`lessons/${id}/allData`, { languageId:"english-us" })) );
-    const lessonDataRes = await Promise.all(lessonDataReqs);
-    let lessonJSONs = [];
-    lessonDataRes.forEach(res => lessonJSONs.push(JSON.parse(res)));
+    const ids = lessons.map(lesson => lesson.structureId);
+    const chunkSize = 5;
+    const staggerDelay = 250;
 
     let points = [];
-    lessonJSONs.forEach(lesson => { 
-        points.push(lesson.points); 
-    });
+
+    async function processChunk(chunk) {
+        const chunkPromises = chunk.map(id =>
+            imAPIPost(`lessons/${id}/allData`, { languageId: "english-us" })
+        );
+        const results = await Promise.all(chunkPromises);
+        return results.map(res => JSON.parse(res).points);
+    }
+
+    // Process IDs in chunks
+    for (let i = 0; i < ids.length; i += chunkSize) {
+        const chunk = ids.slice(i, i + chunkSize);
+        const chunkPoints = await processChunk(chunk);
+        points.push(...chunkPoints);
+        await delay(staggerDelay);
+    }
+
     return points;
 }
 

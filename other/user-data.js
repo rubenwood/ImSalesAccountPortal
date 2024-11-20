@@ -72,7 +72,6 @@ async function getUsersWithTopicInFeed(topicIds) {
     `;
     const result = await pool.query(usersWithTopicsQuery, [topicIds]);
 
-
     const output = [];
     for (const topicId of topicIds) {
         const usersWithTopic = result.rows.filter(row => {

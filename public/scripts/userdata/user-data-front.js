@@ -16,6 +16,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Button events
     document.getElementById('event-log-btn').addEventListener('click', eventLogBtnClicked);
     //document.getElementById('new-ret-btn').addEventListener('click', newRetBtnClicked);
+    document.getElementById('user-journey-div').style.display = 'none';
+    document.getElementById('toggle-inspect-user-journ-btn').addEventListener('click', toggleInspectUserJournButtons);
 
     eventDetails = await fetchEventDetails();
     console.log(eventDetails);
@@ -396,13 +398,10 @@ function graphEventsTimeOfDay() {
 
 // User Funnel Graph
 const steps = ['app_open', 'login', 'launch_activity', 'sign_out'];
-// 3 3 3 1
-
 //const steps = ['app_open', 'login', 'launch_activity', 'sign_out', 'launch_activity'];
-// 3 3 3 1 0
-
+//const steps = ['launch_activity', 'sign_out', 'launch_activity'];
 //const steps = ['sign_out', 'launch_activity'];
-// 4 0
+
 
 function countEventOccurrences(eventLogs, steps) {
     const userStepProgress = {};
@@ -519,6 +518,15 @@ function graphUserFunnel(eventLogs) {
 }
 
 // User Journey
+function toggleInspectUserJournButtons(){
+    const userJourneyDiv = document.getElementById('user-journey-div');
+    if(userJourneyDiv.style.display == 'block'){
+        userJourneyDiv.style.display = 'none';
+    }else{
+        userJourneyDiv.style.display = 'block';
+    }
+}
+
 function populateUserJourneyButtons(eventLogs){
     const userJourneyDiv = document.getElementById('user-journey-div');
     for(const eventLog of eventLogs){
@@ -532,7 +540,8 @@ function populateUserJourneyButtons(eventLogs){
     }    
 }
 function graphUserJourney(eventLog, width = 1200, height = 800) {
-    // Transform data for D3.js based on a single eventLog, sorting events by time and linking sequentially
+    console.log(eventLog);
+    // Transform data to D3js; single eventLog, sorting events by time, linking sequentially
     const transformedData = {
         name: `PlayFabId: ${eventLog.PlayFabId}`,
         children: eventLog.EventLogs.flatMap(log => 
@@ -540,9 +549,9 @@ function graphUserJourney(eventLog, width = 1200, height = 800) {
                 name: `Session: ${session.sessionId}`,
                 children: session.events
                     .sort((a, b) => a.time.localeCompare(b.time))
-                    .reduceRight((nextEvent, event) => [{
+                    .reduceRight((nextEvent, event) => [{                        
                         name: `${event.name} (${event.time})`,
-                        details: event.data.join(", "),
+                        details: event.data.join("<br>"),
                         children: nextEvent
                     }], [])
             }))
@@ -586,7 +595,7 @@ function graphUserJourney(eventLog, width = 1200, height = 800) {
 
     nodeGroup.append("circle")
         .attr("r", 5)
-        .style("fill", "#66c2a5");
+        .style("fill", "#0088ee");
 
     nodeGroup.append("text")
         .attr("dy", 3)
