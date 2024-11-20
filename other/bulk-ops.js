@@ -45,7 +45,9 @@ async function updateDatabase(){
     // extract out the PlayFabId field and make that a separate column PlayFabId, also store the playfab data in UsageDataJSON
     await extractAndSetJsonValue('UsageData', 'UsageDataJSON', 'PlayFabId', undefined, 'PlayFabId').catch(err => console.error(err));
     await extractAndSetJsonValue('UsageData', 'UsageDataJSON', 'Data', 'AcademicArea', 'AcademicArea').catch(err => console.error('Unhandled error:', err));
-    
+    await extractAndSetJsonValue('UsageData', 'UsageDataJSON', 'Data', 'UserPreferenceData', 'UserPreferenceData').catch(err => console.error('Unhandled error:', err));
+    await extractAndSetJsonValue('UsageData', 'UsageDataJSON', 'Data', 'UserProfileData', 'UserProfileData').catch(err => console.error('Unhandled error:', err));
+    await extractAndSetJsonValueSubkeys('UsageData', 'UsageDataJSON', 'Data', ['UserProfileData','Value', 'languageOfStudy'], 'LanguageOfStudy').catch(err => console.error('Unhandled error:', err));
     // handle event logs
     console.log("updating user event logs...");
     getAllPlayerEventLogsWriteToDB();
@@ -126,7 +128,6 @@ async function getAllPlayerEventLogsWriteToDB() {
                 }
 
                 // Insert or update event logs in the database
-                console.log("handling data 1...", JSON.stringify(eventLogs, null, 2));
                 const logEntries = Object.entries(eventLogs);
                 console.log("Log entries:", JSON.stringify(logEntries, null, 2));
                 for (const [eventLogKey, eventLogData] of logEntries) {
@@ -372,7 +373,57 @@ async function extractAndSetJsonValue(tableName, jsonColumnName, keyName, subKey
         client.release();
     }
 }
+// TODO: use this to replace the other
+async function extractAndSetJsonValueSubkeys(tableName, jsonColumnName, keyName, subKeyNames, newColumnName) {
+    const client = await pool.connect();
 
+    try {
+        await client.query('BEGIN');
+
+        // Add the new column if it doesn't exist
+        console.log(`Adding column ${newColumnName} to table ${tableName} if it does not exist.`);
+        await client.query(`
+            ALTER TABLE "${tableName}"
+            ADD COLUMN IF NOT EXISTS "${newColumnName}" TEXT;
+        `);
+
+        // Construct the JSON traversal path dynamically
+        let jsonPath = `"${jsonColumnName}"->'${keyName}'`;
+
+        if (Array.isArray(subKeyNames) && subKeyNames.length > 0) {
+            subKeyNames.forEach((subKey, index) => {
+                if (index === subKeyNames.length - 2) {
+                    // If second to last key, extract as text (JSON string)
+                    jsonPath += `->>'${subKey}'`;
+                } else if (index === subKeyNames.length - 1) {
+                    // Final key to extract value from parsed JSON
+                    jsonPath = `(${jsonPath})::json->>'${subKey}'`;
+                } else {
+                    // Intermediate keys
+                    jsonPath += `->'${subKey}'`;
+                }
+            });
+        }
+
+        // Construct the query for updating the new column
+        const updateQuery = `
+            UPDATE "${tableName}"
+            SET "${newColumnName}" = (${jsonPath});
+        `;
+
+        console.log(`Constructed query: ${updateQuery}`);
+        const result = await client.query(updateQuery);
+        console.log(`${result.rowCount} rows updated.`);
+
+        await client.query('COMMIT');
+        console.log(`${newColumnName} column has been successfully updated with values from ${jsonColumnName}.`);
+    } catch (error) {
+        await client.query('ROLLBACK');
+        console.error('Error occurred:', error);
+    } finally {
+        client.release();
+    }
+}
 // CONVERT LEGACY SUB
 async function convertLegacySubData() {
     const stripeDataQuery = `
