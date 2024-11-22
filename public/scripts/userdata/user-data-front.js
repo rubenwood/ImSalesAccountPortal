@@ -30,6 +30,12 @@ async function eventLogBtnClicked(){
 
     const eventLog = await fetchUsersEventLog(startDate, endDate);
     console.log(eventLog);
+
+    // interpret the event log json
+}
+
+function getTotals(){
+
 }
 
 async function newRetBtnClicked(){

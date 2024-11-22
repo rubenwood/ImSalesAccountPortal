@@ -47,12 +47,9 @@ async function getUsersEventLog(startDate, endDate) {
 
     return usersEventLogs;
 }
-
 userDataRouter.post('/get-users-event-log', async (req, res) => {
     let startDate = req.body.startDate;
     let endDate = req.body.endDate;
-    console.log(startDate);
-    console.log(endDate);
     const usersEventLog = await getUsersEventLog(startDate, endDate);
     res.json(usersEventLog);
 });
