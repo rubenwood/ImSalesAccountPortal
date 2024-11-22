@@ -64,44 +64,13 @@ app.get('/database-last-updated', async (req, res) => {
 app.get('/getExchangeRates', async (req, res) => {
   const secret = req.headers['x-secret-key'];
   if (secret !== process.env.SERVER_SEC) {
-    return res.status(401).json({ message: 'Invalid or missing secret.' });
+    return res.status(401).json({ message: 'Invalid credential' });
   }
 
   console.log("fetching exchange data");
   await fetchExchangeData.fetchExchangeRate();
   console.log("got exchange data");
   res.send("-- Got exchange rate data --");
-});
-
-// GET LESSON INFO
-app.post('/getLessonInfo', async (req, res) => {
-  try {
-      const params = {
-          Bucket: process.env.AWS_BUCKET,
-          Key: `AndroidFiles/5.5.2/OtherData/AcademicAreaData/${req.body.area}/LessonInfo.json`
-      };
-
-      const data = await s3.getObject(params).promise();
-      res.send(JSON.parse(data.Body.toString()));
-  } catch (error) {
-      console.error('Error:', error);
-      res.status(500).send('Error fetching data from S3');
-  }
-});
-// GET PRAC INFO
-app.post('/getPracInfo', async (req, res) => {
-  try {
-      const params = {
-          Bucket: process.env.AWS_BUCKET,
-          Key: `AndroidFiles/5.5.2/OtherData/AcademicAreaData/${req.body.area}/PracticalInfo.json`
-      };
-
-      const data = await s3.getObject(params).promise();
-      res.send(JSON.parse(data.Body.toString()));
-  } catch (error) {
-      console.error('Error:', error);
-      res.status(500).send('Error fetching data from S3');
-  }
 });
 
 // GET USER ACC INFO (by email, for report)
@@ -122,10 +91,8 @@ app.post('/get-user-acc-info-email/:email', async (req, res) => {
   } catch (error) {
     console.error('Error:', error);
     if (error.response && error.response.data) {
-        // Sending back the specific error information from Axios
         res.status(500).json(error.response.data);
     } else {
-        // Sending back a general error if the response data is not available
         res.status(500).json({ message: error.message, stack: error.stack });
     }
   }
@@ -147,10 +114,8 @@ app.post('/get-user-acc-info-id/:playFabID', async (req, res) => {
   } catch (error) {
     console.error('Error:', error);
     if (error.response && error.response.data) {
-        // Sending back the specific error information from Axios
         res.status(500).json(error.response.data);
     } else {
-        // Sending back a general error if the response data is not available
         res.status(500).json({ message: error.message, stack: error.stack });
     }
   }
@@ -172,14 +137,12 @@ app.post('/get-user-profile-id/:playFabID', async (req, res) => {
           }
       );
 
-      res.json(response.data); // send back to client
+      res.json(response.data);
   } catch (error) {
     console.error('Error:', error);
     if (error.response && error.response.data) {
-        // Sending back the specific error information from Axios
         res.status(500).json(error.response.data);
     } else {
-        // Sending back a general error if the response data is not available
         res.status(500).json({ message: error.message, stack: error.stack });
     }
   }
@@ -199,21 +162,18 @@ app.post('/get-user-data/:playFabID', async (req, res) => {
           }
       );
 
-      res.json(response.data); // send back to client
+      res.json(response.data);
   } catch (error) {
     console.error('Error:', error);
     if (error.response && error.response.data) {
-        // Sending back the specific error information from Axios
         res.status(500).json(error.response.data);
     } else {
-        // Sending back a general error if the response data is not available
         res.status(500).json({ message: error.message, stack: error.stack });
     }
   }
 });
 // PLAYFAB UPDATE USER DATA
 app.post('/update-user-data', async (req, res) => {
-  //console.log(req.body);
   try {
       const response = await axios.post(
           `https://${process.env.PLAYFAB_TITLE_ID}.playfabapi.com/Server/UpdateUserData`,
@@ -228,7 +188,7 @@ app.post('/update-user-data', async (req, res) => {
               }
           }
       );
-      res.json(response.data); // send back to client
+      res.json(response.data);
   } catch (error) {
     console.error('Error:', error);
     res.status(500).json({
@@ -241,7 +201,11 @@ app.post('/update-user-data', async (req, res) => {
 
 // DELETE USER
 app.post('/delete-user', async (req, res) => {
-  //console.log(req.body);
+  const secret = req.headers['x-secret-key'];
+  if (secret !== process.env.SERVER_SEC) {
+      return res.status(401).json({ message: 'Invalid credential' });
+  }
+
   try {
       const response = await axios.post(
           `https://${process.env.PLAYFAB_TITLE_ID}.playfabapi.com/Admin/DeletePlayer`,
@@ -255,9 +219,8 @@ app.post('/delete-user', async (req, res) => {
               }
           }
       );
-      res.json(response.data); // send back to client
+      res.json(response.data);
   } catch (error) {
-    //console.error('Error:', error);
     res.status(500).json({
       message: 'An error occurred',
       error: error.message,
@@ -275,7 +238,6 @@ app.post('/check-access', async (req, res) => {
   }
 
   if (userAccess.toLowerCase() === process.env.REQUIRED_ACCESS.toLowerCase()) {
-    //req.session.isAuthorized = true;
     res.json({ isAuthorized: true });
   } else {
     res.status(403).json({ isAuthorized: false, error: 'Access Denied: Incorrect access level' });
@@ -377,7 +339,7 @@ app.post('/get-playfab-report', async (req, res) => {
 app.get('/begin-get-all-players', async (req, res) => {
   const secret = req.headers['x-secret-key'];
   if (secret !== process.env.SERVER_SEC) {
-      return res.status(401).json({ message: 'Invalid or missing secret.' });
+      return res.status(401).json({ message: 'Invalid credential' });
   }
   
   try { 

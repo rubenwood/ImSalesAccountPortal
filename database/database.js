@@ -20,7 +20,7 @@ const pool = new Pool({
 dbRouter.get('/update', async (req, res) => {
     const secret = req.headers['x-secret-key'];
     if (secret !== process.env.SERVER_SEC) {
-        return res.status(401).json({ message: 'Invalid or missing secret.' });
+        return res.status(401).json({ message: 'Invalid credential' });
     }
 
     updateDatabase();
@@ -123,7 +123,7 @@ dbRouter.post('/get-users-by-email', async (req, res) => {
 dbRouter.get('/usagedata', async (req, res) => {
   const secret = req.headers['x-secret-key'];
   if (secret !== process.env.SERVER_SEC) {
-      return res.status(401).json({ message: 'Invalid or missing secret.' });
+      return res.status(401).json({ message: 'Invalid credential' });
   }
 
   let start = parseInt(req.query.start, 10);
@@ -153,7 +153,7 @@ dbRouter.get('/usagedata', async (req, res) => {
 dbRouter.get('/get-usagedata-count', async (req, res) => {
   const secret = req.headers['x-secret-key'];
   if (secret !== process.env.SERVER_SEC) {
-      return res.status(401).json({ message: 'Invalid or missing secret.' });
+      return res.status(401).json({ message: 'Invalid credential' });
   }
   try {
       let count = await getTotalUsageRowCount();
