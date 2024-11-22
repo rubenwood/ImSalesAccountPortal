@@ -32,6 +32,17 @@ export async function fetchUsersEventLog(startDate, endDate){
     return await response.json();
 }
 
+// Event Details
+export async function fetchEventDetails(){
+    const response = await fetch('/appevents/get-event-details');
+
+    if (!response.ok) {
+        throw new Error('Failed to fetch event details');
+    }
+
+    return await response.json();
+}
+
 
 // New Vs. Returning
 export async function fetchNewReturningUsers(startDate, endDate) {

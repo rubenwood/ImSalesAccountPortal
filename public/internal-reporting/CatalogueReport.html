@@ -35,8 +35,9 @@
       <h3>Totals</h3>
       <p id="topics-count"><b>Topics:</b>0</p>
       <br/><br/>
+      <input type="button" id="toggle-totals-btn" value="Totals" />
       <!-- Totals Table-->
-        <table id="totals-table">
+      <table id="totals-table">
         <tr>
             <th></th>
             <th>Area</th>
@@ -49,9 +50,11 @@
             <th>Flashcard (A)</th>
             <th>Sims / Exp</th>
         </tr> 
-        </table>
+       </table>
        <br/><br/>
+       <!-- Act per topic -->
        <h3>Activities per Topic</h3>
+       <input type="button" id="toggle-act-per-topic-btn" value="Activities Per Topic" />
        <table id="act-per-topic-table">
         <tr>
             <th>Area</th>
@@ -61,7 +64,24 @@
         </tr>
         </table>
        <br/><br/>
+       <!-- Time Est-->
+       <h3>Area, Module, Topic, Lesson Time Est.</h3>
+       <input type="button" id="toggle-time-est-btn" value="Time Estimates" />
+       <table id="lesson-data-table">
+        <tr>
+            <th>Area</th>
+            <th>Module</th>
+            <th>Module Time Est.</th>
+            <th>Topic</th>
+            <th>Topic Time Est.</th>
+            <th>Lesson</th>
+            <th>Lesson Time Est.</th>
+        </tr>
+        </table>
+       <br/><br/>
+       <!-- Topics in Feed-->
        <h3>Topics in Feed</h3>
+       <input type="button" id="toggle-topics-in-feed-btn" value="Topics in feed" />
        <p id="unique-users-feed">Total Unique Users with topic(s) in feed:</p>
        <table id="topic-usage-table">
         <tr>
@@ -71,9 +91,10 @@
             <th># Users</th>
         </tr> 
         </table>
+      <br/><br/>
       <!-- Platform Content Graph -->
-      <div id="platcon-graph-container">
-      </div>
+      <h3>Content Map</h3>
+      <div id="platcon-graph-container"></div>
   </div>
 </div>
 

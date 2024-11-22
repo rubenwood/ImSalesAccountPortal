@@ -1,8 +1,10 @@
 import { canAccess } from '../access-check.js';
 import { initializeDarkMode } from '../themes/dark-mode.js';
 import { Login, getPlayerEmailAddr } from '../PlayFabManager.js';
+import { formatTimeToHHMMSS } from '../utils.js';
 import { fetchUsersTopicsInFeed } from '../userdata/user-data-utils.js';
 import { waitForJWT, imAPIGet, imAPIPost, getAreas, getModules, getTopics, getActivities, getTreeStructure, getTopicBrondons } from '../immersifyapi/immersify-api.js';
+import {delay } from '../asyncTools.js';
 
 // D3 for graphs :)
 import * as d3 from "https://cdn.jsdelivr.net/npm/d3@7/+esm";
@@ -14,6 +16,13 @@ document.addEventListener('DOMContentLoaded', async () => {
     // setup dark mode toggle
     initializeDarkMode('darkModeSwitch');
     document.getElementById('loginButton').addEventListener('click', Login);
+
+    // toggle buttons
+    document.getElementById('toggle-totals-btn').addEventListener('click', ()=> toggleSection('totals-table'));
+    document.getElementById('toggle-act-per-topic-btn').addEventListener('click', ()=> toggleSection('act-per-topic-table'));
+    document.getElementById('toggle-time-est-btn').addEventListener('click', ()=> toggleSection('lesson-data-table'));
+    document.getElementById('toggle-topics-in-feed-btn').addEventListener('click', ()=> toggleSection('topic-usage-table'));
+
     // wait for login
     await waitForJWT();
     // Button events
@@ -23,6 +32,16 @@ document.addEventListener('DOMContentLoaded', async () => {
 window.onload = function() {
     document.getElementById('loginModal').style.display = 'block';
 };
+
+function toggleSection(elementId){
+    const element = document.getElementById(elementId);
+  
+    if(element){
+        element.style.display = (element.style.display === "none" || element.style.display === "") ? "block" : "none";
+    }else{
+        console.warn(`Element with ID "${elementId}" not found.`);
+    }
+}
 
 
 // DATA
@@ -38,6 +57,7 @@ async function getCatalogueReport(){
 
     TreeStructure = await getTreeStructure();
     console.log(TreeStructure);
+    
     const areaBrondons = TreeStructure.inAreas;
     const moduleBrondons = getModulesFromAreas(areaBrondons);
     const topicBrondons = getTopicsFromModules(moduleBrondons);
@@ -49,6 +69,7 @@ async function getCatalogueReport(){
     await setGeneralData(areaBrondons);
     populateTotalsTable(areaBrondons);
     populateActPerTopicsTable(areaBrondons);
+    populateLessonDataTable(areaBrondons);
     await populateTopicUsageTable(topicBrondons);
 
     // need to store a snapshot of this data per month    
@@ -89,17 +110,28 @@ function getFlashcardsFromActivities(activities){
 }
 async function getPointsFromLessons(lessons){
     // lesson id 4a494cd3-2d84-4351-8979-f39508ad6d07
-    let ids = lessons.map(lesson => lesson.structureId);
-    let lessonDataReqs = [];
-    ids.forEach(id => lessonDataReqs.push(imAPIPost(`lessons/${id}/allData`, { languageId:"english-us" })) );
-    const lessonDataRes = await Promise.all(lessonDataReqs);
-    let lessonJSONs = [];
-    lessonDataRes.forEach(res => lessonJSONs.push(JSON.parse(res)));
+    const ids = lessons.map(lesson => lesson.structureId);
+    const chunkSize = 5;
+    const staggerDelay = 250;
 
     let points = [];
-    lessonJSONs.forEach(lesson => { 
-        points.push(lesson.points); 
-    });
+
+    async function processChunk(chunk) {
+        const chunkPromises = chunk.map(id =>
+            imAPIPost(`lessons/${id}/allData`, { languageId: "english-us" })
+        );
+        const results = await Promise.all(chunkPromises);
+        return results.map(res => JSON.parse(res).points);
+    }
+
+    // Process IDs in chunks
+    for (let i = 0; i < ids.length; i += chunkSize) {
+        const chunk = ids.slice(i, i + chunkSize);
+        const chunkPoints = await processChunk(chunk);
+        points.push(...chunkPoints);
+        await delay(staggerDelay);
+    }
+
     return points;
 }
 
@@ -241,18 +273,81 @@ async function populateTotalsTable(areaStructure){
 }
 async function populateActPerTopicsTable(areaBrondons){
     const actPerTopicTable = document.getElementById('act-per-topic-table');
-    for(const areaBrondon of areaBrondons){
-        let dataRow = actPerTopicTable.insertRow();
-        
-        let areaCell = dataRow.insertCell();
-        areaCell.innerHTML = areaBrondon.externalTitle;
+    for(const areaBrondon of areaBrondons){        
 
-        let moduleCell = dataRow.insertCell();
+        for(const moduleBrondon of areaBrondon.children){
+            for(const topicBrondon of moduleBrondon.children){
+                let dataRow = actPerTopicTable.insertRow();        
+                let areaCell = dataRow.insertCell();
+                areaCell.innerHTML = areaBrondon.externalTitle;
 
+                let moduleCell = dataRow.insertCell();
+                moduleCell.innerHTML = moduleBrondon.externalTitle;
 
+                let topicCell = dataRow.insertCell();
+                topicCell.innerHTML = topicBrondon.externalTitle;
+
+                let activitiesCell = dataRow.insertCell();
+                activitiesCell.innerHTML = topicBrondon.children.length;
+            }
+        }
     }
-
 }
+async function populateLessonDataTable(areaBrondons) {
+    const lessonDataTable = document.getElementById('lesson-data-table');
+    
+    for (const areaBrondon of areaBrondons) {
+        for (const moduleBrondon of areaBrondon.children) {
+
+            let moduleTotalTime = 0;
+            for (const topicBrondon of moduleBrondon.children) {
+                for (const activityBrondon of topicBrondon.children) {
+                    if (activityBrondon.type === "lesson") {
+                        moduleTotalTime += activityBrondon.timeEstimate;
+                    }
+                }
+            }
+
+            for (const topicBrondon of moduleBrondon.children) {
+                
+                let topicTotalTime = 0;
+                for (const activityBrondon of topicBrondon.children) {
+                    if (activityBrondon.type === "lesson") {
+                        topicTotalTime += activityBrondon.timeEstimate;
+                    }
+                }
+
+                for (const activityBrondon of topicBrondon.children) {
+                    if (activityBrondon.type === "lesson") {
+                        let dataRow = lessonDataTable.insertRow();
+                        
+                        let areaCell = dataRow.insertCell();
+                        areaCell.innerHTML = areaBrondon.externalTitle;
+
+                        let moduleCell = dataRow.insertCell();
+                        moduleCell.innerHTML = moduleBrondon.externalTitle;
+                        let moduleTimeEstCell = dataRow.insertCell();
+                        moduleTimeEstCell.innerHTML = formatTimeToHHMMSS(moduleTotalTime);
+
+                        let topicCell = dataRow.insertCell();
+                        topicCell.innerHTML = topicBrondon.externalTitle;
+
+                        let topicTimeEstCell = dataRow.insertCell();
+                        topicTimeEstCell.innerHTML = formatTimeToHHMMSS(topicTotalTime);
+
+                        let lessonTitleCell = dataRow.insertCell();
+                        lessonTitleCell.innerHTML = activityBrondon.externalTitle;
+
+                        let lessonTimeEstCell = dataRow.insertCell();
+                        lessonTimeEstCell.innerHTML = formatTimeToHHMMSS(activityBrondon.timeEstimate);
+                    }
+                }
+            }
+        }
+    }
+}
+
+
 async function populateTopicUsageTable(topicBrondons) {
     const topicIds = topicBrondons.map(brondon => brondon.structureId);
     const usersTopicsInFeed = await fetchUsersTopicsInFeed(topicIds);
@@ -273,7 +368,7 @@ async function populateTopicUsageTable(topicBrondons) {
             }
         });
     });
-    console.log(uniqueUsers); // For debugging
+    console.log(uniqueUsers);
     document.getElementById('unique-users-feed').innerHTML = `Total Unique Users with topic(s) in feed: ${uniqueUsers.length}`;
 
     // Populate the table with the sorted data
@@ -537,11 +632,18 @@ function renderForceDirectedTree(data) {
         .attr("r", d => 5 + Math.sqrt(d.value) * 3)
         .attr("fill", d => colorByDepth(d.depth));
 
+    function calcTextSize(d){
+        let size = 10 * (Math.sqrt(d.value));
+        console.log(size)
+        return size;
+    }
+    //Math.min(Math.max(calcTextSize(d), 36), 74)
+
     node.append("text")
         .attr("dy", ".35em")
         .attr("x", d => d.children ? -15 - Math.sqrt(d.value) * 3 : 15 + Math.sqrt(d.value) * 3)
         .style("text-anchor", d => d.children ? "end" : "start")
-        .style("font-size", d => `${10 + Math.sqrt(d.value)}px`)
+        .style("font-size", d => `${14 + (Math.sqrt(d.value))}px`)
         .text(d => d.data.name);
 
     simulation.on("tick", () => {

@@ -22,13 +22,10 @@ async function getUsersEventLog(startDate, endDate) {
     const endDateStr = new Date(endDate).toISOString().slice(0, 10);
 
     const usersEventLogQuery = `
-        SELECT "PlayFabId", "EventLogKey", "EventLogJSON"
+        SELECT "PlayFabId", "EventLogKey", "EventLogJSON", "EventLogDate"
         FROM public."UserEventLogs"
         WHERE 
-            -- Check if EventLogKey matches the EventLog-DD/MM/YYYY pattern
-            "EventLogKey" ~ '^EventLog-\\d{2}/\\d{2}/\\d{4}$'
-            AND TO_DATE(SUBSTRING("EventLogKey" FROM 10 FOR 10), 'DD/MM/YYYY') 
-              BETWEEN $1 AND $2
+            "EventLogDate" BETWEEN $1 AND $2
         ORDER BY "PlayFabId";
     `;
 
@@ -36,14 +33,19 @@ async function getUsersEventLog(startDate, endDate) {
 
     // Group results by PlayFabId and aggregate EventLogKeys
     const usersEventLogs = result.rows.reduce((acc, row) => {
-        const { PlayFabId, EventLogKey, EventLogJSON } = row;
-        if (!acc[PlayFabId]) {
-            acc[PlayFabId] = [];
+        const { PlayFabId, EventLogKey, EventLogJSON, EventLogDate } = row;
+        
+        // Find or create an entry for the PlayFabId
+        let userEntry = acc.find(entry => entry.PlayFabId === PlayFabId);
+        if (!userEntry) {
+            userEntry = { PlayFabId, EventLogs: [] };
+            acc.push(userEntry);
         }
-        let EventLog = JSON.parse(EventLogJSON.Value);
-        acc[PlayFabId].push({ EventLogKey, EventLogJSON, EventLog });
+
+        // Add the current log data to the user's EventLogs array
+        userEntry.EventLogs.push({ EventLogKey, EventLogJSON, EventLogDate });
         return acc;
-    }, {});
+    }, []);
 
     return usersEventLogs;
 }
@@ -69,7 +71,6 @@ async function getUsersWithTopicInFeed(topicIds) {
         )
     `;
     const result = await pool.query(usersWithTopicsQuery, [topicIds]);
-
 
     const output = [];
     for (const topicId of topicIds) {

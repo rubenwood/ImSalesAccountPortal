@@ -38,11 +38,6 @@ async function updateDatabase(){
     console.log("updating account data fields...");
     // extract out the PlayerId field and make that a separate column PlayFabId, also store the playfab data in AccountDataJSON
     await extractAndSetJsonValue('AccountData', 'AccountDataJSON', 'PlayerId', undefined, 'PlayFabId').catch(err => console.error(err));
-    
-    // handle event logs
-    console.log("updating user event logs...");
-    await getAllPlayerEventLogsWriteToDB();
-
     console.log("getting all usage data and writing to db...");
     // get usage data (Player Title Data) from playfab and write to DB
     await updateUsageDataInDB();
@@ -50,6 +45,13 @@ async function updateDatabase(){
     // extract out the PlayFabId field and make that a separate column PlayFabId, also store the playfab data in UsageDataJSON
     await extractAndSetJsonValue('UsageData', 'UsageDataJSON', 'PlayFabId', undefined, 'PlayFabId').catch(err => console.error(err));
     await extractAndSetJsonValue('UsageData', 'UsageDataJSON', 'Data', 'AcademicArea', 'AcademicArea').catch(err => console.error('Unhandled error:', err));
+    await extractAndSetJsonValue('UsageData', 'UsageDataJSON', 'Data', 'UserPreferenceData', 'UserPreferenceData').catch(err => console.error('Unhandled error:', err));
+    await extractAndSetJsonValue('UsageData', 'UsageDataJSON', 'Data', 'UserProfileData', 'UserProfileData').catch(err => console.error('Unhandled error:', err));
+    await extractAndSetJsonValueSubkeys('UsageData', 'UsageDataJSON', 'Data', ['UserProfileData','Value', 'languageOfStudy'], 'LanguageOfStudy').catch(err => console.error('Unhandled error:', err));
+    // handle event logs
+    console.log("updating user event logs...");
+    getAllPlayerEventLogsWriteToDB();
+
     // set the last updated date (json file)
     OnUpdateCompletion(new Date());
 }
@@ -98,67 +100,82 @@ async function getAllPlayerEventLogsWriteToDB() {
     console.log(`Getting all event logs ${new Date()}`);
 
     try {
-        // Start transaction
         await client.query('BEGIN');
 
-        // Get all PlayFabIds from AccountData
         const { rows } = await client.query('SELECT "PlayFabId" FROM public."AccountData"');
         const playerIds = rows.map(row => row.PlayFabId);
         let maxConcurrentRequests = 20;
 
-        // Process players in batches
         for (let i = 0; i < playerIds.length; i += maxConcurrentRequests) {
             const currentBatch = playerIds.slice(i, i + maxConcurrentRequests);
+            console.log(`Processing batch ${(i / maxConcurrentRequests) + 1} of ${Math.ceil(playerIds.length / maxConcurrentRequests)}: Processing ${currentBatch.length} player IDs.`);
             const results = await processBatch(currentBatch);
 
             for (const { playerId, data } of results) {
                 const eventLogs = {};
 
-                console.log("---start\n", data, "\nend---");
                 if (data?.Data == undefined) {
                     console.log(`===== NO DATA ${playerId} =====`);
                     continue;
                 }
 
-                // Extract EventLogs (any key with "EventLog" in its name)
+                // Extract EventLogs
                 for (const key in data.Data) {
                     if (key.includes("EventLog")) {
+                        console.log("Event log key found!");
                         eventLogs[key] = data.Data[key];
                     }
                 }
 
                 // Insert or update event logs in the database
-                for (const [eventLogKey, eventLogData] of Object.entries(eventLogs)) {
-                    console.log("\n~~~\n", playerId, "\n~Key~:\n ", eventLogKey, "\n~Data~:\n", eventLogData, "\n~~~\n");
-                    
-                    // Check if an entry with this PlayFabId and EventLogKey already exists
+                const logEntries = Object.entries(eventLogs);
+                console.log("Log entries:", JSON.stringify(logEntries, null, 2));
+                for (const [eventLogKey, eventLogData] of logEntries) {
+                    //console.log("\n~~~\n", playerId, "\n~Key~:\n ", eventLogKey, "\n~Data~:\n", eventLogData, "\n~~~\n");
+
+                    // Extract date from the eventLogKey (from "EventLog-11/11/2024_Part1" to "11/11/2024")
+                    const dateMatch = eventLogKey.match(/EventLog-(\d{2}\/\d{2}\/\d{4})/);
+                    const eventLogDate = dateMatch ? dateMatch[1] : null;
+                    console.log("event log date 1:");
+                    console.log(eventLogDate);
+
+                    if (eventLogDate == null) {
+                        if(eventLogKey.includes("MetaData")){
+                            console.warn(`EventLogKey is MetaData`);
+                        }else{
+                            console.warn(`Invalid EventLogKey format: ${eventLogKey}`);
+                        }
+                    }
+
                     const existingEntry = await client.query(
                         `SELECT 1 FROM public."UserEventLogs" 
                          WHERE "PlayFabId" = $1 AND "EventLogKey" = $2`,
                         [playerId, eventLogKey]
                     );
 
+                    console.log("-------------event log date 2:----------");
+                    console.log(eventLogDate);
+
                     if (existingEntry.rowCount > 0) {
-                        // Update if the entry exists
+                        // dont really need to do this, but just to be safe...
                         await client.query(
                             `UPDATE public."UserEventLogs" 
-                             SET "EventLogJSON" = $1
-                             WHERE "PlayFabId" = $2 AND "EventLogKey" = $3`,
-                            [eventLogData, playerId, eventLogKey]
+                             SET "EventLogJSON" = $1, "EventLogDate" = TO_DATE($2, 'DD/MM/YYYY')
+                             WHERE "PlayFabId" = $3 AND "EventLogKey" = $4`,
+                            [eventLogData, eventLogDate, playerId, eventLogKey]
                         );
                     } else {
-                        // Insert if no entry exists
+                        console.log("inserting data...");
                         await client.query(
-                            `INSERT INTO public."UserEventLogs" ("PlayFabId", "EventLogKey", "EventLogJSON")
-                             VALUES ($1, $2, $3)`,
-                            [playerId, eventLogKey, eventLogData]
+                            `INSERT INTO public."UserEventLogs" ("PlayFabId", "EventLogKey", "EventLogJSON", "EventLogDate")
+                             VALUES ($1, $2, $3, TO_DATE($4, 'DD/MM/YYYY'))`,
+                            [playerId, eventLogKey, eventLogData, eventLogDate]
                         );
                     }
                 }
             }
         }
-
-        // Commit transaction
+        console.log("~~~ event data updated");
         await client.query('COMMIT');
     } catch (error) {
         console.error("Error processing event logs:", error);
@@ -356,7 +373,57 @@ async function extractAndSetJsonValue(tableName, jsonColumnName, keyName, subKey
         client.release();
     }
 }
+// TODO: use this to replace the other
+async function extractAndSetJsonValueSubkeys(tableName, jsonColumnName, keyName, subKeyNames, newColumnName) {
+    const client = await pool.connect();
 
+    try {
+        await client.query('BEGIN');
+
+        // Add the new column if it doesn't exist
+        console.log(`Adding column ${newColumnName} to table ${tableName} if it does not exist.`);
+        await client.query(`
+            ALTER TABLE "${tableName}"
+            ADD COLUMN IF NOT EXISTS "${newColumnName}" TEXT;
+        `);
+
+        // Construct the JSON traversal path dynamically
+        let jsonPath = `"${jsonColumnName}"->'${keyName}'`;
+
+        if (Array.isArray(subKeyNames) && subKeyNames.length > 0) {
+            subKeyNames.forEach((subKey, index) => {
+                if (index === subKeyNames.length - 2) {
+                    // If second to last key, extract as text (JSON string)
+                    jsonPath += `->>'${subKey}'`;
+                } else if (index === subKeyNames.length - 1) {
+                    // Final key to extract value from parsed JSON
+                    jsonPath = `(${jsonPath})::json->>'${subKey}'`;
+                } else {
+                    // Intermediate keys
+                    jsonPath += `->'${subKey}'`;
+                }
+            });
+        }
+
+        // Construct the query for updating the new column
+        const updateQuery = `
+            UPDATE "${tableName}"
+            SET "${newColumnName}" = (${jsonPath});
+        `;
+
+        console.log(`Constructed query: ${updateQuery}`);
+        const result = await client.query(updateQuery);
+        console.log(`${result.rowCount} rows updated.`);
+
+        await client.query('COMMIT');
+        console.log(`${newColumnName} column has been successfully updated with values from ${jsonColumnName}.`);
+    } catch (error) {
+        await client.query('ROLLBACK');
+        console.error('Error occurred:', error);
+    } finally {
+        client.release();
+    }
+}
 // CONVERT LEGACY SUB
 async function convertLegacySubData() {
     const stripeDataQuery = `
