@@ -107,7 +107,7 @@ app.post('/getPracInfo', async (req, res) => {
 app.post('/get-user-acc-info-email/:email', async (req, res) => {
   try {
       const response = await axios.post(
-          `https://${process.env.PLAYFAB_TITLE_ID}.api.main.azureplayfab.com/Admin/GetUserAccountInfo`,
+          `https://${process.env.PLAYFAB_TITLE_ID}.playfabapi.com/Admin/GetUserAccountInfo`,
           { Email: req.body.email },
           {
               headers: {
@@ -132,7 +132,7 @@ app.post('/get-user-acc-info-email/:email', async (req, res) => {
 app.post('/get-user-acc-info-id/:playFabID', async (req, res) => {
   try {
       const response = await axios.post(
-          `https://${process.env.PLAYFAB_TITLE_ID}.api.main.azureplayfab.com/Admin/GetUserAccountInfo`,
+          `https://${process.env.PLAYFAB_TITLE_ID}.playfabapi.com/Admin/GetUserAccountInfo`,
           { PlayFabId: req.body.playFabID },
           {
               headers: {
@@ -158,7 +158,7 @@ app.post('/get-user-acc-info-id/:playFabID', async (req, res) => {
 app.post('/get-user-profile-id/:playFabID', async (req, res) => {
   try {
       const response = await axios.post(
-          `https://${process.env.PLAYFAB_TITLE_ID}.api.main.azureplayfab.com/Admin/GetPlayerProfile`,
+          `https://${process.env.PLAYFAB_TITLE_ID}.playfabapi.com/Admin/GetPlayerProfile`,
           { 
             PlayFabId: req.body.playFabID,
             ProfileConstraints: { ShowContactEmailAddresses:true }
@@ -188,7 +188,7 @@ app.post('/get-user-profile-id/:playFabID', async (req, res) => {
 app.post('/get-user-data/:playFabID', async (req, res) => {
   try {
       const response = await axios.post(
-          `https://${process.env.PLAYFAB_TITLE_ID}.api.main.azureplayfab.com/Admin/GetUserData`,
+          `https://${process.env.PLAYFAB_TITLE_ID}.playfabapi.com/Admin/GetUserData`,
           { PlayFabId: req.body.playFabID },
           {
               headers: {

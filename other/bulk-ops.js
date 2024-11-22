@@ -299,7 +299,7 @@ async function processBatch(playerIds) {
 async function fetchPlayerData(playerId) {
     try {
         const response = await axios.post(
-            `https://${process.env.PLAYFAB_TITLE_ID}.api.main.azureplayfab.com/Admin/GetUserData`,
+            `https://${process.env.PLAYFAB_TITLE_ID}.playfabapi.com/Admin/GetUserData`,
             { PlayFabId: playerId },
             {
                 headers: {
