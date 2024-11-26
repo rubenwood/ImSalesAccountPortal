@@ -104,6 +104,12 @@ label {
     display: flex;
     flex-direction: column;
 }
+#signup-bulk-container{
+    flex: 0 0 auto;
+    width: 400px;
+    display: flex;
+    flex-direction: column;
+}
 #modify-existing-container {
     flex: 0 0 auto;
     width: 400px;

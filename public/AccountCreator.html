@@ -29,12 +29,16 @@
     <div class="form-selection">
         <input type="radio" id="signUpFormRadio" name="formType" value="signUp" checked>
         <label for="signUpFormRadio">Sign Up (Create New)</label><br>
+
+        <input type="radio" id="signUpBulkFormRadio" name="formType" value="signUpBulk">
+        <label for="signUpBulkFormRadio">Sign Up Bulk</label><br>
+
         <input type="radio" id="modifyFormRadio" name="formType" value="modifyExisting">
         <label for="modifyFormRadio">Update Existing</label>
     </div>
     <br><br>
     <div id="signup-container" class="container">
-        Email Address <input type="text" id="emailSignUpAddress" value="example@test.com"><br>
+        Email Address <input type="text" id="emailSignUpAddress" value="example@test.com"></input><br>
         Password <span class="small-text">(Min. 8 characters, must include at least 1 number)</span>
         <input type="text" id="emailSignUpPassword" value="">
         <input type="button" id="generatePassword" class="reveal-button" value="Generate Password"><br>
@@ -56,6 +60,46 @@
         <input type="button" id="registerButton" value="Register"><br><br>
         Result<br><br>
         <textarea id="resultOutput" cols="60" rows="5"></textarea><br>    
+    </div>
+    <div id="signup-bulk-container" class="container">
+        <table id="accTable">
+            <tr>
+                <th>Email</th>
+                <th>Display Name</th>
+            </tr>
+            <tr>
+                <td>
+                    <input type="text" id="emailAddrBulk" value="example@test.com">
+                </td>
+                <td>
+                    <input type="text" id="displayNameBulk" value="">
+                </td>
+                <td>
+                    <input type="button" id="removeRow" value="-">
+                </td>
+            </tr>
+        </table>
+        <input type="button" id="addAccRow" value="+">
+        <br>
+        Password <span class="small-text">(Min. 8 characters, must include at least 1 number)</span>
+        <input type="text" id="emailSignUpPasswordBulk" value="">
+        <input type="button" id="generatePasswordBulk" class="reveal-button" value="Generate Password"><br>
+        Academic Area
+        <select name="academicAreaSelectionBulk" id="academicAreaBulk"></select>
+        <br>
+        Language Of Study
+        <select name="languageSelectionBulk" id="languageBulk"></select>
+        <br>
+        Expiry<br>
+        <input type="date" id="expiryBulk"><br><br><br>
+        Created By<br>
+        <input type="text" id="createdByBulk"><br>
+        Reason<br>
+        <input type="text" id="createdReasonBulk"><br>
+        <br>
+        <input type="button" id="registerButtonBulk" value="Register"><br><br>
+        Result<br><br>
+        <textarea id="resultOutputBulk" cols="60" rows="5"></textarea><br>  
     </div>
     <div id="modify-existing-container" class="container">
         Email Address <input type="text" id="emailAddressUpdate" value="salestest@test.com"><br>

@@ -76,7 +76,7 @@ export function updateButtonText(button, text, maxTicks) {
     };
 }
 // Generate password
-export function generatePass() {
+export function generatePass(passElement) {
     const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
     const digits = '0123456789';
     const allCharacters = alphabet + digits;
@@ -92,7 +92,7 @@ export function generatePass() {
 
     // Shuffle to randomize the position of the digit
     password = password.split('').sort(() => 0.5 - Math.random()).join('');
-    document.getElementById("emailSignUpPassword").value = password;
+    passElement.value = password;
     return password;
 }
 

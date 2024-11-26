@@ -123,20 +123,30 @@ var RegisterCallback = async function (result, error){
     }
 
     document.getElementById("resultOutput").innerHTML = "Account created!";
-
-    //const SubOverride = true;
-    const VerifyEmailOverride = true;
+    
     const AcademicArea = document.getElementById("academicArea").value;
-    const LanguageOfStudyInput = document.getElementById("language").value;
-    const CanEmail = true;
+    const LanguageOfStudyInput = document.getElementById("language").value;    
     const TestAccountExpiryDate = document.getElementById("expiry").value;
-    const TestAccountExpiryDateFormatted = formatDate(new Date(TestAccountExpiryDate));
-    const today = formatDate(new Date());
     const CreatedBy = document.getElementById("createdBy").value;
     const CreatedUpdatedReason = document.getElementById("createdReason").value;
 
-    // TODO: This field will be unused, for now...
-    // SubOverride used instead
+    let data = getDefaultGoldUserData(AcademicArea, LanguageOfStudyInput, TestAccountExpiryDate, CreatedBy, CreatedUpdatedReason);
+    UpdateUserData(data);
+    // wait for UpdateUserData to complete
+    await waitUntil(()=> doneUpdatingUserData == true);
+    // update confluence page
+    const email = document.getElementById("emailSignUpAddress").value;
+    const pass = document.getElementById("emailSignUpPassword").value;
+
+    callUpdateConfluencePage(email,pass,AcademicArea,TestAccountExpiryDate,CreatedBy,CreatedUpdatedReason);   
+}
+// DEFAULT DATA
+export function getDefaultGoldUserData(AcademicArea, LanguageOfStudyInput, TestAccountExpiryDate, CreatedBy, CreatedUpdatedReason){
+    const VerifyEmailOverride = true;
+    const CanEmail = true;
+    const today = formatDate(new Date());
+    const TestAccountExpiryDateFormatted = formatDate(new Date(TestAccountExpiryDate));
+
     const OtherSubDataJSON = {
         Platform:"Other",
         Product:"immersify.gold_yearly",
@@ -163,9 +173,8 @@ var RegisterCallback = async function (result, error){
     const LastWriteDevice = "";
 
     const data = {
-        //SubOverride,
         VerifyEmailOverride,
-        AcademicArea, // TODO: this needs to be a CMS ID
+        AcademicArea,
         CanEmail,
         TestAccountExpiryDate:TestAccountExpiryDateFormatted.toString(),
         CreatedBy,
@@ -174,15 +183,8 @@ var RegisterCallback = async function (result, error){
         LastWriteDevice,
         UserProfileData:userProfileDataStr // localisation
     };
-    //console.log(data);
-    UpdateUserData(data);
-    // wait for UpdateUserData to complete
-    await waitUntil(()=> doneUpdatingUserData == true);
-    // update confluence page
-    const email = document.getElementById("emailSignUpAddress").value;
-    const pass = document.getElementById("emailSignUpPassword").value;
-
-    callUpdateConfluencePage(email,pass,AcademicArea,TestAccountExpiryDate,CreatedBy,CreatedUpdatedReason);   
+    console.log(data);
+    return data;
 }
 // UPDATE USER DATA
 export function UpdateUserDataGeneric(updateData, callback){
@@ -219,25 +221,24 @@ var UpdateUserDataCallback = function (result, error){
 }
 
 // UPDATE USER DATA (SERVER SIDE)
-export async function UpdateUserDataServer(){
+export async function UpdateUserDataServer(inEmail, inPass, inAcaArea, inLanguage, inExpiry, inUpdatedBy, inReason){
     let resultOutput = document.getElementById("updateResultOutput").value;
     resultOutput = '';
-    const email =  document.getElementById("emailAddressUpdate").value;
-    const userAccInfoResp = await fetchUserAccInfoByEmail(email); // input email address, get playfabID
+
+    const userAccInfoResp = await fetchUserAccInfoByEmail(inEmail); // input email address, get playfabID
     if (userAccInfoResp.error) {
         resultOutput = `Error occurred: ${userAccInfoResp.message}`;
         return;
     }
 
-    const SubOverride = true;
     const VerifyEmailOverride = true;
-    const AcademicArea = document.getElementById("academicAreaUpdate").value;
-    const LanguageOfStudyInput = document.getElementById("languageUpdate").value;
-    const TestAccountExpiryDate = document.getElementById("expiryUpdate").value;
+    const AcademicArea = inAcaArea;//document.getElementById("academicAreaUpdate").value;
+    const LanguageOfStudyInput = inLanguage;//document.getElementById("languageUpdate").value;
+    const TestAccountExpiryDate = inExpiry;//document.getElementById("expiryUpdate").value;
     const TestAccountExpiryDateFormatted = formatDate(new Date(TestAccountExpiryDate));
     const today = formatDate(new Date());
-    const UpdatedBy = document.getElementById("updatedBy").value;
-    const CreatedUpdatedReason = document.getElementById("updatedReason").value;
+    const UpdatedBy = inUpdatedBy;//document.getElementById("updatedBy").value;
+    const CreatedUpdatedReason = inReason;//document.getElementById("updatedReason").value;
 
     const OtherSubDataJSON = {
         Platform:"Other",
@@ -290,7 +291,7 @@ export async function UpdateUserDataServer(){
     }
 
     // Update the confluence page
-    await callUpdateConfluencePage(email,'[user defined]',AcademicArea,TestAccountExpiryDate,UpdatedBy,CreatedUpdatedReason);
+    await callUpdateConfluencePage(inEmail,inPass,AcademicArea,TestAccountExpiryDate,UpdatedBy,CreatedUpdatedReason);
 
     return await response.json();
 }
