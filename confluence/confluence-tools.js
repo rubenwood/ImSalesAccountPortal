@@ -28,9 +28,10 @@ confRouter.put('/update-confluence-page/:pageId', async (req, res) => {
     try {
         const currentVersion = await getCurrentPageVersion(pageId)
         const bodyData = {
+            "id":pageId,
             "version": {
                 "number": currentVersion + 1,
-                "message": "update"
+                "message": `update ${currentVersion + 1}`
             },
             "title": "Test Accounts (Automated)",
             "type": "page",
@@ -43,7 +44,7 @@ confRouter.put('/update-confluence-page/:pageId', async (req, res) => {
             }
         };
 
-        const response = await axios.put(`https://immersify.atlassian.net/wiki/rest/api/content/${pageId}`,
+        const response = await axios.put(`https://immersify.atlassian.net/wiki/api/v2/pages/${pageId}`,
             JSON.stringify(bodyData), {
             headers: {
                 'Authorization': `Basic ${Buffer.from(`${process.env.CONFLUENCE_USERNAME}:${process.env.CONFLUENCE_API_TOKEN}`)
