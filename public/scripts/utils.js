@@ -1,4 +1,6 @@
-
+export function RandomInt(max) {
+    return Math.floor(Math.random() * max);
+}
 export function formatTime(secondsTotal) {
     // Handle case where input is 0
     if (secondsTotal == undefined || secondsTotal <= 0) {

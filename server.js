@@ -31,6 +31,7 @@ const { playfabRouter } = require('./playfab/playfab-utils.js');
 const { dlRouter } = require('./other/downloads.js');
 const { appEventsRouter } = require('./app_events/app-events.js');
 const { userDataRouter } = require('./other/user-data.js');
+const { oneSignalRouter } = require('./one_signal/one-signal.js');
 const { getAllPlayerAccDataAndWriteToDB, getAllPlayerEventLogsWriteToDB } = require('./other/bulk-ops');
 
 app.use(express.json());
@@ -427,6 +428,7 @@ app.use('/playfab', playfabRouter);
 app.use('/downloads', dlRouter);
 app.use('/appevents', appEventsRouter);
 app.use('/userdata', userDataRouter);
+app.use('/onesignal', oneSignalRouter);
 const PORT = process.env.PORT;
 
 app.listen(PORT, () => {

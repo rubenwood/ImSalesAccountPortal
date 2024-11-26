@@ -220,12 +220,13 @@ function getLogsPerDate(eventLogs) {
 }
 
 // Type per date
-function graphEventTypesPerDateChartJS(){
+function graphEventTypesPerDateChartJS() {
     const chartElement = document.getElementById('chart-event-by-date').getContext('2d');
     // counts by date and event type
     const eventCounts = {};
     EventList.forEach(entry => {
         const date = entry.date;
+        console.log("date", date);
         entry.events.forEach(event => {
             if (!eventCounts[date]) eventCounts[date] = {};
             if (!eventCounts[date][event.name]) eventCounts[date][event.name] = 0;
@@ -233,17 +234,21 @@ function graphEventTypesPerDateChartJS(){
         });
     });
 
-    const labels = Object.keys(eventCounts);
+    const labels = Object.keys(eventCounts).sort((a, b) => {
+        const [dayA, monthA, yearA] = a.split('/').map(Number);
+        const [dayB, monthB, yearB] = b.split('/').map(Number);
+        return new Date(yearA, monthA - 1, dayA) - new Date(yearB, monthB - 1, dayB);
+    });
     // unique, hash-set, of event types
     const eventTypes = Array.from(new Set(
         Object.values(eventCounts).flatMap(dateEvents => Object.keys(dateEvents))
-    ))
-    // Populate datasets for each event type
+    ));
+     // Populate datasets for each event type
     const datasets = eventTypes.map(eventType => ({
         label: eventType,
         backgroundColor: stringToHexColor(eventType),
-        data: labels.map(date => eventCounts[date][eventType] || 0) 
-    }));    
+        data: labels.map(date => eventCounts[date][eventType] || 0)
+    }));
 
     const eventChart = new Chart(chartElement, {
         type: 'bar',
@@ -282,8 +287,7 @@ function graphEventTypesPerDateChartJS(){
                         text: 'Event Count'
                     },
                     ticks: {
-                        // Using logarithmic style in linear scale by adjusting the tick values
-                        callback: function(value) {
+                        callback: function (value) {
                             if (value === 1 || value % 10 === 0) return value;
                         }
                     }
@@ -292,6 +296,7 @@ function graphEventTypesPerDateChartJS(){
         }
     });
 }
+
 
 // Regex to check if the time is in HH:MM:SS:SSS format
 const timeFormatRegex = /^([0-1]?[0-9]|2[0-3]):([0-5]?[0-9]):([0-5]?[0-9]):(\d{3})$/;
@@ -305,7 +310,7 @@ function graphEventsTimeOfDay() {
         const date = entry.date;
         entry.events.forEach(event => {
             const eventTimeString = event.time;
-            
+
             const match = timeFormatRegex.exec(eventTimeString);
             if (match) {
                 const [hours, minutes, seconds] = match.slice(1, 4).map(Number);
@@ -320,11 +325,21 @@ function graphEventsTimeOfDay() {
         });
     });
 
-    const labels = Array.from(new Set(eventPoints.map(p => p.x)));
+    const sortedDates = Array.from(new Set(eventPoints.map(p => p.x))).sort((a, b) => {
+        const [dayA, monthA, yearA] = a.split('/').map(Number);
+        const [dayB, monthB, yearB] = b.split('/').map(Number);
+        return new Date(yearA, monthA - 1, dayA) - new Date(yearB, monthB - 1, dayB);
+    });
+
     const eventTypes = Array.from(new Set(eventPoints.map(p => p.eventType)));
 
     const datasets = eventTypes.map(eventType => {
-        const data = eventPoints.filter(p => p.eventType === eventType).map(p => ({ x: p.x, y: p.y }));
+        const data = eventPoints
+            .filter(p => p.eventType === eventType)
+            .map(p => ({
+                x: sortedDates.indexOf(p.x) > -1 ? p.x : null, // Ensure date alignment
+                y: p.y
+            }));
 
         return {
             label: eventType,
@@ -337,7 +352,7 @@ function graphEventsTimeOfDay() {
     const eventChart = new Chart(ctx, {
         type: 'scatter',
         data: {
-            labels: labels,
+            labels: sortedDates,
             datasets: datasets,
         },
         options: {
@@ -367,7 +382,7 @@ function graphEventsTimeOfDay() {
                         display: true,
                         text: 'Date',
                     },
-                    labels: labels,
+                    labels: sortedDates,
                     ticks: {
                         autoSkip: true,
                         maxTicksLimit: 10,
@@ -395,6 +410,7 @@ function graphEventsTimeOfDay() {
         }
     });
 }
+
 
 // User Funnel Graph
 const steps = ['app_open', 'login', 'launch_activity', 'sign_out'];
