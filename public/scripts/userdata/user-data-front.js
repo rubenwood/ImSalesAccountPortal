@@ -555,7 +555,7 @@ function populateUserJourneyButtons(eventLogs){
         button.addEventListener('click', () =>{ graphUserJourney(eventLog) });
     }    
 }
-function graphUserJourney(eventLog, width = 1200, height = 800) {
+function graphUserJourney(eventLog, width = 1800, height = 800) {
     console.log(eventLog);
     // Transform data to D3js; single eventLog, sorting events by time, linking sequentially
     const transformedData = {
@@ -565,9 +565,9 @@ function graphUserJourney(eventLog, width = 1200, height = 800) {
                 name: `Session: ${session.sessionId}`,
                 children: session.events
                     .sort((a, b) => a.time.localeCompare(b.time))
-                    .reduceRight((nextEvent, event) => [{                        
-                        name: `${event.name} (${event.time})`,
-                        details: event.data.join("<br>"),
+                    .reduceRight((nextEvent, event) => [{
+                        name: `${event.name} (${event.time})`,                        
+                        details: event.data.join("\r\n"),
                         children: nextEvent
                     }], [])
             }))
@@ -603,40 +603,36 @@ function graphUserJourney(eventLog, width = 1200, height = 800) {
         .style("stroke", "#ccc")
         .style("stroke-width", 1.5);
 
-    const nodeGroup = svg.selectAll(".node")
+        const nodeGroup = svg.selectAll(".node")
         .data(root.descendants())
         .enter().append("g")
         .attr("class", "node")
         .attr("transform", d => `translate(${d.y},${d.x})`);
-
+    
     nodeGroup.append("circle")
         .attr("r", 5)
         .style("fill", "#0088ee");
-
+    
     nodeGroup.append("text")
         .attr("dy", 3)
         .attr("x", d => d.children ? -10 : 10)
         .style("text-anchor", d => d.children ? "end" : "start")
         .text(d => d.data.name);
+    
+    // Persistent details below each node
+    nodeGroup.append("text")
+    .attr("x", -5)
+    .attr("y", 30)
+    .style("text-anchor", "left")
+    .style("font-size", "10px")
+    .style("fill", "#555")
+    .selectAll("tspan")
+    .data(d => (d.data.details || "").split("\r\n")) // Split details into lines
+    .enter().append("tspan")
+    .attr("x", 0) // Align all lines at the same horizontal position
+    .attr("dy", (line, i) => i * 12) // Offset each line within the text block
+    .text(line => line); // Set the text for each line
 
-    const tooltip = d3.select("body").append("div")
-        .style("position", "absolute")
-        .style("padding", "6px")
-        .style("background", "#ddd")
-        .style("border-radius", "4px")
-        .style("visibility", "hidden");
-
-    nodeGroup.on("mouseover", (event, d) => {
-            tooltip.html(d.data.details || "")
-                .style("visibility", "visible");
-        })
-        .on("mousemove", (event) => {
-            tooltip.style("top", (event.pageY - 10) + "px")
-                .style("left", (event.pageX + 10) + "px");
-        })
-        .on("mouseout", () => {
-            tooltip.style("visibility", "hidden");
-        });
 }
 
 // Helper

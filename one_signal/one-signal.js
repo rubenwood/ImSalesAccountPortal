@@ -24,20 +24,21 @@ async function SendPushNotification(data) {
 }
 
 
-const contentList = [
-    "Don't forget to study often to succeed! Why not try a new lesson today?",
-    "Complete at least 1 lesson a day to keep the dentist at bay!",
-    "Log on and try some more activities!",
-    "You'll love these new activities!",
-    "Flashcards, Quizzes, 3D Models... We have it all!"
-];
 const headingList = [
-    "Immersify your learning now!",
-    "Learn immersivley with Immersify",
+    "☀ Don't forget to study today!", // 1
+    "📑Time to get studying!", // 2
     "Immerse yourself in your studies",
     "Its time to Immerisfy!",
     "⏰ Uh Oh! It's cram time!"
 ];
+const contentList = [
+    "Use all your daily activities to get the most out of your learning", // 1
+    "Hit your learning goal by the end of the day!", // 2
+    "Log on and try some more activities!",
+    "You'll love these new activities!",
+    "Flashcards, Quizzes, 3D Models... We have it all!"
+];
+
 
 oneSignalRouter.post('/send-push', async (req, res) => {
     const secret = req.headers['x-secret-key'];
