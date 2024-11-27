@@ -21,6 +21,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     document.getElementById('toggle-totals-btn').addEventListener('click', ()=> toggleSection('totals-table'));
     document.getElementById('toggle-act-per-topic-btn').addEventListener('click', ()=> toggleSection('act-per-topic-table'));
     document.getElementById('toggle-time-est-btn').addEventListener('click', ()=> toggleSection('lesson-data-table'));
+    document.getElementById('exp-toggle-time-est-btn').addEventListener('click', ()=> toggleSection('exp-lesson-data-table'));
     document.getElementById('toggle-topics-in-feed-btn').addEventListener('click', ()=> toggleSection('topic-usage-table'));
 
     // wait for login
@@ -70,7 +71,8 @@ async function getCatalogueReport(){
     populateTotalsTable(areaBrondons);
     populateActPerTopicsTable(areaBrondons);
     populateLessonDataTable(areaBrondons);
-    await populateTopicUsageTable(topicBrondons);
+    populateExperienceDataTable(areaBrondons);
+    //await populateTopicUsageTable(topicBrondons);
 
     // need to store a snapshot of this data per month    
 
@@ -151,7 +153,7 @@ async function setGeneralData(areaBrondons){
     GeneralData.totalTopics = 0;
     GeneralData.totalActivities = 0;
     GeneralData.totalLessons = 0;
-    GeneralData.totalSubheadings = 0;
+    //GeneralData.totalSubheadings = 0;
     GeneralData.totalTopicQuizzes = 0;
     GeneralData.totalFlashcards = 0;
     GeneralData.totalExperiences = 0;
@@ -165,11 +167,11 @@ async function setGeneralData(areaBrondons){
         let flashcards = getFlashcardsFromActivities(activityBrondons);
         let experiences = getExperiencesFromActivities(activityBrondons);
 
-        let pointsPerLesson = await getPointsFromLessons(lessons);
-        const totalSubheadingsCount = pointsPerLesson.reduce((sum, item) => {
-            return sum + (Array.isArray(item) ? item.length : 0);
-        }, 0);
-        console.log(totalSubheadingsCount);
+        // let pointsPerLesson = await getPointsFromLessons(lessons);
+        // const totalSubheadingsCount = pointsPerLesson.reduce((sum, item) => {
+        //     return sum + (Array.isArray(item) ? item.length : 0);
+        // }, 0);
+        // console.log(totalSubheadingsCount);
 
         // Per Area Data
         let AreaData = {
@@ -179,7 +181,7 @@ async function setGeneralData(areaBrondons){
             totalTopics:topicBrondons.length,
             totalActivities:activityBrondons.length,
             totalLessons:lessons.length,
-            totalSubheadings:totalSubheadingsCount,
+            //totalSubheadings:totalSubheadingsCount,
             totalTopicQuizzes:topicQuizzes.length,
             totalFlashcards:flashcards.length,
             totalExperiences:experiences.length
@@ -191,13 +193,12 @@ async function setGeneralData(areaBrondons){
         GeneralData.totalTopics += topicBrondons.length;
         GeneralData.totalActivities += activityBrondons.length;
         GeneralData.totalLessons += lessons.length;
-        GeneralData.totalSubheadings += totalSubheadingsCount;
+        //GeneralData.totalSubheadings += totalSubheadingsCount;
         GeneralData.totalTopicQuizzes += topicQuizzes.length;
         GeneralData.totalFlashcards += flashcards.length;
         GeneralData.totalExperiences += experiences.length;
     }
 }
-
 
 // TABLES
 async function populateTotalsTable(areaStructure){
@@ -293,33 +294,31 @@ async function populateActPerTopicsTable(areaBrondons){
         }
     }
 }
-async function populateLessonDataTable(areaBrondons) {
-    const lessonDataTable = document.getElementById('lesson-data-table');
-    
+
+function populateTimeEstTable(areaBrondons, tableElement, type){
     for (const areaBrondon of areaBrondons) {
         for (const moduleBrondon of areaBrondon.children) {
 
             let moduleTotalTime = 0;
             for (const topicBrondon of moduleBrondon.children) {
                 for (const activityBrondon of topicBrondon.children) {
-                    if (activityBrondon.type === "lesson") {
-                        moduleTotalTime += activityBrondon.timeEstimate;
+                    if (activityBrondon.type === type) {
+                        moduleTotalTime += Number(activityBrondon.timeEstimate);
                     }
                 }
             }
 
-            for (const topicBrondon of moduleBrondon.children) {
-                
+            for (const topicBrondon of moduleBrondon.children) {                
                 let topicTotalTime = 0;
                 for (const activityBrondon of topicBrondon.children) {
-                    if (activityBrondon.type === "lesson") {
-                        topicTotalTime += activityBrondon.timeEstimate;
+                    if (activityBrondon.type === type) {
+                        topicTotalTime += Number(activityBrondon.timeEstimate);
                     }
                 }
 
                 for (const activityBrondon of topicBrondon.children) {
-                    if (activityBrondon.type === "lesson") {
-                        let dataRow = lessonDataTable.insertRow();
+                    if (activityBrondon.type === type) {
+                        let dataRow = tableElement.insertRow();
                         
                         let areaCell = dataRow.insertCell();
                         areaCell.innerHTML = areaBrondon.externalTitle;
@@ -345,6 +344,13 @@ async function populateLessonDataTable(areaBrondons) {
             }
         }
     }
+}
+function populateLessonDataTable(areaBrondons) {
+    populateTimeEstTable(areaBrondons, document.getElementById('lesson-data-table'), "lesson");
+    
+}
+function populateExperienceDataTable(areaBrondons) {
+    populateTimeEstTable(areaBrondons, document.getElementById('exp-lesson-data-table'), "lesson");
 }
 
 

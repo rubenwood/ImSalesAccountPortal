@@ -418,60 +418,6 @@ const steps = ['app_open', 'login', 'launch_activity', 'sign_out'];
 //const steps = ['launch_activity', 'sign_out', 'launch_activity'];
 //const steps = ['sign_out', 'launch_activity'];
 
-
-function countEventOccurrences(eventLogs, steps) {
-    const userStepProgress = {};
-
-    eventLogs.forEach(log => {
-        const PlayFabId = log.PlayFabId;
-
-        log.EventLogs.forEach(eventLog => {
-            eventLog.EventLogParsed.sessions.forEach(session => {
-                const events = session.events;
-                let eventTriggered = [];
-
-                events.forEach((event, eventIndex) => {
-                    if (steps.includes(event.name)) {
-                        const currentStepIndex = steps.indexOf(event.name);
-
-                        // For each event, we check if the user has triggered the previous step
-                        if (currentStepIndex === 0 || eventTriggered.includes(steps[currentStepIndex - 1])) {
-                            if (!userStepProgress[PlayFabId]) {
-                                userStepProgress[PlayFabId] = [];
-                            }
-
-                            userStepProgress[PlayFabId][currentStepIndex] = true;
-                            eventTriggered.push(event.name);
-                        }
-                    }
-                });
-            });
-        });
-    });
-
-    // Count how many users completed each step
-    const stepCounts = steps.map((step, index) => {
-        return {
-            step,
-            count: Object.keys(userStepProgress).filter(userId => {
-                // Check if the user completed the previous step and the current step
-                return (index === 0 || userStepProgress[userId][index - 1]) && userStepProgress[userId][index];
-            }).length
-        };
-    });
-
-    return stepCounts;
-}
-
-function addFunnelStepClicked(eventLogs, eventName) {
-    steps.push(eventName);
-    graphUserFunnel(eventLogs);
-}
-function removeLastStepClicked(eventLogs){
-    steps.pop();
-    graphUserFunnel(eventLogs);
-}
-
 let funnelChart = null;
 let listenersInitialized = false;
 // User Funnel
@@ -531,6 +477,74 @@ function graphUserFunnel(eventLogs) {
             }
         }
     });
+}
+function countEventOccurrences(eventLogs, steps) {
+    const userStepProgress = {};
+    const nonMatchingEventsPerStep = {}; // Group non-matching events by step
+
+    eventLogs.forEach(log => {
+        const PlayFabId = log.PlayFabId;
+
+        log.EventLogs.forEach(eventLog => {
+            eventLog.EventLogParsed.sessions.forEach(session => {
+                const events = session.events;
+                let eventTriggered = [];
+
+                events.forEach((event, eventIndex) => {
+                    if (steps.includes(event.name)) {
+                        const currentStepIndex = steps.indexOf(event.name);
+
+                        // For each event, we check if the user has triggered the previous step
+                        if (currentStepIndex === 0 || eventTriggered.includes(steps[currentStepIndex - 1])) {
+                            // If the user hasn't completed this step yet, mark it
+                            if (!userStepProgress[PlayFabId]) {
+                                userStepProgress[PlayFabId] = [];
+                            }
+
+                            userStepProgress[PlayFabId][currentStepIndex] = true;
+                            eventTriggered.push(event.name);
+                        }
+                        if(!eventTriggered.includes(steps[currentStepIndex - 1])){
+                            // If the event doesn't match the expected step, track it per step
+                            if (!nonMatchingEventsPerStep[steps[currentStepIndex]]) {
+                                nonMatchingEventsPerStep[steps[currentStepIndex]] = [];
+                            }
+                            nonMatchingEventsPerStep[steps[currentStepIndex]].push({
+                                userId: PlayFabId,
+                                nonMatchingEvent: event.name
+                            });
+                        }
+                    }
+                });
+            });
+        });
+    });
+
+    // Log non-matching events for analysis
+    console.log('Non-Matching Events Per Step:', nonMatchingEventsPerStep);
+
+    // Count how many users completed each step
+    const stepCounts = steps.map((step, index) => {
+        return {
+            step,
+            count: Object.keys(userStepProgress).filter(userId => {
+                // Check if the user completed the previous step and the current step
+                return (index === 0 || userStepProgress[userId][index - 1]) && userStepProgress[userId][index];
+            }).length
+        };
+    });
+
+    return stepCounts;
+}
+
+
+function addFunnelStepClicked(eventLogs, eventName) {
+    steps.push(eventName);
+    graphUserFunnel(eventLogs);
+}
+function removeLastStepClicked(eventLogs){
+    steps.pop();
+    graphUserFunnel(eventLogs);
 }
 
 // User Journey
