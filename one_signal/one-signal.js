@@ -2,10 +2,7 @@ const express = require('express');
 const axios = require('axios');
 const oneSignalRouter = express.Router();
 
-// pick random values
-// random time
-// random message?
-
+// schedule cron job for each weekday (at midnight?)
 
 // real seg name:
 // Active Subscriptions
@@ -50,26 +47,27 @@ oneSignalRouter.post('/send-push', async (req, res) => {
     
     const randomIndex = Math.floor(Math.random() * contentList.length);
     const now = new Date();
-    const oneHourLater = new Date(now.getTime() + 60 * 60 * 1000);
-    //const oneHourLaterUTC = new Date(oneHourLater.toISOString());
-    const oneHourLaterUTCString = oneHourLater.toISOString();
+    const oneMinuteLater = new Date(now.getTime() + 60 * 1000);
+    const oneMinuteLaterUTCString = oneMinuteLater.toISOString();
+    //const oneHourLater = new Date(now.getTime() + 60 * 60 * 1000);
+    //const oneHourLaterUTCString = oneHourLater.toISOString();    
 
     const data = {
         target_channel: "push",
         included_segments: ["Test Users"],
         app_id: process.env.ONESIGNAL_APP_ID,
         contents: {
-          en: contentList[randomIndex]
+            en: contentList[randomIndex]
         },
         headings: {
             en: headingList[randomIndex]
         },
         delayed_option: "last-active",
-        send_after: oneHourLaterUTCString
+        send_after: oneMinuteLaterUTCString
     };
 
     const osResponse = SendPushNotification(data);
-    const resp = { message:"sent", timestamp:oneHourLaterUTCString, osResponse }
+    const resp = { message:"sent", timestamp:now, sendAfter:oneMinuteLaterUTCString, osResponse }
     res.send(resp);
 });
 
@@ -83,16 +81,13 @@ oneSignalRouter.post('/send-push-now', async (req, res) => {
 
     const randomIndex = Math.floor(Math.random() * contentList.length);
     const now = new Date();
-    const oneHourLater = new Date(now.getTime() + 60 * 60 * 1000);
-    //const oneHourLaterUTC = new Date(oneHourLater.toISOString());
-    const oneHourLaterUTCString = oneHourLater.toISOString();
 
     const data = {
         target_channel: "push",
         included_segments: ["Test Users"],
         app_id: process.env.ONESIGNAL_APP_ID,
         contents: {
-          en: contentList[randomIndex]
+            en: contentList[randomIndex]
         },
         headings: {
             en: headingList[randomIndex]
@@ -100,7 +95,7 @@ oneSignalRouter.post('/send-push-now', async (req, res) => {
     };
 
     const osResponse = SendPushNotification(data);
-    const resp = { message:"sent", timestamp:oneHourLaterUTCString, osResponse }
+    const resp = { message:"sent", timestamp:now, osResponse }
     res.send(resp);
 });
 
