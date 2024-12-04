@@ -21,24 +21,27 @@ async function getUsersEventLog(startDate, endDate) {
     const startDateStr = new Date(startDate).toISOString().slice(0, 10); // YYYY-MM-DD format
     const endDateStr = new Date(endDate).toISOString().slice(0, 10);
 
+    // Now involves the account data & usage data
     const usersEventLogQuery = `
-        SELECT "PlayFabId", "EventLogKey", "EventLogJSON", "EventLogDate"
+        SELECT "UserEventLogs"."PlayFabId", "UserEventLogs"."EventLogKey", 
+               "UserEventLogs"."EventLogJSON", "UserEventLogs"."EventLogDate", 
+               "AccountData"."AccountDataJSON" AS "AccountDataJSON"
         FROM public."UserEventLogs"
-        WHERE 
-            "EventLogDate" BETWEEN $1 AND $2
-        ORDER BY "PlayFabId";
+        JOIN public."AccountData" 
+        ON "UserEventLogs"."PlayFabId" = "AccountData"."PlayFabId"
+        WHERE "UserEventLogs"."EventLogDate" BETWEEN $1 AND $2
     `;
 
     const result = await pool.query(usersEventLogQuery, [startDateStr, endDateStr]);
 
-    // Group results by PlayFabId and aggregate EventLogKeys
+    // Group results by PlayFabId and EventLogKeys
     const usersEventLogs = result.rows.reduce((acc, row) => {
-        const { PlayFabId, EventLogKey, EventLogJSON, EventLogDate } = row;
+        const { PlayFabId, EventLogKey, EventLogJSON, EventLogDate, AccountDataJSON } = row;
         
         // Find or create an entry for the PlayFabId
         let userEntry = acc.find(entry => entry.PlayFabId === PlayFabId);
         if (!userEntry) {
-            userEntry = { PlayFabId, EventLogs: [] };
+            userEntry = { PlayFabId, EventLogs: [], AccountDataJSON };
             acc.push(userEntry);
         }
 

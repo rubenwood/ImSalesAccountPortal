@@ -31,7 +31,7 @@ function eventLogJoiner(eventLogs) {
     const joinedLogs = [];
 
     for (const entry of eventLogs) {
-        const { PlayFabId, EventLogs } = entry;
+        const { PlayFabId, EventLogs, AccountDataJSON } = entry;
         const logsByKey = {};
 
         // Group logs by base key
@@ -69,8 +69,6 @@ function eventLogJoiner(eventLogs) {
                 ? logsWithoutParts[0].EventLogJSON.Value + joinedLog 
                 : joinedLog;
 
-            //console.log(finalLog);
-            //console.log(PlayFabId);
             if (finalLog) {
                 eventLogsResult.push({
                     EventLogDate: logsWithParts[0]?.EventLogDate || logsWithoutParts[0]?.EventLogDate,
@@ -82,7 +80,8 @@ function eventLogJoiner(eventLogs) {
 
         joinedLogs.push({
             PlayFabId: PlayFabId,
-            EventLogs: eventLogsResult
+            EventLogs: eventLogsResult,
+            AccountDataJSON: AccountDataJSON
         });
     }
 
@@ -96,7 +95,6 @@ async function eventLogBtnClicked(){
     const endDate = new Date(endDateElement.value).toISOString();
 
     const eventLogs = await fetchUsersEventLog(startDate, endDate);
-    console.log(eventLogs);
     const eventLogsJoined = eventLogJoiner(eventLogs);
     console.log(eventLogsJoined);
     eventLogsJoined.forEach(entry => {
@@ -107,9 +105,7 @@ async function eventLogBtnClicked(){
 }
 
 let EventList = [];
-function getEventList(eventLogs){
-    console.log(eventLogs);
-    
+function getEventList(eventLogs){    
     EventList = [];
 
     for(const entry of eventLogs){
@@ -126,7 +122,6 @@ function getEventList(eventLogs){
         
     }
     EventList.sort((a,b) => new Date(a.date) - new Date(b.date));
-    console.log("Event list", EventList);
 }
 let EventIds = [];
 function getEventIds(eventLogs){
@@ -141,7 +136,7 @@ function getEventIds(eventLogs){
             }
         }
     }
-    console.log("Event Ids", EventIds);
+    //console.log("Event Ids", EventIds);
 }
 
 function processEventLogs(eventLogs) {
@@ -232,7 +227,6 @@ function graphEventTypesPerDateChartJS() {
     const eventCounts = {};
     EventList.forEach(entry => {
         const date = entry.date;
-        console.log("date", date);
         entry.events.forEach(event => {
             if (!eventCounts[date]) eventCounts[date] = {};
             if (!eventCounts[date][event.name]) eventCounts[date][event.name] = 0;
@@ -438,6 +432,7 @@ function graphUserFunnel(eventLogs) {
     }
 
     const stepCounts = countEventOccurrences(eventLogs, steps);
+    //console.log(stepCounts);
     console.log(analyseFunnelSteps(eventLogs, steps));
     const labels = stepCounts.map(count => count.step);
     const data = stepCounts.map(count => count.count);
@@ -485,7 +480,6 @@ function graphUserFunnel(eventLogs) {
 }
 function countEventOccurrences(eventLogs, steps) {
     const userStepProgress = {};
-    const nonMatchingEventsPerStep = {}; // Group non-matching events by step
 
     eventLogs.forEach(log => {
         const PlayFabId = log.PlayFabId;
@@ -509,29 +503,11 @@ function countEventOccurrences(eventLogs, steps) {
                             userStepProgress[PlayFabId][currentStepIndex] = true;
                             eventTriggered.push(event.name);
                         }
-                        if(currentStepIndex !== 0 && !eventTriggered.includes(steps[currentStepIndex - 1])){
-                            // If the event doesn't match the expected step, track it per step
-                            if (!nonMatchingEventsPerStep[currentStepIndex]) {
-                                nonMatchingEventsPerStep[currentStepIndex] = [];
-                            }
-                            const existingEntry = nonMatchingEventsPerStep[currentStepIndex].find(
-                                entry => entry.userId === PlayFabId
-                            );
-                            if (!existingEntry) {
-                                nonMatchingEventsPerStep[currentStepIndex].push({
-                                    userId: PlayFabId,
-                                    nonMatchingEvent: event.name
-                                });
-                            }
-                        }
                     }
                 });
             });
         });
     });
-
-    // Log non-matching events for analysis
-    console.log('Non-Matching Events Per Step:', nonMatchingEventsPerStep);
 
     // Count how many users completed each step
     const stepCounts = steps.map((step, index) => {
@@ -607,7 +583,7 @@ function analyseFunnelSteps(eventLogs, steps) {
         });
     });
 
-    // Generate nonStepData by analyzing the differences
+    // Generate nonStepData by analysing the differences
     stepData.forEach((currentStepData, index) => {
         if (index === 0) {
             // Step 0 has no "previous step" so no nonStepData
@@ -641,9 +617,7 @@ function analyseFunnelSteps(eventLogs, steps) {
                 }
             });
 
-
-            console.log(index);
-            console.log(userEventList[index]);
+            console.log(`${index} - ${userEventList[index]}`);
             console.log(userEventList);
 
             let eventName = userEventList[index];
@@ -658,9 +632,6 @@ function analyseFunnelSteps(eventLogs, steps) {
 
     return { stepData, nonStepData };
 }
-
-
-
 
 
 function addFunnelStepClicked(eventLogs, eventName) {
@@ -695,7 +666,6 @@ function populateUserJourneyButtons(eventLogs){
     }    
 }
 function graphUserJourney(eventLog, width = 1800, height = 800) {
-    console.log(eventLog);
     // Transform data to D3js; single eventLog, sorting events by time, linking sequentially
     const transformedData = {
         name: `PlayFabId: ${eventLog.PlayFabId}`,
