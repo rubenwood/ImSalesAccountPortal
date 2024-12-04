@@ -438,7 +438,7 @@ function graphUserFunnel(eventLogs) {
     }
 
     const stepCounts = countEventOccurrences(eventLogs, steps);
-    console.log(analyzeFunnelSteps(eventLogs, steps));
+    console.log(analyseFunnelSteps(eventLogs, steps));
     const labels = stepCounts.map(count => count.step);
     const data = stepCounts.map(count => count.count);
 
@@ -547,7 +547,7 @@ function countEventOccurrences(eventLogs, steps) {
     return stepCounts;
 }
 
-function analyzeFunnelSteps(eventLogs, steps) {
+function analyseFunnelSteps(eventLogs, steps) {
     const stepData = [];
     const nonStepData = [];
     const userStepProgress = {};
@@ -568,7 +568,7 @@ function analyzeFunnelSteps(eventLogs, steps) {
         });
     });
 
-    // Track user progression through the steps
+    // Track user progression through the steps and user events
     eventLogs.forEach(log => {
         const PlayFabId = log.PlayFabId;
 
@@ -576,6 +576,11 @@ function analyzeFunnelSteps(eventLogs, steps) {
             eventLog.EventLogParsed.sessions.forEach(session => {
                 const events = session.events;
                 let lastStepReached = -1;
+
+                // Track events in the order they are triggered for each user
+                if (!userStepProgress[PlayFabId]) {
+                    userStepProgress[PlayFabId] = [];
+                }
 
                 events.forEach(event => {
                     const stepIndex = steps.indexOf(event.name);
@@ -593,10 +598,7 @@ function analyzeFunnelSteps(eventLogs, steps) {
                             stepData[stepIndex].events[event.name] = 
                                 (stepData[stepIndex].events[event.name] || 0) + 1;
 
-                            // Track the user progress
-                            if (!userStepProgress[PlayFabId]) {
-                                userStepProgress[PlayFabId] = [];
-                            }
+                            // Record user's step progress
                             userStepProgress[PlayFabId][stepIndex] = true;
                         }
                     }
@@ -622,19 +624,30 @@ function analyzeFunnelSteps(eventLogs, steps) {
         nonMatchingUsers.forEach(userId => {
             nonStepData[index].users.push(userId);
 
+            let userEventList = [];
+
             eventLogs.forEach(log => {
                 if (log.PlayFabId === userId) {
                     log.EventLogs.forEach(eventLog => {
                         eventLog.EventLogParsed.sessions.forEach(session => {
-                            session.events.forEach(event => {
-                                // Count events triggered by non-matching users
-                                nonStepData[index].events[event.name] =
-                                    (nonStepData[index].events[event.name] || 0) + 1;
+                            session.events.forEach((event, eventIndex) => {
+                                // If event has not been recorded yet for this user
+                                if (!userEventList.includes(event.name)) {
+                                    userEventList.push(event.name);
+                                }
                             });
                         });
                     });
                 }
             });
+
+
+            console.log(index);
+            console.log(userEventList[index]);
+            console.log(userEventList);
+
+            let eventName = userEventList[index];
+            nonStepData[index].events[eventName] = (nonStepData[index].events[eventName] || 0) + 1;
         });
     });
 
@@ -645,6 +658,7 @@ function analyzeFunnelSteps(eventLogs, steps) {
 
     return { stepData, nonStepData };
 }
+
 
 
 
