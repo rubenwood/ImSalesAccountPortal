@@ -16,7 +16,15 @@ router.get('/get-total-users', async (req, res) => {
     try {
         // Alternative method to break down matchedUsers into groups per suffix
         // this is a bit silly but should work
-        let suffixes = [["qmul.ac.uk"], ["cardiff.ac.uk"], ["jcu.edu.au"], ["phoenixdentalacademy.co.uk"], ["uos.ac.uk"], ["highpoint.edu"]]
+        let suffixes = [
+            ["qmul.ac.uk"], 
+            ["cardiff.ac.uk"], 
+            ["jcu.edu.au"], 
+            ["phoenixdentalacademy.co.uk"], 
+            ["uos.ac.uk"], 
+            ["highpoint.edu"],
+            ["pnwu.edu"]
+        ]
         let matchedUsersKVP = [];
         for(const suffixArr of suffixes){
             let matchedUsers = await generateReportByEmailSuffixDB(suffixArr);
