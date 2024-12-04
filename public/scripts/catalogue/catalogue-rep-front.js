@@ -301,20 +301,12 @@ function populateTimeEstTable(areaBrondons, tableElement, type){
 
             let moduleTotalTime = 0;
             for (const topicBrondon of moduleBrondon.children) {
-                for (const activityBrondon of topicBrondon.children) {
-                    if (activityBrondon.type === type) {
-                        moduleTotalTime += Number(activityBrondon.timeEstimate);
-                    }
-                }
+                moduleTotalTime += calcTotalTimeEst(topicBrondon.children, type);
             }
 
             for (const topicBrondon of moduleBrondon.children) {                
                 let topicTotalTime = 0;
-                for (const activityBrondon of topicBrondon.children) {
-                    if (activityBrondon.type === type) {
-                        topicTotalTime += Number(activityBrondon.timeEstimate);
-                    }
-                }
+                topicTotalTime += calcTotalTimeEst(topicBrondon.children, type);
 
                 for (const activityBrondon of topicBrondon.children) {
                     if (activityBrondon.type === type) {
@@ -345,12 +337,21 @@ function populateTimeEstTable(areaBrondons, tableElement, type){
         }
     }
 }
+function calcTotalTimeEst(activities, type){
+    let totalTime = 0;
+    for (const activityBrondon of activities) {
+        if (activityBrondon.type === type) {
+            totalTime += Number(activityBrondon.timeEstimate);
+        }
+    }
+    return totalTime;
+}
 function populateLessonDataTable(areaBrondons) {
     populateTimeEstTable(areaBrondons, document.getElementById('lesson-data-table'), "lesson");
     
 }
 function populateExperienceDataTable(areaBrondons) {
-    populateTimeEstTable(areaBrondons, document.getElementById('exp-lesson-data-table'), "lesson");
+    populateTimeEstTable(areaBrondons, document.getElementById('exp-lesson-data-table'), "experience");
 }
 
 

@@ -181,6 +181,7 @@ function getDistinctEventLogs(eventLogs){
     return totalDistinctEventLogs;
 }
 
+// # Logs Per Date
 function getLogsPerDate(eventLogs) {
     const logsPerDateTable = document.getElementById('logs-per-date-table');
 
@@ -209,8 +210,13 @@ function getLogsPerDate(eventLogs) {
         }
     }
 
+    const sortedDateEntries = Object.entries(dateSummary).sort(([dateA], [dateB]) => {
+        return new Date(dateA) - new Date(dateB);
+    });
+
     logsPerDateTable.innerHTML = "<tr><th>Date</th><th># Logs / Users</th><th># Events</th></tr>";
-    for (const [date, { logCount, userCount, eventCount }] of Object.entries(dateSummary)) {
+
+    for (const [date, { logCount, userCount, eventCount }] of sortedDateEntries) {
         const row = logsPerDateTable.insertRow();
 
         row.insertCell(0).textContent = date;
@@ -296,7 +302,6 @@ function graphEventTypesPerDateChartJS() {
         }
     });
 }
-
 
 // Regex to check if the time is in HH:MM:SS:SSS format
 const timeFormatRegex = /^([0-1]?[0-9]|2[0-3]):([0-5]?[0-9]):([0-5]?[0-9]):(\d{3})$/;
@@ -411,7 +416,6 @@ function graphEventsTimeOfDay() {
     });
 }
 
-
 // User Funnel Graph
 const steps = ['app_open', 'login', 'launch_activity', 'sign_out'];
 //const steps = ['app_open', 'login', 'launch_activity', 'sign_out', 'launch_activity'];
@@ -434,6 +438,7 @@ function graphUserFunnel(eventLogs) {
     }
 
     const stepCounts = countEventOccurrences(eventLogs, steps);
+    console.log(analyzeFunnelSteps(eventLogs, steps));
     const labels = stepCounts.map(count => count.step);
     const data = stepCounts.map(count => count.count);
 
@@ -504,15 +509,20 @@ function countEventOccurrences(eventLogs, steps) {
                             userStepProgress[PlayFabId][currentStepIndex] = true;
                             eventTriggered.push(event.name);
                         }
-                        if(!eventTriggered.includes(steps[currentStepIndex - 1])){
+                        if(currentStepIndex !== 0 && !eventTriggered.includes(steps[currentStepIndex - 1])){
                             // If the event doesn't match the expected step, track it per step
-                            if (!nonMatchingEventsPerStep[steps[currentStepIndex]]) {
-                                nonMatchingEventsPerStep[steps[currentStepIndex]] = [];
+                            if (!nonMatchingEventsPerStep[currentStepIndex]) {
+                                nonMatchingEventsPerStep[currentStepIndex] = [];
                             }
-                            nonMatchingEventsPerStep[steps[currentStepIndex]].push({
-                                userId: PlayFabId,
-                                nonMatchingEvent: event.name
-                            });
+                            const existingEntry = nonMatchingEventsPerStep[currentStepIndex].find(
+                                entry => entry.userId === PlayFabId
+                            );
+                            if (!existingEntry) {
+                                nonMatchingEventsPerStep[currentStepIndex].push({
+                                    userId: PlayFabId,
+                                    nonMatchingEvent: event.name
+                                });
+                            }
                         }
                     }
                 });
@@ -536,6 +546,107 @@ function countEventOccurrences(eventLogs, steps) {
 
     return stepCounts;
 }
+
+function analyzeFunnelSteps(eventLogs, steps) {
+    const stepData = [];
+    const nonStepData = [];
+    const userStepProgress = {};
+
+    // Initialize the data structure for each step
+    steps.forEach((step, index) => {
+        stepData.push({
+            stepIndex: index,
+            stepName: step,
+            users: new Set(), // To track unique users at this step
+            events: {}        // To count occurrences of each event at this step
+        });
+        nonStepData.push({
+            stepIndex: index,
+            stepName: step,
+            users: [],        // Users who didn’t advance to this step
+            events: {}        // Non-matching events triggered at this step
+        });
+    });
+
+    // Track user progression through the steps
+    eventLogs.forEach(log => {
+        const PlayFabId = log.PlayFabId;
+
+        log.EventLogs.forEach(eventLog => {
+            eventLog.EventLogParsed.sessions.forEach(session => {
+                const events = session.events;
+                let lastStepReached = -1;
+
+                events.forEach(event => {
+                    const stepIndex = steps.indexOf(event.name);
+
+                    // If the event matches a step in the funnel
+                    if (stepIndex !== -1) {
+                        if (stepIndex === 0 || lastStepReached === stepIndex - 1) {
+                            // User progressed to this step
+                            lastStepReached = stepIndex;
+
+                            // Track the user in this step
+                            stepData[stepIndex].users.add(PlayFabId);
+
+                            // Count the event
+                            stepData[stepIndex].events[event.name] = 
+                                (stepData[stepIndex].events[event.name] || 0) + 1;
+
+                            // Track the user progress
+                            if (!userStepProgress[PlayFabId]) {
+                                userStepProgress[PlayFabId] = [];
+                            }
+                            userStepProgress[PlayFabId][stepIndex] = true;
+                        }
+                    }
+                });
+            });
+        });
+    });
+
+    // Generate nonStepData by analyzing the differences
+    stepData.forEach((currentStepData, index) => {
+        if (index === 0) {
+            // Step 0 has no "previous step" so no nonStepData
+            return;
+        }
+
+        const previousStepUsers = Array.from(stepData[index - 1].users);
+        const currentStepUsers = Array.from(currentStepData.users);
+        const nonMatchingUsers = previousStepUsers.filter(
+            userId => !currentStepUsers.includes(userId)
+        );
+
+        // Track non-matching users and their events
+        nonMatchingUsers.forEach(userId => {
+            nonStepData[index].users.push(userId);
+
+            eventLogs.forEach(log => {
+                if (log.PlayFabId === userId) {
+                    log.EventLogs.forEach(eventLog => {
+                        eventLog.EventLogParsed.sessions.forEach(session => {
+                            session.events.forEach(event => {
+                                // Count events triggered by non-matching users
+                                nonStepData[index].events[event.name] =
+                                    (nonStepData[index].events[event.name] || 0) + 1;
+                            });
+                        });
+                    });
+                }
+            });
+        });
+    });
+
+    // Convert Sets to Arrays for readability
+    stepData.forEach(step => {
+        step.users = Array.from(step.users);
+    });
+
+    return { stepData, nonStepData };
+}
+
+
 
 
 function addFunnelStepClicked(eventLogs, eventName) {
