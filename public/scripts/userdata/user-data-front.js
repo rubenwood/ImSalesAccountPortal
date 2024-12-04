@@ -411,7 +411,8 @@ function graphEventsTimeOfDay() {
 }
 
 // User Funnel Graph
-const steps = ['app_open', 'login', 'launch_activity', 'sign_out'];
+const steps = ['app_open', 'login', 'launcher_section_change', 'launch_activity', 'sign_out'];
+//const steps = ['login', 'launcher_section_change', 'launch_activity', 'sign_out'];
 //const steps = ['app_open', 'login', 'launch_activity', 'sign_out', 'launch_activity'];
 //const steps = ['launch_activity', 'sign_out', 'launch_activity'];
 //const steps = ['sign_out', 'launch_activity'];
@@ -419,6 +420,78 @@ const steps = ['app_open', 'login', 'launch_activity', 'sign_out'];
 let funnelChart = null;
 let listenersInitialized = false;
 // User Funnel
+function graphUserFunnelStepped(eventLogs, numSteps) {
+    // Process event logs to determine counts for each step
+    const stepEventCounts = Array.from({ length: numSteps }, (_, step) => {
+        const stepCounts = {};
+        eventLogs.forEach(log => {
+            if (log.step === step) {
+                stepCounts[log.event] = (stepCounts[log.event] || 0) + 1;
+            }
+        });
+        return { step, counts: stepCounts };
+    });
+
+    // Extract unique events across all steps to ensure consistent groupings
+    const allEvents = Array.from(
+        new Set(stepEventCounts.flatMap(stepCount => Object.keys(stepCount.counts)))
+    );
+
+    // Prepare data for Chart.js
+    const labels = stepEventCounts.map(stepCount => `Step ${stepCount.step}`);
+    const datasets = allEvents.map(event => ({
+        label: event,
+        data: stepEventCounts.map(stepCount => stepCount.counts[event] || 0),
+        backgroundColor: `rgba(${Math.floor(Math.random() * 255)}, ${Math.floor(Math.random() * 255)}, ${Math.floor(Math.random() * 255)}, 0.2)`,
+        borderColor: `rgba(${Math.floor(Math.random() * 255)}, ${Math.floor(Math.random() * 255)}, ${Math.floor(Math.random() * 255)}, 1)`,
+        borderWidth: 1
+    }));
+
+    // Destroy any existing chart to refresh the data
+    if (funnelChart) { funnelChart.destroy(); }
+
+    // Create a new chart
+    const ctx = document.getElementById('chart-user-funnel').getContext('2d');
+    funnelChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: labels,
+            datasets: datasets
+        },
+        options: {
+            responsive: true,
+            scales: {
+                x: {
+                    stacked: true,
+                    title: {
+                        display: true,
+                        text: 'Steps'
+                    }
+                },
+                y: {
+                    stacked: true,
+                    title: {
+                        display: true,
+                        text: 'Number of Users'
+                    },
+                    beginAtZero: true
+                }
+            },
+            plugins: {
+                legend: {
+                    display: true,
+                    position: 'top'
+                },
+                tooltip: {
+                    mode: 'index',
+                    intersect: false
+                }
+            }
+        }
+    });
+}
+
+
 function graphUserFunnel(eventLogs) {
     if(!listenersInitialized){
         const inputField = document.getElementById('funnel-event-step-in');
@@ -617,8 +690,8 @@ function analyseFunnelSteps(eventLogs, steps) {
                 }
             });
 
-            console.log(`${index} - ${userEventList[index]}`);
-            console.log(userEventList);
+            //console.log(`${index} - ${userEventList[index]}`);
+            //console.log(userEventList);
 
             let eventName = userEventList[index];
             nonStepData[index].events[eventName] = (nonStepData[index].events[eventName] || 0) + 1;
@@ -629,6 +702,8 @@ function analyseFunnelSteps(eventLogs, steps) {
     stepData.forEach(step => {
         step.users = Array.from(step.users);
     });
+
+    console.log(nonStepData);
 
     return { stepData, nonStepData };
 }
@@ -757,16 +832,4 @@ function stringToHexColor(inString) {
         color += ('00' + value.toString(16)).slice(-2);
     }
     return color;
-}
-
-
-async function newRetBtnClicked(){
-    const startDateElement = document.getElementById('new-ret-start-date');
-    const endDateElement = document.getElementById('new-ret-end-date');
-
-    const startDate = new Date(startDateElement.value).toISOString();
-    const endDate = new Date(endDateElement.value).toISOString();
-
-    const newRet = await fetchNewReturningUsers(startDate, endDate);
-    console.log(newRet);
 }

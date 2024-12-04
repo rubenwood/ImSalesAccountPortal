@@ -158,11 +158,18 @@ async function getNewReturningUsers(startDate, endDate){
         pool.query(notNewReturningQuery)
     ]);
 
-    const output = { 
+    /*const output = { 
         newUsers: newUsersResult.rows,
         newUsersNotReturning: newUsersNotReturningResult.rows,
         newReturningUsers: newReturningResult.rows,
         notNewReturningUsers: notNewReturningResult.rows
+    };*/
+
+    const output = { 
+        startDate,
+        endDate,
+        newUsers: newUsersResult.rows,
+        returningUsers:notNewReturningResult.rows
     };
 
     return output;
