@@ -63,11 +63,37 @@ async function getCatalogueReport(){
     const moduleBrondons = getModulesFromAreas(areaBrondons);
     const topicBrondons = getTopicsFromModules(moduleBrondons);
     const floatingTopicBrondons = TreeStructure.inFloatingTopics;
+    const allTopicsBrondons = [...topicBrondons, ...floatingTopicBrondons]
     const testTopicBrondons = TreeStructure.inTestTopics;
     const activityBrondons = getActivitiesFromTopics(topicBrondons);
     setTopicsCount(topicBrondons, floatingTopicBrondons, testTopicBrondons);
 
     await setGeneralData(areaBrondons);
+    
+    const startDate = "2023-01-01";
+    const endDate = "2025-01-01";
+    const brondonData = [
+        { type: "area", brondons: areaBrondons },
+        { type: "module", brondons: moduleBrondons },
+        { type: "topic", brondons: allTopicsBrondons },
+        { type: "activity", brondons: activityBrondons }
+    ];
+
+    const brondonsByMonth = getBrondonsByMonth(startDate, endDate, brondonData);
+    populateBronondsMonthTable(brondonsByMonth);
+    console.log(brondonsByMonth);
+    
+    //const areasCreatedInYear = getCreatedWithin(startDate, endDate, areaBrondons, "area");
+    //const modulesCreatedInYear = getCreatedWithin(startDate, endDate, moduleBrondons, "module");
+    //const topicsCreatedInYear = getCreatedWithin(startDate, endDate, topicBrondons, "topic");
+    //const floatingTopicsCreatedInYear = getCreatedWithin(startDate, endDate, floatingTopicBrondons, "topic");
+    //const activitiesCreatedInYear = getCreatedWithin(startDate, endDate, activityBrondons, "activity");
+    //console.log(areasCreatedInYear);
+    //console.log(modulesCreatedInYear);
+    //console.log(topicBrondons);
+    //console.log(floatingTopicBrondons);
+    //console.log(activityBrondons);
+    
     populateTotalsTable(areaBrondons);
     populateActPerTopicsTable(areaBrondons);
     populateLessonDataTable(areaBrondons);
@@ -200,6 +226,79 @@ async function setGeneralData(areaBrondons){
     }
 }
 
+// TODO: Finish this!
+// call this for each year / month from 01/01/2023
+function getCreatedWithin(startDate, endDate, brondons, type) {
+    let brondonsCreatedWithin = [];
+
+    // Parse the start and end dates to Date objects for comparison
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+
+    // Iterate through the list of brondons
+    for (let brondon of brondons) {
+        // Parse the createdat field to a Date object
+        const createdDate = new Date(brondon.createdat);
+
+        // Check if the created date is within the range
+        if (createdDate >= start && createdDate <= end) {
+            brondonsCreatedWithin.push(brondon);
+        }
+    }
+
+    // Return the output object
+    const output = {
+        type,
+        startDate,
+        endDate,
+        brondonsCreatedWithin
+    };
+
+    return output;
+}
+function getBrondonsByMonth(startDate, endDate, brondonData) {
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+
+    let results = [];
+    let current = new Date(start);
+
+    // Loop through each month from startDate to endDate
+    while (current <= end) {
+        // Format the month range
+        const monthStart = new Date(current.getFullYear(), current.getMonth(), 1);
+        const monthEnd = new Date(current.getFullYear(), current.getMonth() + 1, 0); // Last day of the month
+
+        // Collect data for each brondon type
+        let monthlyData = {
+            month: monthStart.toISOString().slice(0, 7)
+        };
+
+        for (let { type, brondons } of brondonData) {
+            const result = getCreatedWithin(
+                monthStart.toISOString(),
+                monthEnd.toISOString(),
+                brondons,
+                type
+            );
+            monthlyData[type] = {
+                count: result.brondonsCreatedWithin.length,
+                brondons: result.brondonsCreatedWithin
+            };
+        }
+
+        results.push(monthlyData);
+
+        // Move to the next month
+        current.setMonth(current.getMonth() + 1);
+    }
+
+    return results;
+}
+
+
+
+
 // TABLES
 async function populateTotalsTable(areaStructure){
     const totalsTable = document.getElementById('totals-table');
@@ -235,6 +334,9 @@ async function populateTotalsTable(areaStructure){
         let simsCell = row.insertCell();
         simsCell.innerHTML = areaData.totalExperiences;
     }
+
+    console.log(areaStructure);
+    console.log(GeneralData);
 
     // spacing row
     let emptyRow = totalsTable.insertRow();
@@ -294,7 +396,6 @@ async function populateActPerTopicsTable(areaBrondons){
         }
     }
 }
-
 function populateTimeEstTable(areaBrondons, tableElement, type){
     for (const areaBrondon of areaBrondons) {
         for (const moduleBrondon of areaBrondon.children) {
@@ -353,7 +454,42 @@ function populateLessonDataTable(areaBrondons) {
 function populateExperienceDataTable(areaBrondons) {
     populateTimeEstTable(areaBrondons, document.getElementById('exp-lesson-data-table'), "experience");
 }
+function populateBronondsMonthTable(data){
+    let html = `
+        <table border="1" style="border-collapse: collapse; width: 100%;">
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Areas</th>
+                    <th>Modules</th>
+                    <th>Topics</th>
+                    <th>Activities</th>
+                </tr>
+            </thead>
+            <tbody>
+    `;
 
+    // Populate table rows with data
+    for (let entry of data) {
+        html += `
+            <tr>
+                <td>${entry.month}</td>
+                <td>${entry.area ? entry.area.count : 0}</td>
+                <td>${entry.module ? entry.module.count : 0}</td>
+                <td>${entry.topic ? entry.topic.count : 0}</td>
+                <td>${entry.activity ? entry.activity.count : 0}</td>
+            </tr>
+        `;
+    }
+
+    // Close the table structure
+    html += `
+            </tbody>
+        </table>
+    `;
+    document.getElementById('totals-table-pm').innerHTML = html;
+    return html;
+}
 
 async function populateTopicUsageTable(topicBrondons) {
     const topicIds = topicBrondons.map(brondon => brondon.structureId);

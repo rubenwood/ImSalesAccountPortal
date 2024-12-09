@@ -181,4 +181,22 @@ userDataRouter.post('/get-new-returning-users', async (req, res) => {
     res.json(newRetUsers);
 });
 
+
+// Users with Session Debug Data
+// TODO: paginate this!
+async function getUsersSessionDebugData(){
+    const sessionQuery = `
+        SELECT "UsageDataJSON"
+        FROM public."UsageData"
+        WHERE "UsageDataJSON"::text LIKE '%"SessionDebugData"%';
+    `;
+    const sessionResult = await pool.query(sessionQuery);
+
+    return sessionResult.rows;
+}
+userDataRouter.post('/get-session-data', async (req, res) => {
+    const sessionData = await getUsersSessionDebugData();
+    res.json(sessionData);
+});
+
 module.exports = { userDataRouter };

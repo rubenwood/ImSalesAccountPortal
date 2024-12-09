@@ -60,3 +60,19 @@ export async function fetchNewReturningUsers(startDate, endDate) {
 
     return await response.json();
 }
+
+// Session Debug Data
+export async function fetchSessionData() {
+    const response = await fetch('/userdata/get-session-data', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        }
+    });
+
+    if (!response.ok) {
+        throw new Error('Failed to fetch new and returning users');
+    }
+
+    return await response.json();
+}
