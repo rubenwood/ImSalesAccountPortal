@@ -81,18 +81,7 @@ async function getCatalogueReport(){
 
     const brondonsByMonth = getBrondonsByMonth(startDate, endDate, brondonData);
     populateBronondsMonthTable(brondonsByMonth);
-    console.log(brondonsByMonth);
-    
-    //const areasCreatedInYear = getCreatedWithin(startDate, endDate, areaBrondons, "area");
-    //const modulesCreatedInYear = getCreatedWithin(startDate, endDate, moduleBrondons, "module");
-    //const topicsCreatedInYear = getCreatedWithin(startDate, endDate, topicBrondons, "topic");
-    //const floatingTopicsCreatedInYear = getCreatedWithin(startDate, endDate, floatingTopicBrondons, "topic");
-    //const activitiesCreatedInYear = getCreatedWithin(startDate, endDate, activityBrondons, "activity");
-    //console.log(areasCreatedInYear);
-    //console.log(modulesCreatedInYear);
-    //console.log(topicBrondons);
-    //console.log(floatingTopicBrondons);
-    //console.log(activityBrondons);
+    console.log(brondonsByMonth);    
     
     populateTotalsTable(areaBrondons);
     populateActPerTopicsTable(areaBrondons);
@@ -226,29 +215,22 @@ async function setGeneralData(areaBrondons){
     }
 }
 
-// TODO: Finish this!
-// call this for each year / month from 01/01/2023
+// Content created within time frame
 function getCreatedWithin(startDate, endDate, brondons, type) {
     let brondonsCreatedWithin = [];
 
-    // Parse the start and end dates to Date objects for comparison
     const start = new Date(startDate);
     const end = new Date(endDate);
 
-    // Iterate through the list of brondons
     for (let brondon of brondons) {
-        // Parse the createdat field to a Date object
         const createdDate = new Date(brondon.createdat);
-
-        // Check if the created date is within the range
         if (createdDate >= start && createdDate <= end) {
             brondonsCreatedWithin.push(brondon);
         }
     }
 
-    // Return the output object
     const output = {
-        type,
+        type, // type of brondons; area, module, topic, activity
         startDate,
         endDate,
         brondonsCreatedWithin
@@ -263,13 +245,10 @@ function getBrondonsByMonth(startDate, endDate, brondonData) {
     let results = [];
     let current = new Date(start);
 
-    // Loop through each month from startDate to endDate
     while (current <= end) {
-        // Format the month range
         const monthStart = new Date(current.getFullYear(), current.getMonth(), 1);
-        const monthEnd = new Date(current.getFullYear(), current.getMonth() + 1, 0); // Last day of the month
+        const monthEnd = new Date(current.getFullYear(), current.getMonth() + 1, 0);
 
-        // Collect data for each brondon type
         let monthlyData = {
             month: monthStart.toISOString().slice(0, 7)
         };
@@ -288,8 +267,6 @@ function getBrondonsByMonth(startDate, endDate, brondonData) {
         }
 
         results.push(monthlyData);
-
-        // Move to the next month
         current.setMonth(current.getMonth() + 1);
     }
 
@@ -469,7 +446,6 @@ function populateBronondsMonthTable(data){
             <tbody>
     `;
 
-    // Populate table rows with data
     for (let entry of data) {
         html += `
             <tr>
@@ -482,7 +458,6 @@ function populateBronondsMonthTable(data){
         `;
     }
 
-    // Close the table structure
     html += `
             </tbody>
         </table>
