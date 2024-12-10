@@ -86,17 +86,19 @@ async function fetchDevKPIReport() {
         getPlayFabAverageSessionTime(allPlayersSeg.ProfilesInSegment, playFabDailyTotalsReport, monthlyTotalsReports);
 
         // Update retention data
-        let retentionDataCell = table.querySelector("#userRetentionPlayfab");
-        let day1Perc = parseFloat(playFab30DayReport[1]?.Percent_Retained);
-        let day2Perc = parseFloat(playFab30DayReport[2]?.Percent_Retained);
-        let day30Perc = parseFloat(playFab30DayReport[30]?.Percent_Retained);
-        //let day1DropOff = (day2Perc/day1Perc * 100).toFixed(2);
+        // let retentionDataCell = table.querySelector("#userRetentionPlayfab");
+        // let day1Perc = parseFloat(playFab30DayReport[1]?.Percent_Retained);
+        // let day2Perc = parseFloat(playFab30DayReport[2]?.Percent_Retained);
+        // let day30Perc = parseFloat(playFab30DayReport[30]?.Percent_Retained);
+        // //let day1DropOff = (day2Perc/day1Perc * 100).toFixed(2);
 
-        if (retentionDataCell) {
-            retentionDataCell.innerText = `Day 1: ${day1Perc ?? 'N/A'}%
-            Day 2: ${day2Perc ?? 'N/A'}%
-            Day 30: ${day30Perc ?? 'N/A'}%`;
-        }
+        // if (retentionDataCell) {
+        //     retentionDataCell.innerText = `Day 1: ${day1Perc ?? 'N/A'}%
+        //     Day 2: ${day2Perc ?? 'N/A'}%
+        //     Day 30: ${day30Perc ?? 'N/A'}%`;
+        // }
+        console.log(playFab30DayReport);
+        displayRetentionData(playFab30DayReport);
 
         // Process Monthly Totals Report
         //console.log(monthlyTotalsReports);
@@ -154,6 +156,47 @@ async function fetchDevKPIReport() {
     }
 }
 
+function displayRetentionData(data) {
+    const retentionDiv = document.getElementById("userRetentionPlayfab");
+
+    const table = document.createElement("table");
+    table.style.borderCollapse = "collapse";
+    table.style.width = "100%";
+
+    const headerRow = table.insertRow();
+    const headers = ["Date", "Day", "Percent Retained"];
+    headers.forEach(headerText => {
+        const th = document.createElement("th");
+        th.textContent = headerText;
+        th.style.padding = "8px";
+        th.style.textAlign = "center";
+        th.style.backgroundColor = "#f4f4f4";
+        headerRow.appendChild(th);
+    });
+
+    data.forEach(item => {
+        if(item.Days_Later != 1 && item.Days_Later != 2 && item.Days_Later != 30){ return; }
+        const row = table.insertRow();
+
+        const cohortBaseDate = new Date(item.Cohort.split("T")[0]);
+        const adjustedDate = new Date(cohortBaseDate);
+        adjustedDate.setDate(adjustedDate.getDate() + parseInt(item.Days_Later, 10));
+        const formattedDate = adjustedDate.toISOString().split("T")[0];
+
+        const values = [formattedDate, item.Days_Later, item.Percent_Retained];
+        
+        values.forEach(value => {
+            const cell = row.insertCell();
+            cell.textContent = value;
+            cell.style.padding = "8px";
+            cell.style.textAlign = "center";
+        });
+    });
+
+    retentionDiv.innerHTML = "";
+    retentionDiv.appendChild(table);
+}
+
 function setupReportTable(jsonInput){
     let table = document.getElementById('reportTable');
     
@@ -190,19 +233,14 @@ function setupReportTable(jsonInput){
     if (jsonInput.activeUsersPerMonth) { // (MAU)
         let dataCell = table.querySelector("#MAU");
         // last months MAU
-        //console.log(jsonInput.activeUsersPerMonth);
         let outputString = '';
         // reverse the array, because GA returns the results, oldest to newest
         // but we want newest to oldest
         jsonInput.activeUsersPerMonth.reverse();
         jsonInput.activeUsersPerMonth.forEach(element => {
-            //outputString += JSON.stringify(element) + "\n";
             outputString += `<b>${element.month}</b>: ${element.totalActiveUsers}<br/>`;
         });
         if (dataCell){ dataCell.innerHTML = outputString; }
-        //let thisMonthMAU = jsonInput.activeUsersPerMonth[jsonInput.activeUsersPerMonth.length-1];
-        //let lastMonthMAU = jsonInput.activeUsersPerMonth[jsonInput.activeUsersPerMonth.length-2];
-        //if (dataCell){ dataCell.innerText = JSON.stringify(lastMonthMAU) + "\n" + JSON.stringify(thisMonthMAU); }
     }
 
     if (jsonInput.averageActiveUsageTime) { // (Active User Useage Time)

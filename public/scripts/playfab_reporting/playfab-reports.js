@@ -76,12 +76,13 @@ export async function getPlayFab30DayReport() {
 
     const reportName = "Thirty Day Retention Report";
 
-    // Calculate the date 30 days ago from today
     const today = new Date();
     const yesterday = new Date(today.setDate(today.getDate() - 1));
     const day = yesterday.getDate();
-    const month = yesterday.getMonth() + 1; // JavaScript months are 0-indexed
+    const month = yesterday.getMonth() + 1;
     const year = yesterday.getFullYear();
+
+    console.log(`!!! ${day} ${month} ${year}`)
 
     const playFabResponse = await fetch('/get-playfab-report', {
         method: 'POST',
