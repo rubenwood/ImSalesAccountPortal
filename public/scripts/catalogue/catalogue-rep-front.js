@@ -273,9 +273,6 @@ function getBrondonsByMonth(startDate, endDate, brondonData) {
     return results;
 }
 
-
-
-
 // TABLES
 async function populateTotalsTable(areaStructure){
     const totalsTable = document.getElementById('totals-table');
@@ -446,22 +443,45 @@ function populateBronondsMonthTable(data){
             <tbody>
     `;
 
+    // Initialize running totals
+    let runningTotals = {
+        area: 0,
+        module: 0,
+        topic: 0,
+        activity: 0
+    };
+
+    // Populate table rows with data
     for (let entry of data) {
+        // Update running totals
+        const areaCount = entry.area ? entry.area.count : 0;
+        const moduleCount = entry.module ? entry.module.count : 0;
+        const topicCount = entry.topic ? entry.topic.count : 0;
+        const activityCount = entry.activity ? entry.activity.count : 0;
+
+        runningTotals.area += areaCount;
+        runningTotals.module += moduleCount;
+        runningTotals.topic += topicCount;
+        runningTotals.activity += activityCount;
+
+        // Add row to the table
         html += `
             <tr>
                 <td>${entry.month}</td>
-                <td>${entry.area ? entry.area.count : 0}</td>
-                <td>${entry.module ? entry.module.count : 0}</td>
-                <td>${entry.topic ? entry.topic.count : 0}</td>
-                <td>${entry.activity ? entry.activity.count : 0}</td>
+                <td>${runningTotals.area} (+${areaCount})</td>
+                <td>${runningTotals.module} (+${moduleCount})</td>
+                <td>${runningTotals.topic} (+${topicCount})</td>
+                <td>${runningTotals.activity} (+${activityCount})</td>
             </tr>
         `;
     }
 
+    // Close the table structure
     html += `
             </tbody>
         </table>
     `;
+
     document.getElementById('totals-table-pm').innerHTML = html;
     return html;
 }
