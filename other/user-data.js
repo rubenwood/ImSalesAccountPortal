@@ -139,15 +139,15 @@ async function getNewReturningUsers(startDate, endDate){
 
     // created outside of time frame but logged in within the time frame
     const notNewReturningQuery = `
-    SELECT * FROM public."AccountData" 
+    SELECT * FROM public."UsageData"
     WHERE 
-        (
-            to_timestamp(REPLACE("AccountDataJSON"->>'Created', 'Z', ''), 'YYYY-MM-DD"T"HH24:MI:SS.MS') < '${startDateStr}'::timestamptz
-        )
-    AND 
-        (
-            to_timestamp(REPLACE("AccountDataJSON"->>'LastLogin', 'Z', ''), 'YYYY-MM-DD"T"HH24:MI:SS.MS') >= '${startDateStr}'::timestamptz
-            AND to_timestamp(REPLACE("AccountDataJSON"->>'LastLogin', 'Z', ''), 'YYYY-MM-DD"T"HH24:MI:SS.MS') <= '${endDateStr}'::timestamptz
+        EXISTS (
+            SELECT 1
+            FROM jsonb_each_text("UsageDataJSON"::jsonb->'Data') AS data(key, value)
+            WHERE 
+                to_timestamp(REPLACE(value::jsonb->>'LastUpdated', 'Z', ''), 'YYYY-MM-DD"T"HH24:MI:SS.MS') >= '${startDateStr}'::timestamptz
+            AND 
+                to_timestamp(REPLACE(value::jsonb->>'LastUpdated', 'Z', ''), 'YYYY-MM-DD"T"HH24:MI:SS.MS') <= '${endDateStr}'::timestamptz
         );
     `;
 
@@ -165,12 +165,15 @@ async function getNewReturningUsers(startDate, endDate){
         notNewReturningUsers: notNewReturningResult.rows
     };*/
 
+
+
     const output = { 
         startDate,
         endDate,
         newUsers: newUsersResult.rows,
-        returningUsers:notNewReturningResult.rows
+        returningUsers: notNewReturningResult.rows
     };
+    console.log(output.returningUsers);
 
     return output;
 }
