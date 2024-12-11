@@ -28,7 +28,6 @@ async function getUserClassReport(){
     document.getElementById('get-report').value = "Get Report";
 }
 
-
 // RETURNING USERS
 async function getReturningUsers(newRetPerMonth) {
     const dateRanges = getMonthlyDateRanges();
@@ -63,7 +62,8 @@ function getTrulyReturningUsers(newRet) {
         const newUserIds = new Set(newUsers.map(user => user.PlayFabId));
         trulyReturningUsers = [
             ...trulyReturningUsers,
-            ...returningUsers.filter(user => !newUserIds.has(user.PlayFabId)), // filter out users in the newUserIds for this month
+            // filter out users in the newUserIds for this month
+            ...returningUsers.filter(user => !newUserIds.has(user.PlayFabId)),
         ];
     }
 
@@ -92,8 +92,6 @@ function populateNewRetTable(newRetPerMonth, returningUsers) {
     table.innerHTML = `<thead><tr><th>Date</th><th>New</th><th>Returning</th></tr></thead><tbody></tbody>`;
 
     const tbody = table.querySelector("tbody");
-
-    console.log(returningUsers);
 
     newRetPerMonth.forEach((entry, index) => {
         const row = tbody.insertRow();

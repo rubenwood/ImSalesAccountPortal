@@ -158,20 +158,11 @@ async function getNewReturningUsers(startDate, endDate){
         pool.query(notNewReturningQuery)
     ]);
 
-    /*const output = { 
-        newUsers: newUsersResult.rows,
-        newUsersNotReturning: newUsersNotReturningResult.rows,
-        newReturningUsers: newReturningResult.rows,
-        notNewReturningUsers: notNewReturningResult.rows
-    };*/
-
-
-
     const output = { 
         startDate,
         endDate,
         newUsers: newUsersResult.rows,
-        returningUsers: notNewReturningResult.rows
+        returningUsers: notNewReturningResult.rows // returning, but includes new as well (filtered out on FE)
     };
     console.log(output.returningUsers);
 

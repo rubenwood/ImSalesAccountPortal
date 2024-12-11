@@ -411,7 +411,7 @@ function graphEventsTimeOfDay() {
 }
 
 // User Funnel Graph
-const steps = ['app_open', 'login', 'launcher_section_change', 'launch_activity', 'sign_out'];
+const steps = ['login', 'launcher_section_change', 'launch_activity', 'sign_out'];
 //const steps = ['login', 'launcher_section_change', 'launch_activity', 'sign_out'];
 //const steps = ['app_open', 'login', 'launch_activity', 'sign_out', 'launch_activity'];
 //const steps = ['launch_activity', 'sign_out', 'launch_activity'];
