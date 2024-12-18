@@ -17,9 +17,16 @@
     transition: opacity 0.2s ease;
 }
 
-
 #funnel-steps{
     display: flex;
     flex-direction: row;
+    width: min-content;
+}
+
+#data-filters{
+    border: 1px solid black;
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
     width: min-content;
 }

@@ -9,6 +9,7 @@
     <link rel="stylesheet" type="text/css" href="../catalogue-styles.css">
     <link rel="stylesheet" type="text/css" href="../user-data-styles.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-chart-sankey"></script>
 </head>
 <body>
 <!-- Dark Mode Toggle Switch -->
@@ -34,12 +35,18 @@
         <h2>Event Log</h2>
         Start Date <input id="event-log-start-date" type="date">
         End Date <input id="event-log-end-date" type="date">
+        <br/><br/>
+        <div id="data-filters">
+            Suffix<br/>
+            Language<br/>
+            New<br/>
+            Returning<br/>
+            <input id="apply-filter-btn" type="button" value="apply">
+        </div>
         <input id="event-log-btn" type="button" value="Get Report">
         <p id="total-users-p">Total users in report:</p>
         <p id="total-distinct-logs-p">Total logs across users:</p>
         <table id="logs-per-date-table"></table>
-        <!--<div id="event-chart"></div>
-        <div id="event-chart-tooltip" class="graph-tooltip"></div>-->
 
         <h3>Events by Date</h3>
         <canvas id="chart-event-by-date" width="1200" height="600"></canvas>
@@ -52,23 +59,15 @@
             <input id="remove-funnel-step-btn" type="button" value="remove last step" />
         </div>
         <canvas id="chart-user-funnel" width="1200" height="600"></canvas>
+
+        <canvas id="userFlowSankey" width="800" height="600"></canvas>
+
         <h3>User Journey Inspector</h3>
         <input type="button" id="toggle-inspect-user-journ-btn" value="Toggle inspect buttons" />
         <div id="user-journey-div"></div>
         <div id="dendrogram" style="border: 4px solid black;"></div>
-        <!--<canvas id="chart-user-journey" width="1200" height="600"></canvas>-->
     </div>
 </div>
-
-<br/><br/>
-<!--<div id="report-container" class="form-container">
-    <div>
-        <h2>New vs. Returning</h2>
-        Start Date <input id="new-ret-start-date" type="date">
-        End Date <input id="new-ret-end-date" type="date">
-        <input id="new-ret-btn" type="button" value="submit">
-    </div>
-</div>-->
 
 <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.1/dist/confetti.browser.js"></script>
 <script type="module" src="../scripts/userdata/user-data-front.js"></script>

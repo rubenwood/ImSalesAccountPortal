@@ -103,9 +103,8 @@ async function eventLogBtnClicked(){
         entry.EventLogs.sort((a, b) => new Date(a.EventLogDate) - new Date(b.EventLogDate));
     });
     doConfetti();
-    processEventLogs(eventLogsJoined);
-
     document.getElementById('event-log-btn').value = "Get Report";
+    processEventLogs(eventLogsJoined);
 }
 
 let EventList = [];
@@ -158,6 +157,7 @@ function processEventLogs(eventLogs) {
     graphEventTypesPerDateChartJS();
     graphEventsTimeOfDay();
 
+    graphUserFunnelStepped(eventLogs, steps);
     graphUserFunnel(eventLogs);
     graphUserJourney(eventLogs);
 }
@@ -416,79 +416,113 @@ function graphEventsTimeOfDay() {
 
 // User Funnel Graph
 const steps = ['login', 'launcher_section_change', 'launch_activity', 'sign_out'];
-//const steps = ['login', 'launcher_section_change', 'launch_activity', 'sign_out'];
-//const steps = ['app_open', 'login', 'launch_activity', 'sign_out', 'launch_activity'];
-//const steps = ['launch_activity', 'sign_out', 'launch_activity'];
-//const steps = ['sign_out', 'launch_activity'];
 
 let funnelChart = null;
 let listenersInitialized = false;
 // User Funnel
-function graphUserFunnelStepped(eventLogs, numSteps) {
-    // Process event logs to determine counts for each step
-    const stepEventCounts = Array.from({ length: numSteps }, (_, step) => {
-        const stepCounts = {};
-        eventLogs.forEach(log => {
-            if (log.step === step) {
-                stepCounts[log.event] = (stepCounts[log.event] || 0) + 1;
+function graphUserFunnelStepped(eventLogs, steps, keyEvents = [], minFlow = 2) {
+    const eventFlowMap = {}; // Map to count connections between events
+    const eventUsersMap = {}; // Map to store unique users at each event step
+
+    // Define logical event order priority
+    const eventPriority = {
+        "app_open": 1,
+        "login": 2,
+        "launcher_section_change": 3,
+        "launch_activity": 4,
+        "sign_out": 5
+    };
+
+    // Step 1: Process the event logs
+    eventLogs.forEach(log => {
+        const sessions = log.EventLogs.flatMap(eLog => eLog.EventLogParsed.sessions);
+
+        sessions.forEach(session => {
+            // Extract, filter, and sort events by priority or time
+            const events = session.events
+                .map(e => ({ name: e.name, time: e.time }))
+                .filter(e => keyEvents.length === 0 || keyEvents.includes(e.name)) // Apply key event filter
+                .sort((a, b) => {
+                    const priorityA = eventPriority[a.name] || Number.MAX_SAFE_INTEGER;
+                    const priorityB = eventPriority[b.name] || Number.MAX_SAFE_INTEGER;
+                    return priorityA - priorityB || a.time.localeCompare(b.time);
+                })
+                .map(e => e.name); // Get the sorted event names
+
+            // Ensure user completed the first step before processing further
+            console.log(events);
+            console.log(steps[0]);
+            if (events.includes(steps[0])) {
+                // Track users at each event step
+                events.forEach((event, index) => {
+                    if (!eventUsersMap[event]) {
+                        eventUsersMap[event] = new Set();
+                    }
+                    eventUsersMap[event].add(log.PlayFabId); // Add user to the event set
+                });
+
+                // Build flow map (connections between events) based on users
+                for (let i = 0; i < events.length - 1; i++) {
+                    // TODO: find the first occurence of steps[0] and go from there
+
+                    const from = events[i];
+                    const to = events[i + 1];
+                    const key = `${from} -> ${to}`;
+
+                    // Track unique user transitions
+                    if (!eventFlowMap[key]) {
+                        eventFlowMap[key] = new Set();
+                    }
+
+                    // Add the user to the transition map
+                    eventFlowMap[key].add(log.PlayFabId);
+                    
+                    if (steps && i + 1 >= steps.length) break; // Limit by step count
+                }
             }
         });
-        return { step, counts: stepCounts };
     });
 
-    // Extract unique events across all steps to ensure consistent groupings
-    const allEvents = Array.from(
-        new Set(stepEventCounts.flatMap(stepCount => Object.keys(stepCount.counts)))
-    );
+    // Step 2: Aggregate low-frequency flows
+    const sankeyData = [];
+    let otherCount = 0;
 
-    // Prepare data for Chart.js
-    const labels = stepEventCounts.map(stepCount => `Step ${stepCount.step}`);
-    const datasets = allEvents.map(event => ({
-        label: event,
-        data: stepEventCounts.map(stepCount => stepCount.counts[event] || 0),
-        backgroundColor: `rgba(${Math.floor(Math.random() * 255)}, ${Math.floor(Math.random() * 255)}, ${Math.floor(Math.random() * 255)}, 0.2)`,
-        borderColor: `rgba(${Math.floor(Math.random() * 255)}, ${Math.floor(Math.random() * 255)}, ${Math.floor(Math.random() * 255)}, 1)`,
-        borderWidth: 1
-    }));
+    Object.entries(eventFlowMap).forEach(([key, usersSet]) => {
+        const userCount = usersSet.size; // Get the number of unique users for this transition
+        if (userCount >= minFlow) {
+            const [from, to] = key.split(" -> ");
+            sankeyData.push({ from, to, flow: userCount });
+        } else {
+            otherCount += userCount; // Group low-frequency connections
+        }
+    });
 
-    // Destroy any existing chart to refresh the data
-    if (funnelChart) { funnelChart.destroy(); }
+    if (otherCount > 0) {
+        sankeyData.push({ from: "Other", to: "Other", flow: otherCount });
+    }
 
-    // Create a new chart
-    const ctx = document.getElementById('chart-user-funnel').getContext('2d');
-    funnelChart = new Chart(ctx, {
-        type: 'bar',
+    // Step 3: Create the Sankey chart
+    const ctx = document.getElementById('userFlowSankey').getContext('2d');
+    new Chart(ctx, {
+        type: 'sankey',
         data: {
-            labels: labels,
-            datasets: datasets
+            datasets: [{
+                label: 'User Event Funnel',
+                data: sankeyData,
+                colorFrom: '#4285F4',
+                colorTo: '#34A853',
+                hoverColor: '#FFA500',
+                borderWidth: 0
+            }]
         },
         options: {
-            responsive: true,
-            scales: {
-                x: {
-                    stacked: true,
-                    title: {
-                        display: true,
-                        text: 'Steps'
-                    }
-                },
-                y: {
-                    stacked: true,
-                    title: {
-                        display: true,
-                        text: 'Number of Users'
-                    },
-                    beginAtZero: true
-                }
-            },
             plugins: {
-                legend: {
+                title: {
                     display: true,
-                    position: 'top'
+                    text: 'User Funnel Visualization'
                 },
-                tooltip: {
-                    mode: 'index',
-                    intersect: false
+                legend: {
+                    display: false
                 }
             }
         }
@@ -529,7 +563,7 @@ function graphUserFunnel(eventLogs) {
     }));
 
     const stepDataset = {
-        label: 'Step Users',
+        label: 'Users',
         data: stepUserCounts,
         backgroundColor: 'rgba(54, 162, 235, 0.2)',
         borderColor: 'rgba(54, 162, 235, 1)',
@@ -576,51 +610,6 @@ function graphUserFunnel(eventLogs) {
             categoryPercentage: 0.8
         }
     });
-}
-
-function countEventOccurrences(eventLogs, steps) {
-    const userStepProgress = {};
-
-    eventLogs.forEach(log => {
-        const PlayFabId = log.PlayFabId;
-
-        log.EventLogs.forEach(eventLog => {
-            eventLog.EventLogParsed.sessions.forEach(session => {
-                const events = session.events;
-                let eventTriggered = [];
-
-                events.forEach((event, eventIndex) => {
-                    if (steps.includes(event.name)) {
-                        const currentStepIndex = steps.indexOf(event.name);
-
-                        // For each event, we check if the user has triggered the previous step
-                        if (currentStepIndex === 0 || eventTriggered.includes(steps[currentStepIndex - 1])) {
-                            // If the user hasn't completed this step yet, mark it
-                            if (!userStepProgress[PlayFabId]) {
-                                userStepProgress[PlayFabId] = [];
-                            }
-
-                            userStepProgress[PlayFabId][currentStepIndex] = true;
-                            eventTriggered.push(event.name);
-                        }
-                    }
-                });
-            });
-        });
-    });
-
-    // Count how many users completed each step
-    const stepCounts = steps.map((step, index) => {
-        return {
-            step,
-            count: Object.keys(userStepProgress).filter(userId => {
-                // Check if the user completed the previous step and the current step
-                return (index === 0 || userStepProgress[userId][index - 1]) && userStepProgress[userId][index];
-            }).length
-        };
-    });
-
-    return stepCounts;
 }
 
 function analyseFunnelSteps(eventLogs, steps) {
@@ -728,8 +717,6 @@ function analyseFunnelSteps(eventLogs, steps) {
 
     return { stepData, nonStepData };
 }
-
-
 function addFunnelStepClicked(eventLogs, eventName) {
     steps.push(eventName);
     graphUserFunnel(eventLogs);
@@ -737,6 +724,51 @@ function addFunnelStepClicked(eventLogs, eventName) {
 function removeLastStepClicked(eventLogs){
     steps.pop();
     graphUserFunnel(eventLogs);
+}
+
+function countEventOccurrences(eventLogs, steps) {
+    const userStepProgress = {};
+
+    eventLogs.forEach(log => {
+        const PlayFabId = log.PlayFabId;
+
+        log.EventLogs.forEach(eventLog => {
+            eventLog.EventLogParsed.sessions.forEach(session => {
+                const events = session.events;
+                let eventTriggered = [];
+
+                events.forEach((event, eventIndex) => {
+                    if (steps.includes(event.name)) {
+                        const currentStepIndex = steps.indexOf(event.name);
+
+                        // For each event, we check if the user has triggered the previous step
+                        if (currentStepIndex === 0 || eventTriggered.includes(steps[currentStepIndex - 1])) {
+                            // If the user hasn't completed this step yet, mark it
+                            if (!userStepProgress[PlayFabId]) {
+                                userStepProgress[PlayFabId] = [];
+                            }
+
+                            userStepProgress[PlayFabId][currentStepIndex] = true;
+                            eventTriggered.push(event.name);
+                        }
+                    }
+                });
+            });
+        });
+    });
+
+    // Count how many users completed each step
+    const stepCounts = steps.map((step, index) => {
+        return {
+            step,
+            count: Object.keys(userStepProgress).filter(userId => {
+                // Check if the user completed the previous step and the current step
+                return (index === 0 || userStepProgress[userId][index - 1]) && userStepProgress[userId][index];
+            }).length
+        };
+    });
+
+    return stepCounts;
 }
 
 // User Journey
