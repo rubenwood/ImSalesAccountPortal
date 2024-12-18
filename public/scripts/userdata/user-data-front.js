@@ -491,41 +491,62 @@ function graphUserFunnelStepped(eventLogs, numSteps) {
     });
 }
 
-
 function graphUserFunnel(eventLogs) {
-    if(!listenersInitialized){
+    if (!listenersInitialized) {
         const inputField = document.getElementById('funnel-event-step-in');
         document.getElementById('add-funnel-step-btn').addEventListener('click', () => {
             addFunnelStepClicked(eventLogs, inputField.value);
-        });    
+        });
         document.getElementById('remove-funnel-step-btn').addEventListener('click', () => {
             removeLastStepClicked(eventLogs);
         });
         listenersInitialized = true;
     }
 
-    const stepCounts = countEventOccurrences(eventLogs, steps);
-    //console.log(stepCounts);
-    console.log(analyseFunnelSteps(eventLogs, steps));
-    const labels = stepCounts.map(count => count.step);
-    const data = stepCounts.map(count => count.count);
+    const steppedData = analyseFunnelSteps(eventLogs, steps);
+
+    // Step data (blue bars)
+    const stepLabels = steppedData.stepData.map(step => step.stepName);
+    const stepUserCounts = steppedData.stepData.map(step => step.users.length);
+
+    // Non-step event data (red bars)
+    const nonStepEventNames = Array.from(
+        new Set(
+            steppedData.nonStepData.flatMap(step =>
+                Object.keys(step.events)
+            )
+        )
+    ); // Collect all unique event names across non-step data
+
+    const nonStepDatasets = nonStepEventNames.map(eventName => ({
+        label: `${eventName}`,
+        data: steppedData.nonStepData.map(step => step.events[eventName] || 0),
+        backgroundColor: 'rgba(255, 99, 132, 0.2)', // Red for non-step data
+        borderColor: 'rgba(255, 99, 132, 1)',
+        borderWidth: 1
+    }));
+
+    // Primary dataset for step user counts
+    const stepDataset = {
+        label: 'Step Users',
+        data: stepUserCounts,
+        backgroundColor: 'rgba(54, 162, 235, 0.2)', // Blue for step data
+        borderColor: 'rgba(54, 162, 235, 1)',
+        borderWidth: 1
+    };
 
     const ctx = document.getElementById('chart-user-funnel').getContext('2d');
 
     // Destroy in order to refresh (when adding steps)
-    if (funnelChart) { funnelChart.destroy(); }
-    
+    if (funnelChart) {
+        funnelChart.destroy();
+    }
+
     funnelChart = new Chart(ctx, {
         type: 'bar',
         data: {
-            labels: labels,
-            datasets: [{
-                label: '# Users',
-                data: data,
-                backgroundColor: 'rgba(54, 162, 235, 0.2)',
-                borderColor: 'rgba(54, 162, 235, 1)',
-                borderWidth: 1
-            }]
+            labels: stepLabels,
+            datasets: [stepDataset, ...nonStepDatasets] // Combine step and non-step datasets
         },
         options: {
             scales: {
@@ -533,24 +554,31 @@ function graphUserFunnel(eventLogs) {
                     title: {
                         display: true,
                         text: 'Event Steps'
-                    }
+                    },
+                    stacked: false // Separate bars
                 },
                 y: {
                     title: {
                         display: true,
-                        text: 'Number of Users'
+                        text: 'Counts'
                     },
-                    beginAtZero: true
+                    beginAtZero: true,
+                    stacked: false // Separate bars
                 }
             },
             plugins: {
                 legend: {
-                    display: false
+                    display: true,
+                    position: 'top'
                 }
-            }
+            },
+            barPercentage: 0.9,
+            categoryPercentage: 0.8
         }
     });
 }
+
+
 function countEventOccurrences(eventLogs, steps) {
     const userStepProgress = {};
 
