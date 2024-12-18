@@ -421,10 +421,9 @@ let funnelChart = null;
 let listenersInitialized = false;
 // User Funnel
 function graphUserFunnelStepped(eventLogs, steps, keyEvents = [], minFlow = 2) {
-    const eventFlowMap = {}; // Map to count connections between events
-    const eventUsersMap = {}; // Map to store unique users at each event step
+    const eventFlowMap = {};
+    const eventUsersMap = {};
 
-    // Define logical event order priority
     const eventPriority = {
         "app_open": 1,
         "login": 2,
@@ -433,7 +432,6 @@ function graphUserFunnelStepped(eventLogs, steps, keyEvents = [], minFlow = 2) {
         "sign_out": 5
     };
 
-    // Step 1: Process the event logs
     eventLogs.forEach(log => {
         const sessions = log.EventLogs.flatMap(eLog => eLog.EventLogParsed.sessions);
 
@@ -447,11 +445,10 @@ function graphUserFunnelStepped(eventLogs, steps, keyEvents = [], minFlow = 2) {
                     const priorityB = eventPriority[b.name] || Number.MAX_SAFE_INTEGER;
                     return priorityA - priorityB || a.time.localeCompare(b.time);
                 })
-                .map(e => e.name); // Get the sorted event names
+                .map(e => e.name);
 
-            // Ensure user completed the first step before processing further
-            console.log(events);
-            console.log(steps[0]);
+            //console.log(events);
+            //console.log(steps[0]);
             if (events.includes(steps[0])) {
                 // Track users at each event step
                 events.forEach((event, index) => {
@@ -461,10 +458,10 @@ function graphUserFunnelStepped(eventLogs, steps, keyEvents = [], minFlow = 2) {
                     eventUsersMap[event].add(log.PlayFabId); // Add user to the event set
                 });
 
-                // Build flow map (connections between events) based on users
                 for (let i = 0; i < events.length - 1; i++) {
                     // TODO: find the first occurence of steps[0] and go from there
 
+                    // from - to connections (flow graph)
                     const from = events[i];
                     const to = events[i + 1];
                     const key = `${from} -> ${to}`;
@@ -473,22 +470,19 @@ function graphUserFunnelStepped(eventLogs, steps, keyEvents = [], minFlow = 2) {
                     if (!eventFlowMap[key]) {
                         eventFlowMap[key] = new Set();
                     }
-
-                    // Add the user to the transition map
                     eventFlowMap[key].add(log.PlayFabId);
                     
-                    if (steps && i + 1 >= steps.length) break; // Limit by step count
+                    if (steps && i + 1 >= steps.length){ break; }
                 }
             }
         });
     });
 
-    // Step 2: Aggregate low-frequency flows
+    // handle low frequency flows
     const sankeyData = [];
     let otherCount = 0;
-
     Object.entries(eventFlowMap).forEach(([key, usersSet]) => {
-        const userCount = usersSet.size; // Get the number of unique users for this transition
+        const userCount = usersSet.size;
         if (userCount >= minFlow) {
             const [from, to] = key.split(" -> ");
             sankeyData.push({ from, to, flow: userCount });
@@ -501,7 +495,7 @@ function graphUserFunnelStepped(eventLogs, steps, keyEvents = [], minFlow = 2) {
         sankeyData.push({ from: "Other", to: "Other", flow: otherCount });
     }
 
-    // Step 3: Create the Sankey chart
+    // Create the Sankey chart
     const ctx = document.getElementById('userFlowSankey').getContext('2d');
     new Chart(ctx, {
         type: 'sankey',
