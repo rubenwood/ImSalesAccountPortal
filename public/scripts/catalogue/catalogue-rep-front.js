@@ -80,6 +80,7 @@ async function getCatalogueReport(){
     ];
 
     const brondonsByMonth = getBrondonsByMonth(startDate, endDate, brondonData);
+    console.log(brondonsByMonth);
     populateBronondsMonthTable(brondonsByMonth);
     console.log(brondonsByMonth);    
     
@@ -245,12 +246,12 @@ function getBrondonsByMonth(startDate, endDate, brondonData) {
     let results = [];
     let current = new Date(start);
 
-    while (current <= end) {
+    while (current < end) {
         const monthStart = new Date(current.getFullYear(), current.getMonth(), 1);
         const monthEnd = new Date(current.getFullYear(), current.getMonth() + 1, 0);
 
         let monthlyData = {
-            month: monthStart.toISOString().slice(0, 7)
+            month: monthStart.toLocaleDateString('en-UK', { year: 'numeric', month: '2-digit' }).replace(/\//g, '-')
         };
 
         for (let { type, brondons } of brondonData) {
@@ -267,7 +268,9 @@ function getBrondonsByMonth(startDate, endDate, brondonData) {
         }
 
         results.push(monthlyData);
-        current.setMonth(current.getMonth() + 1);
+
+        // Increment to next month more explicitly
+        current = new Date(current.getFullYear(), current.getMonth() + 1, 1);
     }
 
     return results;
