@@ -89,6 +89,8 @@ function eventLogJoiner(eventLogs) {
 }
 
 async function eventLogBtnClicked(){
+    document.getElementById('event-log-btn').value = "Getting Report...";
+
     const startDateElement = document.getElementById('event-log-start-date');
     const endDateElement = document.getElementById('event-log-end-date');
     const startDate = new Date(startDateElement.value).toISOString();
@@ -102,6 +104,8 @@ async function eventLogBtnClicked(){
     });
     doConfetti();
     processEventLogs(eventLogsJoined);
+
+    document.getElementById('event-log-btn').value = "Get Report";
 }
 
 let EventList = [];
@@ -505,39 +509,35 @@ function graphUserFunnel(eventLogs) {
 
     const steppedData = analyseFunnelSteps(eventLogs, steps);
 
-    // Step data (blue bars)
     const stepLabels = steppedData.stepData.map(step => step.stepName);
     const stepUserCounts = steppedData.stepData.map(step => step.users.length);
 
-    // Non-step event data (red bars)
     const nonStepEventNames = Array.from(
         new Set(
             steppedData.nonStepData.flatMap(step =>
                 Object.keys(step.events)
             )
         )
-    ); // Collect all unique event names across non-step data
+    );
 
     const nonStepDatasets = nonStepEventNames.map(eventName => ({
         label: `${eventName}`,
         data: steppedData.nonStepData.map(step => step.events[eventName] || 0),
-        backgroundColor: 'rgba(255, 99, 132, 0.2)', // Red for non-step data
+        backgroundColor: 'rgba(255, 99, 132, 0.2)',
         borderColor: 'rgba(255, 99, 132, 1)',
         borderWidth: 1
     }));
 
-    // Primary dataset for step user counts
     const stepDataset = {
         label: 'Step Users',
         data: stepUserCounts,
-        backgroundColor: 'rgba(54, 162, 235, 0.2)', // Blue for step data
+        backgroundColor: 'rgba(54, 162, 235, 0.2)',
         borderColor: 'rgba(54, 162, 235, 1)',
         borderWidth: 1
     };
 
     const ctx = document.getElementById('chart-user-funnel').getContext('2d');
 
-    // Destroy in order to refresh (when adding steps)
     if (funnelChart) {
         funnelChart.destroy();
     }
@@ -546,7 +546,7 @@ function graphUserFunnel(eventLogs) {
         type: 'bar',
         data: {
             labels: stepLabels,
-            datasets: [stepDataset, ...nonStepDatasets] // Combine step and non-step datasets
+            datasets: [stepDataset, ...nonStepDatasets]
         },
         options: {
             scales: {
@@ -555,7 +555,7 @@ function graphUserFunnel(eventLogs) {
                         display: true,
                         text: 'Event Steps'
                     },
-                    stacked: false // Separate bars
+                    stacked: false
                 },
                 y: {
                     title: {
@@ -563,7 +563,7 @@ function graphUserFunnel(eventLogs) {
                         text: 'Counts'
                     },
                     beginAtZero: true,
-                    stacked: false // Separate bars
+                    stacked: false
                 }
             },
             plugins: {
@@ -577,7 +577,6 @@ function graphUserFunnel(eventLogs) {
         }
     });
 }
-
 
 function countEventOccurrences(eventLogs, steps) {
     const userStepProgress = {};
@@ -634,14 +633,14 @@ function analyseFunnelSteps(eventLogs, steps) {
         stepData.push({
             stepIndex: index,
             stepName: step,
-            users: new Set(), // To track unique users at this step
-            events: {}        // To count occurrences of each event at this step
+            users: new Set(),
+            events: {}
         });
-        nonStepData.push({
+        nonStepData.push({ // users who didnt do this step
             stepIndex: index,
             stepName: step,
-            users: [],        // Users who didn’t advance to this step
-            events: {}        // Non-matching events triggered at this step
+            users: [],
+            events: {}// Non-matching events triggered at this step
         });
     });
 
@@ -667,14 +666,11 @@ function analyseFunnelSteps(eventLogs, steps) {
                         if (stepIndex === 0 || lastStepReached === stepIndex - 1) {
                             // User progressed to this step
                             lastStepReached = stepIndex;
-
                             // Track the user in this step
                             stepData[stepIndex].users.add(PlayFabId);
-
                             // Count the event
                             stepData[stepIndex].events[event.name] = 
                                 (stepData[stepIndex].events[event.name] || 0) + 1;
-
                             // Record user's step progress
                             userStepProgress[PlayFabId][stepIndex] = true;
                         }
@@ -717,9 +713,6 @@ function analyseFunnelSteps(eventLogs, steps) {
                     });
                 }
             });
-
-            //console.log(`${index} - ${userEventList[index]}`);
-            //console.log(userEventList);
 
             let eventName = userEventList[index];
             nonStepData[index].events[eventName] = (nonStepData[index].events[eventName] || 0) + 1;
