@@ -63,7 +63,6 @@ async function getAccessLevel(playFabId) {
                 }
             }
         );
-        console.log(response.data?.data?.Data?.AccessLevel?.Value);
         return response.data?.data?.Data?.AccessLevel?.Value;
     } catch (error) {
         console.error('Error authenticating session ticket:', error.response ? error.response.data : error.message);
@@ -71,11 +70,9 @@ async function getAccessLevel(playFabId) {
     }
 }
 playfabRouter.post('/access-level', async (req, res) => {
-    const accLevel = await getAccessLevel();
-    
+    const accLevel = await getAccessLevel(); 
     res.json(accLevel);
 });
-getAccessLevel("BB92745A1A62B802");
 
 
 module.exports = { playfabRouter, authenticateSessionTicket, getAccessLevel };

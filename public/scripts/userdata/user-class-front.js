@@ -1,9 +1,9 @@
-import { canAccess } from '../access-check.js';
+//import { canAccess } from '../access-check.js';
 import { initializeDarkMode } from '../themes/dark-mode.js';
 import { Login, getPlayerEmailAddr } from '../PlayFabManager.js';
 import { waitForJWT, imAPIGet, getTopicBrondons } from '../immersifyapi/immersify-api.js';
-import { fetchNewReturningUsers, fetchSessionData, fetchUsersEventLog, fetchEventDetails } from './user-data-utils.js';
-import * as d3 from "https://cdn.jsdelivr.net/npm/d3@7/+esm";
+import { fetchNewReturningUsers, fetchB2BUsers, fetchSessionData, fetchUsersEventLog, fetchEventDetails } from './user-data-utils.js';
+//import * as d3 from "https://cdn.jsdelivr.net/npm/d3@7/+esm";
 
 const doConfetti = () => { confetti({particleCount: 100, spread: 70, origin: { y: 0.6 }}); }
 
@@ -17,7 +17,6 @@ document.addEventListener('DOMContentLoaded', async () => {
 window.onload = function() {
     document.getElementById('loginModal').style.display = 'block';
 };
-
 
 async function getUserClassReport(){
     document.getElementById('get-report').value = "Getting Report...";
@@ -87,7 +86,18 @@ async function getNewReturningUsersAnnual() {
     }
     return results;
 }
-function populateNewRetTable(newRetPerMonth, returningUsers) {
+
+async function getB2BUsers(){
+    const b2bUsers = await fetchB2BUsers();
+    console.log(b2bUsers);
+    let totalB2BUsers = 0;
+    b2bUsers.forEach(element => {
+        totalB2BUsers += element.users.matchedUsers.length;
+    });
+    console.log(`Total B2B Users: ${totalB2BUsers}`);
+}
+
+async function populateNewRetTable(newRetPerMonth, returningUsers) {
     const table = document.getElementById('new-ret-table');
     table.innerHTML = `<thead><tr><th>Date</th><th>New</th><th>Returning</th></tr></thead><tbody></tbody>`;
 
@@ -101,6 +111,10 @@ function populateNewRetTable(newRetPerMonth, returningUsers) {
         row.insertCell(1).innerHTML = `${entry.newUsers.length}`;
         row.insertCell(2).innerHTML = `${trulyReturningUsers.length}`;
     });
+
+    await getB2BUsers();
+
+    doConfetti();
 }
 
 //HELPER

@@ -9,11 +9,22 @@ const suffixes = [
     ["cardiff.ac.uk"], 
     ["jcu.edu.au"], 
     ["phoenixdentalacademy.co.uk"], 
-    ["uos.ac.uk"], 
+    ["uos.ac.uk"],
+    ["UOS.ac.uk"],
+    ["UOS.AC.UK"],
     ["highpoint.edu"],
-    ["pnwu.edu"]
+    ["pnwu.edu"],
+    ["eu.edu.ge"]
 ]
 
+async function getB2BUsers(){
+    let matchedUsersKVP = [];
+    for(const suffixArr of suffixes){
+        let matchedUsers = await generateReportByEmailSuffixDB(suffixArr);
+        matchedUsersKVP.push({suffix: suffixArr, users: matchedUsers});
+    }
+    return matchedUsersKVP;
+}
 
 // call /reporting/gen-suffix-rep?suffixes=suffix1,suffix2,suffix3
 // this will get the total users for all of those suffixes
@@ -26,11 +37,7 @@ router.get('/get-total-users-kpi', async (req, res) => {
     }
 
     try {
-        let matchedUsersKVP = [];
-        for(const suffixArr of suffixes){
-            let matchedUsers = await generateReportByEmailSuffixDB(suffixArr);
-            matchedUsersKVP.push({suffix: suffixArr, users: matchedUsers});
-        }
+        let matchedUsersKVP = await getB2BUsers();
         res.send(matchedUsersKVP);
     } catch (error) {
         console.error('Error:', error);
@@ -38,18 +45,15 @@ router.get('/get-total-users-kpi', async (req, res) => {
     }
 });
 
-router.get('/get-total-users', async (req, res) => {
-    if (getAccessLevel() != process.env.REQUIRED_ACCESS) {
+router.post('/get-total-users', async (req, res) => {
+    const accLevel = await getAccessLevel(req.body.PlayFabId);
+    if (accLevel != process.env.REQUIRED_ACCESS) {
         res.status(401).json({ error: "not logged in" });
         return;
     }
 
     try {
-        let matchedUsersKVP = [];
-        for(const suffixArr of suffixes){
-            let matchedUsers = await generateReportByEmailSuffixDB(suffixArr);
-            matchedUsersKVP.push({suffix: suffixArr, users: matchedUsers});
-        }
+        let matchedUsersKVP = await getB2BUsers();
         res.send(matchedUsersKVP);
     } catch (error) {
         console.error('Error:', error);

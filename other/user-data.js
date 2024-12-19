@@ -116,7 +116,7 @@ async function getNewReturningUsers(startDate, endDate){
     `;
 
     // created within time frame & created day & last login day are the same (brand new)
-    const newUsersNotReturningQuery = `
+    /*const newUsersNotReturningQuery = `
     SELECT * FROM public."AccountData" 
     WHERE to_timestamp(REPLACE("AccountDataJSON"->>'Created', 'Z', ''), 'YYYY-MM-DD"T"HH24:MI:SS.MS') 
         >= '${startDateStr}'::timestamptz
@@ -124,10 +124,10 @@ async function getNewReturningUsers(startDate, endDate){
         <= '${endDateStr}'::timestamptz
     AND date_trunc('day', to_timestamp(REPLACE("AccountDataJSON"->>'Created', 'Z', ''), 'YYYY-MM-DD"T"HH24:MI:SS.MS')) 
         = date_trunc('day', to_timestamp(REPLACE("AccountDataJSON"->>'LastLogin', 'Z', ''), 'YYYY-MM-DD"T"HH24:MI:SS.MS'));
-    `;
+    `;*/
 
     // created within time frame & last login date is more recent than created date (new, but returned)
-    const newReturningQuery = `
+    /*const newReturningQuery = `
     SELECT * FROM public."AccountData" 
     WHERE to_timestamp(REPLACE("AccountDataJSON"->>'Created', 'Z', ''), 'YYYY-MM-DD"T"HH24:MI:SS.MS') 
         >= '${startDateStr}'::timestamptz
@@ -135,9 +135,9 @@ async function getNewReturningUsers(startDate, endDate){
         <= '${endDateStr}'::timestamptz
     AND date_trunc('day', to_timestamp(REPLACE("AccountDataJSON"->>'LastLogin', 'Z', ''), 'YYYY-MM-DD"T"HH24:MI:SS.MS')) 
         > date_trunc('day', to_timestamp(REPLACE("AccountDataJSON"->>'Created', 'Z', ''), 'YYYY-MM-DD"T"HH24:MI:SS.MS'));
-    `;
+    `;*/
 
-    // created outside of time frame but logged in within the time frame
+    // Updated any data outside of timeframe (therefore returning, but will also include new users, so we filter them out on frontend)
     const notNewReturningQuery = `
     SELECT * FROM public."UsageData"
     WHERE 
@@ -151,12 +151,15 @@ async function getNewReturningUsers(startDate, endDate){
         );
     `;
 
-    const [newUsersResult, newUsersNotReturningResult, newReturningResult, notNewReturningResult] = await Promise.all([
-        pool.query(newUsersQuery),
-        pool.query(newUsersNotReturningQuery), 
-        pool.query(newReturningQuery),
-        pool.query(notNewReturningQuery)
-    ]);
+    const [newUsersResult, 
+        //newUsersNotReturningResult, 
+        //newReturningResult,
+        notNewReturningResult] = await Promise.all([
+            pool.query(newUsersQuery),
+            //pool.query(newUsersNotReturningQuery), 
+            //pool.query(newReturningQuery),
+            pool.query(notNewReturningQuery)
+        ]);
 
     const output = { 
         startDate,

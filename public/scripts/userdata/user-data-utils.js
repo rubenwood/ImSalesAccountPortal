@@ -1,3 +1,22 @@
+export async function fetchB2BUsers(){
+    console.log(localStorage.getItem("PlayFabId"));
+    const response = await fetch('/b2b/get-total-users', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body:JSON.stringify({
+            PlayFabId: localStorage.getItem("PlayFabId")
+        })
+    });
+
+    if (!response.ok) {
+        throw new Error('Failed to fetch B2B users');
+    }
+
+    return await response.json();
+}
+
 // Users & Topics in feed
 export async function fetchUsersTopicsInFeed(topicIds) {
     const response = await fetch('/userdata/get-users-topic-feed', {
