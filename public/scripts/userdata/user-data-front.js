@@ -157,7 +157,7 @@ function processEventLogs(eventLogs) {
     graphEventTypesPerDateChartJS();
     graphEventsTimeOfDay();
 
-    graphUserFunnelStepped(eventLogs, steps);
+    graphUserFunnelStepped(eventLogs, steps, ['login', 'launcher_section_change', 'launch_activity', 'popup_opened', 'sign_out'], 1);
     graphUserFunnel(eventLogs);
     graphUserJourney(eventLogs);
 }
@@ -429,7 +429,8 @@ function graphUserFunnelStepped(eventLogs, steps, keyEvents = [], minFlow = 2) {
         "login": 2,
         "launcher_section_change": 3,
         "launch_activity": 4,
-        "sign_out": 5
+        "popup_opened":5,
+        "popup_closed":6
     };
 
     eventLogs.forEach(log => {
@@ -447,15 +448,13 @@ function graphUserFunnelStepped(eventLogs, steps, keyEvents = [], minFlow = 2) {
                 })
                 .map(e => e.name);
 
-            //console.log(events);
-            //console.log(steps[0]);
             if (events.includes(steps[0])) {
                 // Track users at each event step
                 events.forEach((event, index) => {
                     if (!eventUsersMap[event]) {
                         eventUsersMap[event] = new Set();
                     }
-                    eventUsersMap[event].add(log.PlayFabId); // Add user to the event set
+                    eventUsersMap[event].add(log.PlayFabId);
                 });
 
                 for (let i = 0; i < events.length - 1; i++) {
@@ -477,6 +476,8 @@ function graphUserFunnelStepped(eventLogs, steps, keyEvents = [], minFlow = 2) {
             }
         });
     });
+
+    console.log(eventFlowMap);
 
     // handle low frequency flows
     const sankeyData = [];
@@ -513,7 +514,7 @@ function graphUserFunnelStepped(eventLogs, steps, keyEvents = [], minFlow = 2) {
             plugins: {
                 title: {
                     display: true,
-                    text: 'User Funnel Visualization'
+                    text: 'User Funnel'
                 },
                 legend: {
                     display: false
