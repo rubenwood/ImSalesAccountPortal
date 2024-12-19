@@ -79,6 +79,8 @@ async function getUsersWithTopicInFeed(topicIds) {
     for (const topicId of topicIds) {
         const usersWithTopic = result.rows.filter(row => {
             const selectedTopics = JSON.parse(row.UsageDataJSON.Data.UserPreferenceData.Value).selectedTopics;
+            // debugging
+            //selectedTopics.forEach(selTop => console.log(selTop.selectedTopicsList));
             return selectedTopics.some(topic => topic.selectedTopicsList.includes(topicId));
         }).map(row => row.PlayFabId);
 

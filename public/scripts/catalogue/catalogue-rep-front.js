@@ -6,7 +6,6 @@ import { fetchUsersTopicsInFeed } from '../userdata/user-data-utils.js';
 import { waitForJWT, imAPIGet, imAPIPost, getAreas, getModules, getTopics, getActivities, getTreeStructure, getTopicBrondons } from '../immersifyapi/immersify-api.js';
 import {delay } from '../asyncTools.js';
 
-// D3 for graphs :)
 import * as d3 from "https://cdn.jsdelivr.net/npm/d3@7/+esm";
 
 const doConfetti = () => { confetti({particleCount: 100, spread: 70, origin: { y: 0.6 }}); }
@@ -24,7 +23,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     document.getElementById('exp-toggle-time-est-btn').addEventListener('click', ()=> toggleSection('exp-lesson-data-table'));
     document.getElementById('toggle-topics-in-feed-btn').addEventListener('click', ()=> toggleSection('topic-usage-table'));
 
-    // wait for login
     await waitForJWT();
     // Button events
     document.getElementById('get-rep-btn').addEventListener('click', getCatalogueReport);
@@ -88,7 +86,7 @@ async function getCatalogueReport(){
     populateActPerTopicsTable(areaBrondons);
     populateLessonDataTable(areaBrondons);
     populateExperienceDataTable(areaBrondons);
-    //await populateTopicUsageTable(topicBrondons);
+    await populateTopicUsageTable(topicBrondons);
 
     // need to store a snapshot of this data per month    
 
@@ -183,6 +181,7 @@ async function setGeneralData(areaBrondons){
         let flashcards = getFlashcardsFromActivities(activityBrondons);
         let experiences = getExperiencesFromActivities(activityBrondons);
 
+        // TODO: improve efficiency
         // let pointsPerLesson = await getPointsFromLessons(lessons);
         // const totalSubheadingsCount = pointsPerLesson.reduce((sum, item) => {
         //     return sum + (Array.isArray(item) ? item.length : 0);
@@ -446,7 +445,6 @@ function populateBronondsMonthTable(data){
             <tbody>
     `;
 
-    // Initialize running totals
     let runningTotals = {
         area: 0,
         module: 0,
@@ -454,9 +452,7 @@ function populateBronondsMonthTable(data){
         activity: 0
     };
 
-    // Populate table rows with data
     for (let entry of data) {
-        // Update running totals
         const areaCount = entry.area ? entry.area.count : 0;
         const moduleCount = entry.module ? entry.module.count : 0;
         const topicCount = entry.topic ? entry.topic.count : 0;
@@ -467,19 +463,17 @@ function populateBronondsMonthTable(data){
         runningTotals.topic += topicCount;
         runningTotals.activity += activityCount;
 
-        // Add row to the table
         html += `
             <tr>
                 <td>${entry.month}</td>
-                <td>${runningTotals.area} (+${areaCount})</td>
-                <td>${runningTotals.module} (+${moduleCount})</td>
-                <td>${runningTotals.topic} (+${topicCount})</td>
-                <td>${runningTotals.activity} (+${activityCount})</td>
+                <td>${runningTotals.area} ${areaCount > 0 ? `(+${areaCount})` : ''}</td>
+                <td>${runningTotals.module} ${moduleCount > 0 ? `(+${moduleCount})` : ''}</td>
+                <td>${runningTotals.topic} ${topicCount > 0 ? `(+${topicCount})` : ''}</td>
+                <td>${runningTotals.activity} ${activityCount > 0 ? `(+${activityCount})` : ''}</td>
             </tr>
         `;
     }
 
-    // Close the table structure
     html += `
             </tbody>
         </table>
@@ -489,10 +483,14 @@ function populateBronondsMonthTable(data){
     return html;
 }
 
+// TODO: Check this!
 async function populateTopicUsageTable(topicBrondons) {
     const topicIds = topicBrondons.map(brondon => brondon.structureId);
     const usersTopicsInFeed = await fetchUsersTopicsInFeed(topicIds);
     usersTopicsInFeed.sort((a, b) => b.users.length - a.users.length);
+    
+    console.log(usersTopicsInFeed);
+    
 
     const userCounts = {};
     usersTopicsInFeed.forEach(topicData => {
@@ -509,8 +507,10 @@ async function populateTopicUsageTable(topicBrondons) {
             }
         });
     });
-    console.log(uniqueUsers);
     document.getElementById('unique-users-feed').innerHTML = `Total Unique Users with topic(s) in feed: ${uniqueUsers.length}`;
+
+    //const topicUserDetails = getTopicInFeedUserDetails(uniqueUsers, usersTopicsInFeed);
+    //console.log(topicUserDetails);
 
     // Populate the table with the sorted data
     const topicUsageTable = document.getElementById('topic-usage-table');
@@ -532,7 +532,45 @@ async function populateTopicUsageTable(topicBrondons) {
         numUsersCell.innerHTML = topicData.users.length;
     }
 }
+function getTopicInFeedUserDetails(uniqueUsers, usersTopicsInFeed) {
+    let output = [];
+    
+    uniqueUsers.forEach(playFabId => {
+        let userEntry = output.find(entry => entry.PlayFabId === playFabId);        
+        usersTopicsInFeed.forEach(({ topicId, users }) => {
+            //console.log(users);
+            // Check if this user is associated with the current topic
+            if (users.includes(playFabId)) {
+                //console.log(`Match found for PlayFabId ${playFabId} in topicId ${topicId}`);
+                
+                if (userEntry) {
+                    if (!userEntry.topicIds.includes(topicId)) {
+                        userEntry.topicIds.push(topicId);
+                        //console.log(`Updated UserEntry: ${JSON.stringify(userEntry)}`);
+                    }
+                } else {
+                    output.push({
+                        PlayFabId: playFabId,
+                        topicIds: [topicId]
+                    });
+                    //console.log(`Added new entry for PlayFabId ${playFabId}`);
+                    userEntry = output.find(entry => entry.PlayFabId === playFabId); // Refresh userEntry
+                }
+            }
+        });
+    });
+    
+    // Log users with more than one topic
+    output.forEach(({ PlayFabId, topicIds }) => {
+        if(PlayFabId == "49BD4A871FCCFF08"){ console.log("-----------------------")}
+        //console.log(`User ${PlayFabId} has topics: ${topicIds}`);
+        if (topicIds.length > 1) {
+            //console.log(`!!!!!!!! User with more than 1 topic: ${JSON.stringify({ PlayFabId, topicIds })}`);
+        }
+    });
 
+    return output;
+}
 
 function renderZoomableSunburst(data) {
     // Transform data into a hierarchical structure for D3
@@ -737,7 +775,7 @@ function renderForceDirectedTree(data) {
         .force("charge", d3.forceManyBody().strength(-300))
         .force("center", d3.forceCenter(width / 2, height / 2))
         .force("collide", d3.forceCollide().radius(d => 10 + Math.sqrt(d.value) * 5))
-        .force("radial", d3.forceRadial(300, width / 2, height / 2).strength(d => d.depth === 1 ? 0.8 : 0));
+        .force("radial", d3.forceRadial(600, width / 2, height / 2).strength(d => d.depth === 1 ? 0.8 : 0));
 
     // Define color scale by depth
     const colorByDepth = d3.scaleOrdinal()
