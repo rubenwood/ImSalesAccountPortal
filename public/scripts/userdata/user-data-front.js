@@ -458,8 +458,6 @@ function graphUserFunnelStepped(eventLogs, steps, keyEvents = [], minFlow = 2) {
                 });
 
                 for (let i = 0; i < events.length - 1; i++) {
-                    // TODO: find the first occurence of steps[0] and go from there
-
                     // from - to connections (flow graph)
                     const from = events[i];
                     const to = events[i + 1];
@@ -476,8 +474,6 @@ function graphUserFunnelStepped(eventLogs, steps, keyEvents = [], minFlow = 2) {
             }
         });
     });
-
-    console.log(eventFlowMap);
 
     // handle low frequency flows
     const sankeyData = [];
@@ -721,51 +717,6 @@ function removeLastStepClicked(eventLogs){
     graphUserFunnel(eventLogs);
 }
 
-function countEventOccurrences(eventLogs, steps) {
-    const userStepProgress = {};
-
-    eventLogs.forEach(log => {
-        const PlayFabId = log.PlayFabId;
-
-        log.EventLogs.forEach(eventLog => {
-            eventLog.EventLogParsed.sessions.forEach(session => {
-                const events = session.events;
-                let eventTriggered = [];
-
-                events.forEach((event, eventIndex) => {
-                    if (steps.includes(event.name)) {
-                        const currentStepIndex = steps.indexOf(event.name);
-
-                        // For each event, we check if the user has triggered the previous step
-                        if (currentStepIndex === 0 || eventTriggered.includes(steps[currentStepIndex - 1])) {
-                            // If the user hasn't completed this step yet, mark it
-                            if (!userStepProgress[PlayFabId]) {
-                                userStepProgress[PlayFabId] = [];
-                            }
-
-                            userStepProgress[PlayFabId][currentStepIndex] = true;
-                            eventTriggered.push(event.name);
-                        }
-                    }
-                });
-            });
-        });
-    });
-
-    // Count how many users completed each step
-    const stepCounts = steps.map((step, index) => {
-        return {
-            step,
-            count: Object.keys(userStepProgress).filter(userId => {
-                // Check if the user completed the previous step and the current step
-                return (index === 0 || userStepProgress[userId][index - 1]) && userStepProgress[userId][index];
-            }).length
-        };
-    });
-
-    return stepCounts;
-}
-
 // User Journey
 function toggleInspectUserJournButtons(){
     const userJourneyDiv = document.getElementById('user-journey-div');
@@ -859,11 +810,11 @@ function graphUserJourney(eventLog, width = 1800, height = 800) {
     .style("font-size", "10px")
     .style("fill", "#555")
     .selectAll("tspan")
-    .data(d => (d.data.details || "").split("\r\n")) // Split details into lines
+    .data(d => (d.data.details || "").split("\r\n"))
     .enter().append("tspan")
     .attr("x", 0) // Align all lines at the same horizontal position
     .attr("dy", (line, i) => i * 12) // Offset each line within the text block
-    .text(line => line); // Set the text for each line
+    .text(line => line);
 
 }
 
