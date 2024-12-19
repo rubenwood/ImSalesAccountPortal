@@ -86,18 +86,6 @@ async function fetchDevKPIReport() {
         getPlayFabAverageSessionTime(allPlayersSeg.ProfilesInSegment, playFabDailyTotalsReport, monthlyTotalsReports);
 
         // Update retention data
-        // let retentionDataCell = table.querySelector("#userRetentionPlayfab");
-        // let day1Perc = parseFloat(playFab30DayReport[1]?.Percent_Retained);
-        // let day2Perc = parseFloat(playFab30DayReport[2]?.Percent_Retained);
-        // let day30Perc = parseFloat(playFab30DayReport[30]?.Percent_Retained);
-        // //let day1DropOff = (day2Perc/day1Perc * 100).toFixed(2);
-
-        // if (retentionDataCell) {
-        //     retentionDataCell.innerText = `Day 1: ${day1Perc ?? 'N/A'}%
-        //     Day 2: ${day2Perc ?? 'N/A'}%
-        //     Day 30: ${day30Perc ?? 'N/A'}%`;
-        // }
-        console.log(playFab30DayReport);
         displayRetentionData(playFab30DayReport);
 
         // Process Monthly Totals Report
@@ -160,22 +148,21 @@ function displayRetentionData(data) {
     const retentionDiv = document.getElementById("userRetentionPlayfab");
 
     const table = document.createElement("table");
-    table.style.borderCollapse = "collapse";
-    table.style.width = "100%";
+    table.className = "retention-table";
 
     const headerRow = table.insertRow();
     const headers = ["Date", "Day", "Percent Retained"];
     headers.forEach(headerText => {
         const th = document.createElement("th");
         th.textContent = headerText;
-        th.style.padding = "8px";
-        th.style.textAlign = "center";
-        th.style.backgroundColor = "#f4f4f4";
+        th.className = "retention-header";
         headerRow.appendChild(th);
     });
 
     data.forEach(item => {
-        if(item.Days_Later != 1 && item.Days_Later != 2 && item.Days_Later != 30){ return; }
+        if (item.Days_Later != 1 && item.Days_Later != 2 && item.Days_Later != 30) {
+            return;
+        }
         const row = table.insertRow();
 
         const cohortBaseDate = new Date(item.Cohort.split("T")[0]);
@@ -184,12 +171,10 @@ function displayRetentionData(data) {
         const formattedDate = adjustedDate.toISOString().split("T")[0];
 
         const values = [formattedDate, item.Days_Later, item.Percent_Retained];
-        
         values.forEach(value => {
             const cell = row.insertCell();
             cell.textContent = value;
-            cell.style.padding = "8px";
-            cell.style.textAlign = "center";
+            cell.className = "retention-cell";
         });
     });
 
@@ -477,7 +462,7 @@ async function fetchStripeReport() {
     return outputText;
 }
 async function fetchB2BUsersReport() {
-    const response = await fetch('/b2b/get-total-users');
+    const response = await fetch('/b2b/get-total-users-kpi');
     if (!response.ok) { responseNotOk(response); }
 
     //const outputText = await response.text();

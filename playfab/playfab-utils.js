@@ -14,7 +14,7 @@ async function authenticateSessionTicket(ticket) {
               }
           }
       );
-      return response.data; // Return the response data
+      return response.data;
   } catch (error) {
       console.error('Error authenticating session ticket:', error.response ? error.response.data : error.message);
       throw new Error('Failed to authenticate session ticket');
@@ -47,4 +47,35 @@ playfabRouter.post('/auth-ticket', async (req, res) => {
     }
 });
 
-module.exports = { playfabRouter, authenticateSessionTicket };
+
+async function getAccessLevel(playFabId) {
+    try {
+        const response = await axios.post(
+            `https://${process.env.PLAYFAB_TITLE_ID}.playfabapi.com/Admin/GetUserData`,
+            { 
+                PlayFabId:playFabId,
+                Keys: ["AccessLevel"]
+            },
+            {
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-SecretKey': process.env.PLAYFAB_SECRET_KEY
+                }
+            }
+        );
+        console.log(response.data?.data?.Data?.AccessLevel?.Value);
+        return response.data?.data?.Data?.AccessLevel?.Value;
+    } catch (error) {
+        console.error('Error authenticating session ticket:', error.response ? error.response.data : error.message);
+        throw new Error('Failed to authenticate session ticket');
+    }
+}
+playfabRouter.post('/access-level', async (req, res) => {
+    const accLevel = await getAccessLevel();
+    
+    res.json(accLevel);
+});
+getAccessLevel("BB92745A1A62B802");
+
+
+module.exports = { playfabRouter, authenticateSessionTicket, getAccessLevel };
