@@ -46,6 +46,7 @@ if (cdButtons.length > 0) {
 
 //#region HIDE / SHOW FORMS
 function displayForms(){
+    hideVerification();
     document.getElementById('signup-form').style.display = 'block';
     document.getElementById('login-form').style.display = 'block';
 }
@@ -86,6 +87,13 @@ function hideErrorMessages(){
 }
 function showDownload(){
     document.getElementById('download-container').style.display = 'block';
+    hideVerification();
+}
+function showVerification(){
+    document.getElementById('verification-container').style.display = 'block';    
+}
+function hideVerification(){
+    document.getElementById('verification-container').style.display = 'none';
 }
 //#endregion
 
@@ -125,6 +133,7 @@ async function registerCallback(response, error){
     console.log(isVerified);
     if(!isVerified){
         // show verification screen (and send email)
+        showVerification();
     }
 
     let AcademicArea = ""; 
@@ -189,6 +198,7 @@ async function loginCallback(response, error){
     console.log(isVerified);
     if(!isVerified){
         // show verification screen (and send email)
+        showVerification();
     }
 
     const userAcademicArea = await getUserData(["AcademicArea"]);
