@@ -24,13 +24,78 @@ document.addEventListener('DOMContentLoaded', async () => {
     document.getElementById('toggle-topics-in-feed-btn').addEventListener('click', ()=> toggleSection('topic-usage-table'));
 
     await waitForJWT();
+    const textData = await imAPIGet('textData');
+    console.log(textData);
+    processTextData(textData);
+
     // Button events
     document.getElementById('get-rep-btn').addEventListener('click', getCatalogueReport);
-    
 });
 window.onload = function() {
     document.getElementById('loginModal').style.display = 'block';
 };
+
+function processTextData(textData){
+    const jsonLoutput = [];
+    textData.forEach(element => {
+        const formattedTextData = processSubtitleText(element.content);
+        console.log(formattedTextData);
+        const formattedAsJSONL = formatAsChatMessages(formattedTextData);
+        console.log(formattedAsJSONL);
+        jsonLoutput.push(formattedAsJSONL);
+    });
+    console.log(jsonLoutput);  
+}
+function processSubtitleText(input) {
+    const lines = input.split('\n');
+
+    let result = '';
+    let tempText = '';
+
+    for (let i = 0; i < lines.length; i++) {
+        const line = lines[i].trim();
+
+        if (/^\d+$/.test(line) || /-->/.test(line)) {
+            continue;
+        }
+
+        if (line) {
+            tempText += line.replace(/<br\/>/g, '\n');
+        } else {
+            if (tempText) {
+                result += tempText.trim() + ' ';
+                tempText = '';
+            }
+        }
+    }
+
+    // Add any remaining text to the result
+    if (tempText) {
+        result += tempText.trim();
+    }
+
+    return result.trim();
+}
+function formatAsChatMessages(text) {
+    return {
+        messages: [
+            {
+                role: "system",
+                content: "You are a subject matter expert who writes content for lessons in an educational app. The app features 3D models and spoken narration of your text. Ensure your content is factually correct and adheres to educational standards."
+            },
+            {
+                role: "user",
+                content: "Write a lesson point for a lesson on The monomer"
+            },
+            {
+                role: "assistant",
+                content: text.trim()
+            }
+        ]
+    };
+}
+
+
 
 function toggleSection(elementId){
     const element = document.getElementById(elementId);
@@ -97,6 +162,7 @@ async function getCatalogueReport(){
     //setHierarchyData(TreeStructure.inAreas);
 }
 
+// TODO: move these helps into their own class
 function getModulesFromAreas(areas){
     let modules = [];
     areas.forEach(area => modules.push(...area.children));

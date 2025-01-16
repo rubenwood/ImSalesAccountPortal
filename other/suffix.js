@@ -21,6 +21,15 @@ async function getEmailBlacklist(){
     return emailBlacklist;
 }
 
+async function getSuffixList(){
+    const suffixList = await getS3JSONFile('TestFiles/EnterpriseData/suffix_list_lite.json');
+    return suffixList;
+}
+suffixRouter.get('/get-suffix-list', async (req, res) => {
+    const suffixList = await getSuffixList();
+    res.json(suffixList);
+});
+
 // Get suffix mappings from S3 (connections_list)
 let suffixMappings;
 let lastDateGotSuffixMappings;

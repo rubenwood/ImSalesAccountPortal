@@ -97,6 +97,7 @@ async function eventLogBtnClicked(){
     const endDate = new Date(endDateElement.value).toISOString();
 
     const eventLogs = await fetchUsersEventLog(startDate, endDate);
+    console.log(eventLogs);
     const eventLogsJoined = eventLogJoiner(eventLogs);
     console.log(eventLogsJoined);
     eventLogsJoined.forEach(entry => {
