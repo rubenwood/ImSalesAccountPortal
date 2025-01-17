@@ -2,7 +2,7 @@ import { canAccess } from '../access-check.js';
 import { initializeDarkMode } from '../themes/dark-mode.js';
 import { Login, getPlayerEmailAddr } from '../PlayFabManager.js';
 import { waitForJWT, imAPIGet, getTopicBrondons } from '../immersifyapi/immersify-api.js';
-import { fetchNewReturningUsers, fetchUsersEventLog, fetchEventDetails } from './user-data-utils.js';
+import { fetchNewReturningUsers, fetchUsersEventLog, fetchEventDetails, fetchEventInsights } from './user-data-utils.js';
 import * as d3 from "https://cdn.jsdelivr.net/npm/d3@7/+esm";
 
 const doConfetti = () => { confetti({particleCount: 100, spread: 70, origin: { y: 0.6 }}); }
@@ -143,6 +143,9 @@ function getEventIds(eventLogs){
 }
 
 function processEventLogs(eventLogs) {
+    console.log(eventLogs);
+    fetchEventInsights(eventLogs);
+
     getEventList(eventLogs);
     getEventIds(eventLogs);
     populateUserJourneyButtons(eventLogs);

@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI Prompt Interface</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+      text-align: center;
+    }
+    #prompt {
+      width: 90%;
+      max-width: 600px;
+      padding: 10px;
+      margin-bottom: 20px;
+      font-size: 16px;
+    }
+    button {
+      padding: 10px 20px;
+      font-size: 16px;
+      background-color: #007bff;
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #0056b3;
+    }
+    #response {
+      margin-top: 20px;
+      font-size: 18px;
+      white-space: pre-wrap;
+    }
+  </style>
+</head>
+<body>
+  <h1>Fine-Tuned AI Prompt</h1>
+  <textarea id="prompt" placeholder="Type your prompt here..."></textarea>
+  <br />
+  <button onclick="generateText()">Generate</button>
+  <div id="response"></div>
+
+  <script>
+    async function generateText() {
+      const prompt = document.getElementById("prompt").value;
+
+      // Send the prompt to the backend
+      const response = await fetch("http://localhost:3001/ai/generate", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ prompt })
+      });
+
+      const data = await response.json();
+      const responseDiv = document.getElementById("response");
+      responseDiv.textContent = data.result;
+    }
+  </script>
+</body>
+</html>
