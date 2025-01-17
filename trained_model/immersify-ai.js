@@ -20,7 +20,6 @@ immersifyAIRouter.post("/generate", async (req, res) => {
         console.log(completion.choices[0]);
         console.log(completion.choices[0].text);
 
-
         res.json({ result: completion.choices[0].text.trim() });
     } catch (error) {
         console.error("Error generating text:", error);

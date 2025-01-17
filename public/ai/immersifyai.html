@@ -47,7 +47,7 @@
       const prompt = document.getElementById("prompt").value;
 
       // Send the prompt to the backend
-      const response = await fetch("http://localhost:3001/ai/generate", {
+      const response = await fetch("/ai/generate", {
         method: "POST",
         headers: {
           "Content-Type": "application/json"
