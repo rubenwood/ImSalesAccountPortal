@@ -1,6 +1,13 @@
 import { RegisterUserEmailAddressGeneric, LoginGeneric, UpdateUserDataGeneric, ResetPassword } from "../PlayFabManager.js";
+import { getSuffixList, isUserOnSuffixList } from "../suffix-front.js";
+import { getUserData, getPlayerProfile, isEmailVerified } from "../PlayFabManager.js";
 
+let suffixFile;
 document.addEventListener('DOMContentLoaded', async() => {    
+    // get suffix list too
+    suffixFile = await getSuffixList();
+    console.log(suffixFile.suffixList);
+
     // pword field
     document.getElementById('loginButton').addEventListener('click', () => submitPass());
     // form
@@ -15,7 +22,6 @@ window.onload = function() {
     document.getElementById('download-container').style.display = 'none';
     // document.getElementById('pwordModal').style.display = 'none';
 };
-
 
 var cdButtons = [].slice.call(document.getElementsByClassName("cd-button"));
 if (cdButtons.length > 0) {
@@ -38,9 +44,9 @@ if (cdButtons.length > 0) {
 		});
 }
 
-
 //#region HIDE / SHOW FORMS
 function displayForms(){
+    hideVerification();
     document.getElementById('signup-form').style.display = 'block';
     document.getElementById('login-form').style.display = 'block';
 }
@@ -79,9 +85,20 @@ function hideErrorMessages(){
     document.getElementById('login-err-msg').style.display = 'none';
     document.getElementById('signup-err-msg').style.display = 'none';
 }
+function showDownload(){
+    document.getElementById('download-container').style.display = 'block';
+    hideVerification();
+}
+function showVerification(){
+    document.getElementById('verification-container').style.display = 'block';    
+}
+function hideVerification(){
+    document.getElementById('verification-container').style.display = 'none';
+}
 //#endregion
 
 let ticket;
+let suffixEntry;
 
 // SIGN UP
 async function signUpBtnClicked(){
@@ -90,9 +107,17 @@ async function signUpBtnClicked(){
     const email = document.getElementById('signup-email').value;
     const displayName = document.getElementById('signup-display-name').value;
     const password = document.getElementById('signup-password').value;
+
+    if(!isUserOnSuffixList(suffixFile.suffixList, email.split('@')[1])){
+        console.log("not on list");
+        document.getElementById('signup-err-msg').style.display = 'block';
+        document.getElementById('signup-err-msg').innerHTML = 'Your institution hasn\'t been granted access';
+        return;
+    }
+
     await RegisterUserEmailAddressGeneric(email,password,displayName,registerCallback);
 }
-function registerCallback(response, error){
+async function registerCallback(response, error){
     if(error){ 
         console.log(error); 
         document.getElementById('signup-err-msg').style.display = 'block';
@@ -101,7 +126,21 @@ function registerCallback(response, error){
     }
     ticket = response.data.SessionTicket;
 
-    let AcademicArea = "838134a6-1399-4ede-a54c-569c308ebd09";
+    // TODO: EMAIL VERIFICATION
+    const playerProf = await getPlayerProfile(response.data.PlayFabId);
+    console.log(playerProf);
+    const isVerified = await isEmailVerified(playerProf.ContactEmailAddresses);
+    console.log(isVerified);
+    if(!isVerified){
+        // show verification screen (and send email)
+        showVerification();
+    }
+
+    let AcademicArea = ""; 
+    if(suffixEntry.suffixArea != ''){
+        AcademicArea = "838134a6-1399-4ede-a54c-569c308ebd09";
+    }
+
     let LastWriteDevice = "";
     const UserProfileDataJSON = {
         selectedAvatarId: "",
@@ -128,9 +167,21 @@ async function loginBtnClicked(){
     
     const email = document.getElementById('login-email').value;
     const password = document.getElementById('login-password').value;
+
+    console.log(email.split('@')[1]);
+    suffixEntry = isUserOnSuffixList(suffixFile.suffixList, email.split('@')[1])
+    if(suffixEntry == undefined){
+        console.log("not on list");
+        document.getElementById('login-err-msg').style.display = 'block';
+        document.getElementById('login-err-msg').innerHTML = 'Your institution hasn\'t been granted access';
+        return;
+    }else{
+        console.log(suffixEntry);
+    }
+
     LoginGeneric(email, password, loginCallback);
 }
-function loginCallback(response, error){
+async function loginCallback(response, error){
     if(error){ 
         console.log("ERROR"); console.log(error);
         document.getElementById('login-err-msg').style.display = 'block';
@@ -138,8 +189,26 @@ function loginCallback(response, error){
         return;
     }
     ticket = response.data.SessionTicket;
+    console.log(response.data);
+
+    // TODO: EMAIL VERIFICATION
+    const playerProf = await getPlayerProfile(response.data.PlayFabId);
+    console.log(playerProf);
+    const isVerified = await isEmailVerified(playerProf.ContactEmailAddresses);
+    console.log(isVerified);
+    if(!isVerified){
+        // show verification screen (and send email)
+        showVerification();
+    }
+
+    const userAcademicArea = await getUserData(["AcademicArea"]);
+    console.log(userAcademicArea.AcademicArea);
+
+    let AcademicArea = userAcademicArea.AcademicArea; // set this to the users current academic area if they have one 
+    if(suffixEntry.suffixArea !== ''){
+        AcademicArea = suffixEntry.suffixArea;
+    }
     
-    let AcademicArea = "838134a6-1399-4ede-a54c-569c308ebd09";
     const data = {
         AcademicArea
     };
@@ -167,7 +236,8 @@ function resetPasswordCallback(response, error){
 // UPDATE USER DATA
 function updatedUserDataCallback(){
     hideLoginSignup();
-    showPasswordForm();
+    //showPasswordForm();
+    showDownload();
 }
 
 async function submitPass(){

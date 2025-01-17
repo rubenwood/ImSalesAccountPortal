@@ -23,6 +23,7 @@ async function getUserClassReport(){
     let newRetPerMonth = await getNewReturningUsersAnnual();
     let returningUsers = await getReturningUsers(newRetPerMonth);
     populateNewRetTable(newRetPerMonth, returningUsers);
+    const retRatesPerMonth = calcRetentionRates(newRetPerMonth, returningUsers);
 
     document.getElementById('get-report').value = "Get Report";
 }
@@ -72,18 +73,24 @@ function getTrulyReturningUsers(newRet) {
 // Function to call the API and collect results
 async function getNewReturningUsersAnnual() {
     const dateRanges = getMonthlyDateRanges();
+    const batchSize = 4;
     const results = [];
-    
-    for (const { startDate, endDate } of dateRanges) {
-        try {
-            const newRet = await fetchNewReturningUsers(startDate, endDate);
-            console.log(newRet);
-            results.push(newRet);
-        } catch (error) {
-            console.error(`Failed for ${startDate} - ${endDate}: ${error.message}`);
-            results.push({ startDate, endDate, error: error.message });
-        }
+
+    for (let i = 0; i < dateRanges.length; i += batchSize) {
+        const batch = dateRanges.slice(i, i + batchSize).map(({ startDate, endDate }) =>
+            fetchNewReturningUsers(startDate, endDate)
+                .then(newRet => {
+                    console.log(newRet);
+                    return newRet;
+                })
+                .catch(error => {
+                    console.error(`Failed for ${startDate} - ${endDate}: ${error.message}`);
+                    return { startDate, endDate, error: error.message };
+                })
+        );
+        results.push(...(await Promise.all(batch)));
     }
+
     return results;
 }
 
@@ -95,6 +102,27 @@ async function getB2BUsers(){
         totalB2BUsers += element.users.matchedUsers.length;
     });
     console.log(`Total B2B Users: ${totalB2BUsers}`);
+}
+
+// total retention rate = this months returning / prev month total users
+function calcRetentionRates(newRetPerMonth, returningUsers){
+    const output = [];
+
+    newRetPerMonth.forEach((entry, index) => {
+        if(index-1 < 0){ return; }
+        
+        const monthlyRetRates = {}
+        const trulyReturningUsers = returningUsers[index].trulyReturningUsers || []; // Ensure alignment
+        const trulyReturningUsersPrev = returningUsers[index-1].trulyReturningUsers || []; // returning users from previous month
+        const newUsersPrev = newRetPerMonth[index-1].newUsers || [];// new users from previous month
+
+        monthlyRetRates.startDate = entry.startDate;
+        monthlyRetRates.endDate = entry.endDate;
+        monthlyRetRates.totalRetRate = trulyReturningUsers.length/(newUsersPrev.length+trulyReturningUsersPrev.length);
+        output.push(monthlyRetRates);
+    });
+
+    console.log(output);
 }
 
 async function populateNewRetTable(newRetPerMonth, returningUsers) {

@@ -297,7 +297,7 @@ export async function UpdateUserDataServer(inEmail, inPass, inAcaArea, inLanguag
 }
 
 // GET USER DATA
-function getUserData(keys){
+export function getUserData(keys){
     return new Promise((resolve, reject) => {
         var requestData = {
             Keys: keys
@@ -318,6 +318,35 @@ function getUserData(keys){
     });
 }
 
+// GET PLAYER PROFILE
+export async function getPlayerProfile(playFabId){
+    return new Promise((resolve, reject) => {
+        const playerProfileRequest = {
+            PlayFabId: playFabId,
+            ProfileConstraints: {
+                ShowContactEmailAddresses: true
+            }
+        };
+
+        PlayFabClientSDK.GetPlayerProfile(playerProfileRequest, (result, error) => {
+            if (error) {
+                reject(error);
+            } else {
+                resolve(result.data.PlayerProfile);
+            }
+        });
+    });
+}
+// 
+export async function isEmailVerified(emailAddresses){
+    for(const email of emailAddresses){
+        if(email.VerificationStatus === "Confirmed"){
+            return true;
+        }
+    }
+    return false;
+}
+
 // RESET PASSWORD
 export function ResetPassword(email, callback){
     PlayFab.settings.titleId = titleId;
@@ -329,7 +358,6 @@ export function ResetPassword(email, callback){
 
     PlayFabClientSDK.SendAccountRecoveryEmail(resetPasswordRequest, callback);    
 }
-
 
 // GET PLAYER EMAIL ADDR
 export async function getPlayerEmailAddr(playFabId){
