@@ -1,0 +1,335 @@
+[
+    {
+        "name": "link_parsed",
+        "description": "Triggered when a deep link or a QR code is successfully parsed.",
+        "params": [
+            {
+                "name": "params",
+                "description": "The parameters extracted from the parsed link."
+            }
+        ]
+    },
+    {
+        "name": "deeplink_received",
+        "description": "Triggered when a deep link is received.",
+        "params": []
+    },
+    {
+        "name": "iap_purchase",
+        "description": "Triggered when an in-app purchase is initiated.",
+        "params": [
+            {
+                "name": "product_id",
+                "description": "The identifier of the purchased product."
+            }
+        ]
+    },
+    {
+        "name": "iap_upgrade",
+        "description": "Triggered when an in-app purchase upgrade is initiated.",
+        "params": [
+            {
+                "name": "old_product_id",
+                "description": "The identifier of the product being upgraded."
+            },
+            {
+                "name": "new_product_id",
+                "description": "The identifier of the new product."
+            }
+        ]
+    },
+    {
+        "name": "iap_purchase_failed",
+        "description": "Triggered when an in-app purchase fails.",
+        "params": [
+            {
+                "name": "product_id",
+                "description": "The identifier of the product that failed to purchase."
+            },
+            {
+                "name": "failure_reason",
+                "description": "The reason for the failure."
+            }
+        ]
+    },
+    {
+        "name": "iap_purchase_complete",
+        "description": "Triggered when an in-app purchase is completed successfully.",
+        "params": [
+            {
+                "name": "product_id",
+                "description": "The identifier of the purchased product."
+            }
+        ]
+    },
+    {
+        "name": "iap_cancelled",
+        "description": "Triggered when an in-app purchase is cancelled by the user.",
+        "params": [
+            {
+                "name": "product_id",
+                "description": "The identifier of the cancelled product."
+            }
+        ]
+    },
+    {
+        "name": "iap_expired",
+        "description": "Triggered when an in-app purchase subscription expires.",
+        "params": [
+            {
+                "name": "product_id",
+                "description": "The identifier of the expired product."
+            }
+        ]
+    },
+    {
+        "name": "login_failed",
+        "description": "Triggered when a login attempt fails.",
+        "params": [
+            {
+                "name": "login_type",
+                "description": "The type of login attempted (e.g. email, openID, uniSSO)."
+            }
+        ]
+    },
+    {
+        "name": "forgot_password_recovery_sent",
+        "description": "Triggered when a password recovery email is sent.",
+        "params": []
+    },
+    {
+        "name": "forgot_password_recovery_failed",
+        "description": "Triggered when a password recovery attempt fails.",
+        "params": []
+    },
+    {
+        "name": "sign_up_failed",
+        "description": "Triggered when a sign-up attempt fails.",
+        "params": [
+            {
+                "name": "login_type",
+                "description": "The type of login attempted (e.g. email, openID, uniSSO)."
+            }
+        ]
+    },
+    {
+        "name": "launcher_section_change",
+        "description": "Triggered when the user navigates to a different section of the launcher.",
+        "params": [
+            {
+                "name": "section",
+                "description": "The name of the new section. (feed/explore/progress/library)"
+            }
+        ]
+    },
+    {
+        "name": "popup_closed",
+        "description": "Triggered when any popup is closed.",
+        "params": [
+            {
+                "name": "popup_name",
+                "description": "The name of the popup that was closed."
+            }
+        ]
+    },
+    {
+        "name": "popup_opened",
+        "description": "Triggered when any popup is opened.",
+        "params": [
+            {
+                "name": "popup_name",
+                "description": "The name of the popup that was opened."
+            }
+        ]
+    },
+    {
+        "name": "qr_code_scanned",
+        "description": "Triggered when a QR code is successfully scanned.",
+        "params": []
+    },
+    {
+        "name": "qr_code_unknown",
+        "description": "Triggered when a QR code scan is unrecognized.",
+        "params": []
+    },
+    {
+        "name": "feed_resume_button_clicked",
+        "description": "Triggered when the feed resume button (floating over the feed) is clicked.",
+        "params": []
+    },
+    {
+        "name": "daily_activity_limit_reached",
+        "description": "Triggered when the daily activity play limit is reached.",
+        "params": []
+    },
+    {
+        "name": "library_tab_change",
+        "description": "Triggered when the user switches tabs in the library.",
+        "params": [
+            {
+                "name": "new_tab",
+                "description": "The name of the new tab. (completed/revision/saved)"
+            }
+        ]
+    },
+    {
+        "name": "display_name_changed",
+        "description": "Triggered when a user changes their display name.",
+        "params": [
+            {
+                "name": "new_display_name",
+                "description": "The new display name."
+            }
+        ]
+    },
+    {
+        "name": "academic_area_changed",
+        "description": "Triggered when a user changes their academic area.",
+        "params": [
+            {
+                "name": "new_area",
+                "description": "The new academic area."
+            }
+        ]
+    },
+    {
+        "name": "ability_set",
+        "description": "Triggered when a user sets their ability level.",
+        "params": [
+            {
+                "name": "new_ability",
+                "description": "The new ability level."
+            }
+        ]
+    },
+    {
+        "name": "activity_ranking_set",
+        "description": "Triggered when a user sets their activity ranking preference.",
+        "params": [
+            {
+                "name": "new_activity_ranking",
+                "description": "The new activity ranking."
+            }
+        ]
+    },
+    {
+        "name": "language_set",
+        "description": "Triggered when a user changes their language setting.",
+        "params": [
+            {
+                "name": "new_language",
+                "description": "The new language ID."
+            }
+        ]
+    },
+    {
+        "name": "year_set",
+        "description": "Triggered when a user sets their academic year.",
+        "params": [
+            {
+                "name": "new_year",
+                "description": "The new academic year."
+            }
+        ]
+    },
+    {
+        "name": "avatar_set",
+        "description": "Triggered when a user changes their avatar.",
+        "params": [
+            {
+                "name": "new_avatar",
+                "description": "The new avatar."
+            }
+        ]
+    },
+    {
+        "name": "skin_tone_set",
+        "description": "Triggered when a user changes their skin tone.",
+        "params": [
+            {
+                "name": "new_skin_tone",
+                "description": "The new skin tone."
+            }
+        ]
+    },
+    {
+        "name": "hair_colour_set",
+        "description": "Triggered when a user changes their hair color.",
+        "params": [
+            {
+                "name": "new_hair_colour",
+                "description": "The new hair color."
+            }
+        ]
+    },
+    {
+        "name": "sign_out",
+        "description": "Triggered when a user signs out of the application.",
+        "params": []
+    },
+    {
+        "name": "facebook_login_button_pressed",
+        "description": "Triggered when the Facebook login button is pressed.",
+        "params": []
+    },
+    {
+        "name": "feed_threshold_changed",
+        "description": "Triggered when a user changes the feed completion threshold.",
+        "params": [
+            {
+                "name": "threshold",
+                "description": "The new feed threshold value. (between 0 and 1)"
+            }
+        ]
+    },
+    {
+        "name": "topic_selection_changed",
+        "description": "Triggered when a user changes their topic selection.",
+        "params": [
+            {
+                "name": "topics",
+                "description": "The new selected topics. (List of GUIDs)"
+            }
+        ]
+    },
+    {
+        "name": "theme_changed",
+        "description": "Triggered when a user changes the application theme.",
+        "params": [
+            {
+                "name": "theme",
+                "description": "The new theme ID."
+            }
+        ]
+    },
+    {
+        "name": "sfx_changed",
+        "description": "Triggered when a user toggles sound effects.",
+        "params": [
+            {
+                "name": "enabled",
+                "description": "Indicates whether sound effects are enabled."
+            }
+        ]
+    },
+    {
+        "name": "saved_activity_added",
+        "description": "Triggered when a saved activity is added.",
+        "params": [
+            {
+                "name": "activity",
+                "description": "The activity that was added."
+            }
+        ]
+    },
+    {
+        "name": "saved_activity_removed",
+        "description": "Triggered when a saved activity is removed.",
+        "params": [
+            {
+                "name": "activity",
+                "description": "The activity that was removed."
+            }
+        ]
+    }
+]

@@ -138,7 +138,9 @@ async function registerCallback(response, error){
 
     let AcademicArea = ""; 
     if(suffixEntry.suffixArea != ''){
-        AcademicArea = "838134a6-1399-4ede-a54c-569c308ebd09";
+        // set the users are to the area specified in the list
+        AcademicArea = suffixEntry.suffixArea;
+        //AcademicArea = "838134a6-1399-4ede-a54c-569c308ebd09";
     }
 
     let LastWriteDevice = "";
@@ -204,7 +206,8 @@ async function loginCallback(response, error){
     const userAcademicArea = await getUserData(["AcademicArea"]);
     console.log(userAcademicArea.AcademicArea);
 
-    let AcademicArea = userAcademicArea.AcademicArea; // set this to the users current academic area if they have one 
+    // set this to the users current academic area if they have one
+    let AcademicArea = userAcademicArea.AcademicArea;
     if(suffixEntry.suffixArea !== ''){
         AcademicArea = suffixEntry.suffixArea;
     }

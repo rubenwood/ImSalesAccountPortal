@@ -33,6 +33,8 @@ const { appEventsRouter } = require('./app_events/app-events.js');
 const { userDataRouter } = require('./other/user-data.js');
 const { oneSignalRouter } = require('./one_signal/one-signal.js');
 const { getAllPlayerAccDataAndWriteToDB, getAllPlayerEventLogsWriteToDB } = require('./other/bulk-ops');
+const { aiInsightsRouter } = require('./insights/ai-insights.js');
+const { immersifyAIRouter } = require('./trained_model/immersify-ai.js');
 
 app.use(express.json());
 app.use(cors());
@@ -429,6 +431,8 @@ app.use('/downloads', dlRouter);
 app.use('/appevents', appEventsRouter);
 app.use('/userdata', userDataRouter);
 app.use('/onesignal', oneSignalRouter);
+app.use('/ai', aiInsightsRouter);
+app.use('/ai', immersifyAIRouter);
 const PORT = process.env.PORT;
 
 app.listen(PORT, () => {

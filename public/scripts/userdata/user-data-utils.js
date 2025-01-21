@@ -95,3 +95,21 @@ export async function fetchSessionData() {
 
     return await response.json();
 }
+
+
+// AI Insights
+export async function fetchEventInsights(eventLogs) {
+    const response = await fetch('/ai/eventlog-insights', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(eventLogs)
+    });
+
+    if (!response.ok) {
+        throw new Error('Failed to fetch new and returning users');
+    }
+
+    return await response.json();
+}
