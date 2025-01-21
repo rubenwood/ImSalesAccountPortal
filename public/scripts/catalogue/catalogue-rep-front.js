@@ -25,7 +25,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     await waitForJWT();
     const textData = await imAPIGet('textData');
-    console.log(textData);
+    //console.log(textData);
     processTextData(textData);
 
     // Button events
@@ -38,8 +38,9 @@ window.onload = function() {
 function processTextData(textData){
     const jsonLoutput = [];
     textData.forEach(element => {
+        //console.log(element);
         const formattedTextData = processSubtitleText(element.content);
-        console.log(formattedTextData);
+        //console.log(formattedTextData);
         const formattedAsJSONL = formatAsChatMessages(formattedTextData);
         console.log(formattedAsJSONL);
         jsonLoutput.push(formattedAsJSONL);
@@ -60,7 +61,7 @@ function processSubtitleText(input) {
         }
 
         if (line) {
-            tempText += line.replace(/<br\/>/g, '\n');
+            tempText += line.replace(/<br\/>/g, ' ');
         } else {
             if (tempText) {
                 result += tempText.trim() + ' ';
@@ -77,6 +78,10 @@ function processSubtitleText(input) {
     return result.trim();
 }
 function formatAsChatMessages(text) {
+    if(text.includes("Start Typing...")){
+        return;
+    }
+
     return {
         messages: [
             {
@@ -85,7 +90,8 @@ function formatAsChatMessages(text) {
             },
             {
                 role: "user",
-                content: "Write a lesson point for a lesson on The monomer"
+                // this will need the area, module, topic, lesson names
+                content: "Write a lesson point for a lesson on [EXAMPLE]" // replace [EXAMPLE] with the point / lesson name?
             },
             {
                 role: "assistant",
@@ -95,8 +101,7 @@ function formatAsChatMessages(text) {
     };
 }
 
-
-
+// TOGGLE
 function toggleSection(elementId){
     const element = document.getElementById(elementId);
   
@@ -106,7 +111,6 @@ function toggleSection(elementId){
         console.warn(`Element with ID "${elementId}" not found.`);
     }
 }
-
 
 // DATA
 let TreeStructure;
@@ -491,7 +495,6 @@ function calcTotalTimeEst(activities, type){
 }
 function populateLessonDataTable(areaBrondons) {
     populateTimeEstTable(areaBrondons, document.getElementById('lesson-data-table'), "lesson");
-    
 }
 function populateExperienceDataTable(areaBrondons) {
     populateTimeEstTable(areaBrondons, document.getElementById('exp-lesson-data-table'), "experience");

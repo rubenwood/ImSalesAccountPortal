@@ -1,49 +1,39 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>AI Prompt Interface</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      margin: 20px;
-      text-align: center;
-    }
-    #prompt {
-      width: 90%;
-      max-width: 600px;
-      padding: 10px;
-      margin-bottom: 20px;
-      font-size: 16px;
-    }
-    button {
-      padding: 10px 20px;
-      font-size: 16px;
-      background-color: #007bff;
-      color: white;
-      border: none;
-      cursor: pointer;
-    }
-    button:hover {
-      background-color: #0056b3;
-    }
-    #response {
-      margin-top: 20px;
-      font-size: 18px;
-      white-space: pre-wrap;
-    }
-  </style>
+  <head>
+    <meta charset="utf-8">
+    <title>Internal User Data Reports</title>
+    <script type="text/javascript" src="https://download.playfab.com/PlayFabClientApi.js"></script>
+    <link rel="stylesheet" type="text/css" href="../styles.css">
+    <link rel="stylesheet" type="text/css" href="../catalogue-styles.css">
 </head>
 <body>
+<!-- Dark Mode Toggle Switch -->
+<div class="dark-mode-toggle">☀
+  <label class="switch">.
+      <input type="checkbox" id="darkModeSwitch">
+      <span class="slider round"></span>
+  </label>
+</div>
+<!-- Login Modal -->
+<div id="loginModal" class="modal">
+  <div class="modal-content">
+      <img src="/immersify_logo.e141b23db21f4b78051561bc464eace7.svg" alt="Immersify Logo" class="login-logo">
+      <h2>Login</h2>
+      <input type="text" id="username" placeholder="Username"><br>
+      <input type="password" id="password" placeholder="Password"><br>
+      <input type="button" id="loginButton" value="Login">
+  </div>
+</div>
+<div id="report-container" class="form-container">
   <h1>Fine-Tuned AI Prompt</h1>
   <textarea id="prompt" placeholder="Type your prompt here..."></textarea>
   <br />
-  <button onclick="generateText()">Generate</button>
+  <input type="button" onclick="generateText()" value="Generate">
   <div id="response"></div>
 
   <script>
-    async function generateText() {
+    async function generateText(){
       const prompt = document.getElementById("prompt").value;
 
       // Send the prompt to the backend
@@ -60,5 +50,16 @@
       responseDiv.textContent = data.result;
     }
   </script>
+</div>
+
+<div id="training-container" class="form-container">
+  <input id="get-lesson-jsonl" type="button" value="Get Lesson Training file"></input>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.1/dist/confetti.browser.js"></script>
+<script type="module" src="../scripts/ai/lesson-trainer.js"></script>
+<script type="module" src="../scripts/PlayFabManager.js"></script>
+<script type="module" src="../scripts/utils.js"></script>
+<script type="module" src="../scripts/asyncTools.js"></script>
 </body>
 </html>

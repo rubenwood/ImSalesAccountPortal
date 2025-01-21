@@ -24,6 +24,9 @@ activitiesRouter.get('/get-users-by-activity-id', async (req, res) => {
         return res.status(400).json({ message: 'Missing activities parameter or it is empty.' });
     }
 
+    // These queries ignore _Parts for now
+    // TODO: update to support fields that have _Parts
+
     const query1 = `
         WITH valid_usage_data AS (
             SELECT *
@@ -31,6 +34,7 @@ activitiesRouter.get('/get-users-by-activity-id', async (req, res) => {
             WHERE ("UsageDataJSON"->'Data'->'PlayerData'->>'Value') IS NOT NULL
               AND ("UsageDataJSON"->'Data'->'PlayerData'->>'Value')::jsonb IS NOT NULL
               AND ("UsageDataJSON"->'Data'->'PlayerData'->>'Value') NOT LIKE '%NaN%'
+              AND NOT ("UsageDataJSON"::text ~ '_Part\d+')
         ),
         user_activity_data AS (
             SELECT 
@@ -51,11 +55,12 @@ activitiesRouter.get('/get-users-by-activity-id', async (req, res) => {
 
     const query2 = `
         WITH valid_usage_data AS (
-            SELECT *
+            SELECT * 
             FROM public."UsageData"
             WHERE ("UsageDataJSON"->'Data'->'PlayerDataNewLauncher'->>'Value') IS NOT NULL
-              AND ("UsageDataJSON"->'Data'->'PlayerDataNewLauncher'->>'Value')::jsonb IS NOT NULL
-              AND ("UsageDataJSON"->'Data'->'PlayerDataNewLauncher'->>'Value') NOT LIKE '%NaN%'
+            AND ("UsageDataJSON"->'Data'->'PlayerDataNewLauncher'->>'Value') NOT LIKE '%NaN%'
+            AND ("UsageDataJSON"->'Data'->'PlayerDataNewLauncher'->>'Value') ~ '^\{.*\}$'
+            AND NOT ("UsageDataJSON"::text ~ 'r_Part\d+')
         ),
         user_activity_data AS (
             SELECT 
@@ -69,14 +74,16 @@ activitiesRouter.get('/get-users-by-activity-id', async (req, res) => {
         WHERE EXISTS (
             SELECT 1
             FROM jsonb_array_elements(
-                ("UsageDataJSON"->'Data'->'PlayerDataNewLauncher'->>'Value')::jsonb->'activities') as activity
-            WHERE activity->>'activityID' = ANY($1::text[])
-        )
+                (("UsageDataJSON"->'Data'->'PlayerDataNewLauncher'->>'Value')::jsonb)->'activities'
+            ) AS activity
+            WHERE activity->>'activityID' = ANY($1::text[]) -- Ensure this remains as JSON
+        );
     `;
 
     const queryParams = [activityIds];
 
     try {
+        
         const [result1, result2] = await Promise.all([
             pool.query(query1, queryParams),
             pool.query(query2, queryParams)
@@ -85,6 +92,7 @@ activitiesRouter.get('/get-users-by-activity-id', async (req, res) => {
         const rows1 = result1.rows;
         const rows2 = result2.rows;
         const combinedRows = [...rows1, ...rows2];
+        console.log(combinedRows);
 
         const allPlayersWithActivity = new Map(activityIds.map(id => [id, { players: new Map(), activityTitle: null }]));
 
