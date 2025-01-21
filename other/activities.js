@@ -92,7 +92,6 @@ activitiesRouter.get('/get-users-by-activity-id', async (req, res) => {
         const rows1 = result1.rows;
         const rows2 = result2.rows;
         const combinedRows = [...rows1, ...rows2];
-        console.log(combinedRows);
 
         const allPlayersWithActivity = new Map(activityIds.map(id => [id, { players: new Map(), activityTitle: null }]));
 
