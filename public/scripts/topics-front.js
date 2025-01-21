@@ -8,7 +8,5 @@ import { initializeDarkMode } from './themes/dark-mode.js';
 export async function fetchTopicReportByTitle(topicTitleList){
     const resp = await fetch(`/topics/get-users-by-topic-title?topics=${topicTitleList}`);
     const dbOutput = await resp.json();
-    console.log("DB OUTPUT:\n");
-    console.log(dbOutput);
     return dbOutput;
 }
