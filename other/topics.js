@@ -29,8 +29,9 @@ topicsRouter.get('/get-users-by-topic-id', async (req, res) => {
             SELECT *
             FROM public."UsageData"
             WHERE ("UsageDataJSON"->'Data'->'PlayerDataNewLauncher'->>'Value') IS NOT NULL
-              AND ("UsageDataJSON"->'Data'->'PlayerDataNewLauncher'->>'Value')::jsonb IS NOT NULL
               AND ("UsageDataJSON"->'Data'->'PlayerDataNewLauncher'->>'Value') NOT LIKE '%NaN%'
+              AND ("UsageDataJSON"->'Data'->'PlayerDataNewLauncher'->>'Value') ~ '^\{.*\}$'
+              AND NOT ("UsageDataJSON"::text ~ '_Part\d+')
         ),
         user_activity_data AS (
             SELECT 
@@ -44,7 +45,8 @@ topicsRouter.get('/get-users-by-topic-id', async (req, res) => {
         WHERE EXISTS (
             SELECT 1
             FROM jsonb_array_elements(
-                ("UsageDataJSON"->'Data'->'PlayerDataNewLauncher'->>'Value')::jsonb->'activities') as activity
+                (("UsageDataJSON"->'Data'->'PlayerDataNewLauncher'->>'Value')::jsonb)->'activities'
+            ) AS activity
             WHERE activity->>'topicID' = ANY($1::text[])
         )
     `;
