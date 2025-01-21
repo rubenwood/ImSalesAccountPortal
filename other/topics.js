@@ -68,13 +68,16 @@ topicsRouter.get('/get-users-by-topic-title', async (req, res) => {
         return res.status(400).json({ message: 'Missing activities parameter or it is empty.' });
     }
 
+    // TODO: update this to support _Parts
+
     const query1 = `
         WITH valid_usage_data AS (
             SELECT *
             FROM public."UsageData"
             WHERE ("UsageDataJSON"->'Data'->'PlayerDataNewLauncher'->>'Value') IS NOT NULL
-              AND ("UsageDataJSON"->'Data'->'PlayerDataNewLauncher'->>'Value')::jsonb IS NOT NULL
               AND ("UsageDataJSON"->'Data'->'PlayerDataNewLauncher'->>'Value') NOT LIKE '%NaN%'
+              AND ("UsageDataJSON"->'Data'->'PlayerDataNewLauncher'->>'Value') ~ '^\{.*\}$'
+              AND NOT ("UsageDataJSON"::text ~ '_Part\d+')
         ),
         user_activity_data AS (
             SELECT 
@@ -88,7 +91,8 @@ topicsRouter.get('/get-users-by-topic-title', async (req, res) => {
         WHERE EXISTS (
             SELECT 1
             FROM jsonb_array_elements(
-                ("UsageDataJSON"->'Data'->'PlayerDataNewLauncher'->>'Value')::jsonb->'activities') as activity
+                (("UsageDataJSON"->'Data'->'PlayerDataNewLauncher'->>'Value')::jsonb)->'activities'
+            ) AS activity
             WHERE activity->>'topicTitle' = ANY($1::text[])
         )
     `;
@@ -97,6 +101,7 @@ topicsRouter.get('/get-users-by-topic-title', async (req, res) => {
         const queryParams = [topicTitles];
         const [result1] = await Promise.all([pool.query(query1, queryParams)]);
         const rows1 = result1.rows;
+        console.log(rows1);
         res.json(rows1);
     } catch (err) {
         console.error('Error fetching usage data from db:', err);

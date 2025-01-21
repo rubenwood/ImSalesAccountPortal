@@ -58,9 +58,9 @@ activitiesRouter.get('/get-users-by-activity-id', async (req, res) => {
             SELECT * 
             FROM public."UsageData"
             WHERE ("UsageDataJSON"->'Data'->'PlayerDataNewLauncher'->>'Value') IS NOT NULL
-            AND ("UsageDataJSON"->'Data'->'PlayerDataNewLauncher'->>'Value') NOT LIKE '%NaN%'
-            AND ("UsageDataJSON"->'Data'->'PlayerDataNewLauncher'->>'Value') ~ '^\{.*\}$'
-            AND NOT ("UsageDataJSON"::text ~ 'r_Part\d+')
+                AND ("UsageDataJSON"->'Data'->'PlayerDataNewLauncher'->>'Value') NOT LIKE '%NaN%'
+                AND ("UsageDataJSON"->'Data'->'PlayerDataNewLauncher'->>'Value') ~ '^\{.*\}$'
+                AND NOT ("UsageDataJSON"::text ~ '_Part\d+')
         ),
         user_activity_data AS (
             SELECT 
@@ -76,7 +76,7 @@ activitiesRouter.get('/get-users-by-activity-id', async (req, res) => {
             FROM jsonb_array_elements(
                 (("UsageDataJSON"->'Data'->'PlayerDataNewLauncher'->>'Value')::jsonb)->'activities'
             ) AS activity
-            WHERE activity->>'activityID' = ANY($1::text[]) -- Ensure this remains as JSON
+            WHERE activity->>'activityID' = ANY($1::text[])
         );
     `;
 
