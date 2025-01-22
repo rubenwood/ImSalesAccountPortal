@@ -55,29 +55,45 @@ activitiesRouter.get('/get-users-by-activity-id', async (req, res) => {
 
     const query2 = `
         WITH valid_usage_data AS (
-            SELECT * 
+            SELECT *
             FROM public."UsageData"
             WHERE ("UsageDataJSON"->'Data'->'PlayerDataNewLauncher'->>'Value') IS NOT NULL
-                AND ("UsageDataJSON"->'Data'->'PlayerDataNewLauncher'->>'Value') NOT LIKE '%NaN%'
-                AND ("UsageDataJSON"->'Data'->'PlayerDataNewLauncher'->>'Value') ~ '^\{.*\}$'
-                AND NOT ("UsageDataJSON"::text ~ '_Part\d+')
+            AND ("UsageDataJSON"->'Data'->'PlayerDataNewLauncher'->>'Value') NOT LIKE '%NaN%'
+            AND ("UsageDataJSON"->'Data'->'PlayerDataNewLauncher'->>'Value') ~ '^\{.*\}$'
+        ),
+        chunked_usage_data AS (
+            -- Select chunked records where key contains '_Part'
+            SELECT 
+                "PlayFabId",
+                string_agg("UsageDataJSON"::text, '') AS full_json
+            FROM public."UsageData"
+            WHERE "UsageDataJSON"::text ~ '_Part\d+'
+            GROUP BY "PlayFabId"
+        ),
+        reconstructed_usage_data AS (
+            -- Reconstruct full JSON for chunked records
+            SELECT 
+                vud.*,
+                cud.full_json
+            FROM valid_usage_data vud
+            LEFT JOIN chunked_usage_data cud ON vud."PlayFabId" = cud."PlayFabId"
         ),
         user_activity_data AS (
             SELECT 
-                vud.*, 
+                rud.*, 
                 ad."AccountDataJSON"
-            FROM valid_usage_data vud
-            JOIN public."AccountData" ad ON vud."PlayFabId" = ad."PlayFabId"
+            FROM reconstructed_usage_data rud
+            JOIN public."AccountData" ad ON rud."PlayFabId" = ad."PlayFabId"
         )
         SELECT *
-        FROM user_activity_data
+        FROM user_activity_data rud
         WHERE EXISTS (
             SELECT 1
             FROM jsonb_array_elements(
-                (("UsageDataJSON"->'Data'->'PlayerDataNewLauncher'->>'Value')::jsonb)->'activities'
+                (COALESCE(rud.full_json, rud."UsageDataJSON"::text)::jsonb->'Data'->'PlayerDataNewLauncher'->>'Value')::jsonb->'activities'
             ) AS activity
             WHERE activity->>'activityID' = ANY($1::text[])
-        );
+        )
     `;
 
     const queryParams = [activityIds];
