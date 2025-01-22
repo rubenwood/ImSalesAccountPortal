@@ -157,6 +157,7 @@ function processEventLogs(eventLogs) {
     document.getElementById('total-distinct-logs-p').innerHTML = `Total logs across users: ${totalDistinctEventLogs}`;
 
     getLogsPerDate(eventLogs);
+    getMostPopular(eventLogs);
 
     graphEventTypesPerDateChartJS();
     graphEventsTimeOfDay();
@@ -227,6 +228,55 @@ function getLogsPerDate(eventLogs) {
         row.insertCell(2).textContent = eventCount;
     }
 }
+
+// Most popular
+function getMostPopular(eventLogs) {
+    const popularTable = document.getElementById('popular-activities-table');
+
+    const popularEvents = {};
+
+    for (const entry of eventLogs) {
+        const { PlayFabId, EventLogs } = entry;
+        const uniqueDatesForUser = new Set();
+
+        for(const eventLog of EventLogs){
+            for(const session of eventLog.EventLogParsed.sessions){
+                for(const event of session.events){
+                    for (const event of session.events) {
+                        const granularEventName = event.name+'~'+event.data[0];
+                        if (!popularEvents[granularEventName]) {
+                            popularEvents[granularEventName] = { 
+                                eventName: event.name, 
+                                eventData: event.data, 
+                                count: 0, 
+                                users: new Set()
+                            };
+                        }
+
+                        popularEvents[granularEventName].count += 1;
+                        popularEvents[granularEventName].users.add(PlayFabId);
+                    }
+                }
+            }
+        }
+    }
+
+    const sortedEvents = Object.values(popularEvents).sort((a, b) => b.count - a.count);
+    console.log(sortedEvents);
+
+    popularTable.innerHTML = "<tr><th>Event Name</th><th>Event Data</th><th># Users</th><th># Times triggered</th></tr>";
+
+    for (const entry of sortedEvents) {
+        if(entry.eventName !== "launch_activity"){ continue; }
+        const row = popularTable.insertRow();       
+
+        row.insertCell(0).textContent = entry.eventName;
+        row.insertCell(1).textContent = JSON.stringify(entry.eventData);
+        row.insertCell(2).textContent = entry.users.size;
+        row.insertCell(3).textContent = entry.count;
+    }
+};
+
 
 // Type per date
 function graphEventTypesPerDateChartJS() {

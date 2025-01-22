@@ -60,22 +60,32 @@ async function populateData(areaBrondons, type){
                         
                         let areaName;
                         let moduleName;
-                        let topicName;                        
+                        let topicName;
                         let activityName;
 
                         console.log(activityBrondon);
                         
-                        const lessonSections = await imAPIGet(`lessons/${activityBrondon.structureId}/allData`);
-                        console.log(lessonSections);
+                        const lessonData = await imAPIPost(`lessons/${activityBrondon.structureId}/allData`, { languageId:"english-us" });
+                        const lessonDataJSON = JSON.parse(lessonData);
+                        const points = lessonDataJSON?.points;
+                        if(points){
+                            for(const point of points){
+                                const textContent = point.textInfo.textData.content;
+                                console.log(textContent);
+                                const pointText = processSubtitleText(textContent);
+                                const chatMessages = formatAsChatMessages(pointText);
+                                console.log(chatMessages);
+                            }
+                        }
+                        return; // for debugging
                         //processSubtitleText();
-                        //formatAsChatMessages
+                        //formatAsChatMessages();
                     }
                 }
             }
         }
     }
 }
-
 
 
 function processSubtitleText(input) {
