@@ -103,6 +103,12 @@ export function populateForm(data){
         let daysSinceLastLogin = calcDaysSince(lastLoginDate);
         let daysSinceCreation = calcDaysSince(createdDate);
         let usageData = element.usageData.UsageDataJSON.Data;
+        //console.log(usageData);
+        let userPrefData = usageData?.UserPreferenceData?.Value ? JSON.parse(usageData.UserPreferenceData.Value) : undefined;
+        let userProfileData = usageData?.UserProfileData?.Value ? JSON.parse(usageData.UserProfileData.Value) : undefined;
+        console.log(userPrefData);
+        console.log(userProfileData);
+
         let accountExpiryDate = usageData.TestAccountExpiryDate !== undefined ? new Date(usageData.TestAccountExpiryDate.Value) : undefined;
         let accountExpiryDateString = accountExpiryDate !== undefined ? accountExpiryDate.toDateString() : "N/A";
         
@@ -130,7 +136,7 @@ export function populateForm(data){
                 totalPlayTime: 0,
                 activityDataForReport: []
             };
-            let newDataState = populateUsageData([playerDataNew, playerData], loginData, nclData, playerDataState, row);
+            let newDataState = populateUsageData([playerDataNew, playerData], userPrefData, userProfileData, loginData, nclData, playerDataState, row);
             let activityDataForReport = newDataState.activityDataForReport;
             let averageTimePerPlay = newDataState.averageTimePerPlay;
             let totalPlays = newDataState.totalPlays;
@@ -139,7 +145,7 @@ export function populateForm(data){
             // write the data for the insights & export data
             writeDataForReport(playFabId, email, createdDate, lastLoginDate, daysSinceLastLogin, daysSinceCreation,
                 accountExpiryDate, 0, "", "", linkedAccounts, activityDataForReport, totalPlays, totalPlayTime,
-                averageTimePerPlay, nclData, loginData);
+                averageTimePerPlay, userPrefData, userProfileData, nclData, loginData);
         }catch(error){
             console.error('Error:', error);
             const row = tableBody.insertRow();

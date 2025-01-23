@@ -138,7 +138,7 @@ export function checkForContactEmailAddrSuffix(input, suffixes){
 }
 
 // populates the expanded usage data modal
-export function populateUsageData(playerDataList, loginData, nclData, state, row){
+export function populateUsageData(playerDataList, userPrefData, userProfileData, loginData, nclData, state, row){
     // if every playerDataList element is undefined, there is no playerdata
     if(playerDataList.every((element) => { return element === undefined})){ 
         addCellToRow(row, 'No Usage Data', false); 
@@ -146,6 +146,9 @@ export function populateUsageData(playerDataList, loginData, nclData, state, row
     }
 
     let playerDataContent = '';
+    playerDataContent += `${formatJSONDataHTML(userPrefData)}<br/><br/>`;
+    playerDataContent += `${formatJSONDataHTML(userProfileData)}<br/><br/>`;
+
     playerDataContent += `<b>Last Login Android:</b> ${loginData.lastLoginAndr} <br/>
                         <b>Last Login iOS:</b> ${loginData.lastLoginIOS} <br/> 
                         <b>Last Login Web:</b> ${loginData.lastLoginWeb} <br/><br/>
@@ -231,6 +234,24 @@ export function populateLoginData(userData){
         sessionsString
     };
 }
+
+
+// PREFERENCE & PROFILE DATA
+function formatJSONDataHTML(userPrefData){
+    if(userPrefData == undefined){ return; }
+    let output = '';
+    for(let field in userPrefData){
+        // if its a json object, stringify it
+        if(typeof userPrefData[field] === 'object'){
+            output += `<b>${field}</b> ${JSON.stringify(userPrefData[field])}<br/>`;
+        }else{
+            output += `<b>${field}</b> ${userPrefData[field]}<br/>`;
+        }
+        
+    }
+    return output;
+}
+
 
 // SESSION DATA
 // format the sessions data

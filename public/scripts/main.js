@@ -290,7 +290,7 @@ export function resetExportData(){
 export async function writeDataForReport(pID, pEmail, pCreatedDate,
                             pLastLoginDate, pDaysSinceLastLogin, pDaysSinceCreation,
                             pAccountExpiryDate, pDaysToExpire, pCreatedBy, pCreatedFor, pLinkedAccounts,
-                            pActivityDataForReport, pTotalPlays, pTotalPlayTime, pAveragePlayTimePerPlay, pNCLData, pLoginData){
+                            pActivityDataForReport, pTotalPlays, pTotalPlayTime, pAveragePlayTimePerPlay, pUserPrefData, pUserProfileData, pNCLData, pLoginData){
     
     let playerDataForReport = { // (per user)
         userPlayFabId: pID, // hide from exported report
@@ -329,6 +329,8 @@ export async function writeDataForReport(pID, pEmail, pCreatedDate,
         totalPlays: pTotalPlays,
         totalPlayTime: pTotalPlayTime,
         averageTimePerPlay: pAveragePlayTimePerPlay,
+        userPrefData: pUserPrefData,
+        userProfileData: pUserProfileData,
         loginData: pLoginData,
         nclData: pNCLData
     }
@@ -355,7 +357,7 @@ function exportToExcel() {
     // General, Login, Lesson & Sim insights
     let insightsExportData = setupGeneralInsights(totalPlayTimeAcrossAllUsersSeconds, totalLogins, playersWithMostPlayTime, playersWithMostPlays, playersWithMostUniqueActivities, mostPlayedActivities);
     let loginInsightsData = setupLoginInsights(totalLoginsPerMonth);
-    console.log("LOGIN INSIGHT: ", loginInsightsData);
+    //console.log("LOGIN INSIGHT: ", loginInsightsData);
     const lessonStats = getLessonStats(reportData);
     let lessonInsightsData = setupLessonInsights(lessonStats);
     const simStats = getSimStats(reportData);
@@ -374,6 +376,12 @@ function exportToExcel() {
         ...simInsightsData
     ];
 
+    // Preference & Profile Reports
+    let prefData = setupPrefData(exportData);
+    console.log(prefData);
+    let profileData = setupProfileData(exportData);
+    console.log(profileData);
+
     // Login, Usage & Progress Reports
     let loginData = setupLoginData(exportData);
     let usageData = setupUsageData(exportData);
@@ -388,7 +396,9 @@ function exportToExcel() {
     const insightsWorksheet = XLSX.utils.json_to_sheet(combinedInsightsData);
     const progressWorksheet = XLSX.utils.json_to_sheet(progressData);
     const usageWorksheet = XLSX.utils.json_to_sheet(usageData);
-    const loginDataWorksheet = XLSX.utils.json_to_sheet(loginData);   
+    const loginDataWorksheet = XLSX.utils.json_to_sheet(loginData);
+    const preferenceDataWorksheet = XLSX.utils.json_to_sheet(prefData);
+    const profileDataWorksheet = XLSX.utils.json_to_sheet(profileData);
     
     removeSpecificHeaders(insightsWorksheet, ["value3","value4","value5","value6","value7","value8","value9","value10","value11","value12"]);
     
@@ -421,6 +431,8 @@ function exportToExcel() {
     XLSX.utils.book_append_sheet(workbook, progressWorksheet, "Progress Report");
     XLSX.utils.book_append_sheet(workbook, usageWorksheet, "Usage Report");
     XLSX.utils.book_append_sheet(workbook, loginDataWorksheet, "Login Report");
+    XLSX.utils.book_append_sheet(workbook, preferenceDataWorksheet, "Pref Report");
+    XLSX.utils.book_append_sheet(workbook, profileDataWorksheet, "Profile Report");
     // Add NCL data if it exists
     if(nclData.length > 0 ){ 
         const nclDataWorksheet = XLSX.utils.json_to_sheet(nclData);
@@ -614,6 +626,45 @@ function setupNCLData(exportData){
     });
     return output;
 }
+function setupPrefData(exportData){
+    console.log(exportData);
+    let output = [];
+    exportData.forEach(dataToExport => {
+        let prefRow = {
+            email: dataToExport.email,
+            dismissedPopups: JSON.stringify(dataToExport.userPrefData.dismissedPopups),
+            feedCompletionThreshold: dataToExport.userPrefData.feedCompletionThreshold,
+            learningGoalNumActivities: dataToExport.userPrefData.learningGoalNumActivities,
+            savedActivities: JSON.stringify(dataToExport.userPrefData.savedActivities),
+            selectedProficiencies: JSON.stringify(dataToExport.userPrefData.selectedProficiencies),
+            selectedTopics: JSON.stringify(dataToExport.userPrefData.selectedTopics),
+            sfxEnabled: dataToExport.userPrefData.sfxEnabled,
+            suggestLessonContent: dataToExport.userPrefData.suggestLessonContent,
+            suggestProficiencyContent: dataToExport.userPrefData.suggestProficiencyContent,
+            theme: dataToExport.userPrefData.theme,
+        };
+        output.push(prefRow);
+    });
+    return output;
+}
+function setupProfileData(exportData){
+    let output = [];
+    exportData.forEach(dataToExport => {
+        let profileRow = {
+            email: dataToExport.email,
+            activityTypePreference: JSON.stringify(dataToExport.userProfileData.activityTypePreference),
+            languageOfStudy: dataToExport.userProfileData.languageOfStudy,
+            selectedAbilityId: dataToExport.userProfileData.selectedAbilityId,
+            selectedAvatarId: dataToExport.userProfileData.selectedAvatarId,
+            selectedHairColourId: dataToExport.userProfileData.selectedHairColourId,
+            selectedSkinToneId: dataToExport.userProfileData.selectedSkinToneId,
+            selectedYearId: dataToExport.userProfileData.selectedYearId,
+        };
+        output.push(profileRow);
+    });
+    return output;
+}
+
 function getBestScore(activity){
     let highestScore = 0;
     activity.plays.forEach(play => {
@@ -683,7 +734,6 @@ function removeSpecificHeaders(worksheet, columnsToRemove) {
         }
     });
 }
-
 
 // GET PLAYERS IN SEGMENT BUTTON CLICKED
 async function getSegmentPlayersButtonClicked() {

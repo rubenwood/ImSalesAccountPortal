@@ -145,7 +145,7 @@ function getEventIds(eventLogs){
 
 function processEventLogs(eventLogs) {
     console.log(eventLogs);
-    fetchEventInsights(eventLogs);
+    //fetchEventInsights(eventLogs);
 
     getEventList(eventLogs);
     getEventIds(eventLogs);
@@ -231,43 +231,43 @@ function getLogsPerDate(eventLogs) {
 
 // Most popular
 function getMostPopular(eventLogs) {
-    const popularTable = document.getElementById('popular-activities-table');
+    const popularTable = document.getElementById('popular-events-table');
 
     const popularEvents = {};
 
     for (const entry of eventLogs) {
         const { PlayFabId, EventLogs } = entry;
-        const uniqueDatesForUser = new Set();
 
         for(const eventLog of EventLogs){
             for(const session of eventLog.EventLogParsed.sessions){
                 for(const event of session.events){
-                    for (const event of session.events) {
-                        const granularEventName = event.name+'~'+event.data[0];
-                        if (!popularEvents[granularEventName]) {
-                            popularEvents[granularEventName] = { 
-                                eventName: event.name, 
-                                eventData: event.data, 
-                                count: 0, 
-                                users: new Set()
-                            };
-                        }
-
-                        popularEvents[granularEventName].count += 1;
-                        popularEvents[granularEventName].users.add(PlayFabId);
+                    const granularEventName = event.name+'~'+event.data[0];
+                    if (!popularEvents[granularEventName]) {
+                        popularEvents[granularEventName] = { 
+                            eventName: event.name, 
+                            eventData: event.data, 
+                            count: 0,
+                            users: new Set()
+                        };
                     }
+
+                    popularEvents[granularEventName].count += 1;
+                    popularEvents[granularEventName].users.add(PlayFabId);                  
                 }
             }
         }
     }
 
-    const sortedEvents = Object.values(popularEvents).sort((a, b) => b.count - a.count);
+    //const sortedEvents = Object.values(popularEvents).sort((a, b) => b.count - a.count);
+    const sortedEvents = Object.values(popularEvents).sort((a, b) => b.users.size - a.users.size);
     console.log(sortedEvents);
 
     popularTable.innerHTML = "<tr><th>Event Name</th><th>Event Data</th><th># Users</th><th># Times triggered</th></tr>";
 
     for (const entry of sortedEvents) {
-        if(entry.eventName !== "launch_activity"){ continue; }
+        if(entry.eventName === "launch_activity"
+            || entry.eventName === "display_name_changed"
+        ){ continue; }
         const row = popularTable.insertRow();       
 
         row.insertCell(0).textContent = entry.eventName;
