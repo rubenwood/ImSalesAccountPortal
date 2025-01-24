@@ -108,11 +108,14 @@ async function signUpBtnClicked(){
     const displayName = document.getElementById('signup-display-name').value;
     const password = document.getElementById('signup-password').value;
 
-    if(!isUserOnSuffixList(suffixFile.suffixList, email.split('@')[1])){
+    suffixEntry = isUserOnSuffixList(suffixFile.suffixList, email.split('@')[1])
+    if(suffixEntry == undefined){
         console.log("not on list");
-        document.getElementById('signup-err-msg').style.display = 'block';
-        document.getElementById('signup-err-msg').innerHTML = 'Your institution hasn\'t been granted access';
+        document.getElementById('login-err-msg').style.display = 'block';
+        document.getElementById('login-err-msg').innerHTML = 'Your institution hasn\'t been granted access';
         return;
+    }else{
+        console.log(suffixEntry);
     }
 
     await RegisterUserEmailAddressGeneric(email,password,displayName,registerCallback);
@@ -127,14 +130,14 @@ async function registerCallback(response, error){
     ticket = response.data.SessionTicket;
 
     // TODO: EMAIL VERIFICATION
-    const playerProf = await getPlayerProfile(response.data.PlayFabId);
+    /*const playerProf = await getPlayerProfile(response.data.PlayFabId);
     console.log(playerProf);
     const isVerified = await isEmailVerified(playerProf.ContactEmailAddresses);
     console.log(isVerified);
     if(!isVerified){
         // show verification screen (and send email)
         showVerification();
-    }
+    }*/
 
     let AcademicArea = ""; 
     if(suffixEntry.suffixArea != ''){
@@ -194,21 +197,21 @@ async function loginCallback(response, error){
     console.log(response.data);
 
     // TODO: EMAIL VERIFICATION
-    const playerProf = await getPlayerProfile(response.data.PlayFabId);
+    /*const playerProf = await getPlayerProfile(response.data.PlayFabId);
     console.log(playerProf);
     const isVerified = await isEmailVerified(playerProf.ContactEmailAddresses);
     console.log(isVerified);
     if(!isVerified){
         // show verification screen (and send email)
         showVerification();
-    }
+    }*/
 
     const userAcademicArea = await getUserData(["AcademicArea"]);
     console.log(userAcademicArea.AcademicArea);
 
     // set this to the users current academic area if they have one
     let AcademicArea = userAcademicArea.AcademicArea;
-    if(suffixEntry.suffixArea !== ''){
+    if(suffixEntry.suffixArea != undefined && suffixEntry.suffixArea !== ''){
         AcademicArea = suffixEntry.suffixArea;
     }
     
