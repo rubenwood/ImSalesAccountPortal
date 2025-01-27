@@ -3,6 +3,7 @@ import { initializeDarkMode } from '../themes/dark-mode.js';
 import { Login, getPlayerEmailAddr } from '../PlayFabManager.js';
 import { waitForJWT, imAPIGet, getTopicBrondons } from '../immersifyapi/immersify-api.js';
 import { fetchNewReturningUsers, fetchUsersEventLog, fetchEventDetails, fetchEventInsights } from './user-data-utils.js';
+//import { getNewReturningUsersAnnual } from './user-class-front.js';
 import * as d3 from "https://cdn.jsdelivr.net/npm/d3@7/+esm";
 
 const doConfetti = () => { confetti({particleCount: 100, spread: 70, origin: { y: 0.6 }}); }
@@ -102,7 +103,8 @@ async function eventLogBtnClicked(){
     console.log(eventLogsJoined);
     eventLogsJoined.forEach(entry => {
         entry.EventLogs.sort((a, b) => new Date(a.EventLogDate) - new Date(b.EventLogDate));
-    });
+    }); 
+
     doConfetti();
     document.getElementById('event-log-btn').value = "Get Report";
     processEventLogs(eventLogsJoined);
@@ -157,7 +159,9 @@ function processEventLogs(eventLogs) {
     document.getElementById('total-distinct-logs-p').innerHTML = `Total logs across users: ${totalDistinctEventLogs}`;
 
     getLogsPerDate(eventLogs);
-    getMostPopular(eventLogs);
+    const sortedPopularEvents = getMostPopular(eventLogs);
+    populateMostPopularTable(sortedPopularEvents);
+    getUsersWhoPlayed(sortedPopularEvents);
 
     graphEventTypesPerDateChartJS();
     graphEventsTimeOfDay();
@@ -231,12 +235,10 @@ function getLogsPerDate(eventLogs) {
 
 // Most popular
 function getMostPopular(eventLogs) {
-    const popularTable = document.getElementById('popular-events-table');
-
     const popularEvents = {};
 
     for (const entry of eventLogs) {
-        const { PlayFabId, EventLogs } = entry;
+        const { PlayFabId, EventLogs, AccountDataJSON } = entry;
 
         for(const eventLog of EventLogs){
             for(const session of eventLog.EventLogParsed.sessions){
@@ -252,7 +254,7 @@ function getMostPopular(eventLogs) {
                     }
 
                     popularEvents[granularEventName].count += 1;
-                    popularEvents[granularEventName].users.add(PlayFabId);                  
+                    popularEvents[granularEventName].users.add(AccountDataJSON);                  
                 }
             }
         }
@@ -261,13 +263,17 @@ function getMostPopular(eventLogs) {
     //const sortedEvents = Object.values(popularEvents).sort((a, b) => b.count - a.count);
     const sortedEvents = Object.values(popularEvents).sort((a, b) => b.users.size - a.users.size);
     console.log(sortedEvents);
-
+    return sortedEvents;  
+}
+function populateMostPopularTable(sortedEvents){
+    const popularTable = document.getElementById('popular-events-table');
     popularTable.innerHTML = "<tr><th>Event Name</th><th>Event Data</th><th># Users</th><th># Times triggered</th></tr>";
-
+    //const eventsToFilterOut = ["launch_activity", "display_name_changed"];
+    const eventsToFilterOut = ["display_name_changed", "popup_opened", "popup_closed", "login", "sign_out", 
+        "hair_colour_set", "skin_tone_set", "avatar_set"];
     for (const entry of sortedEvents) {
-        if(entry.eventName === "launch_activity"
-            || entry.eventName === "display_name_changed"
-        ){ continue; }
+        //if(eventsToFilterOut.includes(entry.eventName)){ continue; }
+        if(entry.eventName !== "launch_activity"){ continue; }
         const row = popularTable.insertRow();       
 
         row.insertCell(0).textContent = entry.eventName;
@@ -275,8 +281,37 @@ function getMostPopular(eventLogs) {
         row.insertCell(2).textContent = entry.users.size;
         row.insertCell(3).textContent = entry.count;
     }
-};
+}
+// Users who played vs. not played
+function getUsersWhoPlayed(sortedEvents){
+    const startDateElement = document.getElementById('event-log-start-date');
+    const endDateElement = document.getElementById('event-log-end-date');
+    const startDate = new Date(startDateElement.value).toISOString();
+    const endDate = new Date(endDateElement.value).toISOString();
 
+    const output = { allUsers:[], newWhoPlayed:[], newNotPlayed:[], returningWhoPlayed:[], returningNotPlayed:[] };
+    console.log(sortedEvents);
+    for(const sortedEntry of sortedEvents){
+        for(const user of sortedEntry.users){
+            if(!output.allUsers.includes(user)){ output.allUsers.push(user); }
+            const created = user.Created;
+            const lastLogin = user.LastLogin;
+            if(sortedEntry.eventName == "launch_activity"){
+                // created within time frame
+                if(created >= startDate && created <= endDate && !output.newWhoPlayed.includes(user)){
+                    output.newWhoPlayed.push(user);
+                }
+                // created before startDate & lastLogin between startDate and endDate then returning
+                if(created < startDate && lastLogin >= startDate && lastLogin <= endDate && !output.returningWhoPlayed.includes(user) ){
+                    output.returningWhoPlayed.push(user);
+                }
+            }
+        }
+    }
+
+    console.log(output);
+    return output;
+}
 
 // Type per date
 function graphEventTypesPerDateChartJS() {

@@ -25,11 +25,14 @@ async function getUserClassReport(){
     populateNewRetTable(newRetPerMonth, returningUsers);
     const retRatesPerMonth = calcRetentionRates(newRetPerMonth, returningUsers);
 
+    const usersWhoPlayed = getUsersWhoPlayed(newRetPerMonth, 11);
+    console.log(usersWhoPlayed);
+
     document.getElementById('get-report').value = "Get Report";
 }
 
 // RETURNING USERS
-async function getReturningUsers(newRetPerMonth) {
+export async function getReturningUsers(newRetPerMonth) {
     const dateRanges = getMonthlyDateRanges();
     const results = [];
 
@@ -71,7 +74,7 @@ function getTrulyReturningUsers(newRet) {
 }
 
 // Function to call the API and collect results
-async function getNewReturningUsersAnnual() {
+export async function getNewReturningUsersAnnual() {
     const dateRanges = getMonthlyDateRanges();
     const batchSize = 4;
     const results = [];
@@ -94,7 +97,7 @@ async function getNewReturningUsersAnnual() {
     return results;
 }
 
-async function getB2BUsers(){
+export async function getB2BUsers(){
     const b2bUsers = await fetchB2BUsers();
     console.log(b2bUsers);
     let totalB2BUsers = 0;
