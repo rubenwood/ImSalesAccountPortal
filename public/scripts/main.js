@@ -630,19 +630,23 @@ function setupPrefData(exportData){
     console.log(exportData);
     let output = [];
     exportData.forEach(dataToExport => {
-        let prefRow = {
-            email: dataToExport.email,
-            dismissedPopups: JSON.stringify(dataToExport.userPrefData.dismissedPopups),
-            feedCompletionThreshold: dataToExport.userPrefData.feedCompletionThreshold,
-            learningGoalNumActivities: dataToExport.userPrefData.learningGoalNumActivities,
-            savedActivities: JSON.stringify(dataToExport.userPrefData.savedActivities),
-            selectedProficiencies: JSON.stringify(dataToExport.userPrefData.selectedProficiencies),
-            selectedTopics: JSON.stringify(dataToExport.userPrefData.selectedTopics),
-            sfxEnabled: dataToExport.userPrefData.sfxEnabled,
-            suggestLessonContent: dataToExport.userPrefData.suggestLessonContent,
-            suggestProficiencyContent: dataToExport.userPrefData.suggestProficiencyContent,
-            theme: dataToExport.userPrefData.theme,
-        };
+        console.log(dataToExport);
+        let prefRow = {};
+        if(dataToExport.userPrefData !== undefined){
+            prefRow = {
+                email: dataToExport.email,
+                dismissedPopups: JSON.stringify(dataToExport.userPrefData.dismissedPopups),
+                feedCompletionThreshold: dataToExport.userPrefData.feedCompletionThreshold,
+                learningGoalNumActivities: dataToExport.userPrefData.learningGoalNumActivities,
+                savedActivities: JSON.stringify(dataToExport.userPrefData.savedActivities),
+                selectedProficiencies: JSON.stringify(dataToExport.userPrefData.selectedProficiencies),
+                selectedTopics: JSON.stringify(dataToExport.userPrefData.selectedTopics),
+                sfxEnabled: dataToExport.userPrefData.sfxEnabled,
+                suggestLessonContent: dataToExport.userPrefData.suggestLessonContent,
+                suggestProficiencyContent: dataToExport.userPrefData.suggestProficiencyContent,
+                theme: dataToExport.userPrefData.theme,
+            };
+        }        
         output.push(prefRow);
     });
     return output;
@@ -650,16 +654,19 @@ function setupPrefData(exportData){
 function setupProfileData(exportData){
     let output = [];
     exportData.forEach(dataToExport => {
-        let profileRow = {
-            email: dataToExport.email,
-            activityTypePreference: JSON.stringify(dataToExport.userProfileData.activityTypePreference),
-            languageOfStudy: dataToExport.userProfileData.languageOfStudy,
-            selectedAbilityId: dataToExport.userProfileData.selectedAbilityId,
-            selectedAvatarId: dataToExport.userProfileData.selectedAvatarId,
-            selectedHairColourId: dataToExport.userProfileData.selectedHairColourId,
-            selectedSkinToneId: dataToExport.userProfileData.selectedSkinToneId,
-            selectedYearId: dataToExport.userProfileData.selectedYearId,
-        };
+        let profileRow = {};
+        if(dataToExport.userProfileData !== undefined){
+            profileRow = {
+                email: dataToExport.email,
+                activityTypePreference: JSON.stringify(dataToExport.userProfileData.activityTypePreference),
+                languageOfStudy: dataToExport.userProfileData.languageOfStudy,
+                selectedAbilityId: dataToExport.userProfileData.selectedAbilityId,
+                selectedAvatarId: dataToExport.userProfileData.selectedAvatarId,
+                selectedHairColourId: dataToExport.userProfileData.selectedHairColourId,
+                selectedSkinToneId: dataToExport.userProfileData.selectedSkinToneId,
+                selectedYearId: dataToExport.userProfileData.selectedYearId,
+            };
+        }
         output.push(profileRow);
     });
     return output;
