@@ -283,35 +283,81 @@ function populateMostPopularTable(sortedEvents){
     }
 }
 // Users who played vs. not played
-function getUsersWhoPlayed(sortedEvents){
+function getUsersWhoPlayed(sortedEvents) {
     const startDateElement = document.getElementById('event-log-start-date');
     const endDateElement = document.getElementById('event-log-end-date');
-    const startDate = new Date(startDateElement.value).toISOString();
-    const endDate = new Date(endDateElement.value).toISOString();
+    const startDate = new Date(startDateElement.value).toISOString().split("T")[0];
+    const endDate = new Date(endDateElement.value).toISOString().split("T")[0];
 
-    const output = { allUsers:[], newWhoPlayed:[], newNotPlayed:[], returningWhoPlayed:[], returningNotPlayed:[] };
+    const output = { 
+        allUsers: [], 
+        notPlayed: [], 
+        newWhoPlayed: [], 
+        newNotPlayed: [], 
+        returningWhoPlayed: [], 
+        returningNotPlayed: [] 
+    };
+
     console.log(sortedEvents);
-    for(const sortedEntry of sortedEvents){
-        for(const user of sortedEntry.users){
-            if(!output.allUsers.includes(user)){ output.allUsers.push(user); }
-            const created = user.Created;
-            const lastLogin = user.LastLogin;
-            if(sortedEntry.eventName == "launch_activity"){
-                // created within time frame
-                if(created >= startDate && created <= endDate && !output.newWhoPlayed.includes(user)){
-                    output.newWhoPlayed.push(user);
+
+    for (const sortedEntry of sortedEvents) {
+        for (const user of sortedEntry.users) {
+            if (!output.allUsers.includes(user)) { 
+                output.allUsers.push(user); 
+            }
+
+            const created = user.Created.split("T")[0];
+            const lastLogin = user.LastLogin.split("T")[0];
+
+            if (sortedEntry.eventName === "launch_activity") {
+                // Created within time frame
+                if (created >= startDate && created <= endDate && !output.newWhoPlayed.some(u => u.user === user)) {
+                    output.newWhoPlayed.push({ activityId: sortedEntry.eventData[0], user });
                 }
-                // created before startDate & lastLogin between startDate and endDate then returning
-                if(created < startDate && lastLogin >= startDate && lastLogin <= endDate && !output.returningWhoPlayed.includes(user) ){
-                    output.returningWhoPlayed.push(user);
+                // Created before startDate & lastLogin between startDate and endDate, then returning
+                if (created < startDate && lastLogin >= startDate && lastLogin <= endDate && !output.returningWhoPlayed.some(u => u.user === user)) {
+                    output.returningWhoPlayed.push({ activityId: sortedEntry.eventData[0], user });
                 }
             }
         }
     }
 
+    // Subtract users in newWhoPlayed and returningWhoPlayed from allUsers to get notPlayed
+    const players = new Set([
+        ...output.newWhoPlayed.map(entry => entry.user),
+        ...output.returningWhoPlayed.map(entry => entry.user)
+    ]);
+    output.notPlayed = output.allUsers.filter(user => !players.has(user));
+    // of the users who have not played anything, classify them as new or returning
+    for (const user of output.notPlayed) {
+        const created = user.Created.split("T")[0];
+        const lastLogin = user.LastLogin.split("T")[0];
+
+        if (created >= startDate && created <= endDate && !output.newNotPlayed.some(u => u.user === user)) {
+            output.newNotPlayed.push(user);
+        }
+        
+        if (created < startDate && lastLogin >= startDate && lastLogin <= endDate && !output.returningNotPlayed.some(u => u.user === user)) {
+            output.returningNotPlayed.push(user);
+        }
+    }
+
     console.log(output);
+    populateWhoPlayedTable(output.newWhoPlayed, 'new-played-table');
+    populateWhoPlayedTable(output.returningWhoPlayed, 'returning-played-table');
     return output;
 }
+function populateWhoPlayedTable(usersWhoPlayed, tableId){
+    const table = document.getElementById(tableId);
+    table.innerHTML = "<tr><th>Activity Id</th><th>PlayFabId</th></tr>";
+for (const entry of usersWhoPlayed) {
+        const row = table.insertRow();       
+
+        row.insertCell(0).textContent = entry.activityId;
+        row.insertCell(1).textContent = entry.user.PlayerId;
+    }
+}
+
 
 // Type per date
 function graphEventTypesPerDateChartJS() {
