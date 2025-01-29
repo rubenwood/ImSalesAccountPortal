@@ -174,7 +174,7 @@ async function loginBtnClicked(){
     const email = document.getElementById('login-email').value;
     const password = document.getElementById('login-password').value;
 
-    console.log(email.split('@')[1]);
+    //console.log(email.split('@')[1]);
     suffixEntry = isUserOnSuffixList(suffixFile.suffixList, email.split('@')[1])
     if(suffixEntry == undefined){
         console.log("not on list");
@@ -182,7 +182,7 @@ async function loginBtnClicked(){
         document.getElementById('login-err-msg').innerHTML = 'Your institution hasn\'t been granted access';
         return;
     }else{
-        console.log(suffixEntry);
+        //console.log(suffixEntry);
     }
 
     LoginGeneric(email, password, loginCallback);
@@ -195,7 +195,7 @@ async function loginCallback(response, error){
         return;
     }
     ticket = response.data.SessionTicket;
-    console.log(response.data);
+    //console.log(response.data);
 
     // TODO: EMAIL VERIFICATION
     /*const playerProf = await getPlayerProfile(response.data.PlayFabId);
@@ -236,7 +236,7 @@ function resetPasswordCallback(response, error){
         return;
     }
     // if no error display confirmation here
-    console.log(response);
+    //console.log(response);
     document.getElementById('fp-error-txt').innerHTML = 'Password reset email sent!';
 }
 
@@ -299,10 +299,8 @@ async function download(platform){
         }
     });
     const respURLs = await resp.json();
-    console.log(respURLs);
 
     const downloadLink = document.createElement('a');
-    //TODO: download link
     if(platform === 'mac'){
         downloadLink.href = respURLs.macURLs[0].url;
     }else{
