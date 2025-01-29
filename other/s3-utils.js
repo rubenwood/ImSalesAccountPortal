@@ -246,8 +246,9 @@ s3Router.get('/s3GetDownloadURLs', async (req, res) => {
   if(authResponse.data.IsSessionTicketExpired){ return res.status(401).send('Unauthorized'); }
 
   try {
-    const URLs = await generatePresignedUrlsForFolder(process.env.AWS_BUCKET, "Downloads");
-    res.send(URLs);
+    const windowsURLs = await generatePresignedUrlsForFolder(process.env.AWS_BUCKET, "Downloads");
+    const macURLs = await generatePresignedUrlsForFolder(process.env.AWS_BUCKET, "DownloadsMac");
+    res.send({windowsURLs, macURLs});
   } catch (error) {
     console.error('Error:', error);
     res.status(500).send('Error fetching data from S3');

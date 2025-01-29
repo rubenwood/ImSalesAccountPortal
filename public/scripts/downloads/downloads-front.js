@@ -14,7 +14,8 @@ document.addEventListener('DOMContentLoaded', async() => {
     document.getElementById('signup-btn').addEventListener('click', () => signUpBtnClicked());
     document.getElementById('login-btn').addEventListener('click', () => loginBtnClicked());
     // download
-    document.getElementById('download-btn').addEventListener('click', () => download());
+    document.getElementById('windows-download-btn').addEventListener('click', () => download("windows"));
+    document.getElementById('mac-download-btn').addEventListener('click', () => download("mac"));
     document.getElementById('forgot-password').addEventListener('click', () => resetPasswordClicked());
 });
 window.onload = function() {
@@ -290,7 +291,7 @@ document.getElementById('f-p').addEventListener('click', function(e) {
     }
 }
 // DOWNLOAD
-async function download(){
+async function download(platform){
     const resp = await fetch('/S3/s3GetDownloadURLs', {
         method: 'GET',
         headers: {
@@ -298,9 +299,14 @@ async function download(){
         }
     });
     const respURLs = await resp.json();
+    console.log(respURLs);
 
     const downloadLink = document.createElement('a');
     //TODO: download link
-    downloadLink.href = respURLs[0].url;
+    if(platform === 'mac'){
+        downloadLink.href = respURLs.macURLs[0].url;
+    }else{
+        downloadLink.href = respURLs.windowsURLs[0].url;
+    }    
     downloadLink.click();
 }
