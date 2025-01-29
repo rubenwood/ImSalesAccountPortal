@@ -35,19 +35,25 @@
     Start Date <input id="event-log-start-date" type="date">
     End Date <input id="event-log-end-date" type="date">
     <br/><br/>
-    <div id="data-filters">
+    <!--<div id="data-filters">
         Suffix<br/>
         Language<br/>
         New<br/>
         Returning<br/>
         <input id="apply-filter-btn" type="button" value="apply">
-    </div>
+    </div>-->
     <input id="event-log-btn" type="button" value="Get Report">
     <p id="total-users-p">Total users in report:</p>
     <p id="popular-events-p">Most popular events</p>
     <table id="popular-events-table"></table><br/>
+    <p>New who played</p>
     <table id="new-played-table"></table><br/>
+    <p>Returning who played</p>
     <table id="returning-played-table"></table><br/>
+    <p>Events of Not Played users</p>
+    <table id="not-played-table"></table><br/>
+    <p>Not Played Users</p>
+    <table id="not-played-users-table"></table><br/>
     <p id="total-distinct-logs-p">Total logs across users:</p>
     <table id="logs-per-date-table"></table>
 
@@ -69,6 +75,11 @@
     <input type="button" id="toggle-inspect-user-journ-btn" value="Toggle inspect buttons" />
     <div id="user-journey-div"></div>
     <div id="dendrogram" style="border: 4px solid black;"></div>
+    <br/><br/>
+    <h3>User Journey Analyser</h3>
+    <textarea id="analyse-user-journ-ids" value=""></textarea>
+    <input type="button" id="analyse-user-journ-btn" value="Analyse user journeys" />
+    <table id="analyse-user-journ-table"></table><br/>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.1/dist/confetti.browser.js"></script>

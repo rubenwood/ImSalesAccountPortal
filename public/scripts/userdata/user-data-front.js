@@ -22,6 +22,8 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     eventDetails = await fetchEventDetails();
     console.log(eventDetails);
+
+    
 });
 window.onload = function() {
     document.getElementById('loginModal').style.display = 'block';
@@ -107,7 +109,9 @@ async function eventLogBtnClicked(){
 
     doConfetti();
     document.getElementById('event-log-btn').value = "Get Report";
+    document.getElementById('analyse-user-journ-btn').addEventListener('click', ()=> { analyseUserJourneys(eventLogsJoined) });
     processEventLogs(eventLogsJoined);
+    
 }
 
 let EventList = [];
@@ -273,7 +277,7 @@ function populateMostPopularTable(sortedEvents){
         "hair_colour_set", "skin_tone_set", "avatar_set"];
     for (const entry of sortedEvents) {
         //if(eventsToFilterOut.includes(entry.eventName)){ continue; }
-        if(entry.eventName !== "launch_activity"){ continue; }
+        if(entry.eventName !== "app_open" && entry.eventName !== "login"){ continue; }
         const row = popularTable.insertRow();       
 
         row.insertCell(0).textContent = entry.eventName;
@@ -345,16 +349,47 @@ function getUsersWhoPlayed(sortedEvents) {
     console.log(output);
     populateWhoPlayedTable(output.newWhoPlayed, 'new-played-table');
     populateWhoPlayedTable(output.returningWhoPlayed, 'returning-played-table');
+    populateNotPlayedTable([...output.newNotPlayed, ...output.returningNotPlayed], sortedEvents);
     return output;
 }
 function populateWhoPlayedTable(usersWhoPlayed, tableId){
     const table = document.getElementById(tableId);
     table.innerHTML = "<tr><th>Activity Id</th><th>PlayFabId</th></tr>";
-for (const entry of usersWhoPlayed) {
+    for (const entry of usersWhoPlayed) {
         const row = table.insertRow();       
 
         row.insertCell(0).textContent = entry.activityId;
         row.insertCell(1).textContent = entry.user.PlayerId;
+    }
+}
+function populateNotPlayedTable(usersNotPlayed, sortedEvents){
+    //console.log(sortedEvents);
+    console.log(usersNotPlayed);
+    const notPlayedUserTable = document.getElementById('not-played-users-table');
+    notPlayedUserTable.innerHTML = "<tr><th>PlayFabId</th></tr>";
+    for(const user of usersNotPlayed){        
+        notPlayedUserTable.insertRow().insertCell(0).textContent = user.PlayerId;
+    }
+    //usersNotPlayed.forEach(user => { console.log(user.PlayerId) });
+    const table = document.getElementById('not-played-table');
+    table.innerHTML = "<tr><th>Event</th><th>Event Data</th><th>Users</th></tr>";
+    for (const entry of sortedEvents) {
+        // ignore the launch activity event
+        if(entry.eventName === "app_open" ||
+            entry.eventName === "launch_activity" || 
+            entry.eventName === "display_name_changed" ||
+            entry.eventName === "avatar_set" ||
+            entry.eventName === "skin_tone_set" ||
+            entry.eventName === "hair_colour_set"){ continue; }
+        // for this event, get its users, and remove any users who do not occur in the usersNotPlayed list
+        const usersNotPlayedExclusive = Array.from(entry.users).filter(user => usersNotPlayed.includes(user));
+        //console.log(usersNotPlayedExclusive);
+        if(usersNotPlayedExclusive.length !== 0){
+            const row = table.insertRow();
+            row.insertCell(0).textContent = entry.eventName;
+            row.insertCell(1).textContent = JSON.stringify(entry.eventData);
+            row.insertCell(2).textContent = usersNotPlayedExclusive.length;
+        }
     }
 }
 
@@ -953,6 +988,61 @@ function graphUserJourney(eventLog, width = 1800, height = 800) {
 
 }
 
+function analyseUserJourneys(eventLogs){
+    //console.log(eventLogs);
+    const table = document.getElementById('analyse-user-journ-table');
+    table.innerHTML = `<tr>
+        <th>ID</th>
+        <th>Login Type</th>
+        <th>B2B / B2C</th>
+        <th># Sessions</th>
+        <th>New / Returning</th>
+        <th>Location</th>        
+        <th>Launcher</th>
+        <th>Explore</th>
+        <th>Feed</th>
+        <th>Progress</th>
+        <th>Shop popup</th>
+        <th>Explore Module popup</th>
+        </tr>`;
+
+    const userIds = document.getElementById('analyse-user-journ-ids').value.split('\n');
+    const matchingUsers = eventLogs.filter(entry => userIds.includes(entry.PlayFabId));
+    console.log(matchingUsers);
+    
+    for(const user of matchingUsers){
+        //graphUserJourney(user);
+        const row = table.insertRow();
+        row.insertCell(0).textContent = user.PlayFabId;        
+        row.insertCell(1).textContent = determineLoginType(user);
+        row.insertCell(2).textContent = "";// B2B / B2C
+        // find this user in eventLogs
+        const userEvents = user.EventLogs.flatMap(log => log.EventLogParsed.sessions);
+        console.log(userEvents);
+        row.insertCell(3).textContent = userEvents.length; // # sessions
+        row.insertCell(4).textContent = ""; // New / Returning
+        row.insertCell(5).textContent = user.AccountDataJSON?.Locations?.LastLogin?.CountryCode; // Location
+
+        row.insertCell(6).textContent = userEvents.some(session => session.events.some(event => 
+            event.name === "launcher_section_change"));
+        row.insertCell(7).textContent = userEvents.some(session => session.events.some(event => 
+            event.name === "launcher_section_change" && event.data[0] === "section:Explore"));
+        row.insertCell(8).textContent = userEvents.some(session => session.events.some(event => 
+            event.name === "launcher_section_change" && event.data[0] === "section:Feed"));
+        row.insertCell(9).textContent = userEvents.some(session => session.events.some(event => 
+            event.name === "launcher_section_change" && event.data[0] === "section:Progress"));
+        row.insertCell(10).textContent = userEvents.some(session => session.events.some(event => 
+            event.name === "popup_opened" && event.data[0] === "popup_name:ShopManager"));
+        row.insertCell(11).textContent = userEvents.some(session => session.events.some(event => 
+            event.name === "popup_opened" && event.data[0] === "popup_name:ExploreModulePopup"));
+        row.insertCell(12).textContent = userEvents.some(session => session.events.some(event => 
+            event.name === "popup_opened" && event.data[0] === "popup_name:TopicPopupManager"));
+        row.insertCell(13).textContent = userEvents.some(session => session.events.some(event => 
+            event.name === "popup_opened" && event.data[0] === "popup_name:PlayActivityPopup"));
+    }
+    
+}
+
 // Helper
 function stringToHexColor(inString) {
     let hash = 0;
@@ -966,4 +1056,26 @@ function stringToHexColor(inString) {
         color += ('00' + value.toString(16)).slice(-2);
     }
     return color;
+}
+
+function determineLoginType(user){
+    let loginType = "EMAIL";
+
+    const loginPlatform = user.AccountDataJSON?.LinkedAccounts[0]?.Platform;
+    const loginPlatformId = user.AccountDataJSON?.LinkedAccounts[0]?.PlatformUserId;
+
+    if(loginPlatformId.includes("google")){
+        return "GOOGLE";
+    }
+
+    switch(loginPlatform){
+        case "Apple":
+            return "APPLE";
+        case "PlayFab":
+            return "EMAIL";
+        case "OpenIdConnect":
+            return "UNISSO";
+    }
+
+    return loginType;
 }
