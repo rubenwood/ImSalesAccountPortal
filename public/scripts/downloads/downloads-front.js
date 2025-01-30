@@ -93,9 +93,9 @@ function showDownload(){
 function showVerification(){
     document.getElementById('verification-container').style.display = 'block';    
 }
-function hideVerification(){
-    document.getElementById('verification-container').style.display = 'none';
-}
+// function hideVerification(){
+//     document.getElementById('verification-container').style.display = 'none';
+// }
 //#endregion
 
 let ticket;
