@@ -74,5 +74,50 @@ playfabRouter.post('/access-level', async (req, res) => {
     res.json(accLevel);
 });
 
+let lastEmailVerificationTime = 0;
+async function sendEmailVerification(playFabId) {
+    const now = Date.now();
+    if (now - lastEmailVerificationTime < 60000) {
+        console.error("Verification email can only be sent once per minute.");
+        return Promise.reject("Verification email can only be sent once per minute.");
+    }
+    lastEmailVerificationTime = now;
+    
+    try {
+        const response = await axios.post(
+            `https://${process.env.PLAYFAB_TITLE_ID}.playfabapi.com/Admin/WritePlayerEvent`,
+            {
+                PlayFabId: playFabId,
+                EventName: "EmailVerificationEvent",
+                Body: { Status: "SentEmail" }
+            },
+            {
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-SecretKey': process.env.PLAYFAB_SECRET_KEY
+                }
+            }
+        );
+        return response.data;
+    } catch (error) {
+        console.error("Error sending verification email:", error);
+        throw error;
+    }
+}
+
+playfabRouter.post('/sendVerificationEmail', async (req, res) => {
+    const { playFabId } = req.body;
+    if (!playFabId) {
+        return res.status(400).json({ error: "PlayFabId is required" });
+    }
+    
+    try {
+        const result = await sendEmailVerification(playFabId);
+        res.json({ success: true, result });
+    } catch (error) {
+        res.status(500).json({ error: "Failed to send verification email", details: error.message });
+    }
+});
+
 
 module.exports = { playfabRouter, authenticateSessionTicket, getAccessLevel };

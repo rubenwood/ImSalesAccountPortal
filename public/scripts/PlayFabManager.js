@@ -346,7 +346,35 @@ export async function isEmailVerified(emailAddresses){
     }
     return false;
 }
-
+// UPDATE CONTACT ADDRESS
+export async function UpdateContactEmail(emailAddr) {
+    if (!emailAddr) {
+        console.error("Email address is required.");
+        return;
+    }
+    
+    PlayFab.settings.titleId = titleId;
+    
+    var updateContactEmailRequest = {
+        EmailAddress: emailAddr
+    };
+    
+    return new Promise((resolve, reject) => {
+        PlayFabClientSDK.AddOrUpdateContactEmail(updateContactEmailRequest, function (result, error) {
+            if (error) {
+                console.error("Error updating contact email:", error);
+                reject(error);
+            } else {
+                console.log("Contact email updated successfully.", result);
+                resolve(result);
+            }
+        });
+    });
+}
+// SEND VERIFICATION EMAIL
+export async function SendVerificationEmail(emailAddr) {
+    //fetch('/playfab/sendVerificationEmail'
+}
 // RESET PASSWORD
 export function ResetPassword(email, callback){
     PlayFab.settings.titleId = titleId;
