@@ -175,9 +175,10 @@ const downloadsHTML = `<!DOCTYPE html>
 </html>`;
 
 //https://im-sales-portal-8acc2a83f73b.herokuapp.com/playfab/verified-download
+//http://localhost:3001/playfab/verified-download
 playfabRouter.get('/verified-download', async (req, res) => {
-    console.log("req:\n", req);
-    console.log("\ntoken:\n", req.query.token);
+    //console.log("req:\n", req);
+    //console.log("\ntoken:\n", req.query.token);
     const queryToken = req.query.token;
 
     if(req.query.token){        
