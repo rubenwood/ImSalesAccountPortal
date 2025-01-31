@@ -8,6 +8,13 @@ document.addEventListener('DOMContentLoaded', async() => {
     suffixFile = await getSuffixList();
     console.log(suffixFile.suffixList);
 
+    const urlParams = new URLSearchParams(window.location.search);
+    const tokenParam = urlParams.get('token');
+    if(tokenParam != undefined && tokenParam != ""){
+        hideLoginSignup();
+        showDownload();        
+    }
+
     // pword field
     document.getElementById('loginButton')?.addEventListener('click', () => submitPass());
     // form
