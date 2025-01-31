@@ -372,8 +372,27 @@ export async function UpdateContactEmail(emailAddr) {
     });
 }
 // SEND VERIFICATION EMAIL
-export async function SendVerificationEmail(emailAddr) {
-    //fetch('/playfab/sendVerificationEmail'
+export async function SendVerificationEmail(playFabId) {
+    try {
+        const response = await fetch('/playfab/sendVerificationEmail', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ playFabId })
+        });
+        
+        const data = await response.json();
+        if (!response.ok) {
+            throw new Error(data.error || "Failed to send verification email");
+        }
+        
+        console.log("Verification email request successful:", data);
+        return data;
+    } catch (error) {
+        console.error("Error sending verification email:", error);
+        throw error;
+    }
 }
 // RESET PASSWORD
 export function ResetPassword(email, callback){

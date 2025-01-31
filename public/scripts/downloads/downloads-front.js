@@ -1,6 +1,6 @@
 import { RegisterUserEmailAddressGeneric, LoginGeneric, UpdateUserDataGeneric, ResetPassword, UpdateContactEmail } from "../PlayFabManager.js";
 import { getSuffixList, isUserOnSuffixList } from "../suffix-front.js";
-import { getUserData, getPlayerProfile, isEmailVerified } from "../PlayFabManager.js";
+import { getUserData, getPlayerProfile, isEmailVerified, SendVerificationEmail } from "../PlayFabManager.js";
 
 let suffixFile;
 document.addEventListener('DOMContentLoaded', async() => {    
@@ -90,7 +90,9 @@ function showDownload(){
     document.getElementById('download-container').style.display = 'block';
     hideVerification();
 }
-function showVerification(emailAddr){
+function showVerification(playFabId, emailAddr){    
+    SendVerificationEmail(playFabId, emailAddr);
+    document.getElementById('verification-btn').addEventListener('click', () => SendVerificationEmail(playFabId, emailAddr));
     document.getElementById('email-addr-h').innerHTML = emailAddr;
     document.getElementById('verification-container').style.display = 'block';    
 }
@@ -142,7 +144,7 @@ async function registerCallback(response, error){
     if(!isVerified){
         // show verification screen (and send email)
         //console.log(playerProf.ContactEmailAddresses[0]);
-        showVerification(playerProf.ContactEmailAddresses[0].EmailAddress);
+        showVerification(response.data.PlayFabId, playerProf.ContactEmailAddresses[0].EmailAddress);
         return;
     }
 
@@ -211,7 +213,7 @@ async function loginCallback(response, error){
     console.log(isVerified);
     if(!isVerified){
         // show verification screen (and send email)
-        showVerification(playerProf.ContactEmailAddresses[0].EmailAddress);
+        showVerification(response.data.PlayFabId, playerProf.ContactEmailAddresses[0].EmailAddress);
         return;
     }
 
