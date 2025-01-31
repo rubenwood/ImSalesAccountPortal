@@ -9,14 +9,14 @@ document.addEventListener('DOMContentLoaded', async() => {
     console.log(suffixFile.suffixList);
 
     // pword field
-    document.getElementById('loginButton').addEventListener('click', () => submitPass());
+    document.getElementById('loginButton')?.addEventListener('click', () => submitPass());
     // form
-    document.getElementById('signup-btn').addEventListener('click', () => signUpBtnClicked());
-    document.getElementById('login-btn').addEventListener('click', () => loginBtnClicked());
+    document.getElementById('signup-btn')?.addEventListener('click', () => signUpBtnClicked());
+    document.getElementById('login-btn')?.addEventListener('click', () => loginBtnClicked());
     // download
-    document.getElementById('windows-download-btn').addEventListener('click', () => download("windows"));
-    document.getElementById('mac-download-btn').addEventListener('click', () => download("mac"));
-    document.getElementById('forgot-password').addEventListener('click', () => resetPasswordClicked());
+    document.getElementById('windows-download-btn')?.addEventListener('click', () => download("windows"));
+    document.getElementById('mac-download-btn')?.addEventListener('click', () => download("mac"));
+    document.getElementById('forgot-password')?.addEventListener('click', () => resetPasswordClicked());
 });
 window.onload = function() {
     displayForms();
@@ -204,6 +204,7 @@ async function loginCallback(response, error){
         return;
     }
     ticket = response.data.SessionTicket;
+    localStorage.setItem('ticket', ticket);
     //console.log(response.data);
 
     // TODO: EMAIL VERIFICATION

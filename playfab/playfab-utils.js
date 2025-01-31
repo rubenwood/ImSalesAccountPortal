@@ -135,6 +135,7 @@ const downloadsHTML = `<!DOCTYPE html>
   <script type="text/javascript" src="https://download.playfab.com/PlayFabClientApi.js"></script>
 </head>
 <body>
+
   <div class="body-wrap">
     <section class="header">
       <div class="logo">
@@ -150,11 +151,15 @@ const downloadsHTML = `<!DOCTYPE html>
     <section class="login-signup-wrap" id="login-wrapper">
       <div class="form-general-block">
         <div id="signup-container">
+
           <div id="download-container">
             <p>Download ready. Click the button below to get your file.</p>
             <button id="windows-download-btn" class="btn-download" type="button"><img src="../images/download.svg" />Download for Windows</button>
             <button id="mac-download-btn" class="btn-download" type="button"><img src="../images/download.svg" />Download for Apple Mac</button>
-          </div>     
+          </div>        
+        </div>
+      </div>
+     
     </section>
   </div>
   </div>
@@ -165,9 +170,10 @@ const downloadsHTML = `<!DOCTYPE html>
 </div>
 
 </div>
-  <script type="module" src="../scripts/downloads/downloads-front.js"></script> 
+  <script type="module" src="../scripts/downloads/downloads-logic-front.js"></script> 
 </body>
-</html>`
+</html>`;
+
 //https://im-sales-portal-8acc2a83f73b.herokuapp.com/playfab/verified-download
 playfabRouter.get('/verified-download', async (req, res) => {
     console.log("req:\n", req);
@@ -176,7 +182,7 @@ playfabRouter.get('/verified-download', async (req, res) => {
 
     if(req.query.token){        
          return res.send(downloadsHTML);
-    }else {
+    }else{
          return res.send(`<h1>Verification Failed</h1><p>You did not verify in time.</p><a href="/downloads/downloads.html">Go back to downloads</a>`);
     }
     
