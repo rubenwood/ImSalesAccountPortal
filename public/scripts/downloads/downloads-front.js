@@ -313,7 +313,7 @@ async function download(platform){
     const resp = await fetch('/S3/s3GetDownloadURLs', {
         method: 'GET',
         headers: {
-            'ticket': `${ticket}`
+            'ticket': `${localStorage.getItem('ticket')}`
         }
     });
     const respURLs = await resp.json();
