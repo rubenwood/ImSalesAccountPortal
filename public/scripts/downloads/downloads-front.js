@@ -101,7 +101,7 @@ function showVerification(playFabId, emailAddr){
     SendVerificationEmail(playFabId, emailAddr);
     document.getElementById('verification-btn').addEventListener('click', () => SendVerificationEmail(playFabId, emailAddr));
     document.getElementById('email-addr-h').innerHTML = emailAddr;
-    document.getElementById('verification-container').style.display = 'block';    
+    document.getElementById('verification-container').style.display = 'flex';    
 }
 function hideVerification(){
      document.getElementById('verification-container').style.display = 'none';

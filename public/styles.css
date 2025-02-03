@@ -213,18 +213,21 @@ label {
 .collapsible-button:hover {
     background-color: #5089fa;
 }
-
+.logo{
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+}
 .login-logo {
-    display: block;
-    margin: 0 auto;
-    max-width: 170px;
-    height: auto;
+    height: 50px;
+    max-width: 100%;
+    object-fit: contain;
 }
 
 .modal {
     display: none;
     position: fixed;
-    z-index: 1;
+    z-index: 99;
     left: 0;
     top: 0;
     width: 100%;
@@ -585,7 +588,6 @@ body{
     transition: .2s all ease;
 }
 .login_wrap_fit{
-    min-height: 600px;
     transition: .2s all ease;
 }
 .login_container h3{
@@ -596,7 +598,8 @@ body{
     color: #2A1D47;
 }
 .login_container h3 span {
-    font-size: 2.2em;
+    display: block;
+    font-size: 2em;
     font-weight: 700;
 }
 .login_container h3 img {
@@ -619,7 +622,9 @@ body{
     background-image:url(Sprinkle.svg);
     padding: 0 70px;
     margin: 0 0 0 50px;
-    height: 95vh;
+    height:calc(100% - 100px);
+    height:-moz-calc(100% - 100px);
+    height:-webkit-calc(100% - 100px);
     width: 50%;
     display: flex;
     align-items: center;
@@ -649,6 +654,7 @@ body{
     align-items: center;
     width: 100%;
     margin: auto;
+    height: 100%;
 }
 
 #password-form, #success, #password-txt, #success-txt{
@@ -817,4 +823,11 @@ object-fit: contain;
 }
 .verify-email .btn-download{
     margin-bottom: 0;
+}
+
+@media only screen and (max-width: 991px){
+
+    .desktop-img{
+        display: none;
+    }
 }
