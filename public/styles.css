@@ -471,6 +471,10 @@ input:checked + .slider:before {
 #download-container p {
     margin-top: 0;
 }
+#download-container h4{
+    font-size: 24px;
+    margin-bottom: 10px;
+}
 .login-signup-wrap .form-general #signup-container{
     display: flex;
     transition: .2s all ease;
@@ -652,6 +656,36 @@ body{
 }
 .button-block{
     position: relative;
+}
+.btn-m{
+    width: 100%;
+    height: 55px;
+    border-radius: 5px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    outline: none !important;
+    box-shadow: none !important;
+    border: none !important;
+    color: #ffffff;
+    margin-bottom: 15px;
+    cursor: pointer;
+    transition: .2s all ease;
+    font-size: 16px;
+}
+.btn-m:hover{
+    opacity: .8;
+}
+.btn-m img{
+    height: 25px;
+    object-fit: contain;
+    margin-right: 10px;
+}
+#mac-download-btn{
+    background: #222222;
+}
+#windows-download-btn{
+    background: #0088EE;
 }
 .loading-spinner{
     position: absolute;
