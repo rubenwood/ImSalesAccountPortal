@@ -19,7 +19,7 @@ document.addEventListener('DOMContentLoaded', async() => {
     document.getElementById('loginButton')?.addEventListener('click', () => submitPass());
     // form
     document.getElementById('signup-btn')?.addEventListener('click', () => signUpBtnClicked());
-    document.getElementById('login-btn')?.addEventListener('click', () => loginBtnClicked());
+    document.getElementById('login-btn').addEventListener('click', () => loginBtnClicked());
     // download
     document.getElementById('windows-download-btn')?.addEventListener('click', () => download("windows"));
     document.getElementById('mac-download-btn')?.addEventListener('click', () => download("mac"));
