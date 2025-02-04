@@ -89,7 +89,9 @@ let playfabIdBlackList = [
     "2162965433B58324",
     "6AF6E0F8BD20D203",
     "702A385C98CEF3BF",
-    "2D81A344E58264B6"
+    "2D81A344E58264B6",
+    "30CD1336ED97DE5A",
+    "9766F05224A16AF9"
 ];
 
 
@@ -102,7 +104,6 @@ export function filterEventLogs(eventLogs){
         let linkedAccounts = eventLog.AccountDataJSON.LinkedAccounts;
         // select linked account where .Platform == "PlayFab"
         let playfabAccount = linkedAccounts.find(account => account.Platform == "PlayFab");
-        //console.log(playfabAccount);
         if(playfabAccount != undefined && playfabAccount.Email != undefined && suffixBlackList.includes(playfabAccount.Email.split('@')[1])){
             continue;
         }

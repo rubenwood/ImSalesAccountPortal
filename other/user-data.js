@@ -183,19 +183,42 @@ userDataRouter.post('/get-new-returning-users', async (req, res) => {
 
 // Users with Session Debug Data
 // TODO: paginate this!
-async function getUsersSessionDebugData(){
+async function getAllUsersSessionDebugData(){
     const sessionQuery = `
         SELECT "UsageDataJSON"
         FROM public."UsageData"
-        WHERE "UsageDataJSON"::text LIKE '%"SessionDebugData"%';
+        WHERE "UsageDataJSON"::text LIKE '%"SessionDebugData"%'
     `;
     const sessionResult = await pool.query(sessionQuery);
 
     return sessionResult.rows;
 }
 userDataRouter.post('/get-session-data', async (req, res) => {
-    const sessionData = await getUsersSessionDebugData();
+    const sessionData = await getAllUsersSessionDebugData();
     res.json(sessionData);
+});
+
+async function getUsersSessionDebugData(playFabIds){
+    if (!Array.isArray(playFabIds) || playFabIds.length === 0) {
+        return [];
+    }
+    const sessionQuery = `
+        SELECT "PlayFabId", "UsageDataJSON"->'Data'->'SessionDebugData'->'Value' AS "SessionDebugData"
+        FROM public."UsageData"
+        WHERE "PlayFabId" = ANY($1) 
+        AND "UsageDataJSON"::text LIKE '%"SessionDebugData"%'
+    `;
+    const sessionResult = await pool.query(sessionQuery, [playFabIds]);
+    return sessionResult.rows;
+}
+userDataRouter.post('/get-users-session-data', async (req, res) => {
+    const playFabIds = req.body.playFabIds;
+    const sessionData = await getUsersSessionDebugData(playFabIds);
+    const parsedSessionData = sessionData.map(player => ({
+        ...player,
+        SessionDebugData: JSON.parse(player.SessionDebugData)
+    }));
+    res.json(parsedSessionData);
 });
 
 module.exports = { userDataRouter };

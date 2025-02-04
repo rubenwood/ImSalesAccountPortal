@@ -95,6 +95,21 @@ export async function fetchSessionData() {
 
     return await response.json();
 }
+export async function fetchUsersSessionData(playFabIds) {
+    const response = await fetch('/userdata/get-users-session-data', {
+        method: 'POST',        
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ playFabIds })
+    });
+
+    if (!response.ok) {
+        throw new Error('Failed to fetch new and returning users');
+    }
+
+    return await response.json();
+}
 
 
 // AI Insights

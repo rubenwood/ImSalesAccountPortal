@@ -2,7 +2,7 @@ import { canAccess } from '../access-check.js';
 import { initializeDarkMode } from '../themes/dark-mode.js';
 import { Login, getPlayerEmailAddr } from '../PlayFabManager.js';
 import { waitForJWT, imAPIGet, getTopicBrondons } from '../immersifyapi/immersify-api.js';
-import { fetchNewReturningUsers, fetchUsersEventLog, fetchEventDetails, fetchEventInsights } from './user-data-utils.js';
+import { fetchNewReturningUsers, fetchUsersEventLog, fetchEventDetails, fetchUsersSessionData, fetchEventInsights } from './user-data-utils.js';
 import { filterEventLogs } from './user-data-filters.js';
 //import { getNewReturningUsersAnnual } from './user-class-front.js';
 import * as d3 from "https://cdn.jsdelivr.net/npm/d3@7/+esm";
@@ -101,9 +101,9 @@ async function eventLogBtnClicked(){
     const endDate = new Date(endDateElement.value).toISOString();
 
     const eventLogs = await fetchUsersEventLog(startDate, endDate);
-    console.log(eventLogs);
+    //console.log(eventLogs);
     const eventLogsJoined = eventLogJoiner(eventLogs);
-    console.log(eventLogsJoined);
+    //console.log(eventLogsJoined);
     eventLogsJoined.forEach(entry => {
         entry.EventLogs.sort((a, b) => new Date(a.EventLogDate) - new Date(b.EventLogDate));
     }); 
@@ -113,10 +113,8 @@ async function eventLogBtnClicked(){
     console.log(filteredEventLogs);
 
     doConfetti();
-    document.getElementById('event-log-btn').value = "Get Report";
-    document.getElementById('analyse-user-journ-btn').addEventListener('click', ()=> { analyseUserJourneys(filteredEventLogs) });
     processEventLogs(filteredEventLogs);
-    
+    document.getElementById('event-log-btn').value = "Get Report";
 }
 
 let EventList = [];
@@ -154,29 +152,37 @@ function getEventIds(eventLogs){
     //console.log("Event Ids", EventIds);
 }
 
-function processEventLogs(eventLogs) {
-    //fetchEventInsights(eventLogs);
+async function processEventLogs(filteredEventLogs) {    
+    getEventList(filteredEventLogs);
+    getEventIds(filteredEventLogs);
+    populateUserJourneyButtons(filteredEventLogs);
 
-    getEventList(eventLogs);
-    getEventIds(eventLogs);
-    populateUserJourneyButtons(eventLogs);
+    document.getElementById('total-users-p').innerHTML = `Total users in report: ${filteredEventLogs.length}`;
 
-    document.getElementById('total-users-p').innerHTML = `Total users in report: ${eventLogs.length}`;
-
-    let totalDistinctEventLogs = getDistinctEventLogs(eventLogs);
+    let totalDistinctEventLogs = getDistinctEventLogs(filteredEventLogs);
     document.getElementById('total-distinct-logs-p').innerHTML = `Total logs across users: ${totalDistinctEventLogs}`;
 
-    getLogsPerDate(eventLogs);
-    const sortedPopularEvents = getMostPopular(eventLogs);
+    getLogsPerDate(filteredEventLogs);
+    const sortedPopularEvents = getMostPopular(filteredEventLogs);
     populateMostPopularTable(sortedPopularEvents);
-    getUsersWhoPlayed(sortedPopularEvents);
+    const userNewRetNot = getNewRetNot(sortedPopularEvents);
+    console.log(userNewRetNot);
+    const allUsersPlayFabIds = userNewRetNot.allUsers.map(player => player.PlayerId);
+    //console.log(allUsersPlayFabIds);
+    const allUsersSessionData = await fetchUsersSessionData(allUsersPlayFabIds);
+    console.log(allUsersSessionData);
+    
+    populateWhoPlayedTable(userNewRetNot.newWhoPlayed, 'new-played-table');
+    populateWhoPlayedTable(userNewRetNot.returningWhoPlayed, 'returning-played-table');
+    populateNotPlayedTable([...userNewRetNot.newNotPlayed, ...userNewRetNot.returningNotPlayed], sortedPopularEvents);
+    document.getElementById('analyse-user-journ-btn').addEventListener('click', ()=> { analyseUserJourneys(filteredEventLogs, userNewRetNot) });
 
     graphEventTypesPerDateChartJS();
     graphEventsTimeOfDay();
 
-    graphUserFunnelStepped(eventLogs, steps, ['login', 'launcher_section_change', 'launch_activity', 'popup_opened', 'sign_out'], 1);
-    graphUserFunnel(eventLogs);
-    graphUserJourney(eventLogs);
+    graphUserFunnelStepped(filteredEventLogs, steps, ['login', 'launcher_section_change', 'launch_activity', 'popup_opened', 'sign_out'], 1);
+    graphUserFunnel(filteredEventLogs);
+    graphUserJourney(filteredEventLogs);
 }
 
 // Data processors
@@ -281,7 +287,8 @@ function populateMostPopularTable(sortedEvents){
         "hair_colour_set", "skin_tone_set", "avatar_set"];
     for (const entry of sortedEvents) {
         //if(eventsToFilterOut.includes(entry.eventName)){ continue; }
-        if(entry.eventName !== "app_open" && entry.eventName !== "login"){ continue; }
+        //if(entry.eventName !== "app_open" && entry.eventName !== "login"){ continue; }
+        if(entry.eventName !== "launch_activity"){ continue; }
         const row = popularTable.insertRow();       
 
         row.insertCell(0).textContent = entry.eventName;
@@ -290,72 +297,71 @@ function populateMostPopularTable(sortedEvents){
         row.insertCell(3).textContent = entry.count;
     }
 }
-// Users who played vs. not played
-function getUsersWhoPlayed(sortedEvents) {
+// Users who played vs. not (new & returning)
+function getNewRetNot(sortedEvents) {
     const startDateElement = document.getElementById('event-log-start-date');
     const endDateElement = document.getElementById('event-log-end-date');
-    const startDate = new Date(startDateElement.value).toISOString().split("T")[0];
-    const endDate = new Date(endDateElement.value).toISOString().split("T")[0];
+    const startDate = new Date(startDateElement.value);
+    const endDate = new Date(endDateElement.value);
 
     const output = { 
-        allUsers: [], 
-        notPlayed: [], 
-        newWhoPlayed: [], 
-        newNotPlayed: [], 
-        returningWhoPlayed: [], 
-        returningNotPlayed: [] 
+        allUsers: [],
+        notPlayed: [],
+        newWhoPlayed: [],
+        newNotPlayed: [],
+        returningWhoPlayed: [],
+        returningNotPlayed: [],
+        unclassifiedUsers: []
     };
-
-    console.log(sortedEvents);
 
     for (const sortedEntry of sortedEvents) {
         for (const user of sortedEntry.users) {
-            if (!output.allUsers.includes(user)) { 
-                output.allUsers.push(user); 
+            if (!output.allUsers.some(u => u.PlayerId === user.PlayerId)) { 
+                output.allUsers.push(user);
             }
 
-            const created = user.Created.split("T")[0];
-            const lastLogin = user.LastLogin.split("T")[0];
+            const created = new Date(user.Created);
+            const lastLogin = new Date(user.LastLogin);
 
             if (sortedEntry.eventName === "launch_activity") {
-                // Created within time frame
-                if (created >= startDate && created <= endDate && !output.newWhoPlayed.some(u => u.user === user)) {
+                if (created >= startDate && created <= endDate && !output.newWhoPlayed.some(u => u.user.PlayerId === user.PlayerId)) {
                     output.newWhoPlayed.push({ activityId: sortedEntry.eventData[0], user });
                 }
-                // Created before startDate & lastLogin between startDate and endDate, then returning
-                if (created < startDate && lastLogin >= startDate && lastLogin <= endDate && !output.returningWhoPlayed.some(u => u.user === user)) {
+                if (created < startDate && lastLogin >= startDate && !output.returningWhoPlayed.some(u => u.user.PlayerId === user.PlayerId)) {
                     output.returningWhoPlayed.push({ activityId: sortedEntry.eventData[0], user });
                 }
             }
         }
     }
 
-    // Subtract users in newWhoPlayed and returningWhoPlayed from allUsers to get notPlayed
+    // Fix Set comparison issue
     const players = new Set([
-        ...output.newWhoPlayed.map(entry => entry.user),
-        ...output.returningWhoPlayed.map(entry => entry.user)
+        ...output.newWhoPlayed.map(entry => entry.user.PlayerId),
+        ...output.returningWhoPlayed.map(entry => entry.user.PlayerId)
     ]);
-    output.notPlayed = output.allUsers.filter(user => !players.has(user));
-    // of the users who have not played anything, classify them as new or returning
-    for (const user of output.notPlayed) {
-        const created = user.Created.split("T")[0];
-        const lastLogin = user.LastLogin.split("T")[0];
 
-        if (created >= startDate && created <= endDate && !output.newNotPlayed.some(u => u.user === user)) {
+    output.notPlayed = output.allUsers.filter(user => !players.has(user.PlayerId));
+
+    for (const user of output.notPlayed) {
+        const created = new Date(user.Created).toISOString().split('T')[0];
+        const lastLogin = new Date(user.LastLogin).toISOString().split('T')[0];
+        const start = startDate.toISOString().split('T')[0];
+        const end = endDate.toISOString().split('T')[0];
+
+        if (created >= start && created <= end) {
             output.newNotPlayed.push(user);
-        }
-        
-        if (created < startDate && lastLogin >= startDate && lastLogin <= endDate && !output.returningNotPlayed.some(u => u.user === user)) {
+        } else if (created < start && lastLogin >= start) {
             output.returningNotPlayed.push(user);
+        } else {
+            output.unclassifiedUsers.push(user);
         }
     }
 
-    console.log(output);
-    populateWhoPlayedTable(output.newWhoPlayed, 'new-played-table');
-    populateWhoPlayedTable(output.returningWhoPlayed, 'returning-played-table');
-    populateNotPlayedTable([...output.newNotPlayed, ...output.returningNotPlayed], sortedEvents);
+    console.log("Final Output:", output);
     return output;
 }
+
+
 function populateWhoPlayedTable(usersWhoPlayed, tableId){
     const table = document.getElementById(tableId);
     table.innerHTML = "<tr><th>Activity Id</th><th>PlayFabId</th></tr>";
@@ -992,8 +998,13 @@ function graphUserJourney(eventLog, width = 1800, height = 800) {
 
 }
 
-function analyseUserJourneys(eventLogs){
+function analyseUserJourneys(eventLogs, userNewRetNot){
     //console.log(eventLogs);
+    const startDateElement = document.getElementById('event-log-start-date');
+    const endDateElement = document.getElementById('event-log-end-date');
+    const startDate = new Date(startDateElement.value).toISOString().split("T")[0];
+    const endDate = new Date(endDateElement.value).toISOString().split("T")[0];
+
     const table = document.getElementById('analyse-user-journ-table');
     table.innerHTML = `<tr>
         <th>ID</th>
@@ -1025,8 +1036,8 @@ function analyseUserJourneys(eventLogs){
         // find this user in eventLogs
         const userEvents = user.EventLogs.flatMap(log => log.EventLogParsed.sessions);
         console.log(userEvents);
-        row.insertCell(3).textContent = userEvents.length; // # sessions
-        row.insertCell(4).textContent = ""; // New / Returning
+        row.insertCell(3).textContent = userEvents.length; // # sessions        
+        row.insertCell(4).textContent = classifyNewOrReturning(user, userNewRetNot); // New / Returning
         row.insertCell(5).textContent = user.AccountDataJSON?.Locations?.LastLogin?.CountryCode; // Location
 
         row.insertCell(6).textContent = userEvents.some(session => session.events.some(event => 
@@ -1084,4 +1095,16 @@ function determineLoginType(user){
     }
 
     return loginType;
+}
+// NEW vs RETURNING (assuming pre-classification)
+function classifyNewOrReturning(user, userNewRetNot){
+    if (userNewRetNot.newWhoPlayed.some(u => u.user.PlayerId === user.PlayFabId) || 
+        userNewRetNot.newNotPlayed.some(u => u.PlayerId === user.PlayFabId)) {
+        return "NEW";
+    }
+    
+    if (userNewRetNot.returningWhoPlayed.some(u => u.user.PlayerId === user.PlayFabId) || 
+        userNewRetNot.returningNotPlayed.some(u => u.PlayerId === user.PlayFabId)) {
+        return "RETURNING";
+    }
 }
