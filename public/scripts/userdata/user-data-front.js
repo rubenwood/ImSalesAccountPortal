@@ -1004,6 +1004,8 @@ function analyseUserJourneys(eventLogs){
         <th>Progress</th>
         <th>Shop popup</th>
         <th>Explore Module popup</th>
+        <th>Topic popup</th>
+        <th>Play Activity popup</th>
         </tr>`;
 
     const userIds = document.getElementById('analyse-user-journ-ids').value.split('\n');
