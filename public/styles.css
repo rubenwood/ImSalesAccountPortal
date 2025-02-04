@@ -213,18 +213,21 @@ label {
 .collapsible-button:hover {
     background-color: #5089fa;
 }
-
+.logo{
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+}
 .login-logo {
-    display: block;
-    margin: 0 auto;
-    max-width: 170px;
-    height: auto;
+    height: 50px;
+    max-width: 100%;
+    object-fit: contain;
 }
 
 .modal {
     display: none;
     position: fixed;
-    z-index: 1;
+    z-index: 99;
     left: 0;
     top: 0;
     width: 100%;
@@ -471,6 +474,10 @@ input:checked + .slider:before {
 #download-container p {
     margin-top: 0;
 }
+#download-container h4{
+    font-size: 24px;
+    margin-bottom: 10px;
+}
 .login-signup-wrap .form-general #signup-container{
     display: flex;
     transition: .2s all ease;
@@ -479,6 +486,7 @@ input:checked + .slider:before {
 .tabbed {
 	overflow-x: hidden; /* so we could easily hide the radio inputs */
 	padding-bottom: 16px;
+    position: relative;
 }
 
 .tabbed [type="radio"] {
@@ -494,6 +502,7 @@ input:checked + .slider:before {
     background: #e4e6f3;
     padding: 9px;
     border-radius: 5px;
+    position: relative;
 }
 ul.tabs .tab {
     width: 100%;
@@ -512,6 +521,8 @@ ul.tabs .tab {
     width: 100%;
     border-radius: 5px;
     text-align: center;
+    z-index: 99;
+    position: relative;
 }
 .tab:hover label {
 	border-top-color: #333;
@@ -523,22 +534,47 @@ ul.tabs .tab {
 	color: #777;
 }
 
+input[id=tab1]:checked ~ .glider {
+    transform: translateX(0);
+  }
+  
+  input[id=tab2]:checked ~ .glider {
+    transform: translateX(100%);
+  }
+  
+  
+  .glider {
+    position: absolute;
+    display: flex;
+    height: 42px;
+    width: 190px;
+    color: #222;
+    background: #ffffff;
+    box-shadow: 2px 3px rgba(0, 0, 0, 0.08);
+    border-radius: 5px;
+    transition: 0.25s ease-out;
+    z-index: 1;
+    top: 22px;
+    left: 8px;
+  }
+
 /* As we cannot replace the numbers with variables or calls to element properties, the number of this selector parts is our tab count limit */
-.tabbed [type="radio"]:nth-of-type(1):checked ~ .tabs .tab:nth-of-type(1) label,
+/* .tabbed [type="radio"]:nth-of-type(1):checked ~ .tabs .tab:nth-of-type(1) label,
 .tabbed [type="radio"]:nth-of-type(2):checked ~ .tabs .tab:nth-of-type(2) label,
 .tabbed [type="radio"]:nth-of-type(3):checked ~ .tabs .tab:nth-of-type(3) label,
 .tabbed [type="radio"]:nth-of-type(4):checked ~ .tabs .tab:nth-of-type(4) label,
 .tabbed [type="radio"]:nth-of-type(5):checked ~ .tabs .tab:nth-of-type(5) label {
-	color: #222;
-    background: #ffffff;
-    box-shadow: 2px 3px rgba(0, 0, 0, 0.08);
-}
+	z-index: 99;
+    position: relative;
+} */
 
-.tabbed [type="radio"]:nth-of-type(1):checked ~ .tab-content:nth-of-type(1),
-.tabbed [type="radio"]:nth-of-type(2):checked ~ .tab-content:nth-of-type(2),
-.tabbed [type="radio"]:nth-of-type(3):checked ~ .tab-content:nth-of-type(3),
-.tabbed [type="radio"]:nth-of-type(4):checked ~ .tab-content:nth-of-type(4) {
+/* .tabbed input[type="radio"]:nth-of-type(1):checked ~ .tab-content:nth-of-type(1),
+.tabbed input[type="radio"]:nth-of-type(2):checked ~ .tab-content:nth-of-type(2) {
 	display: block;
+} */
+.tabbed  input[id=tab1]:checked ~ .tab-content:nth-of-type(1),
+.tabbed  input[id=tab2]:checked ~ .tab-content:nth-of-type(2) {
+    display: block;
 }
 body{
     gap:0 !important;
@@ -549,6 +585,10 @@ body{
     justify-content: center;
     flex-direction: column;
     align-items: center;
+    transition: .2s all ease;
+}
+.login_wrap_fit{
+    transition: .2s all ease;
 }
 .login_container h3{
     font-size: 1.2em;
@@ -558,7 +598,8 @@ body{
     color: #2A1D47;
 }
 .login_container h3 span {
-    font-size: 2.2em;
+    display: block;
+    font-size: 2em;
     font-weight: 700;
 }
 .login_container h3 img {
@@ -581,7 +622,9 @@ body{
     background-image:url(Sprinkle.svg);
     padding: 0 70px;
     margin: 0 0 0 50px;
-    height: 95vh;
+    height:calc(100% - 100px);
+    height:-moz-calc(100% - 100px);
+    height:-webkit-calc(100% - 100px);
     width: 50%;
     display: flex;
     align-items: center;
@@ -611,6 +654,7 @@ body{
     align-items: center;
     width: 100%;
     margin: auto;
+    height: 100%;
 }
 
 #password-form, #success, #password-txt, #success-txt{
@@ -618,6 +662,36 @@ body{
 }
 .button-block{
     position: relative;
+}
+.btn-m{
+    width: 100%;
+    height: 55px;
+    border-radius: 5px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    outline: none !important;
+    box-shadow: none !important;
+    border: none !important;
+    color: #ffffff;
+    margin-bottom: 15px;
+    cursor: pointer;
+    transition: .2s all ease;
+    font-size: 16px;
+}
+.btn-m:hover{
+    opacity: .8;
+}
+.btn-m img{
+    height: 25px;
+    object-fit: contain;
+    margin-right: 10px;
+}
+#mac-download-btn{
+    background: #222222;
+}
+#windows-download-btn{
+    background: #0088EE;
 }
 .loading-spinner{
     position: absolute;
@@ -687,4 +761,73 @@ body{
     font-weight: 400;
     float: right;
     margin-top: 4px;
+}
+
+.verification-block{
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: fixed;
+    height: 100%;
+    width: 100%;
+    z-index: 999;
+}
+.verification-block:before{
+    position: absolute;
+    height: 100%;
+    width: 100%;
+    content: '';
+    background: rgba(0, 0, 0, 0.5);
+    z-index: -1;
+    backdrop-filter: blur(5px);
+}
+
+.verify-email-wrap{
+    max-width: 700px;
+    margin: auto;
+    width: 100%;
+}
+.verify-email{
+    padding: 30px;
+    margin: 0 30px;
+    background: #fff;
+    border-radius: 15px;
+    display: flex;
+    justify-content: center;
+    flex-direction: column;
+    align-items: center;
+}
+.email_img img{
+
+height: 150px;
+max-width: 100%;
+object-fit: contain;
+}
+
+.verify-email h4{
+    color: #0088EE;
+    font-weight: 600;
+    margin-bottom: 5px;
+}
+.verify-email h2{
+    color: #2A1D47;
+    font-size: 1.3rem;
+    margin-bottom: 5px;
+}
+.verify-email .sub_txt{
+    background: #F4F5FD;
+    padding: 10px;
+    border-radius: 5px;
+    font-size: 14px;
+    width: 100%;
+}
+.verify-email .btn-download{
+    margin-bottom: 0;
+}
+
+@media only screen and (max-width: 991px){
+
+    .desktop-img{
+        display: none;
+    }
 }

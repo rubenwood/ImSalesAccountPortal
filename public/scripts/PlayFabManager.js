@@ -346,7 +346,54 @@ export async function isEmailVerified(emailAddresses){
     }
     return false;
 }
-
+// UPDATE CONTACT ADDRESS
+export async function UpdateContactEmail(emailAddr) {
+    if (!emailAddr) {
+        console.error("Email address is required.");
+        return;
+    }
+    
+    PlayFab.settings.titleId = titleId;
+    
+    var updateContactEmailRequest = {
+        EmailAddress: emailAddr
+    };
+    
+    return new Promise((resolve, reject) => {
+        PlayFabClientSDK.AddOrUpdateContactEmail(updateContactEmailRequest, function (result, error) {
+            if (error) {
+                console.error("Error updating contact email:", error);
+                reject(error);
+            } else {
+                console.log("Contact email updated successfully.", result);
+                resolve(result);
+            }
+        });
+    });
+}
+// SEND VERIFICATION EMAIL
+export async function SendVerificationEmail(playFabId) {
+    try {
+        const response = await fetch('/playfab/sendVerificationEmail', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ playFabId })
+        });
+        
+        const data = await response.json();
+        if (!response.ok) {
+            throw new Error(data.error || "Failed to send verification email");
+        }
+        
+        console.log("Verification email request successful:", data);
+        return data;
+    } catch (error) {
+        console.error("Error sending verification email:", error);
+        throw error;
+    }
+}
 // RESET PASSWORD
 export function ResetPassword(email, callback){
     PlayFab.settings.titleId = titleId;

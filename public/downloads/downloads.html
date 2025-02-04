@@ -27,15 +27,40 @@
     </div>
   </div>
 
+  <div id="verification-container" class="verification-block" style="display:none">
+    <div class="verify-email-wrap">
+    <div class="verify-email">
+      <div class="email_img">
+        <img src="../images/email_verf.svg" />
+      </div>
+    <h2>Verify your email address</h2>
+      <h4 id="email-addr-h">Email Address</h4>
+      <p>
+        We've sent an email to the above address. 
+        To proceed to the next step, you must confirm
+        your email address by clicking the link in the email.
+      </p>
+
+      <p class="sub_txt">
+        Didn’t receive the mail? You may have to check your spam/junk folders as well.
+      </p>
+      <button id="verification-btn" class="btn-download" type="button">Resend</button>
+    </div>
+  </div>
+</div>
+
   <div class="body-wrap">
-    <section class="header">
+    <!-- <section class="header">
       <div class="logo">
         <img src="/immersify_logo.e141b23db21f4b78051561bc464eace7.svg" alt="Immersify Logo" class="login-logo">
       </div>
-    </section>
+    </section> -->
 <div class="login_wrap" id="login-area">
   <div class="login_container">
-    <div>
+    <div class="login_wrap_fit">
+      <div class="logo">
+        <img src="/immersify_logo.e141b23db21f4b78051561bc464eace7.svg" alt="Immersify Logo" class="login-logo">
+      </div>
     <div id="login-txt"><h3>Login or Signup to <span>Download</span></h3></div>
     <div id="password-txt"><h3>Enter the given<br/><span>Access Code</span></h3></div>
     <div id="success-txt"><h3>Authentication<br/><span>Successful<img src="../images/success.svg"></span></h3></div>
@@ -43,31 +68,27 @@
       <div class="form-general-block">
         <div id="signup-container">
 
-          <div id="download-container">
-            <p>Download ready. Click the button below to get your file.</p>
-            <button id="windows-download-btn" class="btn-download" type="button"><img src="../images/download.svg" />Download for Windows</button>
-            <button id="mac-download-btn" class="btn-download" type="button"><img src="../images/download.svg" />Download for Apple Mac</button>
+          <div id="download-container" style="display:none">
+            <h4>Download ready</h4>
+            <p>Click the button below to get your file.</p>
+            <button id="windows-download-btn" class="btn-m" type="button"><img src="../images/windows-ico.svg" />Download for Windows</button>
+            <button id="mac-download-btn" class="btn-m" type="button"><img src="../images/mac-ico.svg" />Download for Apple Mac</button>
           </div>
 
-          <div id="verification-container">
-            <p>Please Verify your email!</p>
-            <button id="verification-btn" class="btn-download" type="button">Click here to send verification email</button>
-          </div>
-          
           <div id="password-form">            
             <input type="password" id="password" placeholder="Access Code">
             <span id="error-txt" class="error"></span>
             <div class="button-block"><input type="button" class="cd-button" id="loginButton" value="Submit"> <span id="loginButton-spinner" class="loading-spinner"></span></div>
           </div>
     
-          <div class="tabbed" id="login-signup-forms">
-            <input type="radio" id="tab1" name="css-tabs" checked>
-            <input type="radio" id="tab2" name="css-tabs">
-            
-            <ul class="tabs">
-              <li class="tab"><label for="tab1">Login</label></li>
-              <li class="tab"><label for="tab2">Signup</label></li>
-            </ul>
+          <div class="tabbed" id="login-signup-forms">      
+              <input type="radio" id="tab1" name="css-tabs" checked>
+              <input type="radio" id="tab2" name="css-tabs">
+              <span class="glider"></span>
+              <ul class="tabs">
+                <li class="tab"><label for="tab1">Login</label></li>
+                <li class="tab"><label for="tab2">Signup</label></li>              
+              </ul>
             
             <div class="tab-content">
               <!-- <p>Use your existing Immersify account to login</p> -->

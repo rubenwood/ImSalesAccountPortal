@@ -3,6 +3,7 @@ import { initializeDarkMode } from '../themes/dark-mode.js';
 import { Login, getPlayerEmailAddr } from '../PlayFabManager.js';
 import { waitForJWT, imAPIGet, getTopicBrondons } from '../immersifyapi/immersify-api.js';
 import { fetchNewReturningUsers, fetchUsersEventLog, fetchEventDetails, fetchEventInsights } from './user-data-utils.js';
+import { filterEventLogs } from './user-data-filters.js';
 //import { getNewReturningUsersAnnual } from './user-class-front.js';
 import * as d3 from "https://cdn.jsdelivr.net/npm/d3@7/+esm";
 
@@ -107,10 +108,14 @@ async function eventLogBtnClicked(){
         entry.EventLogs.sort((a, b) => new Date(a.EventLogDate) - new Date(b.EventLogDate));
     }); 
 
+    // FILTER
+    const filteredEventLogs = filterEventLogs(eventLogsJoined);
+    console.log(filteredEventLogs);
+
     doConfetti();
     document.getElementById('event-log-btn').value = "Get Report";
-    document.getElementById('analyse-user-journ-btn').addEventListener('click', ()=> { analyseUserJourneys(eventLogsJoined) });
-    processEventLogs(eventLogsJoined);
+    document.getElementById('analyse-user-journ-btn').addEventListener('click', ()=> { analyseUserJourneys(filteredEventLogs) });
+    processEventLogs(filteredEventLogs);
     
 }
 
@@ -150,7 +155,6 @@ function getEventIds(eventLogs){
 }
 
 function processEventLogs(eventLogs) {
-    console.log(eventLogs);
     //fetchEventInsights(eventLogs);
 
     getEventList(eventLogs);

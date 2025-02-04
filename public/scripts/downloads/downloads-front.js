@@ -1,6 +1,6 @@
-import { RegisterUserEmailAddressGeneric, LoginGeneric, UpdateUserDataGeneric, ResetPassword } from "../PlayFabManager.js";
+import { RegisterUserEmailAddressGeneric, LoginGeneric, UpdateUserDataGeneric, ResetPassword, UpdateContactEmail } from "../PlayFabManager.js";
 import { getSuffixList, isUserOnSuffixList } from "../suffix-front.js";
-import { getUserData, getPlayerProfile, isEmailVerified } from "../PlayFabManager.js";
+import { getUserData, getPlayerProfile, isEmailVerified, SendVerificationEmail } from "../PlayFabManager.js";
 
 let suffixFile;
 document.addEventListener('DOMContentLoaded', async() => {    
@@ -8,15 +8,22 @@ document.addEventListener('DOMContentLoaded', async() => {
     suffixFile = await getSuffixList();
     console.log(suffixFile.suffixList);
 
+    const urlParams = new URLSearchParams(window.location.search);
+    const tokenParam = urlParams.get('token');
+    if(tokenParam != undefined && tokenParam != ""){
+        hideLoginSignup();
+        showDownload();        
+    }
+
     // pword field
-    document.getElementById('loginButton').addEventListener('click', () => submitPass());
+    document.getElementById('loginButton')?.addEventListener('click', () => submitPass());
     // form
-    document.getElementById('signup-btn').addEventListener('click', () => signUpBtnClicked());
+    document.getElementById('signup-btn')?.addEventListener('click', () => signUpBtnClicked());
     document.getElementById('login-btn').addEventListener('click', () => loginBtnClicked());
     // download
-    document.getElementById('windows-download-btn').addEventListener('click', () => download("windows"));
-    document.getElementById('mac-download-btn').addEventListener('click', () => download("mac"));
-    document.getElementById('forgot-password').addEventListener('click', () => resetPasswordClicked());
+    document.getElementById('windows-download-btn')?.addEventListener('click', () => download("windows"));
+    document.getElementById('mac-download-btn')?.addEventListener('click', () => download("mac"));
+    document.getElementById('forgot-password')?.addEventListener('click', () => resetPasswordClicked());
 });
 window.onload = function() {
     displayForms();
@@ -90,13 +97,15 @@ function showDownload(){
     document.getElementById('download-container').style.display = 'block';
     hideVerification();
 }
-function showVerification(){
-    document.getElementById('verification-container').style.display = 'block';    
+function showVerification(playFabId, emailAddr){    
+    SendVerificationEmail(playFabId, emailAddr);
+    document.getElementById('verification-btn').addEventListener('click', () => SendVerificationEmail(playFabId, emailAddr));
+    document.getElementById('email-addr-h').innerHTML = emailAddr;
+    document.getElementById('verification-container').style.display = 'flex';    
 }
 function hideVerification(){
-    document.getElementById('verification-container').style.display = 'none';
+     document.getElementById('verification-container').style.display = 'none';
 }
-//#endregion
 
 let ticket;
 let suffixEntry;
@@ -110,10 +119,10 @@ async function signUpBtnClicked(){
     const password = document.getElementById('signup-password').value;
 
     suffixEntry = isUserOnSuffixList(suffixFile.suffixList, email.split('@')[1])
-    if(suffixEntry == undefined){
+    if(suffixEntry == false){
         console.log("not on list");
-        document.getElementById('login-err-msg').style.display = 'block';
-        document.getElementById('login-err-msg').innerHTML = 'Your institution hasn\'t been granted access';
+        document.getElementById('signup-err-msg').style.display = 'block';
+        document.getElementById('signup-err-msg').innerHTML = 'Your institution hasn\'t been granted access';
         return;
     }else{
         console.log(suffixEntry);
@@ -130,15 +139,21 @@ async function registerCallback(response, error){
     }
     ticket = response.data.SessionTicket;
 
+    console.log(response.data);
+    const updateContactEmailResp = await UpdateContactEmail(document.getElementById('signup-email').value);
+    console.log(updateContactEmailResp);
+
     // TODO: EMAIL VERIFICATION
-    /*const playerProf = await getPlayerProfile(response.data.PlayFabId);
-    console.log(playerProf);
+    const playerProf = await getPlayerProfile(response.data.PlayFabId);
+    //console.log(playerProf);
     const isVerified = await isEmailVerified(playerProf.ContactEmailAddresses);
-    console.log(isVerified);
+    //console.log(isVerified);
     if(!isVerified){
         // show verification screen (and send email)
-        showVerification();
-    }*/
+        //console.log(playerProf.ContactEmailAddresses[0]);
+        showVerification(response.data.PlayFabId, playerProf.ContactEmailAddresses[0].EmailAddress);
+        return;
+    }
 
     let AcademicArea = ""; 
     if(suffixEntry.suffixArea != ''){
@@ -174,9 +189,10 @@ async function loginBtnClicked(){
     const email = document.getElementById('login-email').value;
     const password = document.getElementById('login-password').value;
 
-    //console.log(email.split('@')[1]);
+    console.log(email.split('@')[1]);
     suffixEntry = isUserOnSuffixList(suffixFile.suffixList, email.split('@')[1])
-    if(suffixEntry == undefined){
+    console.log(suffixEntry);
+    if(suffixEntry == false){
         console.log("not on list");
         document.getElementById('login-err-msg').style.display = 'block';
         document.getElementById('login-err-msg').innerHTML = 'Your institution hasn\'t been granted access';
@@ -195,17 +211,19 @@ async function loginCallback(response, error){
         return;
     }
     ticket = response.data.SessionTicket;
+    localStorage.setItem('ticket', ticket);
     //console.log(response.data);
 
     // TODO: EMAIL VERIFICATION
-    /*const playerProf = await getPlayerProfile(response.data.PlayFabId);
+    const playerProf = await getPlayerProfile(response.data.PlayFabId);
     console.log(playerProf);
     const isVerified = await isEmailVerified(playerProf.ContactEmailAddresses);
     console.log(isVerified);
     if(!isVerified){
         // show verification screen (and send email)
-        showVerification();
-    }*/
+        showVerification(response.data.PlayFabId, playerProf.ContactEmailAddresses[0].EmailAddress);
+        return;
+    }
 
     const userAcademicArea = await getUserData(["AcademicArea"]);
     console.log(userAcademicArea.AcademicArea);
@@ -295,7 +313,7 @@ async function download(platform){
     const resp = await fetch('/S3/s3GetDownloadURLs', {
         method: 'GET',
         headers: {
-            'ticket': `${ticket}`
+            'ticket': `${localStorage.getItem('ticket')}`
         }
     });
     const respURLs = await resp.json();
