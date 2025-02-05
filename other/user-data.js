@@ -198,6 +198,7 @@ userDataRouter.post('/get-session-data', async (req, res) => {
     res.json(sessionData);
 });
 
+// Get Users Session Debug Data
 async function getUsersSessionDebugData(playFabIds){
     if (!Array.isArray(playFabIds) || playFabIds.length === 0) {
         return [];
@@ -219,6 +220,30 @@ userDataRouter.post('/get-users-session-data', async (req, res) => {
         SessionDebugData: JSON.parse(player.SessionDebugData)
     }));
     res.json(parsedSessionData);
+});
+
+// Get Users Player Data New Launcher
+async function getUsersPLayerData(playFabIds){
+    if (!Array.isArray(playFabIds) || playFabIds.length === 0) {
+        return [];
+    }
+    const playerDataQuery = `
+        SELECT "PlayFabId", "UsageDataJSON"->'Data'->'PlayerDataNewLauncher'->'Value' AS "PlayerDataNewLauncher"
+        FROM public."UsageData"
+        WHERE "PlayFabId" = ANY($1) 
+        AND "UsageDataJSON"::text LIKE '%"PlayerDataNewLauncher"%'
+    `;
+    const playerDataResult = await pool.query(playerDataQuery, [playFabIds]);
+    return playerDataResult.rows;
+}
+userDataRouter.post('/get-users-player-data-nl', async (req, res) => {
+    const playFabIds = req.body.playFabIds;
+    const playerData = await getUsersPLayerData(playFabIds);
+    const parsedPlayerData = playerData.map(player => ({
+        ...player,
+        PlayerDataNewLauncher: JSON.parse(player.PlayerDataNewLauncher)
+    }));
+    res.json(parsedPlayerData);
 });
 
 module.exports = { userDataRouter };

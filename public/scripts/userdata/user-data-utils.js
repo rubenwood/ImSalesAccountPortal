@@ -111,6 +111,23 @@ export async function fetchUsersSessionData(playFabIds) {
     return await response.json();
 }
 
+// Users Player Data New Launcher
+export async function fetchUsersPlayerDataNewLauncher(playFabIds) {
+    const response = await fetch('/userdata/get-users-player-data-nl', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ playFabIds })
+    });
+
+    if (!response.ok) {
+        throw new Error('Failed to fetch new and returning users');
+    }
+
+    return await response.json();
+}
+
 
 // AI Insights
 export async function fetchEventInsights(eventLogs) {

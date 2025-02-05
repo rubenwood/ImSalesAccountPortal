@@ -2,7 +2,7 @@ import { canAccess } from '../access-check.js';
 import { initializeDarkMode } from '../themes/dark-mode.js';
 import { Login, getPlayerEmailAddr } from '../PlayFabManager.js';
 import { waitForJWT, imAPIGet, getTopicBrondons } from '../immersifyapi/immersify-api.js';
-import { fetchNewReturningUsers, fetchUsersEventLog, fetchEventDetails, fetchUsersSessionData, fetchEventInsights } from './user-data-utils.js';
+import { fetchNewReturningUsers, fetchUsersEventLog, fetchEventDetails, fetchUsersSessionData, fetchUsersPlayerDataNewLauncher, fetchEventInsights } from './user-data-utils.js';
 import { filterEventLogs } from './user-data-filters.js';
 //import { getNewReturningUsersAnnual } from './user-class-front.js';
 import * as d3 from "https://cdn.jsdelivr.net/npm/d3@7/+esm";
@@ -169,11 +169,17 @@ async function processEventLogs(filteredEventLogs) {
     console.log(userNewRetNot);
     const allUsersPlayFabIds = userNewRetNot.allUsers.map(player => player.PlayerId);
     //console.log(allUsersPlayFabIds);
-    const allUsersSessionData = await fetchUsersSessionData(allUsersPlayFabIds);
-    console.log(allUsersSessionData);
+    //const allUsersSessionData = await fetchUsersSessionData(allUsersPlayFabIds);
+    //console.log(allUsersSessionData);
+    const allUsersPlayerData = await fetchUsersPlayerDataNewLauncher(allUsersPlayFabIds);
+    console.log(allUsersPlayerData);
+    const newUsersPlayerData = allUsersPlayerData.filter(player => userNewRetNot.newWhoPlayed.map(entry => entry.user.PlayerId).includes(player.PlayFabId));
+    const returningUsersPlayerData = allUsersPlayerData.filter(player => userNewRetNot.returningWhoPlayed.map(entry => entry.user.PlayerId).includes(player.PlayFabId));
+    console.log(newUsersPlayerData); 
+    console.log(returningUsersPlayerData); 
     
-    populateWhoPlayedTable(userNewRetNot.newWhoPlayed, 'new-played-table');
-    populateWhoPlayedTable(userNewRetNot.returningWhoPlayed, 'returning-played-table');
+    populateWhoPlayedTable(userNewRetNot.newWhoPlayed, newUsersPlayerData, 'new-played-table');
+    populateWhoPlayedTable(userNewRetNot.returningWhoPlayed, returningUsersPlayerData, 'returning-played-table');
     populateNotPlayedTable([...userNewRetNot.newNotPlayed, ...userNewRetNot.returningNotPlayed], sortedPopularEvents);
     document.getElementById('analyse-user-journ-btn').addEventListener('click', ()=> { analyseUserJourneys(filteredEventLogs, userNewRetNot) });
 
@@ -362,7 +368,7 @@ function getNewRetNot(sortedEvents) {
 }
 
 
-function populateWhoPlayedTable(usersWhoPlayed, tableId){
+function populateWhoPlayedTable(usersWhoPlayed, usersPlayerData, tableId){
     const table = document.getElementById(tableId);
     table.innerHTML = "<tr><th>Activity Id</th><th>PlayFabId</th></tr>";
     for (const entry of usersWhoPlayed) {
@@ -370,6 +376,14 @@ function populateWhoPlayedTable(usersWhoPlayed, tableId){
 
         row.insertCell(0).textContent = entry.activityId;
         row.insertCell(1).textContent = entry.user.PlayerId;
+        // find the matching user in usersPlayerData (by PlayFabId)
+        const playerData = usersPlayerData.find(player => player.PlayFabId === entry.user.PlayerId);
+        //console.log(playerData);
+        // find the matching activity in playerData.PlayerDataNewLauncher.activities (by entry.activityId)
+        const activity = playerData.PlayerDataNewLauncher.activities.find(activity => activity.activityID === entry.activityId.replace("activity_id:", ""));
+        console.log(activity);
+        const plays = activity ? activity.plays : [];
+        row.insertCell(2).textContent = plays.length;
     }
 }
 function populateNotPlayedTable(usersNotPlayed, sortedEvents){
@@ -1035,7 +1049,7 @@ function analyseUserJourneys(eventLogs, userNewRetNot){
         row.insertCell(2).textContent = "";// B2B / B2C
         // find this user in eventLogs
         const userEvents = user.EventLogs.flatMap(log => log.EventLogParsed.sessions);
-        console.log(userEvents);
+        
         row.insertCell(3).textContent = userEvents.length; // # sessions        
         row.insertCell(4).textContent = classifyNewOrReturning(user, userNewRetNot); // New / Returning
         row.insertCell(5).textContent = user.AccountDataJSON?.Locations?.LastLogin?.CountryCode; // Location
