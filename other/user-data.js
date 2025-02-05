@@ -246,4 +246,28 @@ userDataRouter.post('/get-users-player-data-nl', async (req, res) => {
     res.json(parsedPlayerData);
 });
 
+// Get Users CMS Lesson Data
+async function getUsersCMSLessonData(playFabIds){
+    if (!Array.isArray(playFabIds) || playFabIds.length === 0) {
+        return [];
+    }
+    const playerDataQuery = `
+        SELECT "PlayFabId", "UsageDataJSON"->'Data'->'CMSLessonPointProgress'->'Value' AS "CMSLessonPointProgress"
+        FROM public."UsageData"
+        WHERE "PlayFabId" = ANY($1) 
+        AND "UsageDataJSON"::text LIKE '%"CMSLessonPointProgress"%'
+    `;
+    const playerDataResult = await pool.query(playerDataQuery, [playFabIds]);
+    return playerDataResult.rows;
+}
+userDataRouter.post('/get-users-lesson-point-prog', async (req, res) => {
+    const playFabIds = req.body.playFabIds;
+    const playerData = await getUsersCMSLessonData(playFabIds);
+    const parsedLessonProgData = playerData.map(player => ({
+        ...player,
+        CMSLessonPointProgress: JSON.parse(player.CMSLessonPointProgress)
+    }));
+    res.json(parsedLessonProgData);
+});
+
 module.exports = { userDataRouter };

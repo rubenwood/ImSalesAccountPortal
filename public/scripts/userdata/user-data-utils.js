@@ -128,6 +128,23 @@ export async function fetchUsersPlayerDataNewLauncher(playFabIds) {
     return await response.json();
 }
 
+// Users CMS Lesson Point Progress
+export async function fetchUsersLessonPointProg(playFabIds) {
+    const response = await fetch('/userdata/get-users-lesson-point-prog', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ playFabIds })
+    });
+
+    if (!response.ok) {
+        throw new Error('Failed to fetch new and returning users');
+    }
+
+    return await response.json();
+}
+
 
 // AI Insights
 export async function fetchEventInsights(eventLogs) {
