@@ -306,12 +306,14 @@ app.post('/get-playfab-report', async (req, res) => {
     const { day, month, year, reportName } = req.body;
 
     const playFabResponse = await axios.post(
-      `https://${process.env.PLAYFAB_TITLE_ID}.playfabapi.com/Admin/GetDataReport`, {
+      `https://${process.env.PLAYFAB_TITLE_ID}.playfabapi.com/Admin/GetDataReport`,
+      {
         Day: day,
         Month: month,
         Year: year,
         ReportName: reportName
-      }, {
+      },
+      {
         headers: {
           'X-SecretKey': process.env.PLAYFAB_SECRET_KEY
         }
@@ -319,14 +321,11 @@ app.post('/get-playfab-report', async (req, res) => {
     );
 
     const reportURL = playFabResponse.data.data.DownloadUrl;
-    const csvResponse = await fetch(reportURL);
-    if (!csvResponse.ok) {
-      throw new Error('Failed to fetch CSV report from PlayFab');
-    }
-    const csvData = await csvResponse.text();
+
+    const csvResponse = await axios.get(reportURL, { responseType: 'text' });
 
     res.header('Content-Type', 'text/csv');
-    res.send(csvData);
+    res.send(csvResponse.data);
   } catch (error) {
     console.error('Error:', error);
     res.status(500).json({
@@ -335,6 +334,7 @@ app.post('/get-playfab-report', async (req, res) => {
     });
   }
 });
+
 
 // GET ALL PLAYERS
 // Gets all players and uploads resulting files to S3
