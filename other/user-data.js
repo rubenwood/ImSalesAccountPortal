@@ -297,7 +297,8 @@ async function getUsersCMSLessonData(playFabIds){
         return [];
     }
     const playerDataQuery = `
-        SELECT "PlayFabId", "UsageDataJSON"->'Data'->'CMSLessonPointProgress'->'Value' AS "CMSLessonPointProgress"
+        SELECT "PlayFabId", 
+        "UsageDataJSON"->'Data'->'CMSLessonPointProgress'->'Value' AS "CMSLessonPointProgress"
         FROM public."UsageData"
         WHERE "PlayFabId" = ANY($1) 
         AND "UsageDataJSON"::text LIKE '%"CMSLessonPointProgress"%'

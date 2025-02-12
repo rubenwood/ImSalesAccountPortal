@@ -402,7 +402,7 @@ function getNewRetNot(sortedEvents) {
     return output;
 }
 
-function populateWhoPlayedTable(usersWhoPlayed, usersPlayerData, userLessonProgData, tableId){
+async function populateWhoPlayedTable(usersWhoPlayed, usersPlayerData, userLessonProgData, tableId){
     const table = document.getElementById(tableId);
     table.innerHTML = "<tr><th>Activity Id</th><th>PlayFabId</th><th>Points completed</th></tr>";
     for (const entry of usersWhoPlayed) {
@@ -410,9 +410,19 @@ function populateWhoPlayedTable(usersWhoPlayed, usersPlayerData, userLessonProgD
 
         row.insertCell(0).textContent = entry.activityId;
         row.insertCell(1).textContent = entry.user.PlayerId;
-        const lessonProgData = userLessonProgData.find(player => player.PlayFabId === entry.user.PlayerId);
-        const lesson = lessonProgData.CMSLessonPointProgress.lessons.find(lesson => lesson.lessonID === entry.activityId.replace("activity_id:", ""));
-        row.insertCell(2).textContent = lesson?.completedPoints?.length;
+        
+        const userLessonData = userLessonProgData.find(player => player.PlayFabId === entry.user.PlayerId);   
+        const lessonPointData = userLessonData.CMSLessonPointProgress.lessons.find(lesson => lesson.lessonID === entry.activityId.replace("activity_id:", ""));
+        row.insertCell(2).textContent = lessonPointData?.completedPoints?.length;
+
+        const userPlayerData = usersPlayerData.find(player => player.PlayFabId === entry.user.PlayerId);
+        const userPlayerDataNL = userPlayerData.PlayerDataNewLauncher;
+        console.log(userPlayerDataNL);
+        const activityData = userPlayerDataNL.activities.find(activity => activity.activityID === entry.activityId.replace("activity_id:", ""))
+        console.log(activityData);
+        const plays = activityData.plays;
+        // check if any of the plays are within the time frame
+        // if so get the normalised scores for them
     }
 }
 function populateNotPlayedTable(usersNotPlayed, sortedEvents){
