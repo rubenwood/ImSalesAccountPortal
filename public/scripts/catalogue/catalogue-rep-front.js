@@ -138,7 +138,7 @@ async function getCatalogueReport(){
     await setGeneralData(areaBrondons);
     
     const startDate = "2023-01-01";
-    const endDate = "2025-01-01";
+    const endDate = "2025-02-12";
     const brondonData = [
         { type: "area", brondons: areaBrondons },
         { type: "module", brondons: moduleBrondons },
