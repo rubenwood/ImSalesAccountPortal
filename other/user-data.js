@@ -59,8 +59,8 @@ userDataRouter.post('/get-users-event-log', async (req, res) => {
     res.json(usersEventLog);
 });
 
-// Users Topics in Feed
-async function getUsersWithTopicInFeed(topicIds) {
+// Topics in Feed (by Topic)
+async function getTopicsInFeed(topicIds) {
     const usersWithTopicsQuery = `
         SELECT *, 
                jsonb_array_elements(("UsageDataJSON"->'Data'->'UserPreferenceData'->>'Value')::jsonb->'selectedTopics') AS selectedTopic
@@ -92,9 +92,55 @@ async function getUsersWithTopicInFeed(topicIds) {
 
     return output;
 }
-userDataRouter.post('/get-users-topic-feed', async (req, res) => {
-    const newRetUsers = await getUsersWithTopicInFeed(req.body.topicIds);
+userDataRouter.post('/get-topics-in-feed', async (req, res) => {
+    const newRetUsers = await getTopicsInFeed(req.body.topicIds);
     res.json(newRetUsers);
+});
+// Users Preferences
+async function getUsersPrefs(playFabIds) {
+    if (!Array.isArray(playFabIds) || playFabIds.length === 0) {
+        return [];
+    }
+    const userPrefQuery = `
+        SELECT "PlayFabId", "UsageDataJSON"->'Data'->'UserPreferenceData'->'Value' AS "UserPreferenceData"
+        FROM public."UsageData"
+        WHERE "PlayFabId" = ANY($1) 
+        AND "UsageDataJSON"::text LIKE '%"UserPreferenceData"%'
+    `;
+    const playerDataResult = await pool.query(userPrefQuery, [playFabIds]);
+    return playerDataResult.rows;
+}
+userDataRouter.post('/get-users-prefs', async (req, res) => {
+    const playFabIds = req.body.playFabIds;
+    const usersPrefs = await getUsersPrefs(playFabIds);
+    const parsedUsersPrefsData = usersPrefs.map(player => ({
+        ...player,
+        UserPreferenceData: JSON.parse(player.UserPreferenceData)
+    }));
+    res.json(parsedUsersPrefsData);
+});
+// Users Profile Data
+async function getUsersProfiles(playFabIds){
+    if (!Array.isArray(playFabIds) || playFabIds.length === 0) {
+        return [];
+    }
+    const userProfileQuery = `
+        SELECT "PlayFabId", "UsageDataJSON"->'Data'->'UserProfileData'->'Value' AS "UserProfileData"
+        FROM public."UsageData"
+        WHERE "PlayFabId" = ANY($1) 
+        AND "UsageDataJSON"::text LIKE '%"UserProfileData"%'
+    `;
+    const profilesDataResult = await pool.query(userProfileQuery, [playFabIds]);
+    return profilesDataResult.rows;
+}
+userDataRouter.post('/get-users-profiles', async (req, res) => {
+    const playFabIds = req.body.playFabIds;
+    const usersProfiles = await getUsersProfiles(playFabIds);
+    const parsedUsersProfileData = usersProfiles.map(player => ({
+        ...player,
+        UserProfileData: JSON.parse(player.UserProfileData)
+    }));
+    res.json(parsedUsersProfileData);
 });
 
 // New Vs. Returning
@@ -180,7 +226,6 @@ userDataRouter.post('/get-new-returning-users', async (req, res) => {
     res.json(newRetUsers);
 });
 
-
 // Users with Session Debug Data
 // TODO: paginate this!
 async function getAllUsersSessionDebugData(){
@@ -223,7 +268,7 @@ userDataRouter.post('/get-users-session-data', async (req, res) => {
 });
 
 // Get Users Player Data New Launcher
-async function getUsersPLayerData(playFabIds){
+async function getUsersPlayerData(playFabIds){
     if (!Array.isArray(playFabIds) || playFabIds.length === 0) {
         return [];
     }
@@ -238,7 +283,7 @@ async function getUsersPLayerData(playFabIds){
 }
 userDataRouter.post('/get-users-player-data-nl', async (req, res) => {
     const playFabIds = req.body.playFabIds;
-    const playerData = await getUsersPLayerData(playFabIds);
+    const playerData = await getUsersPlayerData(playFabIds);
     const parsedPlayerData = playerData.map(player => ({
         ...player,
         PlayerDataNewLauncher: JSON.parse(player.PlayerDataNewLauncher)

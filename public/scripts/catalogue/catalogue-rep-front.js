@@ -2,7 +2,7 @@ import { canAccess } from '../access-check.js';
 import { initializeDarkMode } from '../themes/dark-mode.js';
 import { Login, getPlayerEmailAddr } from '../PlayFabManager.js';
 import { formatTimeToHHMMSS } from '../utils.js';
-import { fetchUsersTopicsInFeed } from '../userdata/user-data-utils.js';
+import { fetchTopicsInFeed } from '../userdata/user-data-utils.js';
 import { waitForJWT, imAPIGet, imAPIPost, getAreas, getModules, getTopics, getActivities, getTreeStructure, getTopicBrondons } from '../immersifyapi/immersify-api.js';
 import {delay } from '../asyncTools.js';
 
@@ -555,7 +555,7 @@ function populateBronondsMonthTable(data){
 // TODO: Check this!
 async function populateTopicUsageTable(topicBrondons) {
     const topicIds = topicBrondons.map(brondon => brondon.structureId);
-    const usersTopicsInFeed = await fetchUsersTopicsInFeed(topicIds);
+    const usersTopicsInFeed = await fetchTopicsInFeed(topicIds);
     usersTopicsInFeed.sort((a, b) => b.users.length - a.users.length);
     
     console.log(usersTopicsInFeed);

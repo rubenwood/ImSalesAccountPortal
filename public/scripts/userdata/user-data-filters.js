@@ -92,12 +92,20 @@ let playfabIdBlackList = [
     "2D81A344E58264B6",
     "30CD1336ED97DE5A",
     "9766F05224A16AF9",
-    "30CD1336ED97DE5A",
-    "118205DCCC438304",
-    "50594E470AFFEFA4",
-    "1A658389625D0C74"
+    "1A658389625D0C74",
+    "C65E3565BDEA962D",
+    "434FDD3A0A255C75",
+    "7D4A1AA0D1153587",
+    "30CB4632AB499F97"
 ];
-
+let emailAddressesBlackList = [
+    "g44b6@soscandia.org",
+    "rikodec291@numerobo.com",
+    "netjtvnishavdmokgp@ytnhy.com",
+    "nalifywe@dreamclarify.org",
+    "goliha@azuretechtalk.net",
+    "cituvo@azuretechtalk.net"
+];
 
 export function filterEventLogs(eventLogs){
     console.log(eventLogs);
@@ -110,6 +118,10 @@ export function filterEventLogs(eventLogs){
         let playfabAccount = linkedAccounts.find(account => account.Platform == "PlayFab");
         if(playfabAccount != undefined && playfabAccount.Email != undefined && suffixBlackList.includes(playfabAccount.Email.split('@')[1])){
             continue;
+        }
+        if(playfabAccount != undefined && playfabAccount.Email != undefined && emailAddressesBlackList.includes(playfabAccount.Email)){
+            continue;
+
         }
         
         if(playfabIdBlackList.includes(eventLog.playfabId)){

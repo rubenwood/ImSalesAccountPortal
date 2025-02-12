@@ -17,14 +17,47 @@ export async function fetchB2BUsers(){
     return await response.json();
 }
 
-// Users & Topics in feed
-export async function fetchUsersTopicsInFeed(topicIds) {
-    const response = await fetch('/userdata/get-users-topic-feed', {
+// Topics in feed (by topic id)
+export async function fetchTopicsInFeed(topicIds) {
+    const response = await fetch('/userdata/get-topics-in-feed', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json'
         },
         body: JSON.stringify({ topicIds })
+    });
+
+    if (!response.ok) {
+        throw new Error('Failed to fetch new and returning users');
+    }
+
+    return await response.json();
+}
+
+// Users Preferences
+export async function fetchUsersPrefs(playFabIds){
+    const response = await fetch('/userdata/get-users-prefs', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ playFabIds })
+    });
+
+    if (!response.ok) {
+        throw new Error('Failed to fetch new and returning users');
+    }
+
+    return await response.json();
+}
+// Users Profile
+export async function fetchUsersProfileData(playFabIds){
+    const response = await fetch('/userdata/get-users-profiles', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ playFabIds })
     });
 
     if (!response.ok) {

@@ -119,7 +119,7 @@ activitiesRouter.get('/get-users-by-activity-id', async (req, res) => {
         });
 
         const firstElement = Array.from(allPlayersWithActivity.values())[0];
-        console.log("Number of players in the first element:", firstElement.players.size);
+        //console.log("Number of players in the first element:", firstElement.players.size);
 
         const outputList = [];
         allPlayersWithActivity.forEach((activityData, activityId) => {

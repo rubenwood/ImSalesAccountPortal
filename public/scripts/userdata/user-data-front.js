@@ -2,7 +2,15 @@ import { canAccess } from '../access-check.js';
 import { initializeDarkMode } from '../themes/dark-mode.js';
 import { Login, getPlayerEmailAddr } from '../PlayFabManager.js';
 import { waitForJWT, imAPIGet, getTopicBrondons } from '../immersifyapi/immersify-api.js';
-import { fetchNewReturningUsers, fetchUsersEventLog, fetchEventDetails, fetchUsersSessionData, fetchUsersPlayerDataNewLauncher, fetchUsersLessonPointProg, fetchEventInsights } from './user-data-utils.js';
+import { fetchNewReturningUsers, 
+    fetchUsersEventLog, 
+    fetchEventDetails, 
+    fetchUsersSessionData, 
+    fetchUsersPlayerDataNewLauncher, 
+    fetchUsersLessonPointProg, 
+    fetchUsersPrefs,
+    fetchUsersProfileData, 
+    fetchEventInsights } from './user-data-utils.js';
 import { filterEventLogs } from './user-data-filters.js';
 //import { getNewReturningUsersAnnual } from './user-class-front.js';
 import * as d3 from "https://cdn.jsdelivr.net/npm/d3@7/+esm";
@@ -168,19 +176,17 @@ async function processEventLogs(filteredEventLogs) {
     const userNewRetNot = getNewRetNot(sortedPopularEvents);
     console.log(userNewRetNot);
     const allUsersPlayFabIds = userNewRetNot.allUsers.map(player => player.PlayerId);
-    //console.log(allUsersPlayFabIds);
+
     //const allUsersSessionData = await fetchUsersSessionData(allUsersPlayFabIds);
-    //console.log(allUsersSessionData);
+
+    // PlayerDataNewLauncher
     const allUsersPlayerData = await fetchUsersPlayerDataNewLauncher(allUsersPlayFabIds);
     console.log(allUsersPlayerData);
     const newUsersPlayerData = allUsersPlayerData.filter(player => userNewRetNot.newWhoPlayed.map(entry => entry.user.PlayerId).includes(player.PlayFabId));
     const returningUsersPlayerData = allUsersPlayerData.filter(player => userNewRetNot.returningWhoPlayed.map(entry => entry.user.PlayerId).includes(player.PlayFabId));
-    //console.log(newUsersPlayerData); 
-    //console.log(returningUsersPlayerData);
+    // CMSLessonPointPrg
     const allUsersLessonProgData = await fetchUsersLessonPointProg(allUsersPlayFabIds);
-    //console.log(allUsersLessonProgData);
     const newUsersLessonProgData = allUsersLessonProgData.filter(player => userNewRetNot.newWhoPlayed.map(entry => entry.user.PlayerId).includes(player.PlayFabId));
-    //console.log(newUsersLessonProgData);
     const returningUsersLessonProgData = allUsersLessonProgData.filter(player => userNewRetNot.returningWhoPlayed.map(entry => entry.user.PlayerId).includes(player.PlayFabId));
     console.log(returningUsersLessonProgData);
 
@@ -188,6 +194,29 @@ async function processEventLogs(filteredEventLogs) {
     populateWhoPlayedTable(userNewRetNot.returningWhoPlayed, returningUsersPlayerData, returningUsersLessonProgData, 'returning-played-table');
     populateNotPlayedTable([...userNewRetNot.newNotPlayed, ...userNewRetNot.returningNotPlayed], sortedPopularEvents);
     document.getElementById('analyse-user-journ-btn').addEventListener('click', ()=> { analyseUserJourneys(filteredEventLogs, userNewRetNot) });
+
+    // UserPreferenceData
+    const allUsersPrefs = await fetchUsersPrefs(allUsersPlayFabIds);
+    console.log(allUsersPrefs);
+    const newPlayedUsersPrefsData = allUsersPrefs.filter(player => userNewRetNot.newWhoPlayed.map(entry => entry.user.PlayerId).includes(player.PlayFabId));
+    const returningPlayedUsersPrefsData = allUsersPrefs.filter(player => userNewRetNot.returningWhoPlayed.map(entry => entry.user.PlayerId).includes(player.PlayFabId));
+
+    const newNotPlayedPrefsData = allUsersPrefs.filter(player => userNewRetNot.newNotPlayed.map(entry => entry.PlayerId).includes(player.PlayFabId));
+    const returningNotPlayedPrefsData = allUsersPrefs.filter(player => userNewRetNot.returningNotPlayed.map(entry => entry.PlayerId).includes(player.PlayFabId));
+
+    const notPlayed = [...userNewRetNot.newNotPlayed, ...userNewRetNot.returningNotPlayed];
+    const notPlayedPrefs = [...newNotPlayedPrefsData, ...returningNotPlayedPrefsData];
+    const notPlayedFiltered = notPlayed.filter(user => !notPlayedPrefs.some(pref => pref.PlayFabId === user.PlayerId));
+    console.log(notPlayedFiltered);
+
+    // UserProfileData
+    //const allUsersProfiles = await fetchUsersProfileData(allUsersPlayFabIds);
+    //console.log(allUsersProfiles);
+
+    populateTopicsInFeedTable(newPlayedUsersPrefsData, 'new-topics-table');
+    populateTopicsInFeedTable(returningPlayedUsersPrefsData, 'returning-topics-table');
+    populateTopicsInFeedTable([...newNotPlayedPrefsData, ...returningNotPlayedPrefsData], 'not-played-topics-table');
+    //populateTopicsInFeedTable([...userNewRetNot.newNotPlayed, ...userNewRetNot.returningNotPlayed], 'not-played-topics-table');
 
     graphEventTypesPerDateChartJS();
     graphEventsTimeOfDay();
@@ -381,19 +410,8 @@ function populateWhoPlayedTable(usersWhoPlayed, usersPlayerData, userLessonProgD
 
         row.insertCell(0).textContent = entry.activityId;
         row.insertCell(1).textContent = entry.user.PlayerId;
-        // find the matching user in usersPlayerData (by PlayFabId)
-        //const playerData = usersPlayerData.find(player => player.PlayFabId === entry.user.PlayerId);
-        //console.log(playerData);
-        // find the matching activity in playerData.PlayerDataNewLauncher.activities (by entry.activityId)
-        //const activity = playerData.PlayerDataNewLauncher.activities.find(activity => activity.activityID === entry.activityId.replace("activity_id:", ""));
-        //console.log(activity);
-        //const plays = activity ? activity.plays : [];
-        //row.insertCell(2).textContent = plays.length;
-
         const lessonProgData = userLessonProgData.find(player => player.PlayFabId === entry.user.PlayerId);
-        console.log(lessonProgData);
         const lesson = lessonProgData.CMSLessonPointProgress.lessons.find(lesson => lesson.lessonID === entry.activityId.replace("activity_id:", ""));
-        console.log(lesson);
         row.insertCell(2).textContent = lesson?.completedPoints?.length;
     }
 }
@@ -427,7 +445,26 @@ function populateNotPlayedTable(usersNotPlayed, sortedEvents){
         }
     }
 }
-
+function populateTopicsInFeedTable(usersPrefData, tableId){
+    const table = document.getElementById(tableId);
+    table.innerHTML = "<tr><th>PlayFabId</th><th>Topics</th></tr>";
+    for(const entry of usersPrefData){        
+        const usersTopics = [];
+        entry.UserPreferenceData.selectedTopics.forEach(topic => topic.selectedTopicsList && usersTopics.push(...topic.selectedTopicsList));
+        if(usersTopics.length > 1){
+            for(const userTopic of usersTopics){
+                const topicRow = table.insertRow();
+                topicRow.insertCell(0).textContent = entry.PlayFabId;
+                topicRow.insertCell(1).textContent = JSON.stringify(userTopic);
+            }
+        }else{
+            const row = table.insertRow();
+            row.insertCell(0).textContent = entry.PlayFabId;
+            row.insertCell(1).textContent = JSON.stringify(usersTopics[0]);
+        }
+        
+    }
+}
 
 // Type per date
 function graphEventTypesPerDateChartJS() {
