@@ -12,7 +12,13 @@ document.addEventListener('DOMContentLoaded', async () => {
     document.getElementById('loginButton').addEventListener('click', Login);
     await waitForJWT();
     // Button events
-    document.getElementById('get-report').addEventListener('click', getUserClassReport)
+    document.getElementById('get-report').addEventListener('click', getUserClassReport);
+    document.addEventListener("click", (event) => {
+        const modal = document.getElementById("emailList");
+        if (event.target === modal) {
+            modal.style.display = "none";
+        }
+    });
 });
 window.onload = function() {
     document.getElementById('loginModal').style.display = 'block';
@@ -25,8 +31,8 @@ async function getUserClassReport(){
     populateNewRetTable(newRetPerMonth, returningUsers);
     const retRatesPerMonth = calcRetentionRates(newRetPerMonth, returningUsers);
 
-    const usersWhoPlayed = getUsersWhoPlayed(newRetPerMonth, 11);
-    console.log(usersWhoPlayed);
+    //const usersWhoPlayed = getUsersWhoPlayed(newRetPerMonth, 11);
+    //console.log(usersWhoPlayed);
 
     document.getElementById('get-report').value = "Get Report";
 }
@@ -130,22 +136,72 @@ function calcRetentionRates(newRetPerMonth, returningUsers){
 
 async function populateNewRetTable(newRetPerMonth, returningUsers) {
     const table = document.getElementById('new-ret-table');
-    table.innerHTML = `<thead><tr><th>Date</th><th>New</th><th>Returning</th></tr></thead><tbody></tbody>`;
+    table.innerHTML = `<thead><tr><th>Date</th><th>New</th><th>New Users</th><th>Returning</th><th>Returning Users</th></tr></thead><tbody></tbody>`;
 
     const tbody = table.querySelector("tbody");
 
     newRetPerMonth.forEach((entry, index) => {
         const row = tbody.insertRow();
-
         const trulyReturningUsers = returningUsers[index].trulyReturningUsers || []; // Ensure alignment
+
         row.insertCell(0).innerHTML = `${entry.startDate} - ${entry.endDate}`;
         row.insertCell(1).innerHTML = `${entry.newUsers.length}`;
-        row.insertCell(2).innerHTML = `${trulyReturningUsers.length}`;
+
+        // Create "New Users" button
+        const newEmailButton = document.createElement("button");
+        newEmailButton.textContent = "View New Users";
+        newEmailButton.onclick = () => showEmailModal(entry.newUsers);
+
+        const newCell = row.insertCell(2);
+        newCell.appendChild(newEmailButton);
+
+        row.insertCell(3).innerHTML = `${trulyReturningUsers.length}`;
+
+        // Create "Returning Users" button
+        const retEmailButton = document.createElement("button");
+        retEmailButton.textContent = "View Returning Users";
+        retEmailButton.onclick = () => showEmailModal(trulyReturningUsers);
+
+        const retCell = row.insertCell(4);
+        retCell.appendChild(retEmailButton);
     });
 
     await getB2BUsers();
 
     doConfetti();
+}
+function showEmailModal(users) {
+    const modal = document.getElementById("emailList");
+    const modalContent = modal.querySelector(".modal-content");
+
+    // Clear previous content
+    modalContent.innerHTML = "<h2>Email List</h2><ul>" +
+        users.map(user => {
+            let userEmail = getUserEmail(user);
+            return userEmail !== undefined ? `<li>${userEmail}</li>` : '';
+        }).join('') +
+        "</ul>";
+
+    modal.style.display = "block";
+}
+
+
+function getUserEmail(user){
+    console.log(`${user.PlayFabId}\n${user.AccountDataJSON.LinkedAccounts.length}\n${user.AccountDataJSON.ContactEmailAddresses.length}`)
+
+    if(user.AccountDataJSON.LinkedAccounts.length > 0){
+        for(const account of user.AccountDataJSON.LinkedAccounts){
+            //if(account.Platform == "PlayFab" || account.Platform == "OpenIdConnect"){ checkContact = false; }
+            if (account.Platform == "PlayFab" && account.Email){
+                return account.Email;
+            }
+        }
+    }
+
+    if(user.AccountDataJSON.ContactEmailAddresses.length > 0){
+        return user.AccountDataJSON.ContactEmailAddresses[0].EmailAddress;
+    }
+    return undefined;
 }
 
 //HELPER
