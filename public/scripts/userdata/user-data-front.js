@@ -210,13 +210,28 @@ async function processEventLogs(filteredEventLogs) {
     console.log(notPlayedFiltered);
 
     // UserProfileData
-    //const allUsersProfiles = await fetchUsersProfileData(allUsersPlayFabIds);
+    const allUsersProfiles = await fetchUsersProfileData(allUsersPlayFabIds);
     //console.log(allUsersProfiles);
+    const newUsersProfiles = allUsersProfiles.filter(player => userNewRetNot.newWhoPlayed.map(entry => entry.user.PlayerId).includes(player.PlayFabId));
+    console.log(newUsersProfiles);
+    const returningUsersProfiles = allUsersProfiles.filter(player => userNewRetNot.returningWhoPlayed.map(entry => entry.user.PlayerId).includes(player.PlayFabId));
+    console.log(returningUsersProfiles);
+    const notPlayedUsersProfiles = allUsersProfiles.filter(player => userNewRetNot.notPlayed.map(entry => entry.PlayerId).includes(player.PlayFabId));
+    console.log(notPlayedUsersProfiles);
+    populateActivityPrefTable(newUsersProfiles, 'new-played-act-pref-table');
+    populateActivityPrefTable(returningUsersProfiles, 'ret-played-act-pref-table');
+    populateActivityPrefTable(notPlayedUsersProfiles, 'not-played-act-pref-table');
 
+    // Topics
     populateTopicsInFeedTable(newPlayedUsersPrefsData, 'new-topics-table');
     populateTopicsInFeedTable(returningPlayedUsersPrefsData, 'returning-topics-table');
     populateTopicsInFeedTable([...newNotPlayedPrefsData, ...returningNotPlayedPrefsData], 'not-played-topics-table');
     //populateTopicsInFeedTable([...userNewRetNot.newNotPlayed, ...userNewRetNot.returningNotPlayed], 'not-played-topics-table');
+
+    // Quizzes
+    // have to get quiz data?
+    populateQuizFCTable(userNewRetNot.newWhoPlayed, 'new-quiz-fc-table');
+    populateQuizFCTable(userNewRetNot.returningWhoPlayed, 'returning-quiz-fc-table');
 
     graphEventTypesPerDateChartJS();
     graphEventsTimeOfDay();
@@ -365,6 +380,9 @@ function getNewRetNot(sortedEvents) {
             const lastLogin = new Date(user.LastLogin);
 
             if (sortedEntry.eventName === "launch_activity") {
+                
+                //console.log(sortedEntry.eventData);
+
                 if (created >= startDate && created <= endDate && !output.newWhoPlayed.some(u => u.user.PlayerId === user.PlayerId)) {
                     output.newWhoPlayed.push({ activityId: sortedEntry.eventData[0], user });
                 }
@@ -403,8 +421,19 @@ function getNewRetNot(sortedEvents) {
 }
 
 async function populateWhoPlayedTable(usersWhoPlayed, usersPlayerData, userLessonProgData, tableId){
+    const startDateElement = document.getElementById('event-log-start-date');
+    const endDateElement = document.getElementById('event-log-end-date');
+    const startDate = new Date(startDateElement.value).toISOString();
+    const endDate = new Date(endDateElement.value).toISOString();
     const table = document.getElementById(tableId);
-    table.innerHTML = "<tr><th>Activity Id</th><th>PlayFabId</th><th>Points completed</th></tr>";
+    table.innerHTML = `<tr>
+            <th>Activity Id</th>
+            <th>PlayFabId</th>
+            <th>Points completed</th>
+            <th>Questions completed</th>
+            <th>Questions completed (total)</th>
+        </tr>`;
+
     for (const entry of usersWhoPlayed) {
         const row = table.insertRow();
 
@@ -414,13 +443,21 @@ async function populateWhoPlayedTable(usersWhoPlayed, usersPlayerData, userLesso
         const userLessonData = userLessonProgData.find(player => player.PlayFabId === entry.user.PlayerId);   
         const lessonPointData = userLessonData.CMSLessonPointProgress.lessons.find(lesson => lesson.lessonID === entry.activityId.replace("activity_id:", ""));
         row.insertCell(2).textContent = lessonPointData?.completedPoints?.length;
+        let completedQuestionsLengths = [];
+        if (lessonPointData?.quizProgresses?.length) {
+            completedQuestionsLengths = lessonPointData.quizProgresses.map(qp => qp.completedQuestions?.length || 0);
+        }
+        row.insertCell(3).textContent = completedQuestionsLengths;
+        let totalQuestionsCompleted = completedQuestionsLengths.reduce((sum, qLength) => sum + qLength, 0);
+        row.insertCell(4).textContent = totalQuestionsCompleted;
 
         const userPlayerData = usersPlayerData.find(player => player.PlayFabId === entry.user.PlayerId);
         const userPlayerDataNL = userPlayerData.PlayerDataNewLauncher;
-        console.log(userPlayerDataNL);
-        const activityData = userPlayerDataNL.activities.find(activity => activity.activityID === entry.activityId.replace("activity_id:", ""))
-        console.log(activityData);
-        const plays = activityData.plays;
+        //console.log(userPlayerDataNL);
+        const activityData = userPlayerDataNL.activities.find(activity => activity.activityID === entry.activityId.replace("activity_id:", ""));
+        
+        const playsInTimeFrame = getPlaysInTimeFrame(startDate, endDate, activityData);
+        //console.log(playsInTimeFrame);
         // check if any of the plays are within the time frame
         // if so get the normalised scores for them
     }
@@ -474,6 +511,23 @@ function populateTopicsInFeedTable(usersPrefData, tableId){
         }
         
     }
+}
+
+function populateActivityPrefTable(usersProfileData, tableId){
+    const table = document.getElementById(tableId);
+    table.innerHTML = "<tr><th>PlayFabId</th><th>Pref 1</th><th>Pref 2</th><th>Pref 3</th><th>Pref 4</th></tr>";
+    for(const entry of usersProfileData){
+        const row = table.insertRow();
+        row.insertCell(0).textContent = entry.PlayFabId;
+        const activityPrefs = entry.UserProfileData.activityTypePreference;
+        for(const pref of activityPrefs){
+            row.insertCell().textContent = pref;
+        }
+    }
+}
+
+function populateQuizFCTable(){
+
 }
 
 // Type per date
@@ -1179,4 +1233,27 @@ function classifyNewOrReturning(user, userNewRetNot){
         userNewRetNot.returningNotPlayed.some(u => u.PlayerId === user.PlayFabId)) {
         return "RETURNING";
     }
+}
+
+function getPlaysInTimeFrame(startDate, endDate, activityData) {
+    if (!activityData || !activityData.plays || activityData.plays.length === 0) {
+        return [];
+    }
+
+    let playsInTimeFrame = [];
+
+    for (const play of activityData.plays) {
+        const playDateString = play.playDate; // e.g., "17/09/2024 10:42:18"
+
+        // Convert "DD/MM/YYYY HH:MM:SS" to a Date object
+        const [day, month, year, hour, minute, second] = playDateString.split(/[/\s:]/);
+        const playDate = new Date(`${year}-${month}-${day}T${hour}:${minute}:${second}Z`);
+
+        // Check if playDate is valid and within the time frame
+        if (!isNaN(playDate) && playDate >= new Date(startDate) && playDate <= new Date(endDate)) {
+            playsInTimeFrame.push(play);
+        }
+    }
+
+    return playsInTimeFrame;
 }
