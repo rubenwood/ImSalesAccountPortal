@@ -5,7 +5,7 @@ const { Pool } = require('pg');
 const XLSX = require('xlsx');
 
 const { getS3JSONFile, uploadToS3, anyFileModifiedSince, checkFileLastModified } = require('./s3-utils');
-const { listItems, getReportFolders, generatePresignedUrlsForFolder } = require('./s3-utils'); 
+const { getReportFolders, generatePresignedUrlsForFolder } = require('./s3-utils'); 
 const { addMessages, removeSpecificHeaders } = require('./export'); 
 
 AWS.config.update({
@@ -228,12 +228,10 @@ function sortAndCombineDataForReport(data) {
     }, []);
 }
 async function setupDataForExport(sortedData){
-    // get email blacklist (we'll need this later)
     let emailBlacklistResp = await getEmailBlacklist();
 
     let exportData = [];
     sortedData.forEach(element =>{
-        //let playFabId = element.accountData.PlayFabId;
         let email = getUserEmailFromAccData(element.accountData.AccountDataJSON);
         let createdDate = new Date(element.accountData.AccountDataJSON.Created);
         let lastLoginDate = new Date(element.accountData.AccountDataJSON.LastLogin);
@@ -276,9 +274,12 @@ async function setupDataForExport(sortedData){
         let totalPlayTime = newDataState.totalPlayTime;
 
         let nclData;
-        //console.log("USAGE DATA: " + JSON.stringify(userData))
         if(userData.NclNhsOnboardingData != undefined){
             nclData = JSON.parse(userData.NclNhsOnboardingData.Value);
+        }
+        let cpdData;
+        if(userData.NclCpdProgress != undefined){
+            cpdData = JSON.parse(userData.NclCpdProgress.Value);
         }
 
         let userExportData = {
@@ -296,7 +297,8 @@ async function setupDataForExport(sortedData){
             totalPlayTime,
             averageTimePerPlay,
             loginData,
-            nclData
+            nclData,
+            cpdData
         }
         // remove certain emails from the report data
         let blacklistedEmails = emailBlacklistResp.blacklistedEmails;
@@ -550,6 +552,7 @@ function exportToExcel(folderName, exportData){
 
     // NCL DATA
     let nclData = setupNCLData(exportData);
+    let cpdData = setupCPDData(exportData);
 
     const workbook = XLSX.utils.book_new();
     const insightsWorksheet = XLSX.utils.json_to_sheet(combinedInsightsData);
@@ -589,10 +592,14 @@ function exportToExcel(folderName, exportData){
     XLSX.utils.book_append_sheet(workbook, usageWorksheet, "Usage Report");
     XLSX.utils.book_append_sheet(workbook, loginDataWorksheet, "Login Report");
     // Add NCL data if it exists
+    // add to the combined report workbook
     if(nclData.length > 0 ){ 
         const nclDataWorksheet = XLSX.utils.json_to_sheet(nclData);
-        // add to the combined report workbook
         XLSX.utils.book_append_sheet(workbook, nclDataWorksheet, "NCL Report");
+    }
+    if(cpdData.length > 0 ){ 
+        const cpdDataWorksheet = XLSX.utils.json_to_sheet(cpdData);
+        XLSX.utils.book_append_sheet(workbook, cpdDataWorksheet, "NCL CPD Report");
     }
 
     // Seperate workbooks and seperate work sheets (with slightly different messages)
@@ -1106,6 +1113,22 @@ function setupNCLData(exportData){
             nclRow[tempField.fieldId] = tempField.value;
         });
         output.push(nclRow);
+    });
+    return output;
+}
+function setupCPDData(exportData){
+    let output = [];
+    exportData.forEach(dataToExport => {
+        if(dataToExport.cpdData == undefined){ return output; }
+
+        let cpdRow = {}
+        cpdRow["email"] = dataToExport.email;        
+        dataToExport.cpdData.trackedCPDs.forEach(element => {
+            cpdRow["completedDate"] = element.completedDate;
+            cpdRow["cpdId"] = element.cpdId;
+            cpdRow["sentEmail"] = element.sentEmail;
+        });
+        output.push(cpdRow);
     });
     return output;
 }

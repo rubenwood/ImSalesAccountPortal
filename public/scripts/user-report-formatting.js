@@ -199,7 +199,7 @@ export function populateUsageData(playerDataList, userPrefData, userProfileData,
 
     // NCL data
     playerDataContent += `<br/>${formatNCLDataHTML(formatNCLData(nclData))}<br/>`;
-    playerDataContent += `<br/>${formatCPDDataHTML(formatCPDData(cpdData))}<br/>`;
+    playerDataContent += `<br/>${formatCPDDataHTML(cpdData)}<br/>`;
 
     playerDataContent += `<h1>Total Plays: ${state.totalPlays}</h1>`;
     playerDataContent += `<h1>Total Activities Played: ${state.totalActivitiesPlayed}</h1>`;
@@ -474,16 +474,6 @@ function formatNCLDataHTML(nclDataJSON){
     return output;
 }
 // FORMAT NCL CPD DATA
-function formatCPDData(cpdData){ // REMOVE THIS
-    if(cpdData == undefined){ return; }
-    let output = [];
-    /*for(let cpdTopic of cpdData.topics){
-        let topicTitle = cpdTopic.title;
-    }*/
-
-    //return cpdData.trackedCPDs;
-    return cpdData;
-}
 function formatCPDDataHTML(cpdDataJSON){
     console.log(cpdDataJSON);
     if(cpdDataJSON == undefined){ return; }
