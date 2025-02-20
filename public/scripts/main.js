@@ -290,7 +290,8 @@ export function resetExportData(){
 export async function writeDataForReport(pID, pEmail, pCreatedDate,
                             pLastLoginDate, pDaysSinceLastLogin, pDaysSinceCreation,
                             pAccountExpiryDate, pDaysToExpire, pCreatedBy, pCreatedFor, pLinkedAccounts,
-                            pActivityDataForReport, pTotalPlays, pTotalPlayTime, pAveragePlayTimePerPlay, pUserPrefData, pUserProfileData, pNCLData, pLoginData){
+                            pActivityDataForReport, pTotalPlays, pTotalPlayTime, pAveragePlayTimePerPlay, pUserPrefData, 
+                            pUserProfileData, pNCLData, pCPDData, pLoginData){
     
     let playerDataForReport = { // (per user)
         userPlayFabId: pID, // hide from exported report
@@ -310,7 +311,8 @@ export async function writeDataForReport(pID, pEmail, pCreatedDate,
         totalPlayTime: pTotalPlayTime,
         averageTimePerPlay: pAveragePlayTimePerPlay,
         loginData: pLoginData,
-        nclData: pNCLData
+        nclData: pNCLData,
+        cpdData: pCPDData
     };
     reportData.push(playerDataForReport);
 
@@ -332,7 +334,8 @@ export async function writeDataForReport(pID, pEmail, pCreatedDate,
         userPrefData: pUserPrefData,
         userProfileData: pUserProfileData,
         loginData: pLoginData,
-        nclData: pNCLData
+        nclData: pNCLData,
+        cpdData: pCPDData
     }
     
     // remove certain emails from the report data
@@ -391,6 +394,7 @@ function exportToExcel() {
 
     // NCL DATA
     let nclData = setupNCLData(exportData);
+    let cpdData = setupCPDData(exportData);
 
     const workbook = XLSX.utils.book_new();
     const insightsWorksheet = XLSX.utils.json_to_sheet(combinedInsightsData);
@@ -434,9 +438,13 @@ function exportToExcel() {
     XLSX.utils.book_append_sheet(workbook, preferenceDataWorksheet, "Pref Report");
     XLSX.utils.book_append_sheet(workbook, profileDataWorksheet, "Profile Report");
     // Add NCL data if it exists
-    if(nclData.length > 0 ){ 
+    if(nclData.length > 0){ 
         const nclDataWorksheet = XLSX.utils.json_to_sheet(nclData);
         XLSX.utils.book_append_sheet(workbook, nclDataWorksheet, "NCL Report");
+    }
+    if(cpdData.length > 0){
+        const cpdDataWorksheet = XLSX.utils.json_to_sheet(cpdData);
+        XLSX.utils.book_append_sheet(workbook, cpdDataWorksheet, "NCL CPD Report");
     }
     
     XLSX.writeFile(workbook, "Report.xlsx");
@@ -623,6 +631,22 @@ function setupNCLData(exportData){
             nclRow[field.fieldId] = field.value;
         });
         output.push(nclRow);
+    });
+    return output;
+}
+function setupCPDData(exportData){
+    let output = [];
+    exportData.forEach(dataToExport => {
+        if(dataToExport.cpdData == undefined){ return output; }
+
+        let cpdRow = {}
+        cpdRow["email"] = dataToExport.email;        
+        dataToExport.cpdData.trackedCPDs.forEach(element => {
+            cpdRow["completedDate"] = element.completedDate;
+            cpdRow["cpdId"] = element.cpdId;
+            cpdRow["sentEmail"] = element.sentEmail;
+        });
+        output.push(cpdRow);
     });
     return output;
 }

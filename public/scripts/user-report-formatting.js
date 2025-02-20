@@ -199,7 +199,6 @@ export function populateUsageData(playerDataList, userPrefData, userProfileData,
 
     // NCL data
     playerDataContent += `<br/>${formatNCLDataHTML(formatNCLData(nclData))}<br/>`;
-    console.log(cpdData);
     playerDataContent += `<br/>${formatCPDDataHTML(formatCPDData(cpdData))}<br/>`;
 
     playerDataContent += `<h1>Total Plays: ${state.totalPlays}</h1>`;
@@ -475,7 +474,7 @@ function formatNCLDataHTML(nclDataJSON){
     return output;
 }
 // FORMAT NCL CPD DATA
-function formatCPDData(cpdData){
+function formatCPDData(cpdData){ // REMOVE THIS
     if(cpdData == undefined){ return; }
     let output = [];
     /*for(let cpdTopic of cpdData.topics){

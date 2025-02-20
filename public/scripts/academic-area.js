@@ -150,7 +150,7 @@ export function populateForm(data){
             // write the data for the insights & export data
             writeDataForReport(playFabId, email, createdDate, lastLoginDate, daysSinceLastLogin, daysSinceCreation,
                 accountExpiryDate, 0, "", "", linkedAccounts, activityDataForReport, totalPlays, totalPlayTime,
-                averageTimePerPlay, userPrefData, userProfileData, nclData, loginData);
+                averageTimePerPlay, userPrefData, userProfileData, nclData, cpdData, loginData);
         }catch(error){
             console.error('Error:', error);
             const row = tableBody.insertRow();
