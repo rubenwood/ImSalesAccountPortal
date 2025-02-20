@@ -1,6 +1,7 @@
 import { decodeQRCode, getPresignedQRCodeURLs, getPresignedURLForFile } from './qr-code-utils.js';
 import { Login } from '../PlayFabManager.js';
-import { getAreas, getModules, getTopics, getActivities, getAreaBrondons, getTopicBrondons, getActivityBrondons, waitForJWT, imAPIGet} from '../immersifyapi/immersify-api.js';
+import { getAreas, getModules, getTopics, getActivities, getAreaBrondons, 
+	getTopicBrondons, getActivityBrondons, waitForJWT, imAPIGet} from '../immersifyapi/immersify-api.js';
 import { initializeDarkMode } from '../themes/dark-mode.js';
 
 const doConfetti = () => { confetti({particleCount: 100, spread: 70, origin: { y: 0.6 }}); }
@@ -8,6 +9,7 @@ const doConfetti = () => { confetti({particleCount: 100, spread: 70, origin: { y
 let areas, topics, activities;
 let areaBrondons, topicBrondons, activityBrondon;
 const Tab = { // enum
+	MISC: Symbol("MISC"),
 	AREAS: Symbol("AREA"),
 	TOPICS: Symbol("TOPIC"),
 	ACTIVITIES: Symbol("ACTIVITY")
@@ -23,9 +25,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 	document.getElementById('loginButton').addEventListener('click', Login);
 	await waitForJWT();
 
-	//const moduleResp = await getModules();
-	//const test = await imAPIGet(`modules/${moduleResp[0].id}`);
-
+	document.getElementById('miscTabBtn').addEventListener('click', miscTabClicked);
 	document.getElementById('areasTabBtn').addEventListener('click', areasTabClicked);
 	document.getElementById('topicsTabBtn').addEventListener('click', topicsTabClicked);
 	document.getElementById('activitiesTabBtn').addEventListener('click', activitiesTabClicked);
@@ -58,6 +58,12 @@ async function searchClicked(){
 function setupSearchResult(searchResult){
 	const tableBody = document.getElementById('reportTableBody');
 	tableBody.innerHTML = ''; // Clear existing rows
+
+	if(selectedTab == Tab.MISC){
+		for(let entry of searchResult){
+			setupMiscEntry(tableBody, entry);
+		}
+	}
 
 	if(selectedTab == Tab.AREAS){
 		for(let entry of searchResult){
@@ -108,6 +114,9 @@ function searchBrondons(query){
 
 function setupSelectedTab(){
 	switch(selectedTab){
+		case Tab.MISC:
+			miscTabClicked();
+			break;
 		case Tab.AREAS:
 			areasTabClicked();
 			break;
@@ -126,6 +135,13 @@ function setSelectedTab(tab, tabBtn){
 
 	selectedTab = tab;
 }
+
+async function miscTabClicked(){
+	// get the misc deeplink data
+
+	const tabBtn = document.getElementById('miscTabBtn');
+	setSelectedTab(Tab.MISC, tabBtn);
+} 
 
 async function areasTabClicked(){
 	const tabBtn = document.getElementById('areasTabBtn');
@@ -244,6 +260,13 @@ function setupCommonElements(tableBody, brondon){
 	tableBody.appendChild(statusRow);
 }
 // SETUP ENTRIES
+function setupMiscEntry(tableBody, brondon){
+	if(brondon == undefined){ return; }
+	const brondonData = brondon.brondon;
+	if(brondonData == undefined){ console.log("no brondon data: ", brondon); return; }
+	setupCommonElements(tableBody, brondon);
+}
+
 function setupAreaEntry(tableBody, brondon){
 	if(brondon == undefined){ return; }
 	const brondonData = brondon.brondon;
