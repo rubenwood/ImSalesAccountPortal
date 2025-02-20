@@ -106,8 +106,8 @@ export function populateForm(data){
         //console.log(usageData);
         let userPrefData = usageData?.UserPreferenceData?.Value ? JSON.parse(usageData.UserPreferenceData.Value) : undefined;
         let userProfileData = usageData?.UserProfileData?.Value ? JSON.parse(usageData.UserProfileData.Value) : undefined;
-        console.log(userPrefData);
-        console.log(userProfileData);
+        //console.log(userPrefData);
+        //console.log(userProfileData);
 
         let accountExpiryDate = usageData.TestAccountExpiryDate !== undefined ? new Date(usageData.TestAccountExpiryDate.Value) : undefined;
         let accountExpiryDateString = accountExpiryDate !== undefined ? accountExpiryDate.toDateString() : "N/A";
@@ -115,6 +115,10 @@ export function populateForm(data){
         let nclData;
         if(usageData.NclNhsOnboardingData != undefined){
             nclData = JSON.parse(usageData.NclNhsOnboardingData.Value);
+        }
+        let cpdData;
+        if(usageData.NclCpdProgress != undefined){
+            cpdData = JSON.parse(usageData.NclCpdProgress.Value);
         }
 
         try{
@@ -136,7 +140,8 @@ export function populateForm(data){
                 totalPlayTime: 0,
                 activityDataForReport: []
             };
-            let newDataState = populateUsageData([playerDataNew, playerData], userPrefData, userProfileData, loginData, nclData, playerDataState, row);
+            let newDataState = populateUsageData([playerDataNew, playerData], userPrefData, userProfileData, loginData, 
+                nclData, cpdData, playerDataState, row);
             let activityDataForReport = newDataState.activityDataForReport;
             let averageTimePerPlay = newDataState.averageTimePerPlay;
             let totalPlays = newDataState.totalPlays;

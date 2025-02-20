@@ -138,7 +138,7 @@ export function checkForContactEmailAddrSuffix(input, suffixes){
 }
 
 // populates the expanded usage data modal
-export function populateUsageData(playerDataList, userPrefData, userProfileData, loginData, nclData, state, row){
+export function populateUsageData(playerDataList, userPrefData, userProfileData, loginData, nclData, cpdData, state, row){
     // if every playerDataList element is undefined, there is no playerdata
     if(playerDataList.every((element) => { return element === undefined})){ 
         addCellToRow(row, 'No Usage Data', false); 
@@ -198,7 +198,9 @@ export function populateUsageData(playerDataList, userPrefData, userProfileData,
     });
 
     // NCL data
-    playerDataContent += `${formatNCLDataHTML(formatNCLData(nclData))}`;
+    playerDataContent += `<br/>${formatNCLDataHTML(formatNCLData(nclData))}<br/>`;
+    console.log(cpdData);
+    playerDataContent += `<br/>${formatCPDDataHTML(formatCPDData(cpdData))}<br/>`;
 
     playerDataContent += `<h1>Total Plays: ${state.totalPlays}</h1>`;
     playerDataContent += `<h1>Total Activities Played: ${state.totalActivitiesPlayed}</h1>`;
@@ -235,7 +237,6 @@ export function populateLoginData(userData){
     };
 }
 
-
 // PREFERENCE & PROFILE DATA
 function formatJSONDataHTML(userPrefData){
     if(userPrefData == undefined){ return; }
@@ -251,7 +252,6 @@ function formatJSONDataHTML(userPrefData){
     }
     return output;
 }
-
 
 // SESSION DATA
 // format the sessions data
@@ -454,7 +454,7 @@ function formatPlatform(platform){
     return "unknown";
 }
 
-// FORMAT NCL DAT
+// FORMAT NCL DATA
 function formatNCLData(nclData){
     if(nclData == undefined){ return; }
     let output = [];
@@ -469,7 +469,31 @@ function formatNCLDataHTML(nclDataJSON){
     if(nclDataJSON == undefined){ return; }
     let output = '';
     nclDataJSON.forEach(element => {
-        output += `<b>${element.fieldId}</b> ${element.value}\n`;
+        output += `<b>${element.fieldId}</b> ${element.value}<br/>`;
+    });
+    
+    return output;
+}
+// FORMAT NCL CPD DATA
+function formatCPDData(cpdData){
+    if(cpdData == undefined){ return; }
+    let output = [];
+    /*for(let cpdTopic of cpdData.topics){
+        let topicTitle = cpdTopic.title;
+    }*/
+
+    //return cpdData.trackedCPDs;
+    return cpdData;
+}
+function formatCPDDataHTML(cpdDataJSON){
+    console.log(cpdDataJSON);
+    if(cpdDataJSON == undefined){ return; }
+    let output = '';
+    cpdDataJSON.trackedCPDs.forEach(element => {
+        output += `<b>Completed Date:</b> ${element.completedDate}<br/>`;
+        output += `<b>CPD ID:</b> ${element.cpdId}<br/>`;
+        output += `<b>Email Sent:</b> ${element.sentEmail}<br/>`;
+        output += `<br/>`;
     });
     
     return output;

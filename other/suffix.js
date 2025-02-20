@@ -398,9 +398,7 @@ function getLoginsPerDate(sessions) {
     let loginCountByDate = {};
 
     loginHistoryDates.forEach(date => {
-        // Format the date as DD/MM/YYYY
         let formattedDate = date.toLocaleDateString('en-GB'); // DD/MM/YYYY format
-
         // Increment the count for this date
         if (loginCountByDate[formattedDate]) {
             loginCountByDate[formattedDate]++;

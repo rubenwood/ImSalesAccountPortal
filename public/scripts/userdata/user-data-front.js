@@ -524,7 +524,6 @@ function populateActivityPrefTable(usersProfileData, tableId){
         }
     }
 }
-
 function populateActivityTypeTable(usersWhoPlayed, type, tableId){
     const startDate = getStartDateISO();
     const endDate = getEndDateISO();
@@ -1273,12 +1272,10 @@ function getPlaysInTimeFrame(startDate, endDate, activityData) {
     let playsInTimeFrame = [];
 
     for (const play of activityData.plays) {
-        const playDateString = play.playDate; // e.g., "17/09/2024 10:42:18"
-
+        const playDateString = play.playDate;
         // Convert "DD/MM/YYYY HH:MM:SS" to a Date object
         const [day, month, year, hour, minute, second] = playDateString.split(/[/\s:]/);
         const playDate = new Date(`${year}-${month}-${day}T${hour}:${minute}:${second}Z`);
-
         // Check if playDate is valid and within the time frame
         if (!isNaN(playDate) && playDate >= new Date(startDate) && playDate <= new Date(endDate)) {
             playsInTimeFrame.push(play);
